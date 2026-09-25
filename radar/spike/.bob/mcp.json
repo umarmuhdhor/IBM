@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "radar-spike": {
+      "command": "node",
+      "args": ["mcp/echo-server.mjs"],
+      "env": { "RADAR_ROLE": "coder" },
+      "alwaysAllow": ["ping"]
+    }
+  }
+}
