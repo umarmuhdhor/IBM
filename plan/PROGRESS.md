@@ -12,7 +12,7 @@ Waktu dalam WITA. Setiap lane **hanya mengedit baris fasenya sendiri** (supaya m
 | 04 | Sync agent | Alief | lane/core | [ ] | | | | log/fase-04.md |
 | 05 | Kunci, task, permintaan, proposal | Alief | lane/core | [ ] | | | | log/fase-05.md |
 | 06 | Commit GitHub, diff (relay terminal P1) | Alief | lane/core | [ ] | | | | log/fase-06.md |
-| 07 | Kit `.bob/` coder | Umar | lane/bob | [ ] | | | | log/fase-07.md |
+| 07 | Kit `.bob/` coder | Umar | lane/bob | [x] | Sab 26 00:45 | Sab 26 01:10 | Kit coder (5 hook, radar-mcp 5 tool, mode + rules), 57 test hijau, uji Bob IDE jalur blokir 3/3 melawan fake server; uji di toko-demo asli = fase 10 | log/fase-07.md |
 | 08 | Main agent `pm-lead` | Umar | lane/bob | [ ] | | | | log/fase-08.md |
 | 09 | App desktop (Orca di `app/`) + `@radar/ui` | Aarief | lane/app | [ ] | | | | log/fase-09.md |
 | 10 | Integrasi E2E | Semua | lane masing-masing | [ ] | | | | log/fase-10.md |
@@ -47,7 +47,7 @@ Waktu dalam WITA. Setiap lane **hanya mengedit baris fasenya sendiri** (supaya m
 | SV-01, SV-08 | 03 | [ ] | |
 | SV-02..06 | 05 | [ ] | |
 | SV-07 | 06 | [ ] | |
-| BC-01..04, BC-07 | 07 | [ ] | |
+| BC-01..04, BC-07 | 07 | [x] | hooks 41 + mcp 16 test; Bob IDE vs fake server (log fase 07); ulang di toko-demo asli fase 10 |
 | MA-01..05, MA-07 | 08 (+05, 06) | [ ] | |
 | UI-01..04, UI-07 | 09 | [ ] | |
 | UI-05 | 11D1 | [ ] | |
@@ -69,9 +69,9 @@ Waktu dalam WITA. Setiap lane **hanya mengedit baris fasenya sendiri** (supaya m
 | A3 commit GitHub API | Core | Alief | | [ ] | |
 | A4 review locks | Core | Alief | | [ ] | |
 | B1 spike hooks | Bob | Umar | `uaai_umar_task01_spike_hooks_summary.png` | [x] | 0.345 |
-| B2 coder mode | Bob | Umar | | [ ] | |
-| B3 hooks | Bob | Umar | | [ ] | |
-| B4a MCP coder | Bob | Umar | | [ ] | |
+| B2 coder mode | Bob | Umar | `uaai_umar_task02_coder_mode_summary.png` | [x] | 0.354 |
+| B3 hooks | Bob | Umar | `uaai_umar_task03_hooks_summary.png` | [x] | 0.914 |
+| B4a MCP coder | Bob | Umar | `uaai_umar_task04_mcp_coder_summary.png` | [x] | 1.13 |
 | B4b MCP PM | Bob | Umar | | [ ] | |
 | C1 onboarding Orca | App | Aarief | | [ ] | |
 | C2 agent bob | App | Aarief | | [ ] | |

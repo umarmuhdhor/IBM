@@ -153,6 +153,19 @@ describe('lock_guard (PreToolUse, BC-04)', () => {
     }
   });
 
+  it('stays inside 1.8 s even when stdin is never closed and the server is slow', async () => {
+    const slow = await startFakeServer(() => ({ json: { decision: 'block', results: [], activeTaskId: null, message: 'x' }, delayMs: 3_000 }));
+    try {
+      const r = await runHook(bundles.lock_guard, [], prePayload(root, 'src/checkout/checkout.ts'), { ...env, RADAR_SERVER: slow.url }, root, {
+        keepStdinOpen: true,
+      });
+      expect(r.code).toBe(0);
+      expect(r.ms).toBeLessThan(1_800);
+    } finally {
+      await slow.close();
+    }
+  });
+
   it('fails open on an HTTP error from the server', async () => {
     const broken = await startFakeServer(() => ({ status: 500, json: { error: { code: 'internal' } } }));
     try {

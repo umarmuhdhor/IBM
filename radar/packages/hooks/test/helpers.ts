@@ -103,7 +103,14 @@ export interface RunResult {
   ms: number;
 }
 
-export function runHook(file: string, args: string[], stdin: unknown, env: Record<string, string>, cwd: string): Promise<RunResult> {
+export function runHook(
+  file: string,
+  args: string[],
+  stdin: unknown,
+  env: Record<string, string>,
+  cwd: string,
+  opts: { keepStdinOpen?: boolean } = {},
+): Promise<RunResult> {
   return new Promise((resolveRun) => {
     const t0 = Date.now();
     const child = spawn(process.execPath, [file, ...args], {
@@ -115,7 +122,11 @@ export function runHook(file: string, args: string[], stdin: unknown, env: Recor
     child.stdout.on('data', (c: Buffer) => (stdout += c.toString()));
     child.stderr.on('data', (c: Buffer) => (stderr += c.toString()));
     child.on('close', (code) => resolveRun({ code, stdout, stderr, ms: Date.now() - t0 }));
-    child.stdin.end(typeof stdin === 'string' ? stdin : JSON.stringify(stdin));
+    const data = typeof stdin === 'string' ? stdin : JSON.stringify(stdin);
+    // keepStdinOpen: write the payload but never close stdin (a host that forgets EOF)
+    if (opts.keepStdinOpen) child.stdin.write(data);
+    else child.stdin.end(data);
+    child.on('close', () => child.stdin.destroy());
   });
 }
 

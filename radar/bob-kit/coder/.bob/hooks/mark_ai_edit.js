@@ -246,13 +246,14 @@ async function main() {
   const { cfg, hook } = ctx;
   const tool = hook.tool ?? "unknown";
   if (OWN_MCP_TOOL.test(tool)) return;
+  const changed = linesChanged(tool, hook.input);
   const sends = [
     sendActivity(cfg, {
       kind: "tool.post",
       sessionId: hook.sessionId,
       tool,
       paths: hook.paths,
-      ...linesChanged(tool, hook.input) === void 0 ? {} : { linesChanged: linesChanged(tool, hook.input) }
+      ...changed === void 0 ? {} : { linesChanged: changed }
     })
   ];
   if (EDIT_TOOLS_REGEX.test(tool) && hook.paths.length > 0) {

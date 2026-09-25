@@ -5,6 +5,11 @@ import { sendActivity } from './activity.js';
 import { loadContext, logLine, radarFetch, settleWithin } from './_shared.js';
 import { EDIT_TOOLS_REGEX, HOOK_SERVER_TIMEOUT_MS, type LockCheckRes, saveState } from './placeholder/common.js';
 
+// Whole-hook budget from process start (stdin + server call); keeps the hook under the 1.8 s fail-open target
+// even when the host is slow to close stdin.
+export const LOCK_GUARD_BUDGET_MS = 1_600;
+const MAX_SAVED_MESSAGE = 2_000;
+
 async function main(): Promise<void> {
   const ctx = await loadContext('lock_guard');
   if (!ctx) return;
@@ -20,7 +25,7 @@ async function main(): Promise<void> {
       'POST',
       '/v1/locks/check',
       { paths: hook.paths, tool, sessionId: hook.sessionId, clientTs: Date.now() },
-      HOOK_SERVER_TIMEOUT_MS,
+      Math.max(100, Math.min(HOOK_SERVER_TIMEOUT_MS, LOCK_GUARD_BUDGET_MS - (Date.now() - started))),
     );
   } catch (err) {
     logLine(cfg.root, 'lock_guard', `locks/check failed: ${String(err)}`);
@@ -46,7 +51,7 @@ async function main(): Promise<void> {
     process.stderr.write(res.message + '\n');
     try {
       const blocked = res.results.find((r) => r.decision === 'block')?.path ?? hook.paths[0] ?? '';
-      saveState(cfg.root, { lastBlock: { path: blocked, message: res.message, ts: Date.now() } });
+      saveState(cfg.root, { lastBlock: { path: blocked, message: res.message.slice(0, MAX_SAVED_MESSAGE), ts: Date.now() } });
     } catch (err) {
       // a local state file must never turn a block into an allow
       logLine(cfg.root, 'lock_guard', `lastBlock not saved: ${String(err)}`);

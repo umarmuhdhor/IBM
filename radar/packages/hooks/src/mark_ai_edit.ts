@@ -30,13 +30,14 @@ async function main(): Promise<void> {
   const tool = hook.tool ?? 'unknown';
   if (OWN_MCP_TOOL.test(tool)) return;
 
+  const changed = linesChanged(tool, hook.input);
   const sends: Promise<unknown>[] = [
     sendActivity(cfg, {
       kind: 'tool.post',
       sessionId: hook.sessionId,
       tool,
       paths: hook.paths,
-      ...(linesChanged(tool, hook.input) === undefined ? {} : { linesChanged: linesChanged(tool, hook.input) }),
+      ...(changed === undefined ? {} : { linesChanged: changed }),
     }),
   ];
   if (EDIT_TOOLS_REGEX.test(tool) && hook.paths.length > 0) {
