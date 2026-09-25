@@ -823,6 +823,8 @@ Aturan: MP4, maksimal 3 menit (juri berhenti menonton di 3:00), minimal 90 detik
 
 Total solusi berjalan: ±120 detik (syarat ≥ 90). Subtitle Bahasa Inggris dibakar ke video.
 
+> **Catatan waktu:** tabel di atas berjumlah tepat 3:00, tanpa slack. fase 14 menargetkan ekspor di 2:50 (margin 10 detik) — kalau editing Minggu siang melebihi itu, potong dari **2:25–2:50 "Di balik layar"** dulu (jadikan 15 detik, lihat `plan/fase-14-submission.md` tabel risiko), bukan dari adegan solusi berjalan (0:25–2:25), supaya syarat ≥ 90 detik solusi berjalan tetap aman.
+
 ---
 
 ## 16. Scope & rencana rilis

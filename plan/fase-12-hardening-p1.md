@@ -66,7 +66,7 @@ Kerjakan dari atas. Kalau jam 10:00 belum sampai sebuah item, **item itu dan sem
    - Uji "server restart saat demo": `wrangler deploy` ulang (DO restart) → semua klien tersambung lagi < 10 s, MC memuat ulang state.
    - Backup: job harian tidak perlu; cukup `pnpm -C radar admin export` sebelum rekaman.
 
-10. **GATE 2 (11:00)**: bekukan fitur. Tandai di PROGRESS apa yang masuk/terpotong. Deploy final server & web. Tag git `v0.2.0-freeze`.
+10. **GATE 2 (11:00)**: bekukan fitur. Tandai di PROGRESS apa yang masuk/terpotong. Deploy final server & web. Tag git `v0.3.0-freeze`.
 
 11. Commit `fase-12: hardening and P1 features`.
 
@@ -89,7 +89,7 @@ curl -s $S/v1/report/session -H "authorization: Bearer $TOK_C" | jq -r .markdown
 - [ ] Semua bug P0 dari E2E_REPORT fixed dengan test regresi.
 - [ ] Setiap item P1 berstatus **selesai + test** atau **dipotong + tercatat** (tidak ada yang setengah jadi di main branch).
 - [ ] Uji beban 5 anggota lulus; restart server pulih < 10 s.
-- [ ] Tag `v0.2.0-freeze`, deploy final.
+- [ ] Tag `v0.3.0-freeze`, deploy final.
 
 ## Risiko & fallback
 

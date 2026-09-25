@@ -37,7 +37,7 @@ Cek kata: `wc -w` pada kedua statement harus ≤ 500. Simpan hasilnya di log.
 
 ### A. Rekaman final (Min 09:00–12:00, pagi saat tim masih segar)
 
-1. **Gladi & rekam** (LANGKAH MANUAL): reset server (`RECORD_TERMINALS=true`) dan toko-demo, 4 Mac dengan app `.dmg`. A memakai Bob IDE, B memakai Bob Shell di app, C memakai Mission Control + `pm-lead` (D peran demo TODO — tim tentukan sebelum gladi). Rekam layar per Mac (QuickTime/OBS, 1080p) + audio narasi terpisah. 2 take penuh mengikuti PRD §15. Pantau Bobcoin: satu take ≈ 3–4 Bobcoin per akun.
+1. **Gladi & rekam** (LANGKAH MANUAL): reset server (`RECORD_TERMINALS=true`) dan toko-demo, 4 Mac dengan app `.dmg`. A memakai Bob IDE, B memakai Bob Shell di app, C memakai Mission Control + `pm-lead`. **D (default, ubah hanya lewat DECISIONS):** coder keempat yang mengerjakan task kecil independen (mis. `utils.ts` atau task ke-4 dari `EXPERIMENT_TASKS.md`, bukan salah satu yang dinarasikan) di Bob IDE selama pengambilan gambar — D tidak muncul di 3 panel naskah PRD §15 (yang tetap A/MC/B), tapi kartunya terlihat sekilas di Team/Files & locks dan di feed, membuktikan "4 Bobs bekerja paralel" (PLAN.md §12 "Parallel tasks") alih-alih hanya 2 coder yang terlihat di layar. D juga memegang kendali rekaman (start/stop OBS di 4 Mac) dan hitung mundur bersama. Rekam layar per Mac (QuickTime/OBS, 1080p) + audio narasi terpisah. 2 take penuh mengikuti PRD §15. Pantau Bobcoin: satu take ≈ 3–4 Bobcoin per akun.
 2. Setelah take terbaik: `pnpm -C radar admin export --with-terminals > events.live-final.json`. Ekspor sesi Bob dari keempat Mac (R7). Jalankan ulang `export-replay.ts` lalu deploy replay.
 3. **Rotasi token** yang pernah tampil di layar (`pnpm -C radar admin token --rotate`).
 
@@ -65,7 +65,7 @@ Cek kata: `wc -w` pada kedua statement harus ≤ 500. Simpan hasilnya di log.
    - temuan spike Bob 2.x,
    - Bobcoin per anggota,
    - catatan `.bobignore` template (Bob tidak membaca `tsconfig.json`).
-10. `bob_sessions/INDEX.md` final. Jalankan `pnpm -C radar evidence:check` sampai **hijau**: 3 anggota, masing-masing ≥ 3 slice lengkap, dan semua trailer valid.
+10. `bob_sessions/INDEX.md` final. Jalankan `pnpm -C radar evidence:check` sampai **hijau**: **keempat** anggota (Alief, Umar, Aarief, Imelda — R7 §4, PLAN.md §9), masing-masing ≥ 3 slice lengkap, dan semua trailer valid.
 
 ### E. README juri, keamanan, repo (Lane Alief)
 
@@ -88,6 +88,7 @@ Cek kata: `wc -w` pada kedua statement harus ≤ 500. Simpan hasilnya di log.
     - [ ] `DATA_SOURCES.md` lengkap (guide: daftar situs data publik). Semua data sintetis.
     - [ ] Video menunjukkan **Bob IDE** sebagai alat utama (syarat lolos penjurian).
     - [ ] Gitleaks bersih. Tidak ada token di video/deck/replay JSON.
+    - [ ] **Baca ulang manual** setiap `text` prompt di `events.json`/`bob-quotes.json` yang akan tayang di `/demo` (publik, tanpa login). `export-replay.ts` (fase 11 langkah 14) hanya menyaring pola secret (`rdr_`, `ghp_`, `sk-`) dan memotong panjang — bukan isi. Prompt asli yang diketik terburu-buru selama hackathon bisa memuat sesuatu yang tidak pantas dipublikasikan (nama file/data internal yang disebut sembarangan, komentar frustrasi, dll). Redaksi manual sebelum deploy replay terakhir.
 17. Commit `fase-14: submission`, tag `v0.3.0-submit`, push. Retrospektif 10 baris di log.
 
 ## Verifikasi
@@ -105,7 +106,7 @@ npx markdown-link-check README.md BOB_DEVELOPMENT.md radar/docs/*.md
 
 - [ ] Semua field form terisi dan terkirim sebelum 23:00 WITA (bukti screenshot).
 - [ ] Video ≤ 180 s, statement ≤ 500 kata masing-masing.
-- [ ] `evidence:check` hijau untuk 3 anggota.
+- [ ] `evidence:check` hijau untuk keempat anggota.
 - [ ] Token yang pernah tampil di footage sudah dirotasi.
 
 ## Risiko & fallback
