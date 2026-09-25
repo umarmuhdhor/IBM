@@ -114,16 +114,14 @@ Toolchain: **Node 24 + pnpm 12** (syarat `app/`). `nvm install 24 && nvm use 24`
 
 Nama command bisa berubah antar versi ECC. Kalau `/plugin list` menunjukkan nama lain, pakai padanannya dan catat di `DECISIONS.md`.
 
-### 4.3 Prompt satu baris per orang
-
-Salin blok di [`plan/PROMPT.md`](plan/PROMPT.md), ubah dua baris, lalu tempel ke Claude Code di root repo:
+### 4.3 Prompt satu kalimat per orang
 
 ```text
-LANE: Aarief
-FASE: 09
+Saya <Alief|Umar|Aarief|Imelda>. Kerjakan semua tugas lane saya secara otomatis sesuai CLAUDE.md dan plan/PROMPT.md (mode auto).
 ```
+AI mengurus branch, memilih fase berikutnya, membuka PR ke `main`, dan lanjut sendiri. AI hanya berhenti untuk BOB SLICE atau langkah manual.
 
-Model per fase ada di `plan/README.md` §3 dan `plan/ref/R6-model-ai.md`.
+**Berurutan atau paralel?** Fase **di dalam satu lane** berurutan, karena fase berikutnya memakai hasil fase sebelumnya. **Antar-lane jalan sendiri-sendiri**: kalau butuh hasil lane lain yang belum di-merge, AI memakai mock server atau data contoh, lalu menyambungkan ke yang asli setelah `rebase`. Merge ke `main` kapan saja lewat PR. Satu-satunya titik kumpul wajib adalah **Sab 21:00** (integrasi demo di `main`).
 
 ---
 

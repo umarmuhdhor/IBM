@@ -1,5 +1,33 @@
 # Prompt eksekusi — satu prompt untuk semua fase (Claude Code + ECC)
 
+## ⚡ Cara cepat: cukup satu kalimat (disarankan)
+
+Buka Claude Code di root repo, lalu ketik **satu** kalimat sesuai namamu:
+
+```text
+Saya Alief. Kerjakan semua tugas lane saya secara otomatis sesuai CLAUDE.md dan plan/PROMPT.md (mode auto).
+```
+```text
+Saya Umar. Kerjakan semua tugas lane saya secara otomatis sesuai CLAUDE.md dan plan/PROMPT.md (mode auto).
+```
+```text
+Saya Aarief. Kerjakan semua tugas lane saya secara otomatis sesuai CLAUDE.md dan plan/PROMPT.md (mode auto).
+```
+```text
+Saya Imelda. Kerjakan semua tugas lane saya secara otomatis sesuai CLAUDE.md dan plan/PROMPT.md (mode auto).
+```
+
+AI akan:
+- menyiapkan branch lane-nya sendiri,
+- memilih fase berikutnya yang belum selesai,
+- mengerjakan fase itu sampai selesai, membuka PR ke `main`, lalu **langsung lanjut** ke fase berikutnya.
+
+AI hanya berhenti untuk **BOB SLICE** (kamu kerjakan di Bob IDE), **LANGKAH MANUAL** (akun, rekaman), atau kalau konteks hampir habis. Untuk melanjutkan, ketik lagi kalimat yang sama.
+
+---
+
+## Cara manual (satu fase tertentu)
+
 **Cara pakai:** salin seluruh blok di bawah, ubah **dua baris pertama** (`LANE`, `FASE`), lalu tempel ke Claude Code di **root repo `umarmuhdhor/IBM`** (folder `IBM/` ini).
 
 Syarat: plugin ECC terpasang (`/plugin install ecc@ecc`, lihat [`../PLAN.md`](../PLAN.md) §4.1). Model per fase ada di `README.md` §3.
@@ -18,7 +46,7 @@ Alternatif tanpa salin-tempel: ubah dua baris di file ini, lalu ketik ke Claude 
 
 ```text
 LANE: Aarief        # Alief | Umar | Aarief | Imelda
-FASE: 09
+FASE: auto          # auto = kerjakan semua fase lane berurutan tanpa berhenti; atau nomor fase, mis. 09
 
 <peran>
 Kamu senior engineer (TypeScript, Node 20+, Electron/React) yang mengeksekusi rencana pembangunan
@@ -49,16 +77,29 @@ Laporan dalam Bahasa Indonesia. Kode, nama file, komentar: Bahasa Inggris.
 </konteks>
 
 <langkah>
-1. TEMUKAN FASE. Cari plan/fase-<FASE>-*.md. Kalau tidak ada, berhenti dan tampilkan daftar fase.
+1. TEMUKAN FASE.
+   - Kalau user menulis "Saya <nama>", maka LANE = <nama> dan FASE = auto.
+   - FASE = auto: ambil fase pertama milik LANE (tabel "Urutan fase" di atas) yang di plan/PROGRESS.md belum [x]
+     dan tidak sedang dikerjakan orang lain.
+   - FASE = nomor: cari plan/fase-<FASE>-*.md. Kalau tidak ada, berhenti dan tampilkan daftar fase.
    Pastikan fase ini milik LANE (tabel di plan/README.md §3). Kalau bukan, berhenti dan tanya user.
 
 2. BACA berurutan: plan/README.md, plan/PROGRESS.md, plan/log/DECISIONS.md, file fase, lalu SEMUA
    "Bacaan wajib" di file fase. Kalau plan/log/fase-<FASE>.md sudah ada → mode LANJUT.
    Untuk LANE Aarief/Imelda: baca juga orca:AGENTS.md dan orca:CLAUDE.md dan patuhi aturannya.
 
-3. CEK PRASYARAT & BRANCH. Prasyarat di PROGRESS.md harus [x], kecuali file fase mengizinkan mock.
-   Pastikan kamu berada di branch lane (lane/core | lane/bob | lane/app) atau sub-branch lane.
-   Kalau fase ini ditandai "di main" (00, 02, 10), pastikan di main dan bersih.
+3. BRANCH & PRASYARAT (otomatis, jangan minta user mengetik perintah git):
+   a. `git fetch origin`. Kalau branch lane belum ada, buat dari origin/main:
+      Alief → lane/core, Umar → lane/bob, Aarief → lane/app, Imelda → lane/web.
+      Pindah ke branch itu (`git switch`), lalu `git rebase origin/main` kalau main sudah maju.
+      Fase yang ditandai "di main" (00, 02, 10, 14) dikerjakan di main (untuk 10/14 koordinasikan lewat PR).
+   b. Lane jalan MANDIRI. Kalau prasyarat dari lane lain belum di-merge ke main, JANGAN menunggu:
+      pakai mock server / tipe sementara / data fixture (setiap fase menjelaskan caranya), tandai
+      "memakai mock" di log, dan sambungkan ke yang asli nanti setelah rebase. Pengecualian:
+      prasyarat di lane SENDIRI harus selesai dulu (fase di dalam satu lane berurutan).
+   c. Jangan membuat file di luar folder lane (PLAN.md §2). Kalau butuh kerangka `radar/` dari fase 00
+      yang belum ada, buat paketmu sendiri sebagai paket mandiri di foldermu, dan rapikan setelah
+      fase 00 masuk main.
 
 4. RENCANAKAN dengan ECC. Panggil agent `planner` (padanan /ecc:plan) dengan isi "Langkah kerja" fase.
    Hasilnya daftar todo dan urutan test. Tulis ringkasannya (≤ 15 baris) ke log fase. Jangan menunggu
@@ -122,9 +163,13 @@ Laporan dalam Bahasa Indonesia. Kode, nama file, komentar: Bahasa Inggris.
 
 12. SIMPAN SESI. Jalankan /ecc:save-session (atau padanannya) dengan nama "lane<LANE>-fase<FASE>".
 
-13. LAPOR & BERHENTI (maks 15 baris): hasil (selesai / menunggu manual / terblokir), angka verifikasi,
-    Bob slice yang masih harus dikerjakan user, langkah manual, lalu baris terakhir PERSIS:
-    "Lanjut: LANE <x> · FASE <nomor berikutnya>". JANGAN mulai fase berikutnya.
+13. LANJUT atau LAPOR.
+    - FASE = auto: setelah PR fase ini dibuat, tulis ringkasan 3 baris, lalu KEMBALI ke langkah 1 untuk
+      fase berikutnya milik lane. Berhenti hanya kalau: (a) BOB SLICE menunggu user, (b) LANGKAH MANUAL,
+      (c) semua fase lane selesai, atau (d) konteks hampir habis (simpan log + /ecc:save-session dulu).
+      Sebelum mulai fase baru: `git fetch origin && git rebase origin/main` bila ada merge baru.
+    - FASE = nomor: laporan ringkas (maks 15 baris), baris terakhir PERSIS
+      "Lanjut: LANE <x> · FASE <nomor berikutnya>", lalu berhenti.
 </langkah>
 
 <batasan>

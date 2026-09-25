@@ -1,7 +1,9 @@
 # IBM Bob Live Collab — project rules for Claude Code
 
 Hackathon project (IBM Bob 2.0, lablab, deadline Sun 27 Sep 2026 23:00 WITA). Community project, not an official IBM product.
-Start with `README.md` → `PLAN.md` → `ARCHITECTURE.md`. Phase work is driven by `plan/PROMPT.md` (lines `LANE:` + `FASE:`).
+Start with `README.md` → `PLAN.md` → `ARCHITECTURE.md`. Phase work is driven by `plan/PROMPT.md`.
+
+**If the user says "Saya <Alief|Umar|Aarief|Imelda> …"**: run `plan/PROMPT.md` in auto mode for that lane: set up the lane branch yourself, do the lane's phases in order, open a PR to `main` after each phase, and continue to the next phase without waiting. Stop only for BOB SLICE, manual steps, or low context. Lanes run independently: use the mock server or fixtures instead of waiting for other lanes.
 
 ## Team & lanes (only touch your lane's folders — PLAN.md §2)
 | Person | Lane | Folders |
