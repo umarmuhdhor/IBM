@@ -20,8 +20,12 @@ const electronMock = vi.hoisted(() => {
 
 vi.mock('electron', () => electronMock)
 
-const { clearRadarConnection, getRadarConnectionSummary, readRadarConnection, saveRadarConnection } =
-  await import('./secure-store')
+const {
+  clearRadarConnection,
+  getRadarConnectionSummary,
+  readRadarConnection,
+  saveRadarConnection
+} = await import('./secure-store')
 
 describe('Radar connection storage', () => {
   let userDataPath: string
@@ -68,6 +72,20 @@ describe('Radar connection storage', () => {
       })
     ).toThrow(/encryption/i)
     expect(getRadarConnectionSummary()).toBeNull()
+  })
+
+  it('rejects a server URL with credentials or an unsupported protocol', () => {
+    const connection = {
+      server: 'https://user:pass@live.example.test',
+      workspace: 'demo',
+      member: 'A',
+      role: 'coder' as const,
+      token: 'synthetic-value'
+    }
+    expect(() => saveRadarConnection(connection)).toThrow(/Invalid Live Collab connection/)
+    expect(() => saveRadarConnection({ ...connection, server: 'file:///tmp/live' })).toThrow(
+      /Invalid Live Collab connection/
+    )
   })
 
   it('removes the saved connection', () => {

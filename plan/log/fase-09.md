@@ -37,7 +37,7 @@ Aturan yang tetap berlaku: `CLAUDE.md`, `plan/PROMPT.md` (LANE Aarief, FASE auto
 - [x] 2. BOB SLICE C2 (P1) — Agent mode via CDP, commit Bob asli `b8406f70` dengan trailer `Bob-Assisted` dan `Co-authored-by: IBM Bob <bob@ibm.com>` (default R5 §3; verifikasi email GitHub masih TODO B6), serta bukti `bob_sessions/uaai_aarief_task02_register_bob_agent_summary.png`. Test registry merah (1 gagal/11) sebelum Bob, lalu 59/59 test terkait lulus; `pnpm -C app tc` hijau. Uji interaktif `bob` masih LANGKAH MANUAL karena CLI belum terpasang pada PATH.
 - [x] 3. Alias paket UI/common di Vite renderer, Vitest, `tsconfig.web.json`, dan `tsconfig.tc.web.json`; React/React DOM/lucide di-dedupe. `pnpm -C app tc:web` hijau.
 - [x] 4. Penyimpanan koneksi aman + IPC: ciphertext `userData/radar/connection.bin`, menolak OS encryption yang tidak tersedia, `get`/`set` hanya mengembalikan ringkasan tanpa token, `clear` menghapus file. Test merah sebelum implementasi, lalu 7/7 lulus.
-- [ ] 5. 09b WebSocket, store, API.
+- [x] 5. 09b: WebSocket di main (`hello` mc/app, keepalive string persis, backoff 0,5→8 s, stop pada 4401), store renderer dari snapshot/event, dan aksi MC via IPC (`decide`, `revoke`, `cancelTask`). Test merah untuk WS, endpoint, store task/kunci/proposal sebelum implementasi; 19/19 test terkait lulus.
 - [ ] 6–14. 09c.
 
 ## File dibuat/diubah
@@ -48,11 +48,14 @@ Aturan yang tetap berlaku: `CLAUDE.md`, `plan/PROMPT.md` (LANE Aarief, FASE auto
 - C2 Bob: `app/src/shared/{tui-agent,tui-agent-config,tui-agent-display-names,tui-agent-selection,telemetry-property-schemas,agent-kind,skills-cli-agent-keys}.ts`, `app/src/renderer/src/lib/{agent-catalog.tsx,agent-status.ts}`, bukti dan indeks Aarief. Review sesudah commit: komentar konfigurasi diubah ke Bahasa Inggris; satu baris dukungan IBM Bob ditambah di `app/docs/site/content/docs/agents/supported.mdx`.
 - 09b langkah 3: `app/electron.vite.config.ts`, `app/config/{tsconfig.web.json,tsconfig.tc.web.json,vitest.config.ts}`.
 - 09b langkah 4: `app/src/shared/radar-connection.ts`, `app/src/main/radar/{secure-store,connection-ipc}{,.test}.ts`, `app/src/main/startup/main-process-ipc-bootstrap.ts`, `app/src/preload/api/radar-bridge.ts`, `app/src/preload/{api-types,index}.ts`.
+- 09b langkah 5: `app/src/main/radar/{ws-client,api}{,.test}.ts`, `app/src/shared/radar-update.ts`, `app/src/renderer/src/lib/radar/state-placeholder.ts`, `app/src/renderer/src/store/radar-store{,.test}.ts`, penyesuaian IPC/preload, `radar/packages/ui/src/index.ts`, dan include TypeScript di `app/config/tsconfig*.web.json`.
 - `plan/PROGRESS.md` (baris 09 `[~]`)
 
 ## Placeholder aktif
 
 - `radar/packages/ui/src/types-temp.ts` — `TODO(sync:alief)`: tipe view R3 §5/§6; status tolak diasumsikan `ditolak`.
+- `app/src/renderer/src/lib/radar/state-placeholder.ts` — `TODO(sync:alief)`: adapter snapshot/event sementara sampai reducer + schemas `@radar/common` fase 02 masuk main.
+- `app/src/main/radar/ws-client.ts` — `TODO(sync:alief)`: impor konstanta keepalive dari `@radar/common` setelah fase 02.
 
 ## Hasil verifikasi
 
@@ -62,12 +65,14 @@ Aturan yang tetap berlaku: `CLAUDE.md`, `plan/PROMPT.md` (LANE Aarief, FASE auto
 - C2: `pnpm -C app test` untuk 4 suite registry/prompt transport: 59/59 lulus. `pnpm -C app tc`: hijau. `pnpm -C app exec oxlint` pada 11 file TS/TSX C2: bersih. `git diff --check`: bersih. `command -v bob`: tidak ditemukan; respons terminal Bob Shell belum terverifikasi.
 - 09b langkah 3: `pnpm -C app tc:web` exit 0.
 - 09b langkah 4: 7/7 test penyimpanan/IPC lulus; `pnpm -C app tc:node` dan `tc:web` exit 0; oxlint pada 9 file TS terkait exit 0. File hanya memuat ciphertext; tidak ada token dalam respons `get`/`set`.
+- 09b langkah 5: `pnpm -C app test src/main/radar src/renderer/src/store/radar-store.test.ts` 19/19 lulus; `pnpm -C app tc` exit 0; oxlint file terkait exit 0. `tc:web` sempat TS6307 pada source paket UI, lalu hijau setelah include source workspace ditambah.
 
 ## Deviasi
 
 - Model Opus 5.5 (lihat atas). Otomasi Bob memakai CDP langsung ke iframe webview karena `agent-browser` tidak bisa masuk frame (SPIKE_RESULTS).
 - Batas koneksi, role, token UI, dan drawer dicatat di D-aarief-01.
 - Review C2: registrasi exhaustive `Record<TuiAgent,...>` lengkap tanpa cast baru, `detectCmd`/`launchCmd`/`expectedProcess` = `bob`, glyph B generik. `stdin-after-start` menghindari argumen prompt CLI tetapi tetap mengirim followup lewat PTY bila ada; perilaku Bob Shell **BELUM DIVERIFIKASI**. Tidak ada channel IPC atau `nodeIntegration` baru. Gerbang screenshot UI dilakukan sebelum PR 09a.
+- 09b: path `lib/radar/{ws-client,api}.ts` dari rencana dipindah ke main process sesuai D-aarief-01, sehingga header Bearer hanya dipasang di main. `RadarState` dari server bisa berupa array (§2.21); adapter sementara mengubahnya menjadi record. Keputusan Approve/Deny tetap menunggu `proposal.decided` dari WS; API tidak mengubah store secara optimistis.
 
 ## LANGKAH MANUAL
 

@@ -14,7 +14,7 @@ Waktu dalam WITA. Setiap lane **hanya mengedit baris fasenya sendiri** (supaya m
 | 06 | Commit GitHub, diff (relay terminal P1) | Alief | lane/core | [ ] | | | | log/fase-06.md |
 | 07 | Kit `.bob/` coder | Umar | lane/bob | [x] | Sab 26 00:45 | Sab 26 01:10 | Kit coder (5 hook, radar-mcp 5 tool, mode + rules), 57 test hijau, uji Bob IDE jalur blokir 3/3 melawan fake server; uji di toko-demo asli = fase 10 | log/fase-07.md |
 | 08 | Main agent `pm-lead` | Umar | lane/bob | [x] | Sab 26 01:12 | Sab 26 01:30 | 8 tool PM (tanpa approve), kit PM, uji Bob IDE MA-01/02/03/04 (3/3)/05/07 melawan fake server; uji server asli = fase 10 | log/fase-08.md |
-| 09 | App desktop (Orca di `app/`) + `@radar/ui` | Aarief | lane/app | [~] | Sab 26 00:12 | | 09a berjalan: identitas app terpisah, Bob slice C1 | log/fase-09.md |
+| 09 | App desktop (Orca di `app/`) + `@radar/ui` | Aarief | lane/app | [~] | Sab 26 00:12 | | 09a C1/C2 selesai; 09b koneksi aman + WS/store/API selesai; uji Bob Shell P1 manual tertunda | log/fase-09.md |
 | 10 | Integrasi E2E | Semua | lane masing-masing | [ ] | | | | log/fase-10.md |
 | 11a | Tonton Bob rekan (A) + script bukti C4 (E) | Aarief | lane/app | [ ] | | | | log/fase-11a.md |
 | 11b | `.dmg` + Release (C) | Aarief | lane/app | [ ] | | | | log/fase-11b.md |

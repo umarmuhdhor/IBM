@@ -12,11 +12,27 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
+function isServerAddress(value: string): boolean {
+  try {
+    const url = new URL(value)
+    return (
+      (url.protocol === 'http:' || url.protocol === 'https:') &&
+      url.pathname === '/' &&
+      !url.username &&
+      !url.password &&
+      !url.search &&
+      !url.hash
+    )
+  } catch {
+    return false
+  }
+}
+
 export function isRadarConnection(value: unknown): value is RadarConnection {
   return (
     isRecord(value) &&
     typeof value.server === 'string' &&
-    value.server.trim().length > 0 &&
+    isServerAddress(value.server) &&
     typeof value.workspace === 'string' &&
     value.workspace.trim().length > 0 &&
     typeof value.member === 'string' &&

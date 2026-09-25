@@ -6,7 +6,9 @@
     "../src/renderer/src/**/*.tsx",
     "../src/preload/api-types.ts",
     "../src/preload/api/**/*",
-    "../src/shared/**/*"
+    "../src/shared/**/*",
+    "../../radar/packages/common/src/**/*",
+    "../../radar/packages/ui/src/**/*"
   ],
   "compilerOptions": {
     "composite": true,
