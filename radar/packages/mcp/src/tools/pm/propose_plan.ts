@@ -12,17 +12,17 @@ export default defineTool({
   title: 'Usulkan rencana',
   description: 'Gunakan untuk mengusulkan rencana task baru ke PM. Tentukan tujuan, alasan, dan daftar task beserta pemilik dan file-nya.',
   inputSchema: {
-    goal: z.string().describe('Tujuan rencana'),
-    reason: z.string().describe('Alasan usulan rencana'),
+    goal: z.string().min(1).describe('Tujuan rencana'),
+    reason: z.string().min(1).describe('Alasan usulan rencana (satu kalimat)'),
     tasks: z.array(
       z.object({
-        title: z.string(),
-        description: z.string(),
-        owner: z.string().describe('ID anggota tim'),
-        files: z.array(z.string()),
-        queued_files: z.array(z.string()).optional(),
+        title: z.string().min(1),
+        description: z.string().min(1),
+        owner: z.string().min(1).describe('ID anggota seperti A atau B (bukan nama)'),
+        files: z.array(z.string().min(1)).max(20),
+        queued_files: z.array(z.string().min(1)).max(20).optional(),
       }),
-    ),
+    ).min(1).max(8),
   },
   async run(args, client) {
     const payload = {

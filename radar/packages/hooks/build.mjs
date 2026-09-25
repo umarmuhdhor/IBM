@@ -1,16 +1,16 @@
 // Bundles each hook into one CommonJS file for the Bob kit (R5 §1: format cjs, platform node, target node20).
-// Output: bob-kit/coder/.bob/hooks/<name>.js. The kit ships .bob/package.json {"type":"commonjs"} so a
+// Output: bob-kit/{coder,pm}/.bob/hooks/<name>.js. The kit ships .bob/package.json {"type":"commonjs"} so a
 // workspace with "type": "module" still runs them as CommonJS (fase 01 finding, D-umar-01).
 import { build } from 'esbuild';
 import { fileURLToPath } from 'node:url';
 
-const HOOKS = ['brief', 'lock_guard', 'mark_ai_edit', 'stop'];
+// coder: all hooks; pm: brief + stop only (the PM does not write, so no lock_guard / mark_ai_edit)
+const KITS = { coder: ['brief', 'lock_guard', 'mark_ai_edit', 'stop'], pm: ['brief', 'stop'] };
 const src = (f) => fileURLToPath(new URL(`./src/${f}.ts`, import.meta.url));
-const outdir = fileURLToPath(new URL('../../bob-kit/coder/.bob/hooks/', import.meta.url));
 
-await build({
-  entryPoints: HOOKS.map(src),
-  outdir,
+for (const [kit, hooks] of Object.entries(KITS)) await build({
+  entryPoints: hooks.map(src),
+  outdir: fileURLToPath(new URL(`../../bob-kit/${kit}/.bob/hooks/`, import.meta.url)),
   bundle: true,
   platform: 'node',
   format: 'cjs',

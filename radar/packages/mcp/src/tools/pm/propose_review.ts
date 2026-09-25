@@ -13,12 +13,12 @@ export default defineTool({
   inputSchema: {
     task_id: z.string().describe('ID task yang direview'),
     verdict: z.enum(['setujui', 'setujui_beri_tahu', 'kembalikan']).describe('Hasil review'),
-    notes: z.string().describe('Catatan review'),
+    notes: z.string().min(1).describe('Catatan review'),
     notify: z
       .array(
         z.object({
-          member: z.string().describe('ID anggota yang diberi tahu'),
-          message: z.string(),
+          member: z.string().min(1).describe('ID anggota seperti A atau B (bukan nama)'),
+          message: z.string().min(1).max(200),
         }),
       )
       .optional()

@@ -1,9 +1,9 @@
-// Bundles radar-mcp into one CommonJS file for the Bob kit (R5 §1). Output: bob-kit/coder/.bob/radar-mcp.js.
-// fase 08 adds bob-kit/pm/.bob/radar-mcp.js (same file; the role comes from .radar/local.json).
+// Bundles radar-mcp into one CommonJS file per Bob kit (R5 §1): bob-kit/{coder,pm}/.bob/radar-mcp.js.
+// Same file in both kits; the role comes from .radar/local.json.
 import { build } from 'esbuild';
 import { fileURLToPath } from 'node:url';
 
-const outfiles = ['../../bob-kit/coder/.bob/radar-mcp.js'].map((f) => fileURLToPath(new URL(f, import.meta.url)));
+const outfiles = ['../../bob-kit/coder/.bob/radar-mcp.js', '../../bob-kit/pm/.bob/radar-mcp.js'].map((f) => fileURLToPath(new URL(f, import.meta.url)));
 
 for (const outfile of outfiles) {
   await build({

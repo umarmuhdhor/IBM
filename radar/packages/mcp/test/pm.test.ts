@@ -175,6 +175,61 @@ describe('radar-mcp PM tools (MA-01..05, MA-07, R3 §7)', () => {
     expect(text.split('\n').length).toBeLessThanOrEqual(25);
   });
 
+  it('team_status: shows member ids next to names so notify/owner use ids, not names', async () => {
+    const { text } = await call('team_status');
+    expect(text).toMatch(/\bA\b.*Alice/);
+    expect(text).toMatch(/\bB\b.*Budi/);
+  });
+
+  it('get_task_diff: stays near 8 KB when several files together pass the budget', async () => {
+    const saved = DIFF.files.slice();
+    DIFF.files.splice(0, DIFF.files.length,
+      { ...saved[0]!, patch: 'X'.repeat(7_975) },
+      { ...saved[1]!, path: `src/${'deep/'.repeat(20)}file.ts`, patch: 'Y'.repeat(20_000) },
+    );
+    try {
+      const { text } = await call('get_task_diff', { task_id: 'T-0' });
+      expect(text.length).toBeLessThan(9_000);
+      expect(text).toMatch(/read_file/);
+    } finally {
+      DIFF.files.splice(0, DIFF.files.length, ...saved);
+    }
+  });
+
+  it('get_task_diff: tolerates a server without exportsChanged/lines/importers', async () => {
+    const saved = JSON.parse(JSON.stringify(DIFF));
+    delete (DIFF.files[1] as { exportsChanged?: unknown }).exportsChanged;
+    delete (DIFF.importers[0] as { lines?: unknown }).lines;
+    try {
+      const { isError, text } = await call('get_task_diff', { task_id: 'T-0' });
+      expect(isError).toBe(false);
+      expect(text).not.toContain('undefined');
+    } finally {
+      Object.assign(DIFF, saved);
+    }
+  });
+
+  it('list_requests: caps a long queue and says how many are left', async () => {
+    const saved = REQUESTS.requests.slice();
+    for (let i = 4; i < 12; i++) REQUESTS.requests.push({ ...saved[0]!, id: `R-${i}` });
+    try {
+      const { text } = await call('list_requests');
+      expect(text.split('\n').length).toBeLessThanOrEqual(14);
+      expect(text).toMatch(/lagi/);
+    } finally {
+      REQUESTS.requests.splice(0, REQUESTS.requests.length, ...saved);
+    }
+  });
+
+  it('propose_plan: rejects more than 8 tasks or empty titles before calling the server', async () => {
+    const task = { title: 't', description: 'd', owner: 'A', files: ['a.ts'] };
+    const tooMany = await call('propose_plan', { goal: 'g', reason: 'r', tasks: Array.from({ length: 9 }, () => task) });
+    const empty = await call('propose_plan', { goal: 'g', reason: 'r', tasks: [{ ...task, title: '' }] });
+    expect(tooMany.isError).toBe(true);
+    expect(empty.isError).toBe(true);
+    expect(seen).toHaveLength(0);
+  });
+
   it('propose_plan: converts snake_case tasks to the R3 §4.1 payload and reports the proposal', async () => {
     const { text, isError } = await call('propose_plan', {
       goal: 'Tambah fitur kupon dan dark mode',

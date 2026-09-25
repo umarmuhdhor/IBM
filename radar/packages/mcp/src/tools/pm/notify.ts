@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { RadarToolError } from '../../client.js';
 import { defineTool } from '../types.js';
 
 interface NotifyResponse {
@@ -11,13 +10,10 @@ export default defineTool({
   title: 'Kirim notifikasi',
   description: 'Gunakan untuk mengirim pesan singkat ke anggota tim. Pesan muncul di brief berikutnya. Maksimal 200 karakter.',
   inputSchema: {
-    member: z.string().describe('ID anggota yang dituju'),
+    member: z.string().min(1).describe('ID anggota seperti A atau B (bukan nama)'),
     message: z.string().max(200).describe('Pesan (maks 200 karakter)'),
   },
   async run(args, client) {
-    if (args.message.length > 200) {
-      throw new RadarToolError('Pesan terlalu panjang. Maksimal 200 karakter.');
-    }
 
     const data = await client.post<NotifyResponse>('/v1/notify', { memberId: args.member, message: args.message });
 

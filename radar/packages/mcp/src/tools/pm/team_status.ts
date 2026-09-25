@@ -41,7 +41,9 @@ export default defineTool({
   description: 'Gunakan untuk melihat status tim: siapa online, task aktif, file yang dikunci, permintaan terbuka, dan proposal tertunda.',
   inputSchema: {},
   async run(_args, client) {
-    const data = await client.get<TeamResponse>('/v1/team');
+    const res = await client.get<Partial<TeamResponse>>('/v1/team');
+    // TODO(sync:alief): validate with the @radar/common TeamRes zod schema once fase 02 lands; until then default the arrays.
+    const data: TeamResponse = { members: [], tasks: [], locks: [], openRequests: 0, pendingProposals: 0, headCommit: '', ...res };
     const lines: string[] = [];
 
     lines.push(`Tim: ${data.members.filter((m) => m.online).length} online, ${data.members.filter((m) => !m.online).length} offline — ${data.openRequests} permintaan terbuka, ${data.pendingProposals} proposal tertunda`);
@@ -49,13 +51,13 @@ export default defineTool({
     for (const m of data.members) {
       const task = data.tasks.find((t) => t.id === m.activeTaskId);
       const taskStr = task ? ` → ${task.id} ${task.title} (${task.status})` : '';
-      lines.push(`  ${m.name} [${m.online ? 'online' : 'offline'}]${taskStr}`);
+      lines.push(`  ${m.id} ${m.name} [${m.online ? 'online' : 'offline'}]${taskStr}`);
     }
 
     if (data.locks.length > 0) {
       lines.push('Kunci file:');
       for (const lock of data.locks) {
-        const queueStr = lock.queue.length > 0 ? ` | antre: ${lock.queue.join(', ')}` : '';
+        const queueStr = (lock.queue ?? []).length > 0 ? ` | antre: ${lock.queue.join(', ')}` : '';
         lines.push(`  ${lock.path} → ${lock.taskId} (${lock.state})${queueStr}`);
       }
     }

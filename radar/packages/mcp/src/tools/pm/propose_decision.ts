@@ -14,12 +14,12 @@ export default defineTool({
   inputSchema: {
     request_id: z.string().describe('ID permintaan (mis. R-3)'),
     option: z.enum(['antre', 'pindahkan', 'pecah']).describe('Opsi keputusan'),
-    reason: z.string().describe('Alasan keputusan'),
+    reason: z.string().min(1).describe('Alasan keputusan (satu kalimat, sebut file dan task)'),
     new_task: z
       .object({
         title: z.string(),
         description: z.string(),
-        owner: z.string().describe('ID anggota tim'),
+        owner: z.string().min(1).describe('ID anggota seperti A atau B (bukan nama)'),
       })
       .optional()
       .describe('Task baru untuk opsi pecah'),

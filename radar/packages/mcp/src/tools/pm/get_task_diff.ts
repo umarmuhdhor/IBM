@@ -47,19 +47,21 @@ export default defineTool({
     task_id: z.string().describe('ID task (mis. T-0)'),
   },
   async run(args, client) {
-    const data = await client.get<DiffResponse>(`/v1/tasks/${encodeURIComponent(args.task_id)}/diff`);
+    const res = await client.get<Partial<DiffResponse>>(`/v1/tasks/${encodeURIComponent(args.task_id)}/diff`);
+    // TODO(sync:alief): validate with the @radar/common TaskDiffRes zod schema once fase 02 lands; until then default the arrays.
+    const data = { ...res, files: res.files ?? [], importers: res.importers ?? [] };
 
     const fileCount = data.files.length;
 
     // Build summary line
-    const changedExports = data.files.flatMap((f) => f.exportsChanged);
+    const changedExports = data.files.flatMap((f) => f.exportsChanged ?? []);
     const exportSummary = changedExports
       .map((e) => `ekspor berubah: ${e.before} → ${e.after}`)
       .join('; ');
 
     const importerSummary = data.importers
       .map((imp) => {
-        const lines = imp.lines.map((l) => `${imp.path}:${l}`).join(', ');
+        const lines = (imp.lines ?? []).length > 0 ? (imp.lines ?? []).map((l) => `${imp.path}:${l}`).join(', ') : imp.path;
         const holderStr = imp.holder ? ` (dipegang ${imp.holder.memberId}, ${imp.holder.taskId})` : '';
         return `${lines}${holderStr}`;
       })
@@ -81,8 +83,8 @@ export default defineTool({
         break;
       }
       lines.push(header);
-      const patch = f.patch.slice(0, remaining - header.length);
-      if (patch.length < f.patch.length) {
+      const patch = (f.patch ?? '').slice(0, Math.max(0, remaining - header.length));
+      if (patch.length < (f.patch ?? '').length) {
         wasCut = true;
         lines.push(patch);
         break;

@@ -42,14 +42,16 @@ export default defineTool({
   },
   async run(args, client) {
     const status = args.status ?? 'terbuka';
-    const data = await client.get<RequestsResponse>(`/v1/requests?status=${status}`);
+    const res = await client.get<Partial<RequestsResponse>>(`/v1/requests?status=${status}`);
+    const data = { requests: res.requests ?? [] };
 
     if (data.requests.length === 0) {
       return `Tidak ada permintaan dengan status "${status}".`;
     }
 
+    const MAX_REQUESTS = 4; // 3 lines each: stays near the ±12-line budget of R3 §7
     const lines: string[] = [];
-    for (const r of data.requests) {
+    for (const r of data.requests.slice(0, MAX_REQUESTS)) {
       const requester = r.requester;
       const holder = r.holder;
       const holderDesc = `dipegang ${holder.memberId} (${holder.taskId} ${holder.taskTitle}, ${holder.editCount} edit, ${holder.state})`;
@@ -58,6 +60,7 @@ export default defineTool({
       lines.push(holder.taskDescription.slice(0, 200));
     }
 
+    if (data.requests.length > MAX_REQUESTS) lines.push(`+${data.requests.length - MAX_REQUESTS} permintaan lagi (panggil list_requests lagi setelah memutuskan yang di atas).`);
     return lines.join('\n');
   },
 });
