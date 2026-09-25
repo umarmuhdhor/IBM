@@ -186,3 +186,16 @@ Format:
 - Alternatif yang ditolak: `ENFORCEMENT = server-only` (tidak perlu, hook terbukti); `SYNC = poll-1s` (watch cukup cepat); pindah grup ke `command` (tidak terdokumentasi).
 - Dampak: fase 02 (fixture + normalizer, jendela 02b), fase 03 (`bob/activity` field), fase 07/08 (kit, `radar-mcp` path, onboarding), fase 10 (checklist trust + pemanasan MCP), fase 11a (`session_id` = Task Id Bob).
 - File ref/ yang diperbarui: – (usulan P1–P5 menunggu Alief).
+
+## D-umar-02 · 26 Sep 2026 01:10 · fase 07 · Bentuk kit coder `.bob/` setelah uji di Bob IDE
+
+- Keputusan:
+  1. Hook dibundel ke `.bob/hooks/*.js` (CJS, node20) dan kit membawa **`.bob/package.json` `{"type":"commonjs"}`**. Tanpa file itu, hook gagal di proyek yang `package.json`-nya `"type": "module"` (fakta spike D-umar-01).
+  2. `.bob/mcp.json`: `"args": ["${workspaceFolder}/.bob/radar-mcp.js", "--root", "${workspaceFolder}"]`. `radar-mcp` membaca root dari `--root` (fallback `RADAR_ROOT`, lalu cwd), tidak pernah dari cwd saja, karena Bob menjalankan server stdio dengan cwd `/`.
+  3. Matcher `PostToolUse` = tool edit + `read_file` + `execute_command` (nama dari payload spike). `mark_ai_edit` tidak mencetak apa pun dan melewati tool `mcp__radar__*`. `Stop` hanya mengirim `turn.end` + `sessionId`; `last_assistant_message` tetap lokal.
+  4. Fail-open `lock_guard` dicatat lokal saja (`.radar/hook.log`), pilihan minimal di fase 07 langkah 3. Server tetap punya lapis 2 (sync agent).
+  5. **Instruksi mode `coder` poin 1a:** "jangan menolak sendiri, coba edit, Radar yang memutuskan". Tanpa ini Bob menolak semua file di luar daftar task-nya (termasuk file bebas), jadi hook tidak terpicu dan permintaan otomatis ke PM tidak pernah dibuat. Setelah perubahan: jalur hook 3/3. Catatan untuk Lane Core (brief R4 §8) dan naskah demo: file yang sudah diumumkan dipegang/antre di brief atau `my_tasks` tetap dijelaskan Bob tanpa percobaan edit.
+- Alasan: uji perilaku di Bob IDE 2.2.0 (workspace sintetis `toko-sim`, fake server `radar/spike/fake-radar`), log fase 07.
+- Alternatif yang ditolak: nama `.cjs` (mengubah nama file di spec dan `settings.json`); path MCP relatif (gagal, cwd `/`); membiarkan Bob menolak sendiri (menghilangkan momen blokir dan permintaan otomatis).
+- Dampak: fase 04 (`radar kit install` menyalin `.bob/package.json`), fase 08 (kit PM memakai pola yang sama), fase 10 (uji ulang di `toko-demo`), fase 14 (naskah demo: file rebutan tidak diumumkan di brief B sebelum B mencoba).
+- File ref/ yang diperbarui: – (tidak ada perubahan kontrak).

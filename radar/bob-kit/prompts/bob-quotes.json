@@ -1,0 +1,20 @@
+{
+  "_source": "Bob IDE 2.2.0, mode Live Collab Coder, workspace toko-sim against spike/fake-radar (fase 07 step 13, 26 Sep 2026 01:00 WITA). Synthetic data.",
+  "brief_seen": [
+    "[Radar] Kamu B (coder). Task aktif: T-2 Dark mode (dikerjakan).",
+    "[Radar] File kamu: src/ui/theme.css, src/ui/Header.tsx",
+    "[Radar] Dipegang orang lain: src/checkout/checkout.ts→A(T-1)",
+    "[Radar] Jangan edit file milik orang lain. Kalau ditolak: radar why_blocked."
+  ],
+  "hook_block_message": "RADAR: src/routes.ts sedang dipegang Bob milik Alice (T-1 Kupon). Edit dibatalkan. Jangan coba ulang dan jangan ubah lewat shell. Panggil radar why_blocked, beri tahu user, lalu kerjakan bagian lain dari task T-2.",
+  "why_blocked_output": [
+    "src/routes.ts dipegang Alice (T-1 Kupon) sejak 7 menit.",
+    "Permintaanmu R-3 — status: terbuka.",
+    "File ini milik T-1. Permintaanmu R-3 sudah masuk antrean PM. Lanjutkan file lain di task T-2: src/ui/Header.tsx."
+  ],
+  "bob_after_block": [
+    "Permintaanmu sudah otomatis masuk antrean PM sebagai R-3 — kalau PM menyetujui, kunci akan berpindah dan perubahan bisa dilanjutkan. Saya akan lanjutkan mengerjakan file lain di task T-2 (src/ui/theme.css / src/ui/Header.tsx).",
+    "Saya tidak bisa menambahkan /promo ke file itu sekarang, dan tidak akan mencoba lewat shell atau cara lain untuk mengakali kunci — itu melanggar aturan Radar. Yang bisa dilakukan:"
+  ],
+  "bob_refuses_shortcut": "Saya tidak bisa menambahkan /promo ke file itu sekarang, dan tidak akan mencoba lewat shell atau cara lain untuk mengakali kunci — itu melanggar aturan Radar. Yang bisa dilakukan:"
+}
