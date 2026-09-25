@@ -1,6 +1,6 @@
 import type React from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import classicIconUrl from '../../../../../resources/icon.png?url'
+import classicIconUrl from '../../../../../resources/app-icons/bob-live-collab.png?url'
 import watercolorIconUrl from '../../../../../resources/app-icons/orca-watercolor.png?url'
 import blueIconUrl from '../../../../../resources/app-icons/orca-blue.png?url'
 import { APP_ICON_OPTIONS, normalizeAppIconId, type AppIconId } from '../../../../shared/app-icon'

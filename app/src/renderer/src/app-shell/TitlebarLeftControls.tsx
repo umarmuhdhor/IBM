@@ -1,5 +1,4 @@
-import { ArrowLeft, ArrowRight, MoreHorizontal, PanelLeft } from 'lucide-react'
-import logo from '../../../../resources/logo.svg'
+import { ArrowLeft, ArrowRight, Bot, MoreHorizontal, PanelLeft } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
@@ -47,7 +46,7 @@ export function TitlebarLeftControls({ layout }: { layout: AppChromeLayout }): R
         ) : hasCustomTitleBar ? (
           /* Why: Windows/Linux remove the native title bar, so render the logo plus a ··· button that pops the application menu (as Alt does). */
           <>
-            <img src={logo} alt="" aria-hidden className="titlebar-logo" />
+            <Bot aria-hidden="true" className="titlebar-logo" />
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
@@ -71,10 +70,10 @@ export function TitlebarLeftControls({ layout }: { layout: AppChromeLayout }): R
             <ContextMenuTrigger asChild>
               <div
                 className="titlebar-app-name"
-                aria-label={translate('auto.App.5096cbbc86', 'Orca')}
+                aria-label="IBM Bob Live Collab"
               >
                 <span className="titlebar-app-name-main">
-                  {translate('auto.App.5096cbbc86', 'Orca')}
+                  IBM Bob Live Collab
                 </span>
               </div>
             </ContextMenuTrigger>

@@ -25,12 +25,8 @@ vi.mock('@electron-toolkit/utils', () => ({
   is: isMock
 }))
 
-vi.mock('../../resources/icon.png?asset', () => ({
-  default: 'classic-icon'
-}))
-
-vi.mock('../../resources/icon-dev.png?asset', () => ({
-  default: 'classic-dev-icon'
+vi.mock('../../resources/app-icons/bob-live-collab.png?asset', () => ({
+  default: 'bob-live-collab-icon'
 }))
 
 vi.mock('../../resources/app-icons/orca-watercolor.png?asset', () => ({
@@ -83,10 +79,10 @@ describe('app icon selection', () => {
   })
 
   it('resolves classic, watercolor, blue, and invalid icon ids', () => {
-    expect(getAppIconPath('classic')).toBe('classic-icon')
+    expect(getAppIconPath('classic')).toBe('bob-live-collab-icon')
     expect(getAppIconPath('watercolor')).toBe('watercolor-icon')
     expect(getAppIconPath('blue')).toBe('blue-icon')
-    expect(getAppIconPath('missing')).toBe('classic-icon')
+    expect(getAppIconPath('missing')).toBe('bob-live-collab-icon')
   })
 
   it('applies the selected icon to the dock and live windows', () => {
