@@ -1,6 +1,6 @@
 # Log fase 09 — App desktop (Lane Aarief · `lane/app`)
 
-- **Status:** [~] berjalan (09a).
+- **Status:** [~] berjalan (09c; 09a/09b menunggu gerbang UI dan snapshot PR).
 - **Mulai:** Sab 26 Sep 2026 00:12 WITA · branch `lane/app` (dibuat dari `origin/main` `ed1f2951`, tanpa upstream).
 - **Model:** Claude Opus 5.5 · high (R6 §2 menyarankan Sonnet 5 high; Opus diizinkan untuk titik sambung Orca).
 
@@ -38,7 +38,8 @@ Aturan yang tetap berlaku: `CLAUDE.md`, `plan/PROMPT.md` (LANE Aarief, FASE auto
 - [x] 3. Alias paket UI/common di Vite renderer, Vitest, `tsconfig.web.json`, dan `tsconfig.tc.web.json`; React/React DOM/lucide di-dedupe. `pnpm -C app tc:web` hijau.
 - [x] 4. Penyimpanan koneksi aman + IPC: ciphertext `userData/radar/connection.bin`, menolak OS encryption yang tidak tersedia, `get`/`set` hanya mengembalikan ringkasan tanpa token, `clear` menghapus file. Test merah sebelum implementasi, lalu 7/7 lulus.
 - [x] 5. 09b: WebSocket di main (`hello` mc/app, keepalive string persis, backoff 0,5→8 s, stop pada 4401), store renderer dari snapshot/event, dan aksi MC via IPC (`decide`, `revoke`, `cancelTask`). Test merah untuk WS, endpoint, store task/kunci/proposal sebelum implementasi; 19/19 test terkait lulus.
-- [ ] 6–14. 09c.
+- [x] 6. BOB SLICE C3 lewat CDP Bob IDE, commit asli `c9e33b6c` dengan `Bob-Assisted` dan `Co-authored-by: IBM Bob <bob@ibm.com>`. Bukti `bob_sessions/uaai_aarief_task03_radar_ui_components_summary.png` (2.27 Bobcoin). Dua suite test ditulis merah sebelum Bob; hasil Bob 6/6 test dan typecheck hijau. Review terpisah: ganti satu warna hex pada komponen, jangan menandai pemilik task online bila status belum diketahui, rapikan EOF.
+- [ ] 7–14. 09c: komponen pelengkap, panel, gerbang UI, security review, snapshot PR.
 
 ## File dibuat/diubah
 
@@ -49,6 +50,7 @@ Aturan yang tetap berlaku: `CLAUDE.md`, `plan/PROMPT.md` (LANE Aarief, FASE auto
 - 09b langkah 3: `app/electron.vite.config.ts`, `app/config/{tsconfig.web.json,tsconfig.tc.web.json,vitest.config.ts}`.
 - 09b langkah 4: `app/src/shared/radar-connection.ts`, `app/src/main/radar/{secure-store,connection-ipc}{,.test}.ts`, `app/src/main/startup/main-process-ipc-bootstrap.ts`, `app/src/preload/api/radar-bridge.ts`, `app/src/preload/{api-types,index}.ts`.
 - 09b langkah 5: `app/src/main/radar/{ws-client,api}{,.test}.ts`, `app/src/shared/radar-update.ts`, `app/src/renderer/src/lib/radar/state-placeholder.ts`, `app/src/renderer/src/store/radar-store{,.test}.ts`, penyesuaian IPC/preload, `radar/packages/ui/src/index.ts`, dan include TypeScript di `app/config/tsconfig*.web.json`.
+- 09c langkah 6: komponen Bob `radar/packages/ui/src/{LockChip,MemberChip,WritingPulse,BobTrace,DecisionCard,TaskCard,FeedItem}.tsx`, `theme-vars.css`, `index.ts`, dua test merah, bukti PNG dan indeks Aarief. Review kecil pada `DecisionCard`, `TaskCard`, `BobTrace`.
 - `plan/PROGRESS.md` (baris 09 `[~]`)
 
 ## Placeholder aktif
@@ -66,6 +68,7 @@ Aturan yang tetap berlaku: `CLAUDE.md`, `plan/PROMPT.md` (LANE Aarief, FASE auto
 - 09b langkah 3: `pnpm -C app tc:web` exit 0.
 - 09b langkah 4: 7/7 test penyimpanan/IPC lulus; `pnpm -C app tc:node` dan `tc:web` exit 0; oxlint pada 9 file TS terkait exit 0. File hanya memuat ciphertext; tidak ada token dalam respons `get`/`set`.
 - 09b langkah 5: `pnpm -C app test src/main/radar src/renderer/src/store/radar-store.test.ts` 19/19 lulus; `pnpm -C app tc` exit 0; oxlint file terkait exit 0. `tc:web` sempat TS6307 pada source paket UI, lalu hijau setelah include source workspace ditambah.
+- 09c langkah 6: `pnpm -C radar --filter @radar/ui test` 6/6 lulus; `pnpm -C radar --filter @radar/ui typecheck` exit 0; Bob menyelesaikan 9 file sumber dalam batas folder yang diminta.
 
 ## Deviasi
 

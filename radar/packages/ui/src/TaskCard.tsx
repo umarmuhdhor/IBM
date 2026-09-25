@@ -12,6 +12,7 @@
  *   batal     → cancelled
  */
 import { MemberChip } from './MemberChip';
+import type { MemberOnlineStatus } from './MemberChip';
 import type { MemberId, TaskStatus } from './types-temp';
 
 export interface TaskCardProps {
@@ -23,6 +24,8 @@ export interface TaskCardProps {
   ownerId: MemberId;
   /** Single-char initials for the owner chip. */
   ownerInitials: string;
+  /** Current presence of the task owner. Defaults to offline when unknown. */
+  ownerStatus?: MemberOnlineStatus;
   /** Current task status. */
   status: TaskStatus;
   /** Number of files being worked on. */
@@ -58,6 +61,7 @@ export function TaskCard({
   title,
   ownerId,
   ownerInitials,
+  ownerStatus = 'offline',
   status,
   fileCount,
   editCount,
@@ -98,7 +102,7 @@ export function TaskCard({
         >
           {id}
         </span>
-        <MemberChip member={ownerId} initials={ownerInitials} status="online" />
+        <MemberChip member={ownerId} initials={ownerInitials} status={ownerStatus} />
       </div>
 
       {/* Title */}

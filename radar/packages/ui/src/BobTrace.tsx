@@ -27,7 +27,6 @@ export interface BobTraceProps {
   /** Optional CSS class. */
   className?: string;
 }
-
 const PRIMITIVE_ICON: Record<BobTracePrimitive, string> = {
   hook: '⚓',
   mcp: '⧉',
@@ -89,4 +88,3 @@ export function BobTrace({ primitive, detail, outcome, ms, className }: BobTrace
     </code>
   );
 }
-
