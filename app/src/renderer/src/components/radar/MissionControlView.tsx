@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { DecisionCard, FeedItem, ReviewCard, TaskCard } from '@radar/ui'
 import type { ProposalView, RadarState, TaskView } from '@radar/ui'
 import { getRadarViewModel } from './radar-view-model'
+import { NotificationsPanel } from './NotificationsPanel'
 
 type Props = { state: RadarState; canDecide: boolean }
 
@@ -54,6 +55,7 @@ export function MissionControlView({ state, canDecide }: Props) {
         </section>
       </div>
       <div className="space-y-4">
+        <NotificationsPanel state={state} />
         <section aria-label="Needs you" className="space-y-2">
           <h3 className="text-sm font-semibold">Needs you · {model.needsYou}</h3>
           {error && <p role="alert" className="text-xs text-destructive">{error}</p>}

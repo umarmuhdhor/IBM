@@ -1,10 +1,16 @@
 import { AgentTag, MemberChip } from '@radar/ui'
 import type { RadarState } from '@radar/ui'
+import { useAppStore } from '@/store'
+import { openWorktreePath } from '@/components/sidebar/WorktreeOpenInMenu'
 
 export function TeamPanel({ state }: { state: RadarState }) {
+  const activeWorktreeId = useAppStore((store) => store.activeWorktreeId)
+  const getKnownWorktreeById = useAppStore((store) => store.getKnownWorktreeById)
+  const activeWorktree = activeWorktreeId ? getKnownWorktreeById(activeWorktreeId) : null
   return (
     <section aria-label="Team" className="space-y-3 p-4">
       <h3 className="text-sm font-semibold">Team</h3>
+      <button type="button" disabled={!activeWorktree} onClick={() => { if (activeWorktree) { void openWorktreePath({ target: 'external-editor', worktreePath: activeWorktree.path, command: 'open -a "IBM Bob"' }) } }} className="rounded-md border border-border px-3 py-1.5 text-xs disabled:opacity-50">Open in Bob IDE</button>
       {Object.values(state.members).map((member) => {
         const activity = state.bobActivity[member.id]?.at(-1)
         const status = member.online ? member.stale ? 'stale' : 'online' : 'offline'
