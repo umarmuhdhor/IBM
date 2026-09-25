@@ -4,14 +4,14 @@ import type { z } from 'zod';
 import type { RadarClient } from './client.js';
 import { RadarToolError } from './client.js';
 import { CODER_TOOLS } from './tools/coder/index.js';
+import { PM_TOOLS } from './tools/pm/index.js';
 import type { ToolDef } from './tools/types.js';
 
 export const SERVER_NAME = 'radar';
 export const SERVER_VERSION = '0.3.0';
 
 export function toolsForRole(role: 'coder' | 'pm'): readonly ToolDef[] {
-  // TODO(fase 08): PM tools (team_status, propose_plan, …) register here for role 'pm'.
-  return role === 'coder' ? (CODER_TOOLS as readonly ToolDef[]) : [];
+  return role === 'coder' ? CODER_TOOLS : PM_TOOLS;
 }
 
 export function createRadarServer(client: RadarClient, role: 'coder' | 'pm'): McpServer {
