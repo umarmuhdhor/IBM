@@ -75,7 +75,7 @@ Membuktikan alur penuh PRD berjalan: **rencana → live → blokir → keputusan
 
 ## Tambahan v0.3 — uji di 3 Mac dengan app
 
-1. Ketiga Mac memakai **app Live Collab** (build `pnpm dev` atau `.app` dari spike 8). A: Bob IDE + app (panel Team). B: Bob Shell di terminal app. C: Mission Control + Bob `pm-lead`.
+1. Ketiga Mac memakai **app Live Collab** (build `pnpm -C app dev` atau `.app` dari spike 8). A: Bob IDE + app (panel Team). B: Bob Shell di terminal app. C: Mission Control + Bob `pm-lead`.
 2. Tambahkan ke milestone Sab 23:00: B menonton terminal Bob A (JT-01/02) dan latensi p95 tercatat.
 3. `scripts/sim-3pc.ts` ditambah langkah `term.share` + 1 penonton (tanpa Bob, frame sintetis).
 4. Rekam semua sesi uji dengan `RECORD_TERMINALS=true` sebagai bahan replay cadangan.

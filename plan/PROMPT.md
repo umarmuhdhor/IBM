@@ -1,6 +1,6 @@
 # Prompt eksekusi — satu prompt untuk semua fase (Claude Code + ECC)
 
-**Cara pakai:** salin seluruh blok di bawah, ubah **dua baris pertama** (`LANE`, `FASE`), lalu tempel ke Claude Code di **root repo `ibm-bob-live-collab`** (fork Orca). Sebelum fase 00 selesai, root-nya adalah folder `IBM/` ini.
+**Cara pakai:** salin seluruh blok di bawah, ubah **dua baris pertama** (`LANE`, `FASE`), lalu tempel ke Claude Code di **root repo `umarmuhdhor/IBM`** (folder `IBM/` ini).
 
 Syarat: plugin ECC terpasang (`/plugin install ecc@ecc`, lihat [`../PLAN.md`](../PLAN.md) §4.1). Model per fase ada di `README.md` §3.
 
@@ -11,7 +11,7 @@ Syarat: plugin ECC terpasang (`/plugin install ecc@ecc`, lihat [`../PLAN.md`](..
 | C · App | `09 → 11 → 10 → 14` (fase 09 bagian a/b boleh mulai sebelum 02 selesai, memakai mock) |
 | Solo | `00 → 01 → … → 14` |
 
-Alternatif tanpa salin-tempel: ubah dua baris di file ini, lalu ketik ke Claude Code: `Jalankan instruksi di radar/plan/PROMPT.md`.
+Alternatif tanpa salin-tempel: ubah dua baris di file ini, lalu ketik ke Claude Code: `Jalankan instruksi di plan/PROMPT.md`.
 
 ---
 
@@ -29,10 +29,15 @@ Laporan dalam Bahasa Indonesia. Kode, nama file, komentar: Bahasa Inggris.
 
 <konteks>
 - Produk: PRD.md. Rencana tim: PLAN.md. Desain: DESIGN.md. Detail fase: plan/ (setelah fase 00:
-  radar/plan/). Status: plan/PROGRESS.md. Keputusan: plan/log/DECISIONS.md.
+  plan/). Status: plan/PROGRESS.md. Keputusan: plan/log/DECISIONS.md.
 - Kontrak wajib: plan/ref/R1..R7. R7 = protokol bukti IBM Bob.
-- Repo = fork Orca. Path berawalan "orca:" = relatif ke root repo (kode Orca, misalnya
-  orca:src/shared/tui-agent.ts). Path lain = relatif ke folder radar/.
+- Repo umarmuhdhor/IBM. Orca (Electron) ada di folder app/. Path "orca:" = relatif ke app/
+  (orca:src/shared/tui-agent.ts = app/src/shared/tui-agent.ts). Dokumen dan plan/ di root.
+  Path kode lain tanpa prefix (packages/, scripts/, docs/, bob-kit/) = relatif ke radar/.
+- Toolchain: Node 24 + pnpm 12. Jalankan `nvm use 24` sebelum perintah pnpm.
+  Selalu pakai `pnpm -C app …` atau `pnpm -C radar …`.
+- Skill wajib: lihat PLAN.md §11. Untuk LANE C selalu muat skill `live-collab-app`, dan pakai
+  `electron-automation` untuk melihat UI yang kamu buat sebelum menyatakan langkah UI selesai.
 - LANE menentukan folder yang BOLEH kamu ubah (PLAN.md §2). Jangan menyentuh folder lane lain.
   Kalau perlu, tulis "Catatan handoff" + entri DECISIONS ber-prefix lane (D-A.., D-B.., D-C..).
 </konteks>
@@ -113,7 +118,7 @@ Laporan dalam Bahasa Indonesia. Kode, nama file, komentar: Bahasa Inggris.
   command ECC dari `/plugin list ecc@ecc` yang tercatat di DECISIONS. Yang belum pasti ditandai
   "BELUM DIVERIFIKASI".
 - Di kode Orca: perubahan aditif. Jangan refactor, jangan ubah pty daemon, relay, atau mobile/.
-  Jalankan `pnpm tc` dan oxlint pada file yang diubah saja, bukan seluruh `pnpm lint`.
+  Jalankan `pnpm -C app tc` dan oxlint pada file yang diubah saja, bukan seluruh `pnpm lint`.
 - Jangan menambah fitur di luar PRD. Jangan ganti stack R1 tanpa entri DECISIONS.
 - Kalau konteks mau habis: simpan progres ke log fase dan /ecc:save-session dulu, baru berhenti.
 </batasan>

@@ -43,6 +43,8 @@ Tampilan mengikuti [`../DESIGN.md`](../DESIGN.md) §2–§5 dan mockup hasil `pr
 
 ### 09a · Onboarding Orca dengan Bob + agent IBM Bob (Sab 00:30–02:30)
 
+0. **Pisahkan identitas app dari Orca asli (wajib, sebelum menjalankan build apa pun).** Di Mac tim sudah terpasang Orca asli (`com.stablyai.orca`). Build kita memakai appId dan folder data yang sama, jadi bisa berbagi atau menimpa settings dan worktree Orca asli. Ubah di `orca:config/electron-builder.config.cjs`: `appId = 'dev.livecollab.app'`, `productName: 'IBM Bob Live Collab'`. Ubah juga nama userData di main process (cari `app.setName`/`setPath('userData'` lewat ORCA_MAP, atau langsung `grep -rn "userData" app/src/main | head`) menjadi `IBM Bob Live Collab`. Cek `pnpm -C app dev` memakai folder data terpisah (`~/Library/Application Support/IBM Bob Live Collab*`).
+
 1. **Bob slice C1 — onboarding Orca (Ask/Plan mode, ±3 Bobcoin).** Prompt siap tempel:
    > "Kamu di repo fork Orca (Electron + React). Tanpa mengubah file, jelaskan: (1) di mana agent CLI didefinisikan dan langkah minimum menambah agent baru bernama `bob` (command `bob`); (2) di mana renderer menulis output pty ke xterm (`term.write`) dan di mana input keyboard dikirim ke pty; (3) komponen sidebar kiri dan cara menambah seksi baru; (4) cara menambah tab/pane view baru; (5) cara main process mengekspos IPC ke renderer; (6) konfigurasi electron-builder untuk productName & ikon. Fokus ke `src/shared/`, `src/renderer/src/lib/`, `src/renderer/src/components/sidebar/`, `src/main/ipc/`, `config/electron-builder.config.cjs`. Beri path:baris. Buat laporan HTML ringkas."
    - Simpan laporan HTML Bob ke `docs/ORCA_MAP.html` dan ringkas ke `docs/ORCA_MAP.md`. Buktikan dengan `bob-evidence.sh aarief 01-orca-onboarding`.
@@ -52,19 +54,19 @@ Tampilan mengikuti [`../DESIGN.md`](../DESIGN.md) §2–§5 dan mockup hasil `pr
 2. **Bob slice C2 — registrasi agent `bob` (Code mode, ±3 Bobcoin).** Prompt: "Tambahkan agent `bob` (label 'IBM Bob', command `bob`, homepage https://bob.ibm.com, glyph huruf B generik, **bukan** logo IBM) mengikuti pola agent `claude` di file-file yang tercantum di `docs/ORCA_MAP.md`. Jangan ubah agent lain." Bukti: `02-register-bob-agent`.
    - Setelah Bob selesai: pastikan `detectCmd`/`expectedProcess` benar (`bob`), dan `promptInjectionMode` mengikuti hasil spike 7 (fase 01). Kalau belum ada hasil spike, pakai mode yang paling konservatif (ketik manual, tanpa injeksi) dan tandai "BELUM DIVERIFIKASI".
    - Update `orca:docs/site/content/docs/agents/supported.mdx` (satu baris) kalau file itu ada.
-   - Test: jalankan test Orca yang terkait registry agent (cari `tui-agent*.test.ts`) dan `pnpm tc`.
-   - Uji manual: `pnpm dev` → buat worktree → pilih **IBM Bob** → terminal menjalankan `bob` dan Bob menjawab "halo".
+   - Test: jalankan test Orca yang terkait registry agent (cari `tui-agent*.test.ts`) dan `pnpm -C app tc`.
+   - Uji manual: `pnpm -C app dev` → buat worktree → pilih **IBM Bob** → terminal menjalankan `bob` dan Bob menjawab "halo".
 
 ### 09b · Koneksi Live Collab (Sab 02:30–04:00)
 
-3. **Alias Vite.** Di `orca:electron.vite.config.ts` bagian renderer: `resolve.alias['@radar/common'] = radar/packages/common/src`, `['@radar/ui'] = radar/packages/ui/src`. Pastikan tsconfig renderer Orca mengenal path yang sama (`paths`). Uji `pnpm tc`.
+3. **Alias Vite.** Di `orca:electron.vite.config.ts` bagian renderer: `resolve.alias['@radar/common'] = radar/packages/common/src`, `['@radar/ui'] = radar/packages/ui/src`. Pastikan tsconfig renderer Orca mengenal path yang sama (`paths`). Uji `pnpm -C app tc`.
 4. **Penyimpanan koneksi.** `orca:src/main/radar/secure-store.ts`: simpan `{server, workspace, member, role, token}` terenkripsi dengan `safeStorage` di `userData/radar/connection.bin`. Nama file tidak mengandung "token" (R5 §8). IPC `radar:get-connection` / `radar:set-connection` / `radar:clear-connection` lewat pola IPC Orca (lihat ORCA_MAP). Token **tidak pernah** dikirim ke renderer log.
 5. **WS client + store.** `lib/radar/ws-client.ts`: `hello { token, client: role === 'pm' ? 'mc' : 'app' }`, lalu `state` → `reset` dan `event` → `applyEvent`. Reconnect backoff 0,5→8 s. Ukur latensi feed. `store/radar-store.ts` (zustand, mengikuti pola store Orca): `state`, `connected`, `now` (ticker 250 ms untuk pulse), `actions`. `lib/radar/api.ts`: `decide`, `revoke`, `cancelTask` (hanya role pm).
    - Test vitest: store menerapkan urutan event fixture dari mock → kolom task dan kunci benar.
 
 ### 09c · Panel Live Collab (Sab 09:00–16:00)
 
-6. **Bob slice C3 — komponen `@radar/ui` (Code mode, ±4 Bobcoin).** Prompt: "Di `radar/packages/ui/src`, buat komponen React presentasional sesuai `radar/DESIGN.md` §2–§3: `AgentTag`, `MemberChip`, `LockChip`, `WritingPulse`, `BobTrace`, `DecisionCard`, `TaskCard`, `FeedItem`, plus `tokens.css` (CSS variables DESIGN §2.1, font IBM Plex dari `@fontsource`). Props murni, tanpa fetch. Tulis test @testing-library untuk `LockChip` (4 status) dan `DecisionCard` (Approve memanggil `onApprove`)." Bukti: `03-radar-ui-components`.
+6. **Bob slice C3 — komponen `@radar/ui` (Code mode, ±4 Bobcoin).** Prompt: "Di `radar/packages/ui/src`, buat komponen React presentasional sesuai `DESIGN.md` §2–§3: `AgentTag`, `MemberChip`, `LockChip`, `WritingPulse`, `BobTrace`, `DecisionCard`, `TaskCard`, `FeedItem`, plus `tokens.css` (CSS variables DESIGN §2.1, font IBM Plex dari `@fontsource`). Props murni, tanpa fetch. Tulis test @testing-library untuk `LockChip` (4 status) dan `DecisionCard` (Approve memanggil `onApprove`)." Bukti: `03-radar-ui-components`.
    - Claude Code melengkapi sisa komponen (`ReviewCard`, `TerminalFrame`, `PresenceStack`, `BriefMeter`, `views/*`) mengikuti gaya yang dibuat Bob.
    - Halaman `packages/web/app/gallery/page.tsx` menampilkan semua komponen dengan data contoh, dipakai untuk mencocokkan dengan mockup `prompt_ui.md`.
 7. **Seksi sidebar** `RadarSidebarSection`: judul **LIVE COLLAB**, item Mission Control (badge jumlah "Needs you"), Team, Files & locks. Disisipkan ke sidebar Orca dengan satu baris import + render (titik dari ORCA_MAP).
@@ -74,7 +76,7 @@ Tampilan mengikuti [`../DESIGN.md`](../DESIGN.md) §2–§5 dan mockup hasil `pr
    - `FilesLocksView`: pohon file dari `selectors.fileTree`, dengan `LockChip` + `WritingPulse`.
    - `NotificationsPanel`: blokir saya, keputusan, notify dari main agent.
 9. **Settings & status bar.** `RadarSettingsPane` (DESIGN §5.9 versi sederhana): URL server, workspace, member, role, token (field password), tombol **Connect** dan **Test**. Checklist cek: koneksi WS, `bob --version` (lewat IPC `child_process` main), ada `.bob/settings.json` di folder workspace. `RadarStatusItem`: `● Live Collab · 3 online · 1 needs you`.
-10. **Branding minimum** (DA-06): `productName: "IBM Bob Live Collab"` di electron-builder, judul jendela, About ("built on Orca by Stably AI, MIT"). Ikon diganti di fase 11.
+10. **Branding minimum** (DA-06): judul jendela, About ("built on Orca by Stably AI, MIT"). `productName` dan appId sudah diganti di langkah 0. Ikon diganti di fase 11.
 11. **Kondisi kosong & error**: belum konek → kartu "Connect to a Live Collab workspace". Server putus → badge merah, data terakhir tetap tampil.
 12. **Test & verifikasi visual.** Unit test `@radar/ui`. Vitest store. Uji manual melawan mock `--scenario demo`: dalam 10 s muncul kartu `[blocked]`, dan Approve memanggil `POST /v1/proposals/:id/decision` (lihat log mock). Ambil 3 screenshot ke `docs/img/` dan bandingkan dengan mockup.
 13. **Security review** (`security-reviewer`): token hanya di main process/safeStorage, tidak ada token di log renderer, tidak ada `nodeIntegration` baru.
@@ -83,12 +85,12 @@ Tampilan mengikuti [`../DESIGN.md`](../DESIGN.md) §2–§5 dan mockup hasil `pr
 ## Verifikasi
 
 ```bash
-pnpm tc                                            # Orca + perubahan kita
-pnpm exec oxlint $(git diff --name-only main -- 'src/**/*.ts' 'src/**/*.tsx')
-pnpm test -- src/renderer/src/components/radar src/renderer/src/store/radar-store
+pnpm -C app tc                                            # Orca + perubahan kita
+pnpm -C app exec oxlint $(git diff --name-only main -- 'src/**/*.ts' 'src/**/*.tsx')
+pnpm -C app test -- src/renderer/src/components/radar src/renderer/src/store/radar-store
 pnpm -C radar --filter @radar/ui test
 pnpm -C radar check:ignored
-pnpm -C radar dev:mock &  pnpm dev                 # uji manual melawan mock
+pnpm -C radar dev:mock &  pnpm -C app dev                 # uji manual melawan mock
 ```
 
 ## Kriteria selesai (DoD)
@@ -98,7 +100,7 @@ pnpm -C radar dev:mock &  pnpm dev                 # uji manual melawan mock
 - [ ] UI-01..04, UI-07 tampil dengan data mock, dan setelah Sinkron 1 dengan server asli.
 - [ ] Approve/Deny memanggil endpoint mc, hanya untuk role pm.
 - [ ] Bob slice C1, C2, C3 punya folder bukti lengkap + commit dengan trailer `Bob-Assisted`.
-- [ ] `pnpm tc` hijau. Tidak ada perubahan di pty daemon, relay, atau mobile Orca.
+- [ ] `pnpm -C app tc` hijau. Tidak ada perubahan di pty daemon, relay, atau mobile Orca.
 
 ## Risiko & fallback
 

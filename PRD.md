@@ -504,7 +504,7 @@ Mission Control kini menjadi view di app Live Collab (seksi sidebar **Live Colla
 
 | ID | Requirement | Kriteria penerimaan | Prioritas |
 |---|---|---|---|
-| DA-01 | Build `.app`/`.dmg` macOS | `pnpm build:mac` (atau `build:unpack` + `electron-builder --mac dmg`) menghasilkan `IBM Bob Live Collab.dmg` yang bisa dipasang di Mac lain (arm64). Tidak di-sign. Cara buka dijelaskan di README. | P0 |
+| DA-01 | Build `.app`/`.dmg` macOS | `pnpm -C app build:mac` (atau `build:unpack` + `electron-builder --mac dmg`) menghasilkan `IBM Bob Live Collab.dmg` yang bisa dipasang di Mac lain (arm64). Tidak di-sign. Cara buka dijelaskan di README. | P0 |
 | DA-02 | IBM Bob sebagai agent Orca | "IBM Bob" muncul di pemilih agent. Memilihnya menjalankan `bob` di terminal worktree. Glyph generik "B", bukan logo IBM. | P0 |
 | DA-03 | Seksi sidebar Live Collab | Item Mission Control, Team, Files & locks, dengan badge jumlah "Needs you". | P0 |
 | DA-04 | Koneksi Live Collab | Settings → Live Collab: URL server + token (atau kode undangan). Status koneksi tampil di status bar. Token disimpan di storage aman Electron (`safeStorage`), tidak di repo. | P0 |
@@ -871,9 +871,9 @@ Rencana lengkap per lane, branch, titik sinkron, anggaran Bobcoin, dan cara menj
 5. Mode dengan grup `[read, mcp]` benar-benar tidak bisa menulis file.
 6. Tool MCP stdio bisa dipanggil dari mode `coder` dan `pm-lead`.
 7. **Baru:** `bob` berjalan interaktif di terminal Orca (TTY, warna, input), dan output xterm bisa di-tap untuk dibagikan.
-8. **Baru:** `pnpm build:unpack` Orca sukses di Mac tim (native helper macOS).
+8. **Baru:** `pnpm -C app build:unpack` Orca sukses di Mac tim (native helper macOS).
 
-> **GATE 1, Sabtu 04:00.** Poin 1 gagal di IDE tapi lolos di Shell → coder IDE mengandalkan penegakan server (SY-04), dan demo tetap menampilkan hook di Budi (Shell). Poin 1 gagal di keduanya → penegakan sepenuhnya di sync agent + server. Poin 7 gagal → Budi memakai Bob Shell di Terminal macOS, dan fitur tonton terminal memakai terminal Orca biasa yang menjalankan `bob`. Poin 8 gagal → demo memakai `pnpm dev` dan `.dmg` dikejar di fase 11.
+> **GATE 1, Sabtu 04:00.** Poin 1 gagal di IDE tapi lolos di Shell → coder IDE mengandalkan penegakan server (SY-04), dan demo tetap menampilkan hook di Budi (Shell). Poin 1 gagal di keduanya → penegakan sepenuhnya di sync agent + server. Poin 7 gagal → Budi memakai Bob Shell di Terminal macOS, dan fitur tonton terminal memakai terminal Orca biasa yang menjalankan `bob`. Poin 8 gagal → demo memakai `pnpm -C app dev` dan `.dmg` dikejar di fase 11.
 
 ### Eksperimen A/B untuk angka pitch
 
@@ -888,8 +888,8 @@ Rencana lengkap per lane, branch, titik sinkron, anggaran Bobcoin, dan cara menj
 
 | Risiko | Dampak | Mitigasi |
 |---|---|---|
-| Codebase Orca besar (~23k file), tooling ketat (oxlint, ratchet) | Lane C lambat | Perubahan aditif di folder `components/radar/` baru. Bob slice C1 memetakan titik sambung. Jalankan `pnpm tc` + oxlint file yang diubah saja. |
-| Build `.dmg` gagal (native helper, signing) | Teman tidak bisa pasang | Coba `build:unpack` sebelum kickoff. Fallback: `pnpm dev` di 3 Mac. App tidak di-sign → klik kanan → Open. |
+| Codebase Orca besar (~23k file), tooling ketat (oxlint, ratchet) | Lane C lambat | Perubahan aditif di folder `components/radar/` baru. Bob slice C1 memetakan titik sambung. Jalankan `pnpm -C app tc` + oxlint file yang diubah saja. |
+| Build `.dmg` gagal (native helper, signing) | Teman tidak bisa pasang | Coba `build:unpack` sebelum kickoff. Fallback: `pnpm -C app dev` di 3 Mac. App tidak di-sign → klik kanan → Open. |
 | Hook di Bob IDE tidak jalan | Coder IDE tidak diblokir oleh Bob-nya sendiri | Lapis 2 di server + sync agent. Demo blokir memakai Budi (Bob Shell). |
 | `.gitignore` template IBM mengabaikan nama file berisi `token`, `secret`, `password`, `credentials`, `config.json` | Kode hilang diam-diam dari repo | Larangan nama file di R5. CI menjalankan `radar/scripts/check-ignored.sh`. |
 | `.bobignore` template mengabaikan `*config.json` | Bob tidak bisa membaca `tsconfig.json` | Diterima. Bob slice tidak bergantung ke file itu. Dicatat di `BOB_DEVELOPMENT.md`. |

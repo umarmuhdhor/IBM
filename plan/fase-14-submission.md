@@ -23,7 +23,7 @@ Semua field form lablab terisi, dan setiap field didukung artefak di repo yang b
 | Long Description = **Problem & Solution Statement** | **≤ 500 kata**: masalah (angka + sumber), solusi, target user, cara user berinteraksi, kenapa kreatif dan unik (tabel pembanding singkat), cara mengatasi masalah secara baru | `radar/docs/SUBMISSION.md` §Long | C |
 | **IBM Bob Usage Statement** | **≤ 500 kata** (R7 §6): Bob sebagai runtime (hook, custom mode, MCP, agent di app) + Bob sebagai pembangun (slice per anggota, onboarding Orca, angka) + watsonx: not used | `radar/docs/SUBMISSION.md` §Bob, `BOB_DEVELOPMENT.md` | B |
 | Technology & Category Tags | IBM Bob, Bob Shell, MCP, Electron, TypeScript, Node.js, WebSocket, SQLite, Next.js, Developer Tools, Collaboration, Multi-agent | SUBMISSION.md | C |
-| Public Code Repository | `https://github.com/<akun>/ibm-bob-live-collab` (publik) | – | A |
+| Public Code Repository | `https://github.com/umarmuhdhor/IBM` (publik) | – | A |
 | IBM Bob Task Session Summary Screenshots | Unggah screenshot dari **setiap anggota** (pilih 1–3 terbaik per orang) + semuanya ada di `bob_sessions/` | `bob_sessions/INDEX.md` | B |
 | Demo Application Platform | "macOS desktop app (Electron, fork of Orca) + web replay" | – | C |
 | Application URL | `https://ibm-bob-live-collab.vercel.app` = landing (tombol **Watch the live replay** → `/demo`, tombol **Download for macOS** → Release `.dmg`). Juri tidak perlu install apa pun. | `packages/web/app/page.tsx` (fase 11 langkah 17) | C |

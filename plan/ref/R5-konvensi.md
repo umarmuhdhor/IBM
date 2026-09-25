@@ -9,7 +9,7 @@
 | Modul | ESM di semua paket Node. Hook & radar-mcp dibundel esbuild ke **CJS** satu file (`format: 'cjs', platform: 'node', target: 'node20'`) supaya jalan dengan `node file.js` di mana pun |
 | Penamaan | file `kebab-case.ts` (kecuali nama hook yang mengikuti PRD: `lock_guard`, `mark_ai_edit`), tipe `PascalCase`, fungsi `camelCase`, konstanta `UPPER_SNAKE` |
 | Bahasa teks | Kode, identifier, komentar: Inggris. Teks yang dibaca user/Bob (brief, pesan blokir, output tool MCP, UI): **Bahasa Indonesia**, singkat |
-| Lint/format | `radar/`: ESLint flat config (`typescript-eslint` recommended + `no-floating-promises`), Prettier (`printWidth 100`, `singleQuote`, `trailingComma all`). Kode Orca (`orca:src/**`): ikuti tooling Orca (oxlint + oxfmt), jalankan hanya pada file yang diubah, plus `pnpm tc`. |
+| Lint/format | `radar/`: ESLint flat config (`typescript-eslint` recommended + `no-floating-promises`), Prettier (`printWidth 100`, `singleQuote`, `trailingComma all`). Kode Orca (`orca:src/**`): ikuti tooling Orca (oxlint + oxfmt), jalankan hanya pada file yang diubah, plus `pnpm -C app tc`. |
 | Error | Jangan telan error diam-diam. Hook: semua error → fail-open (exit 0) + log, KECUALI keputusan `block` yang sah (exit 2). Server: error bisnis → `RadarError(code, message)` → handler error R3 §1 |
 | Log | Server `pino` (JSON). Sync/hook: file `.radar/*.log` baris teks. **Tidak pernah** menulis token ke log |
 | Validasi | Semua input eksternal lewat zod dari `@radar/common/schemas` |
@@ -134,5 +134,5 @@ Selalu diabaikan: `.git/`, `node_modules/`, `.radar/`, `.bob/`, `bob_sessions/`,
 
 Akibatnya file seperti `access-token.ts` atau `config.json` **tidak akan ter-commit tanpa peringatan**. Aturannya:
 1. Jangan membuat file sumber dengan nama di atas. Contoh padanan: `token.ts` → `access.ts`, `secret-store.ts` → `secure-store.ts`, `config.json` → `radar.settings.json`.
-2. `scripts/check-ignored.sh` (fase 00, dijalankan di CI dan `verification-loop`) mencari file sumber yang di-ignore: `git ls-files --others --ignored --exclude-standard -- radar src | grep -vE '(node_modules|dist|\.next|out|\.data|\.radar)/'`. Kalau ada hasil, CI gagal.
+2. `scripts/check-ignored.sh` (fase 00, dijalankan di CI dan `verification-loop`) mencari file sumber yang di-ignore: `git ls-files --others --ignored --exclude-standard -- radar app/src | grep -vE '(node_modules|dist|\.next|out|\.data|\.radar)/'`. Kalau ada hasil, CI gagal.
 3. `.bobignore` template membuat Bob tidak membaca file yang cocok dengan `*config.json`, `*token*`, `*secret*`, dan sejenisnya (termasuk `tsconfig.json`). Prompt Bob slice tidak boleh bergantung ke file itu. Jangan menghapus pola template.

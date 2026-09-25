@@ -47,7 +47,7 @@ exit 0 = sukses, 1 = argumen salah, 2 = screenshot batal, 3 = md tidak ditemukan
 ## 4. `pnpm -C radar evidence:check` (fase 14)
 
 Gagal kalau salah satu kondisi berikut terjadi:
-- anggota di `radar/plan/team.json` punya < 3 folder slice lengkap (`summary.png` + `task.md`),
+- anggota di `plan/team.json` punya < 3 folder slice lengkap (`summary.png` + `task.md`),
 - ada trailer `Bob-Assisted:` (dari `git log --all`) yang menunjuk ke folder yang tidak ada,
 - `bob_sessions/INDEX.md` tidak mencantumkan salah satu folder,
 - ada file di `bob_sessions/` yang cocok dengan pola `.gitignore` template (tidak ikut ter-commit).

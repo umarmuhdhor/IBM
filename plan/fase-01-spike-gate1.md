@@ -37,7 +37,7 @@ Membuktikan (atau membantah) enam asumsi teknis yang menopang PRD sebelum menuli
 
 ### A. Siapkan artefak (agent)
 
-0. **Bob slice B1.** Langkah 1 dan 5 di bawah ditulis oleh **Bob IDE** (mode Code) dengan prompt: "Buat `radar/spike/hooks/log_payload.js` dan `radar/spike/.bob/custom_modes.yaml` sesuai `radar/plan/fase-01-spike-gate1.md` langkah A1 dan A5." Bukti: `bob-evidence.sh <nama> 01-spike-hooks`. Claude Code mengerjakan sisanya.
+0. **Bob slice B1.** Langkah 1 dan 5 di bawah ditulis oleh **Bob IDE** (mode Code) dengan prompt: "Buat `radar/spike/hooks/log_payload.js` dan `radar/spike/.bob/custom_modes.yaml` sesuai `plan/fase-01-spike-gate1.md` langkah A1 dan A5." Bukti: `bob-evidence.sh <nama> 01-spike-hooks`. Claude Code mengerjakan sisanya.
 1. **`spike/hooks/log_payload.js`** — CommonJS, tanpa dependensi:
    - Baca seluruh stdin (timeout 1 s), `JSON.parse` kalau bisa.
    - Tulis `spike/out/<event>-<timestamp>.json` berisi `{ argv, env: <hanya var berawalan BOB_/HOOK_/CLAUDE_>, cwd, stdinRaw, stdinJson }`.
@@ -77,9 +77,9 @@ Buka folder `radar/spike/` sebagai workspace di Bob IDE **dan** di Bob Shell (`c
 | 8 | Overhead hook | `timing.js` | Catat ms; target total cek kunci < 300 ms (NFR-01) |
 | 9 | Nama grup tool & tool shell (OQ 2, 3) | Dari `pre-all-*.json` dan docs | Catat nama grup yang valid & nama tool eksekusi perintah |
 | 10 | Bentuk payload (dua bentuk BC-04) | Bandingkan `pre-*.json` dari IDE vs Shell | Catat bentuk mana yang dipakai masing-masing |
-| 11 | **Bob Shell di terminal Orca** (spike 7) | Lane C: `pnpm dev` app fork → pilih agent (sementara "custom command" `bob`) → jalankan `bob` di folder `spike/` → ulangi uji 1 & 3 dari terminal itu | Bob interaktif normal (warna, input, TUI), hook terpicu sama seperti di Terminal macOS. Catat mode injeksi prompt yang aman untuk `promptInjectionMode`. |
+| 11 | **Bob Shell di terminal Orca** (spike 7) | Lane C: `pnpm -C app dev` app fork → pilih agent (sementara "custom command" `bob`) → jalankan `bob` di folder `spike/` → ulangi uji 1 & 3 dari terminal itu | Bob interaktif normal (warna, input, TUI), hook terpicu sama seperti di Terminal macOS. Catat mode injeksi prompt yang aman untuk `promptInjectionMode`. |
 | 12 | **Tap output xterm** (spike 7b) | Lane C: tambahkan `console.debug` sementara di titik `term.write` renderer (lihat Bob slice C1) | Data dari sesi `bob` bisa disalin tanpa mengganggu tampilan. Catat ukuran frame/detik saat Bob menjawab. |
-| 13 | **Build app** (spike 8) | Lane C: `pnpm build:unpack` (atau `build:mac`) di Mac tim | `.app` terbentuk dan bisa dibuka. Catat durasi dan error native helper. |
+| 13 | **Build app** (spike 8) | Lane C: `pnpm -C app build:unpack` (atau `build:mac`) di Mac tim | `.app` terbentuk dan bisa dibuka. Catat durasi dan error native helper. |
 | 14 | **Login akun** | `bob` CLI dan Bob IDE memakai akun hackathon yang sama | Keduanya jalan. Catat cara login CLI. |
 
 ### C. Keputusan GATE 1 (Sab 04:00)
@@ -97,7 +97,7 @@ Buka folder `radar/spike/` sebagai workspace di Bob IDE **dan** di Bob Shell (`c
 | Spike 6 gagal di salah satu mode | Dokumentasikan; untuk PM gunakan REST lewat script `bob-kit/prompts` sebagai fallback |
 | Hook jalan di Shell tapi tidak di IDE | `ENFORCEMENT_IDE = server-only`. Demo blokir memakai coder Bob Shell (Budi). Andi (IDE) tetap diamankan lapis 2. |
 | Spike 11 gagal (Bob tidak nyaman di terminal Orca) | Budi menjalankan `bob` di Terminal macOS. Fitur tonton terminal tetap memakai terminal Orca biasa yang menjalankan `bob`, atau mode fallback: tonton output `bob run --format stream-json` |
-| Spike 13 gagal | Demo memakai `pnpm dev` di 3 Mac. `.dmg` dikejar di fase 11 bagian C. |
+| Spike 13 gagal | Demo memakai `pnpm -C app dev` di 3 Mac. `.dmg` dikejar di fase 11 bagian C. |
 
 10. Perbarui konstanta yang terdampak di rencana: `EDIT_TOOLS_REGEX` (R5 §4), daftar field path untuk normalisasi (dipakai fase 02 `hook-payload.ts`), nama grup tool & lokasi file konfigurasi Bob (fase 07/08), nama tool shell (instruksi mode `coder`). Tulis semuanya sebagai entri DECISIONS dan edit `plan/ref/R5-konvensi.md` bila regex berubah.
 

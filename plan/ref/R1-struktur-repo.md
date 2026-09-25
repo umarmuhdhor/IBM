@@ -1,4 +1,4 @@
-# R1 — Struktur repo, paket, script & CLI (v0.3: fork Orca + workspace `radar/`)
+# R1 — Struktur repo, paket, script & CLI (v0.3: Orca di `app/` + workspace `radar/` di repo umarmuhdhor/IBM)
 
 > Kontrak layout. Semua fase menaruh file sesuai peta ini. Perubahan → `log/DECISIONS.md`.
 
@@ -6,56 +6,51 @@
 
 | Repo | Isi | Lokasi |
 |---|---|---|
-| **ibm-bob-live-collab** (repo produk, publik, dinilai juri) | **Fork GitHub dari `stablyai/orca`** (MIT). Kode Orca di root (`src/`, `config/`, …) + workspace pnpm terpisah `radar/` (server, sync, hook, MCP, UI, replay, kit Bob, plan) + `bob_sessions/` | `gh repo fork stablyai/orca --fork-name ibm-bob-live-collab` di fase 00 |
+| **`umarmuhdhor/IBM`** (repo produk, **sudah publik**, yang dinilai juri) | Dokumen di root, **Orca di `app/`** (disalin dari `stablyai/orca` @ `bf40d35`, MIT, tanpa history upstream), workspace pnpm `radar/` (server, sync, hook, MCP, UI, replay, kit Bob), `bob_sessions/`, `.claude/` (agent & skill bersama) | sudah ada. Orca masuk di commit `7c86819`. |
 | **toko-demo** (workspace yang disinkronkan) | Toko online kecil, data sintetis. Diedit Bob A & B lewat Live Collab. Server meng-commit + push ke sini. | Template `radar/examples/toko-demo/`, disalin ke repo GitHub terpisah di fase 00 |
 
-Konvensi path di semua file plan: **`orca:`** = relatif ke root repo (kode Orca), path tanpa prefix = relatif ke `radar/`.
+Konvensi path di semua file plan:
+- **`orca:`** = relatif ke folder **`app/`** (kode Orca), misalnya `orca:src/shared/tui-agent.ts` = `app/src/shared/tui-agent.ts`.
+- `plan/…`, `PRD.md`, `PLAN.md`, `DESIGN.md`, `bob_sessions/…` = relatif ke root repo.
+- Path kode lain tanpa prefix (`packages/…`, `scripts/…`, `docs/…`, `bob-kit/…`, `examples/…`) = relatif ke **`radar/`**.
 
-## 2. Layout repo `ibm-bob-live-collab`
+Toolchain: `app/` butuh **Node 24 + pnpm 12** (`nvm use 24`, lalu corepack). `radar/` jalan di Node 20+ tapi disarankan Node 24 juga supaya satu shell cukup.
+
+## 2. Layout repo
 
 ```text
-ibm-bob-live-collab/                  ← root = fork Orca
-├── src/                              ← Orca (Electron main/preload/renderer/shared). Lane C menambah:
-│   ├── shared/tui-agent.ts           ← + 'bob' di union TuiAgent
-│   ├── shared/tui-agent-config.ts    ← + konfigurasi launch/detect bob
-│   ├── main/radar/                   ← BARU: sync-supervisor.ts (P1), secure-store.ts (safeStorage)
-│   └── renderer/src/
-│       ├── lib/agent-catalog.tsx     ← + entri "IBM Bob"
-│       ├── lib/agent-icon-glyphs.tsx ← + glyph "B"
-│       ├── store/radar-store.ts      ← BARU: zustand + applyEvent
-│       ├── lib/radar/ws-client.ts    ← BARU
-│       ├── lib/radar/terminal-share.ts ← BARU (fase 11): tap xterm → term.frame
-│       └── components/radar/         ← BARU: RadarSidebarSection, MissionControlView, TeamPanel,
-│                                        FilesLocksView, WatchTerminalView, RadarSettingsPane, …
-├── electron.vite.config.ts           ← + alias @radar/common, @radar/ui → radar/packages/*/src
-├── config/electron-builder.config.cjs← productName "IBM Bob Live Collab", appId, ikon (fase 11)
-├── resources/                        ← ikon app baru (fase 11)
-├── .gitignore                        ← .gitignore Orca + blok template IBM (fase 00)
-├── .bobignore  SECURITY.MD  .env.example   ← dari ibm-hackathon-template (fase 00)
-├── LICENSE                           ← MIT Orca, TIDAK diubah
-├── README.md                         ← README juri (atas) + atribusi Orca (bawah)
+IBM/  (github.com/umarmuhdhor/IBM)
+├── README.md  PLAN.md  PRD.md  DESIGN.md  prompt_ui.md     ← dokumen (tetap di root)
+├── plan/  arsip/  "UI Inspo & Design"/                      ← rencana, arsip, referensi & mockup UI
+├── .claude/agents/electron-pro.md                           ← agent bersama (VoltAgent, MIT)
+├── .claude/skills/{electron-automation,live-collab-app}/    ← skill bersama (lihat PLAN.md §11)
+├── .gitignore  .bobignore  SECURITY.MD  .env.example        ← template IBM (fase 00)
+├── .github/workflows/ci.yml                                 ← CI kita (workflow Orca di app/.github tidak jalan)
 ├── BOB_DEVELOPMENT.md
 ├── bob_sessions/<nama>/<NN-slug>/{summary.png,task.md} + INDEX.md
-└── radar/                            ← workspace pnpm TERPISAH (pnpm-workspace.yaml sendiri)
+├── app/                               ← Orca (Electron). Lane C menambah:
+│   ├── src/shared/tui-agent.ts        ← + 'bob'
+│   ├── src/shared/tui-agent-config.ts ← + konfigurasi launch/detect bob
+│   ├── src/main/radar/                ← BARU: secure-store.ts (safeStorage), sync-supervisor.ts (P1)
+│   ├── src/renderer/src/
+│   │   ├── lib/agent-catalog.tsx, lib/agent-icon-glyphs.tsx   ← + "IBM Bob"
+│   │   ├── store/radar-store.ts                               ← BARU
+│   │   ├── lib/radar/{ws-client,api,terminal-share}.ts        ← BARU
+│   │   └── components/radar/*                                 ← BARU: sidebar section, views, settings
+│   ├── electron.vite.config.ts        ← + alias @radar/common, @radar/ui → ../radar/packages/*/src
+│   ├── config/electron-builder.config.cjs ← productName, appId, ikon (fase 11)
+│   └── LICENSE                        ← MIT Orca, TIDAK diubah
+└── radar/                             ← workspace pnpm Live Collab (dibuat fase 00)
     ├── package.json  pnpm-workspace.yaml  tsconfig.base.json  eslint.config.js  .prettierrc
-    ├── PRD.md  PLAN.md  DESIGN.md  prompt_ui.md      ← dipindah dari folder IBM/ di fase 00
-    ├── plan/                          ← folder ini
-    ├── packages/
-    │   ├── common/   @radar/common    (tipe, zod, events, reducer, hook-payload, term.ts)
-    │   ├── server/   @radar/server    (Fastify + ws + SQLite + git + relay terminal)
-    │   ├── sync/     @radar/sync      → bin: radar
-    │   ├── hooks/    @radar/hooks     → bundel ke bob-kit/*/.bob/hooks/*.js
-    │   ├── mcp/      @radar/mcp       → bundel ke bob-kit/*/.bob/radar-mcp.js
-    │   ├── ui/       @radar/ui        BARU: komponen React presentasional (DESIGN.md §3)
-    │   └── web/      @radar/web       Next.js: /demo replay, /install (P2), /gallery (dev)
+    ├── packages/{common,server,sync,hooks,mcp,ui,web}
     ├── bob-kit/{coder,pm}/.bob/  bob-kit/prompts/
     ├── spike/  examples/toko-demo/
     ├── scripts/  (mock-server, sim-3pc, bench-sync, metrics, export-replay, ab/,
     │             bob-evidence.sh, evidence-check.ts, check-ignored.sh)
-    └── docs/  (SPIKE_RESULTS, ARCHITECTURE, EXPERIMENT, DEMO_SCRIPT, SUBMISSION, deck/, video/)
+    └── docs/  (SPIKE_RESULTS, ARCHITECTURE, EXPERIMENT, DEMO_SCRIPT, SUBMISSION, ORCA_MAP, deck/, video/)
 ```
 
-Isi folder `packages/server/src` dan lainnya sama dengan v0.2 (di bawah), dengan satu perubahan: `db/repo/token.ts` → **`db/repo/access.ts`**, karena pola `*token*` di `.gitignore` template IBM akan membuat file itu tidak ter-commit (R5 §8).
+`db/repo/token.ts` → **`db/repo/access.ts`**, karena pola `*token*` di `.gitignore` template IBM akan membuat file itu tidak ter-commit (R5 §8).
 
 ### 2.1 Isi paket (tidak berubah dari v0.2 kecuali ditandai)
 
@@ -109,7 +104,7 @@ Aturan: **hook dan radar-mcp harus bisa jalan di workspace toko-demo tanpa `npm 
 | `secrets:scan` | `gitleaks detect --source .. --log-opts="--all"` |
 | `evidence:check` | `tsx scripts/evidence-check.ts` (R7 §4) |
 | `check:ignored` | `bash scripts/check-ignored.sh` — gagal kalau ada file sumber yang cocok pola `.gitignore` template IBM |
-| `dev:app` | `pnpm -C .. dev` (menjalankan Orca/Live Collab dari root) |
+| `dev:app` | `pnpm -C ../app dev` (menjalankan app Live Collab) |
 
 ## 5. CLI
 

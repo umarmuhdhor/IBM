@@ -39,7 +39,7 @@
 3. **`ShareTerminalButton`** di header tab terminal agent: ikon + teks **Share** / `👁 2 watching`. Default mati (NFR-12).
 4. **`WatchTerminalView`**: tab baru "Watching <nama>'s Bob · <mode>". Membuat `@xterm/xterm` read-only (`disableStdin: true`), `TerminalFrame` dengan border warna pemilik, menerapkan `term.snapshot` lalu frame berurutan `seq` (buang duplikat, minta snapshot ulang kalau ada celah). Mengirim `term.ack` setiap 50 frame untuk metrik latensi. Menampilkan `term.ended`.
 5. **Tombol Watch** di `TeamPanel` aktif kalau `term.list` punya terminal milik anggota itu.
-6. **Uji:** dua instance app di satu Mac (`pnpm dev` + `pnpm dev-stable-name` dengan userData berbeda) atau dua Mac → p95 latensi < 500 ms (log `term.latency`). Ketik `ls`, jalankan `bob`, dan warna/ANSI tampil sama. Tutup share → penonton melihat "host stopped sharing" < 1 s.
+6. **Uji:** dua instance app di satu Mac (`pnpm -C app dev` + `pnpm -C app dev-stable-name` dengan userData berbeda) atau dua Mac → p95 latensi < 500 ms (log `term.latency`). Ketik `ls`, jalankan `bob`, dan warna/ANSI tampil sama. Tutup share → penonton melihat "host stopped sharing" < 1 s.
 7. **Security review** (`security-reviewer`): frame hanya ke anggota workspace, tidak ada input dari penonton di P0, dan tidak ada data terminal di log.
 
 ### B. Ketik sebagai tamu (P1 — bonus, kerjakan hanya kalau A, C, D hijau)
@@ -48,28 +48,40 @@
 
 ### C. Build `.dmg` (11b, P0)
 
-9. Ikon app dari `prompt_ui.md` #11 → `resources/` (`.icns` via script `build:icons` Orca kalau cocok, atau `iconutil`). `electron-builder.config.cjs`: `productName`, `appId: dev.livecollab.app`, `mac.target: dmg`, `arch: arm64`, **tanpa** signing/notarize (`identity: null`). Kalau `build:mac` memaksa native helper yang gagal, pakai `build:unpack` + `electron-builder --mac dmg --prepackaged`.
-10. Paket CLI: `pnpm -C radar --filter @radar/sync pack` → `radar-cli.tgz` (bundle hook + MCP + kit di dalamnya).
-11. GitHub Release `v0.3.0` (`gh release create`): `.dmg`, `radar-cli.tgz`, catatan pasang (klik kanan → Open, atau `xattr -dr com.apple.quarantine "/Applications/IBM Bob Live Collab.app"`).
-12. Uji pasang di **Mac teman** dari nol: unduh → pasang → Settings → Connect → tersinkron. Catat waktunya (metrik "< 3 menit").
+9. **Resep build yang sudah terbukti** (Mac Aarief, 25 Sep, Node 24 + pnpm 12, ±7 menit total):
+   ```bash
+   nvm use 24
+   pnpm -C app install && pnpm -C app/mobile install        # mobile wajib: build:desktop membundel mobile-web
+   pnpm -C app build:desktop                                # typecheck, relay, cli, electron-vite, web, mobile-web
+   pnpm -C app build:notification-status-macos && pnpm -C app build:keyboard-layout-macos
+   # build:computer-macos (helper Computer Use) GAGAL di lipo, dan fitur itu tidak dipakai → lewati
+   pnpm -C app run ensure:electron-runtime
+   CSC_NAME=- CSC_IDENTITY_AUTO_DISCOVERY=false pnpm -C app exec electron-builder --config config/electron-builder.config.cjs --dir
+   # hasil: app/dist/mac-arm64/<productName>.app (ad-hoc signed)
+   ```
+   Untuk `.dmg`: ganti `--dir` dengan `--mac dmg`. `CSC_NAME=-` wajib, karena tanpa itu `codesign` memakai sertifikat "Apple Development" di keychain dan gagal non-interaktif.
+10. Ikon app dari `prompt_ui.md` #11 → `resources/` (`.icns` via script `build:icons` Orca kalau cocok, atau `iconutil`). `electron-builder.config.cjs`: `productName`, `appId: dev.livecollab.app`, `mac.target: dmg`, `arch: arm64`, **tanpa** signing/notarize (`identity: null`). Kalau `build:mac` memaksa native helper yang gagal, pakai `build:unpack` + `electron-builder --mac dmg --prepackaged`.
+11. Paket CLI: `pnpm -C radar --filter @radar/sync pack` → `radar-cli.tgz` (bundle hook + MCP + kit di dalamnya).
+12. GitHub Release `v0.3.0` (`gh release create`): `.dmg`, `radar-cli.tgz`, catatan pasang (klik kanan → Open, atau `xattr -dr com.apple.quarantine "/Applications/IBM Bob Live Collab.app"`).
+13. Uji pasang di **Mac teman** dari nol: unduh → pasang → Settings → Connect → tersinkron. Catat waktunya (metrik "< 3 menit").
 
 ### D. Replay web `/demo` (11c, P0)
 
-13. **`scripts/export-replay.ts`**: input export server (`GET /v1/events/export?withTerminals=true` dari sesi rekaman dengan `RECORD_TERMINALS=true`) + `bob-quotes.src.json`. Output `events.json` (sensor: gagal kalau ada `rdr_`, `ghp_`, `sk-`), `frames.json` (frame terminal A dan B, dikompresi, target < 3 MB), dan `meta.json` (chapter Plan/Live/Near-miss/Review/Commit, link repo/bob_sessions/video/deck).
-14. **`lib/replay-player.ts`**: play/pause/seek/speed. Seek = `applyEvents` sampai `t`, plus memutar ulang frame terminal sampai `t` (snapshot tiap 10 s untuk seek cepat).
-15. **`/demo`** (DESIGN §5.8): header + badge `no login · no API key`. Counter. Tiga kolom: Andi (mini xterm replay), Mission Control (views `@radar/ui` read-only), Budi (mini xterm replay). Timeline chapter. Panel **Bob inside**: untuk event yang dipilih, tampilkan primitif Bob (hook/MCP/mode), payload ringkas, kutipan Bob, dan link ke `bob_sessions/...` di GitHub. Autoplay 2×, jeda > 5 s dipadatkan.
-16. Statis (`force-static`), tanpa panggilan jaringan selain origin. Playwright `e2e/demo.spec.ts` (skill `e2e-testing`): autoplay jalan, near-miss muncul ≤ 30 s di 8×, klik event → Bob inside, dan tidak ada request ke domain lain.
-17. **Landing `/`** (UI-09, DESIGN §5.11, ±30 menit): hero (judul, tagline, GIF near-miss), tombol utama **Watch the live replay** → `/demo`, tombol **Download for macOS** → `.dmg` di Release terbaru (URL dari `meta.json`), 3 langkah pasang (termasuk klik kanan → Open), dan link Repo · bob_sessions · Video · Deck. Tambahkan kalimat "Community hackathon project, not an official IBM product · built on Orca (MIT)". Statis, tanpa login.
-18. Deploy Vercel. Buka `/` dan `/demo` dari incognito dan ponsel (tab A/MC/B).
+14. **`scripts/export-replay.ts`**: input export server (`GET /v1/events/export?withTerminals=true` dari sesi rekaman dengan `RECORD_TERMINALS=true`) + `bob-quotes.src.json`. Output `events.json` (sensor: gagal kalau ada `rdr_`, `ghp_`, `sk-`), `frames.json` (frame terminal A dan B, dikompresi, target < 3 MB), dan `meta.json` (chapter Plan/Live/Near-miss/Review/Commit, link repo/bob_sessions/video/deck).
+15. **`lib/replay-player.ts`**: play/pause/seek/speed. Seek = `applyEvents` sampai `t`, plus memutar ulang frame terminal sampai `t` (snapshot tiap 10 s untuk seek cepat).
+16. **`/demo`** (DESIGN §5.8): header + badge `no login · no API key`. Counter. Tiga kolom: Andi (mini xterm replay), Mission Control (views `@radar/ui` read-only), Budi (mini xterm replay). Timeline chapter. Panel **Bob inside**: untuk event yang dipilih, tampilkan primitif Bob (hook/MCP/mode), payload ringkas, kutipan Bob, dan link ke `bob_sessions/...` di GitHub. Autoplay 2×, jeda > 5 s dipadatkan.
+17. Statis (`force-static`), tanpa panggilan jaringan selain origin. Playwright `e2e/demo.spec.ts` (skill `e2e-testing`): autoplay jalan, near-miss muncul ≤ 30 s di 8×, klik event → Bob inside, dan tidak ada request ke domain lain.
+18. **Landing `/`** (UI-09, DESIGN §5.11, ±30 menit): hero (judul, tagline, GIF near-miss), tombol utama **Watch the live replay** → `/demo`, tombol **Download for macOS** → `.dmg` di Release terbaru (URL dari `meta.json`), 3 langkah pasang (termasuk klik kanan → Open), dan link Repo · bob_sessions · Video · Deck. Tambahkan kalimat "Community hackathon project, not an official IBM product · built on Orca (MIT)". Statis, tanpa login.
+19. Deploy Vercel. Buka `/` dan `/demo` dari incognito dan ponsel (tab A/MC/B).
 
 ### E. Bob slice C4 — script bukti (kapan saja di fase ini, ±2 Bobcoin)
 
-18. Prompt: "Lengkapi `radar/scripts/bob-evidence.sh` dan buat `radar/scripts/evidence-check.ts` sesuai `radar/plan/ref/R7-bukti-bob.md` §3–§4. Bash POSIX + macOS `screencapture`. `evidence-check.ts` membaca `radar/plan/team.json`, `bob_sessions/`, dan trailer `Bob-Assisted` dari `git log --all`." Bukti: `04-evidence-scripts`. Claude Code menambah test untuk `evidence-check.ts` (fixture folder palsu).
+20. Prompt: "Lengkapi `radar/scripts/bob-evidence.sh` dan buat `radar/scripts/evidence-check.ts` sesuai `plan/ref/R7-bukti-bob.md` §3–§4. Bash POSIX + macOS `screencapture`. `evidence-check.ts` membaca `plan/team.json`, `bob_sessions/`, dan trailer `Bob-Assisted` dari `git log --all`." Bukti: `04-evidence-scripts`. Claude Code menambah test untuk `evidence-check.ts` (fixture folder palsu).
 
 ## Verifikasi
 
 ```bash
-pnpm tc && pnpm test -- src/renderer/src/lib/radar src/renderer/src/components/radar
+pnpm -C app tc && pnpm -C app test -- src/renderer/src/lib/radar src/renderer/src/components/radar
 pnpm -C radar --filter @radar/web build && pnpm -C radar --filter @radar/web exec playwright test e2e/demo.spec.ts
 pnpm -C radar evidence:check       # boleh merah untuk anggota yang belum selesai, tapi tidak boleh error script
 ls -lh dist/*.dmg                  # atau lokasi output electron-builder
@@ -90,7 +102,7 @@ ls -lh dist/*.dmg                  # atau lokasi output electron-builder
 |---|---|
 | Titik tap xterm sulit dijangkau (output lewat worker/webgl) | Tap di level IPC data pty yang masuk ke renderer (sebelum ke xterm). Pilihan terakhir: tap di main process pada listener pty, tanpa mengubah alurnya. Catat D-C.. |
 | Frame terlalu besar (TUI Bob me-redraw penuh) | Batasi 20 fps, gabungkan frame, kirim snapshot setiap 5 s dan buang frame lama |
-| `.dmg` gagal dibuat | Kirim `.app` di dalam `.zip` (`--dir` + `ditto -c -k`). Demo tetap memakai `pnpm dev`. |
+| `.dmg` gagal dibuat | Kirim `.app` di dalam `.zip` (`--dir` + `ditto -c -k`). Demo tetap memakai `pnpm -C app dev`. |
 | Gatekeeper memblokir app | Instruksi `xattr` di README + Release notes |
 | Rekaman nyata belum ada | Replay memakai `sim-3pc` + frame rekaman lokal. Ganti setelah rekaman Minggu 09:00. |
 

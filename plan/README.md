@@ -20,7 +20,7 @@ Agent mengisi `PROGRESS.md` dan `log/fase-XX.md`, commit, push branch lane, lalu
 ## 2. Struktur folder
 
 ```text
-plan/                         (dipindah ke radar/plan/ di fase 00)
+plan/                         (dipindah ke plan/ di fase 00)
 ├── README.md                 ← file ini
 ├── PROMPT.md                 ← satu prompt (ubah LANE + FASE)
 ├── PROGRESS.md               ← status fase + requirement P0

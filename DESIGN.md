@@ -6,6 +6,18 @@
 
 ---
 
+## 0. Urutan prioritas (baca dulu)
+
+1. **Orca dulu.** Di dalam app (`app/`), pakai komponen, token, spasi, ikon, dan pola layout Orca apa adanya: shadcn/Radix, Tailwind theme Orca, lucide, sidebar, dan panel Agent Dashboard. Panel Live Collab harus terasa seperti fitur bawaan Orca, bukan aplikasi tempelan.
+2. **Aksen Live Collab di atasnya.** Hanya ini yang kita tambahkan: warna orang (A/B/C), aksen "Needs you", warna status, `AgentTag`, `LockChip`, dan `BobTrace` (§2–§3). Font IBM Plex dipakai di **web** (landing, replay, cover, deck). Di dalam app, ikuti font Orca.
+3. **Mockup Stitch** (`UI Inspo & Design/UI Design/stitch_ibm_bob_live_collab_ui/*`) dan gambar Amoeba/Mosaic **hanya pedoman** susunan dan suasana, bukan spesifikasi piksel. Jangan menyalin:
+   - angka karangan (mis. "99.4% Safe Handoff", "V2.4", "HD 60FPS", "vs 4.2 min baseline"). Semua angka di UI harus berasal dari data nyata,
+   - font serif di render Stitch (itu fallback),
+   - sidebar app di halaman replay web,
+   - teks lama "Bob radar" di status bar.
+
+---
+
 ## 1. Prinsip
 
 1. **Bob selalu kelihatan.** Setiap aksi di layar menyebut Bob siapa dan primitif Bob apa yang bekerja, misalnya `Andi · Bob coder`, `hook · PreToolUse · lock_guard → blocked · 84 ms`, `mcp · radar.why_blocked`. Juri harus bisa melihat hook, mode, dan MCP bekerja, bukan cuma mendengarnya di narasi.
