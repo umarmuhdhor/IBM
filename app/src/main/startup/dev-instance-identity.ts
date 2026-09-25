@@ -2,8 +2,9 @@ import { createHash } from 'node:crypto'
 import path from 'node:path'
 import type { AppIdentity } from '../../shared/app-identity'
 
-const BASE_APP_NAME = 'Orca'
-const BASE_APP_USER_MODEL_ID = 'com.stablyai.orca'
+// Live Collab fork: own name/id so settings, Keychain item and worktrees never collide with stock Orca.
+const BASE_APP_NAME = 'IBM Bob Live Collab'
+const BASE_APP_USER_MODEL_ID = 'dev.livecollab.app'
 const MAX_LABEL_LENGTH = 80
 
 export type DevInstanceIdentity = AppIdentity & {

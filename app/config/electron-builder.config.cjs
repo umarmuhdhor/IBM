@@ -74,7 +74,7 @@ const devChannelRepo = isHourlyChannel
     : isAdhocChannel
       ? 'orca-adhoc'
       : null
-const appId = 'com.stablyai.orca'
+const appId = 'dev.livecollab.app'
 const featureWallResources = {
   from: 'resources/onboarding/feature-wall',
   to: 'onboarding/feature-wall'
@@ -172,7 +172,7 @@ const windowsRuntimeResources = existsSync(
 /** @type {import('electron-builder').Configuration} */
 module.exports = {
   appId,
-  productName: 'Orca',
+  productName: 'IBM Bob Live Collab',
   protocols: [{ name: 'Orca', schemes: ['orca'] }],
   toolsets: { appimage: '1.0.3' },
   ...(devChannelBuildVersion
