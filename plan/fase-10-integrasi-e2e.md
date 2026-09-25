@@ -2,7 +2,7 @@
 
 | Field | Nilai |
 |---|---|
-| Jalur | Semua, di **`main`** setelah PR ketiga lane di-merge (Sab 21:00). Dipimpin Lane Umar (simulator & Bob). Lane Aarief/Imelda memegang app di 3 Mac. Lane Alief memegang server. |
+| Jalur | Semua, mulai Sab 21:00 setelah PR keempat lane ter-merge. Setiap lane memperbaiki di branch lane sendiri dan membuka PR kecil (PROMPT langkah 11). Lane Alief: simulator `sim-3pc` + server (folder `radar/scripts` miliknya). Lane Umar: memimpin uji Bob di 3 Mac. Lane Aarief: app di 3 Mac. Lane Imelda: replay dari export milestone. |
 | Slot WITA | Sab 26 Sep 21:00 – Min 27 Sep 02:00 · **Milestone Sab 23:00** |
 | Estimasi | 3–4 jam |
 | Prasyarat | 04, 05, 07, 08, 09. Fase 06 hanya dibutuhkan untuk langkah review/commit (sim langkah 6–7, 3 PC langkah 7) |
@@ -32,7 +32,7 @@ Membuktikan alur penuh PRD berjalan: **rencana → live → blokir → keputusan
 ## Langkah kerja
 
 1. **Simulator `scripts/sim-3pc.ts`** — tanpa Bob, satu proses:
-   - Opsi `--server local|<url>`; `local` = `wrangler dev` (unstable_dev) dengan DO lokal + `GITHUB_COMMIT=false` (commit dicatat tanpa memanggil GitHub).
+   - Opsi `--server local|<url>`; `local` = `createTestHarness` wrangler dengan DO lokal + `GITHUB_COMMIT=false` (commit dicatat tanpa memanggil GitHub).
    - Buat 3 `SyncAgent` (A, B di folder tmp; C folder tmp read-only).
    - "Bob palsu" = fungsi yang meniru Bob: sebelum menulis, menjalankan **bundle hook nyata** `bob-kit/coder/.bob/hooks/lock_guard.js` dengan stdin payload bentuk IDE; kalau exit 0 → menulis file ke folder (sync agent mengirim); kalau exit 2 → memanggil tool `why_blocked` lewat radar-mcp (Client stdio ke `bob-kit/coder/.bob/radar-mcp.js`).
    - "Main agent palsu" = memanggil tool PM radar-mcp (`propose_plan`, `list_requests`, `propose_decision`, `get_task_diff`, `propose_review`) dengan payload skenario.
@@ -57,8 +57,8 @@ Membuktikan alur penuh PRD berjalan: **rencana → live → blokir → keputusan
 4. **Milestone Sab 23:00 — 3 PC nyata (LANGKAH MANUAL, tulis checklist ini di log)**:
    Persiapan:
    1. Reset server: `pnpm -C radar admin reset --confirm && pnpm -C radar admin init …` (repo toko-demo bersih), bagikan token baru.
-   2. PC A & B: clone kosong folder kerja → `radar join <server> --workspace toko-demo --as A|B --token … --kit coder`; buka folder di Bob IDE, mode "Radar Coder".
-   3. PC C: `radar join … --as C --kit pm`; Bob IDE mode "Radar PM Lead"; browser Mission Control login token mc.
+   2. PC A & B: clone kosong folder kerja → `radar join <server> --workspace toko-demo --as A|B --token … --kit coder`; buka folder di Bob IDE dan **trust workspace** (kalau tidak, hook & MCP dilewati tanpa error), cek tab Hooks dan panel MCP `radar` tanpa prompt approve, mode "Live Collab Coder".
+   3. PC C: `radar join … --as C --kit pm`; Bob IDE (trust workspace) mode "Live Collab PM Lead"; browser Mission Control login token mc.
    Jalankan naskah PRD §15 (tanpa merekam dulu):
    4. C: prompt `pm-rencana.md` tujuan "Tambah fitur kupon dan dark mode" → kartu rencana → Setujui → kunci berwarna muncul.
    5. A: "Kerjakan task aktifmu: kupon diskon di checkout." · B: "Kerjakan task aktifmu: dark mode." → amati file berubah sendiri di PC lain & ✎ di MC.

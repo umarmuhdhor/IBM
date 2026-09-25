@@ -3,10 +3,10 @@
 | Field | Nilai |
 |---|---|
 | Jalur | **Lane Umar** (Umar) · branch `lane/bob` · sebagian besar kode ditulis di **Bob IDE** (Bob slice), Claude Code + ECC untuk test, review, dan bundel |
-| Slot WITA | Sab 26 Sep 10:00 – 16:00 |
+| Slot WITA | Sab 26 Sep 09:00 – 16:00 |
 | Estimasi | 5 jam |
-| Prasyarat | 01 (hasil spike), 02. **Boleh paralel** memakai mock server (`pnpm dev:mock`) sebelum fase 05 selesai |
-| Requirement PRD | BC-01, BC-02, BC-03, BC-04, BC-07 (P0); kerangka BC-05 (P1) |
+| Prasyarat | 01 (hasil spike), 02. **Boleh paralel** memakai mock server (`pnpm -C radar dev:mock`) sebelum fase 03/05 masuk `main` |
+| Requirement PRD | BC-01, BC-02, BC-03, BC-04, BC-07, JT-01 (sisi hook), JT-03 (`shareprompts`) (P0); kerangka BC-05 (P1) |
 | Model | Sonnet 5 · effort high |
 | Bob slice | **B2** `custom_modes.yaml` coder (bukti `02-coder-mode`) · **B3** hook `lock_guard` + `brief` (`03-hooks`) · **B4a** tool MCP coder (`04-mcp-coder`). Prompt siap tempel ditulis agent sebelum setiap slice. |
 | Fase berikutnya | 08 |
@@ -23,15 +23,15 @@ Membuat Bob milik coder "sadar Radar": di awal sesi dan setiap prompt ia mendapa
 
 ## Output
 
-- `packages/hooks/src/{brief,lock_guard,mark_ai_edit}.ts` + `build.mjs` (esbuild)
+- `packages/hooks/src/{_shared,activity,brief,lock_guard,mark_ai_edit,stop}.ts` + `build.mjs` (esbuild)
 - `packages/mcp/src/{main,client}.ts`, `tools/coder/*.ts` + `build.mjs`
-- `bob-kit/coder/.bob/{custom_modes.yaml, settings.json, mcp.json, hooks/brief.js, hooks/lock_guard.js, hooks/mark_ai_edit.js, radar-mcp.js, README.md}`
+- `bob-kit/coder/.bob/{custom_modes.yaml, settings.json, mcp.json, rules-coder/01-radar.md, hooks/brief.js, hooks/lock_guard.js, hooks/mark_ai_edit.js, hooks/stop.js, radar-mcp.js, README.md}`
 - `bob-kit/prompts/coder-*.md`
 - Test hook & MCP; bukti manual di Bob IDE
 
 ## Langkah kerja
 
-1. **Sesuaikan dengan spike.** Sebelum menulis kode, salin ke log fase: regex tool edit, field path, kanal pesan blokir (stderr+exit 2 / JSON), apakah stdout brief masuk konteks, lokasi `mcp.json`, nama grup mode, nama tool shell. Kalau ada yang belum diverifikasi → tandai "BELUM DIVERIFIKASI SPIKE" dan uji di langkah 12.
+1. **Sesuaikan dengan spike.** Sebelum menulis kode, salin ke log fase: regex tool edit, field path, kanal pesan blokir (stderr+exit 2 / JSON), apakah stdout brief masuk konteks, lokasi `mcp.json` + `alwaysAllow`, nama grup mode (docs: `execute`, bukan `command`), nama tool shell (docs: `execute_command`), perilaku timeout hook, hasil uji trust workspace. Kalau ada yang belum diverifikasi → tandai "BELUM DIVERIFIKASI SPIKE" dan uji di langkah 12.
 
 2. **Hook bersama** (`packages/hooks/src/_shared.ts`): `readStdin(timeoutMs=500)`, `loadLocalConfig(cwd atau RADAR_ROOT)`, `logLine()` ke `.radar/hook.log` (tanpa token), `withDeadline(fn, 1500)` — semua error/timeout → **fail-open**.
 
@@ -54,9 +54,11 @@ Membuat Bob milik coder "sadar Radar": di awal sesi dan setiap prompt ia mendapa
    - `start`: `GET /v1/brief?kind=start` → cetak `lines` ke stdout (≤ 6). Simpan `cursor`.
    - `prompt`: `GET /v1/brief?kind=prompt&since=<cursor>` → cetak bila tidak kosong; simpan cursor baru.
    - Timeout 1500 ms → cetak apa-apa? **Tidak**: diam (hemat Bobcoin), log lokal.
-   - Kalau spike menunjukkan stdout tidak masuk konteks → mode fallback sesuai DECISIONS (mis. JSON `additionalContext`).
+   - Docs lifecycle hooks Bob IDE: stdout `SessionStart` dan `UserPromptSubmit` disuntik sebagai konteks. Ini jalur utama penjelasan blokir: server menaruh blokir terbaru sejak `since` di baris pertama brief `prompt` (R4 §8 kind=prompt poin 0), jadi hook cukup mencetak `lines`. Kalau spike 3 membuktikan sebaliknya → fallback sesuai DECISIONS.
 
-5. **`mark_ai_edit.ts`** (PostToolUse, BC-05, P1): `POST /v1/ai-edits {paths, tool, sessionId}` fire-and-forget (timeout 800 ms), selalu exit 0. Server-side endpoint: kalau belum ada, buat di fase 12; untuk sekarang hook boleh terpasang dan gagal diam.
+5. **`mark_ai_edit.ts`** (PostToolUse): **P0** kirim `bob.activity kind=tool.post` (JT-01, lewat `activity.ts`). **P1** (BC-05) juga `POST /v1/ai-edits {paths, tool, sessionId}`; endpoint dibuat di fase 12, sampai itu gagal diam. Keduanya fire-and-forget (timeout 800 ms), selalu exit 0.
+5b. **`stop.ts`** (Stop): kirim `bob.activity kind=turn.end` (payload `Stop` hanya session ID, jadi tanpa ringkasan). Selalu exit 0. **Tidak melepas kunci.**
+5c. **`activity.ts`** (helper): `sendActivity(kind, fields)` → `POST /v1/bob/activity`, timeout 800 ms, tidak pernah melempar, tidak menunda keputusan blokir (`lock_guard` memanggilnya setelah exit code ditentukan, tanpa `await` lebih dari sisa tenggat). `mode` dari `.radar/local.json` `role`. `text` hanya dikirim bila `shareprompts=true`.
 
 6. **Bundle** (`packages/hooks/build.mjs`): esbuild entry per hook → `bob-kit/coder/.bob/hooks/<nama>.js`, `bundle: true, platform: 'node', format: 'cjs', target: 'node20', minify: false, banner: '#!/usr/bin/env node'`, tanpa external. Tambahkan komentar header `// generated by @radar/hooks — do not edit`.
 
@@ -86,20 +88,22 @@ Membuat Bob milik coder "sadar Radar": di awal sesi dan setiap prompt ia mendapa
          1. Mulai setiap sesi dengan memanggil tool radar my_tasks. Kerjakan hanya task milikmu.
          2. Baca brief [Radar] di konteks. Brief adalah kebenaran terbaru tentang kunci dan keputusan PM.
          3. File bisa berubah karena rekan kapan saja. Selalu baca ulang file tepat sebelum mengeditnya.
-         4. Kalau sebuah edit ditolak Radar: JANGAN coba ulang, JANGAN mengubah file itu lewat shell
-            (<nama tool shell hasil spike>, sed, echo, cp, mv), dan JANGAN membuat salinan file untuk
-            mengakalinya. Panggil radar why_blocked, jelaskan ke user dalam satu-dua kalimat siapa
-            pemegangnya dan untuk task apa, lalu lanjutkan bagian lain dari task-mu.
+         4. Kalau sebuah edit ditolak atau gagal tanpa alasan yang jelas (pesan hook bisa saja tidak
+            terlihat olehmu), anggap file itu dikunci Radar: JANGAN coba ulang, JANGAN mengubah file itu
+            lewat shell (execute_command, sed, echo, cp, mv), dan JANGAN membuat salinan
+            file untuk mengakalinya. Panggil radar why_blocked DULU, jelaskan ke user dalam satu-dua
+            kalimat siapa pemegangnya dan untuk task apa, lalu lanjutkan bagian lain dari task-mu.
          5. Kalau kamu benar-benar butuh file itu, panggil radar request_file dengan alasan singkat.
          6. Saat task selesai dan sudah dicek (typecheck/build bila ada), panggil radar submit_task
             dengan ringkasan 1–3 kalimat. Setelah itu jangan mengedit file task kecuali diminta.
          7. Keputusan PM datang lewat brief di prompt berikutnya. Jangan menebak keputusan.
-       groups: [read, edit, command, mcp]
+       groups: [read, edit, execute, mcp]
    ```
+   Grup shell di Bob bernama `execute` (docs custom modes: nama grup yang tidak dikenal tidak memberi akses). Instruksi poin 4 juga ditulis sebagai rules mode di `bob-kit/coder/.bob/rules-coder/01-radar.md` supaya tetap terbaca walau `customInstructions` terpotong.
 
-9. **`bob-kit/coder/.bob/settings.json`** — PRD §13 dengan nilai hasil spike (matcher, perintah). Perintah hook memakai path relatif root workspace (`node .bob/hooks/lock_guard.js`); kalau spike menunjukkan cwd hook bukan root, pakai variabel yang tersedia atau path absolut yang ditulis `radar kit install` saat pemasangan (template `{{ROOT}}`).
+9. **`bob-kit/coder/.bob/settings.json`** — PRD §13 dengan nilai hasil spike (matcher `^(write_file|apply_diff|search_and_replace|insert_content|office_edit)$`, perintah, `timeout` eksplisit 3 s untuk `PreToolUse` dan 5 s untuk brief; default Bob 10 s). Perintah hook memakai path relatif root workspace (`node .bob/hooks/lock_guard.js`); kalau spike menunjukkan cwd hook bukan root, pakai variabel yang tersedia atau path absolut yang ditulis `radar kit install` saat pemasangan (template `{{ROOT}}`).
 
-10. **`bob-kit/coder/.bob/mcp.json`** — `{ "mcpServers": { "radar": { "command": "node", "args": [".bob/radar-mcp.js"] } } }` (atau format/lokasi hasil spike). `radar kit install` mengganti path menjadi absolut bila perlu.
+10. **`bob-kit/coder/.bob/mcp.json`** — `{ "mcpServers": { "radar": { "command": "node", "args": [".bob/radar-mcp.js"], "alwaysAllow": ["my_tasks", "why_blocked", "request_file", "team_activity", "submit_task"] } } }` (atau format/lokasi hasil spike). Tanpa `alwaysAllow`, Bob meminta approve untuk setiap panggilan MCP (auto-approve mati secara default), jadi `why_blocked` tidak jalan otomatis. `radar kit install` mengganti path menjadi absolut bila perlu.
 
 11. **Prompt siap pakai** `bob-kit/prompts/coder-mulai.md` ("Mulai kerja: panggil my_tasks lalu kerjakan task aktif…"), `coder-lanjut.md`, `coder-selesai.md`. Singkat, hemat Bobcoin.
 
@@ -113,7 +117,7 @@ Membuat Bob milik coder "sadar Radar": di awal sesi dan setiap prompt ia mendapa
     - `packages/mcp/test/coder.test.ts`: `Client` + `InMemoryTransport` (atau spawn stdio) → `listTools` untuk role coder = persis 5 tool; setiap tool mengembalikan teks sesuai skenario mock.
 
 13. **Uji di Bob IDE (LANGKAH MANUAL, di workspace toko-demo yang di-`radar join` sebagai A dan B, server = mock atau server asli)**:
-    1. `radar kit install coder` → Bob IDE memuat mode "Radar Coder" & MCP `radar` (cek panel MCP).
+    1. `radar kit install coder` → buka folder di Bob IDE dan **trust workspace** (folder untrusted melewati hook, MCP, dan rules tanpa error) → Bob IDE memuat mode "Live Collab Coder" & MCP `radar` (cek panel MCP dan tab Hooks di Settings).
     2. Sesi baru mode `coder` → brief `[Radar]` terlihat/terbaca Bob (tanya "apa brief Radar-mu?").
     3. Prompt "Kerjakan task aktifmu" → Bob memanggil `my_tasks` lebih dulu (BC-01).
     4. Minta Bob B mengedit `src/checkout/checkout.ts` (milik A) → edit diblokir, file tidak berubah, Bob memanggil `why_blocked` dan menjelaskan pemilik + pindah ke file lain, **tidak mencoba ulang dan tidak memakai shell** (BC-01, BC-04). Ulangi 3× dengan kata-kata berbeda, catat hasil.
@@ -127,17 +131,17 @@ Membuat Bob milik coder "sadar Radar": di awal sesi dan setiap prompt ia mendapa
 
 ## Tambahan v0.3
 
-- **Target utama = Bob IDE** (aturan hackathon: Bob IDE wajib jadi komponen inti). Docs resmi menyatakan Bob IDE mendukung 5 hook, blokir exit 2 di `PreToolUse`, dan stdout `SessionStart`/`UserPromptSubmit` masuk konteks. Bob Shell cukup diuji sekali (opsional).
-- **Stream aktivitas (JT-01, P0):** semua hook memanggil `POST /v1/bob/activity` secara fire-and-forget (≤ 800 ms, gagal = diam): `UserPromptSubmit` → `kind:"prompt"` (ringkasan ≤ 200 karakter, hanya bila `shareprompts` di `.radar/local.json` = true), `PreToolUse` → `tool.pre` + hasil cek kunci, `PostToolUse` (matcher semua tool, bukan hanya edit) → `tool.post` + path + jumlah baris berubah, `Stop` → `turn.end`, `SessionStart` → `session.start` + mode. Isi file tidak pernah dikirim.
+- **Target utama = Bob IDE** (aturan hackathon: Bob IDE wajib jadi komponen inti). Docs resmi menyatakan Bob IDE mendukung 5 hook dan blokir exit 2 di `PreToolUse`. Tapi stderr hook hanya masuk log, jadi pesan blokir belum tentu sampai ke model: jalur penjelasan dipilih dari hasil spike 2 (R3 §2.2), dan instruksi mode poin 4 selalu dipasang sebagai jaring pengaman. Bob Shell opsional, tidak diuji untuk P0.
+- **Stream aktivitas (JT-01, P0):** semua hook memanggil `POST /v1/bob/activity` secara fire-and-forget (≤ 800 ms, gagal = diam): `UserPromptSubmit` → `kind:"prompt"` (ringkasan ≤ 200 karakter, hanya bila `shareprompts` di `.radar/local.json` = true), `PreToolUse` → `tool.pre` + hasil cek kunci, `PostToolUse` (matcher tool edit + baca + perintah dari hasil spike, bukan tool MCP `radar` sendiri) → `tool.post` + path + jumlah baris berubah bila payload membawanya, `Stop` → `turn.end` (tanpa ringkasan), `SessionStart` → `session.start` + mode. Isi file tidak pernah dikirim.
 - Jejak `BobTrace` (mis. `hook · PreToolUse · lock_guard → blocked · 84 ms`) dibentuk dari event `bob.activity` di app. Di Bob IDE, stdout `PreToolUse` diabaikan, jadi jejak blokir di chat Bob berasal dari pesan penolakan + penjelasan `why_blocked`.
 - `RADAR_LANG=en` (default demo) atau `id` untuk teks brief/blokir.
 
 ## Verifikasi
 
 ```bash
-pnpm --filter @radar/hooks test
-pnpm --filter @radar/mcp test
-pnpm bundle:kit && ls -la bob-kit/coder/.bob bob-kit/coder/.bob/hooks
+pnpm -C radar --filter @radar/hooks test
+pnpm -C radar --filter @radar/mcp test
+pnpm -C radar bundle:kit && ls -la radar/bob-kit/coder/.bob radar/bob-kit/coder/.bob/hooks
 echo '{"hook_event_name":"PreToolUse","tool_name":"write_file","tool_input":{"path":"src/checkout/checkout.ts"}}' \
   | RADAR_SERVER=http://localhost:8787 RADAR_TOKEN=tok-b RADAR_ROOT=$PWD/examples/toko-demo \
     node bob-kit/coder/.bob/hooks/lock_guard.js; echo "exit=$?"
@@ -151,7 +155,8 @@ echo '{"hook_event_name":"PreToolUse","tool_name":"write_file","tool_input":{"pa
 - [ ] BC-04: dua bentuk payload dinormalisasi; blokir = exit 2 & file tidak berubah (test + bukti Bob).
 - [ ] BC-07: 5 tool coder berfungsi (test MCP + bukti Bob).
 - [ ] Fail-open terbukti (server mati → exit 0 < 1,8 s).
-- [ ] Sesi Bob diekspor ke `bob_sessions/`.
+- [ ] JT-01 sisi hook: setiap hook mengirim `bob.activity` yang benar (test dengan mock), `text` tidak terkirim bila `shareprompts=false`.
+- [ ] Screenshot ringkasan task Bob ada di `bob_sessions/` (R7).
 
 ## Risiko & fallback
 
@@ -160,9 +165,10 @@ echo '{"hook_event_name":"PreToolUse","tool_name":"write_file","tool_input":{"pa
 | Bob tetap mencoba ulang edit | Pesan blokir lebih eksplisit + contoh di instruksi mode; lapis kedua server tetap menjamin file tidak berubah |
 | Hook lambat karena start Node (> 300 ms) | Bundle kecil (tanpa zod penuh: impor hanya schema yang dibutuhkan), hindari `ignore` besar; ukur `node --cpu-prof` bila perlu |
 | cwd hook bukan root workspace | `radar kit install` menulis path absolut ke `settings.json` |
-| MCP tidak terbaca di mode | Lokasi config sesuai spike; fallback: daftarkan MCP global Bob |
+| MCP tidak terbaca di mode | Cek workspace trusted dulu; lokasi config sesuai spike; fallback: daftarkan MCP global Bob (`~/.bob/settings/mcp.json`) |
+| Hook/MCP diam tanpa error | Workspace belum trusted (Bob IDE ≥ 2.0.2). Trust workspace, lalu cek tab Hooks di Settings |
 
 ## Catatan handoff
 
 - Fase 08 memakai `packages/mcp` yang sama (tambah `tools/pm/*`).
-- Kutipan jawaban Bob (blokir & penjelasan) → `packages/web/public/demo/bob-quotes.json` (fase 11).
+- Kutipan jawaban Bob (blokir & penjelasan) → `radar/bob-kit/prompts/bob-quotes.json` (folder lane Umar). Imelda menyalinnya ke replay di fase 11D.

@@ -40,7 +40,7 @@ Bob milik PM menjadi main agent yang **hanya bisa mengusulkan**: menyusun rencan
    - `session_report()` → P1: kalau endpoint belum ada, balas "Laporan sesi tersedia setelah fase 12."
    - **Tidak ada** tool approve/decide/revoke (MA-07). Tambahkan test yang menggagalkan build bila daftar tool PM ≠ 8 nama di atas.
 
-2. **Mode `pm-lead`** `bob-kit/pm/.bob/custom_modes.yaml` (grup hasil spike 5; target `[read, mcp]`, tanpa `edit` & `command`):
+2. **Mode `pm-lead`** `bob-kit/pm/.bob/custom_modes.yaml` (grup hasil spike 5; target `[read, mcp]`, tanpa `edit` & `execute`):
    ```yaml
    customModes:
      - slug: pm-lead
@@ -76,7 +76,7 @@ Bob milik PM menjadi main agent yang **hanya bisa mengusulkan**: menyusun rencan
        groups: [read, mcp]
    ```
 
-3. **`bob-kit/pm/.bob/mcp.json`** sama dengan coder (role PM dari `.radar/local.json` di PC C). `settings.json` PM: hanya `SessionStart` brief PM (opsional, ringkas: "2 permintaan, 1 review menunggu"). **Tidak** memasang `lock_guard` (PM tidak menulis; server menolak update PM).
+3. **`bob-kit/pm/.bob/mcp.json`** sama dengan coder (role PM dari `.radar/local.json` di PC C), dengan `alwaysAllow` berisi 8 tool PM (aman: semua usulan tetap menunggu persetujuan di Mission Control, MA-07). Workspace PC C juga harus di-trust. `settings.json` PM: hanya `SessionStart` brief PM (opsional, ringkas: "2 permintaan, 1 review menunggu"). **Tidak** memasang `lock_guard` (PM tidak menulis; server menolak update PM).
 
 4. **Prompt PM siap tempel** `bob-kit/prompts/`:
    - `pm-rencana.md`: "Tujuan sesi: <tujuan>. Tim: A dan B (coder). Susun rencana dengan propose_plan."
@@ -91,7 +91,7 @@ Bob milik PM menjadi main agent yang **hanya bisa mengusulkan**: menyusun rencan
    - Mencoba memanggil nama tool `approve` → error "tool tidak ada".
 
 6. **Uji di Bob IDE — PC C (LANGKAH MANUAL, melawan server asli setelah fase 05/06; mock boleh untuk latihan)**:
-   1. `radar join … --as C --kit pm` → mode "Radar PM Lead" tersedia.
+   1. `radar join … --as C --kit pm` → mode "Live Collab PM Lead" tersedia.
    2. **MA-01:** minta "Tolong ubah theme.css jadi gelap sekarang juga" → Bob menolak / tidak punya tool tulis; file tidak berubah.
    3. **MA-02:** tempel `pm-rencana.md` dengan tujuan "Tambah fitur kupon dan dark mode" → muncul proposal plan di `GET /v1/proposals` tanpa file tumpang tindih (atau file bersama ditandai antre). Ulangi 2× untuk konsistensi.
    4. **MA-03:** buat blokir (B mengedit checkout.ts milik A lewat hook/curl) → tempel `pm-rebutan.md` → proposal decision dengan opsi & alasan satu kalimat.
@@ -107,8 +107,8 @@ Bob milik PM menjadi main agent yang **hanya bisa mengusulkan**: menyusun rencan
 ## Verifikasi
 
 ```bash
-pnpm --filter @radar/mcp test
-pnpm bundle:kit
+pnpm -C radar --filter @radar/mcp test
+pnpm -C radar bundle:kit
 RADAR_SERVER=http://localhost:8787 RADAR_TOKEN=tok-c RADAR_ROLE=pm \
   npx @modelcontextprotocol/inspector node bob-kit/pm/.bob/radar-mcp.js   # cek daftar tool secara visual (opsional)
 ```

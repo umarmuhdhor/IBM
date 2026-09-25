@@ -3,8 +3,8 @@
 | Field | Nilai |
 |---|---|
 | Jalur | **Lane Alief** (Alief) · branch `lane/core` |
-| Slot WITA | Sab 26 Sep 16:00 – 21:00 |
-| Estimasi | 5 jam (fase terpenting) |
+| Slot WITA | Sab 26 Sep 14:00 – 17:30 (setelah tidur 09:00–14:00; PR fase 04 di-merge saat Sinkron 1 16:00) |
+| Estimasi | 3,5 jam (fase terpenting; `pecah` boleh dipangkas, lihat Risiko) |
 | Prasyarat | 03 (04 disarankan untuk test lapis kedua) |
 | Requirement PRD | SV-02, SV-03, SV-04, SV-05, SV-06, MA-07 (sisi server), §06 seluruhnya, §07.3, §08.2, §09, BC-02/03 (sisi server brief) |
 | Model | **Opus 5.5** · effort high (jangan diturunkan) |
@@ -52,7 +52,7 @@ Mewujudkan tiga aturan PRD di server: satu file satu penulis, kunci dipesan saat
      - `decision` + `antre` + `AUTO_APPLY_QUEUE=true` → langsung `apply` dengan `decided_by='auto'`, status `diterapkan_otomatis`.
      - Event `proposal.created` (+ `review.flagged` bila `flags` tidak kosong — dicatat saat dibuat supaya metrik tetap terhitung walau PM menolak).
    - `GET /v1/proposals?status=`.
-   - `POST /v1/proposals/:id/decision` (**hanya token mc**, MA-07): `approve=false` → `ditolak` + efek penolakan R4 §6; `approve=true` → `apply(proposal)` R4 §6.1–6.3. Untuk `review` disetujui, panggil `git.commitTask(task)` — **di fase ini pakai stub** `commitTask` yang mengembalikan sha palsu `"pending-fase-06"` di balik interface `GitWorker` supaya alur bisa dites; fase 06 menggantinya.
+   - `POST /v1/proposals/:id/decision` (**hanya token mc**, MA-07): `approve=false` → `ditolak` + efek penolakan R4 §6; `approve=true` → `apply(proposal)` R4 §6.1–6.3. Untuk `review` disetujui, bangun **kerangka dua transaksi R4 §6.3 sekarang**: Tx1 klaim (`commit_started_at`, 409 bila commit lain berjalan) → `await committer.commitTask(snapshot)` → Tx2 validasi ulang + finalisasi, atau lepas klaim + `commit.push_failed` bila gagal. `committer` adalah interface `GitHubCommitter`; **di fase ini pakai stub** yang mengembalikan sha palsu `"pending-fase-06"`; fase 06 menggantinya dengan Git Data API. Selama klaim aktif, `checkWrite` mengembalikan `committing` (R4 §3 baris 12).
    - `event proposal.decided`, `request.decided` (+ `metric(block_to_decision_ms)`).
 
 7. **`notifications.ts` + `POST /v1/notify`** (pm): simpan notifikasi + event `notify.sent`; batasi 200 karakter.
@@ -61,7 +61,7 @@ Mewujudkan tiga aturan PRD di server: satu file satu penulis, kunci dipesan saat
 
 9. **`GET /v1/team`, `GET /v1/activity`, `GET /v1/state` lengkap** (R3 §2.8, §2.10, §2.21).
 
-10. **Test tabel `locks.test.ts`**: satu test per baris tabel R4 §3 (11 baris) + kasus: antrean 3 task pada satu file (maju berurutan saat approve), `pindahkan` memindahkan `task_touch`, `pecah` membuat task anak berantre, revoke memajukan antrean, cancel melepas semua kunci, auto-grab tanpa task membuat task adhoc, PM tidak pernah memegang kunci.
+10. **Test tabel `locks.test.ts`**: satu test per baris tabel R4 §3 (12 baris, termasuk `committing`) + kasus: approve review kedua saat commit pertama berjalan → 409, stub gagal → task tetap `review` + kunci tetap + klaim dilepas, kasus: antrean 3 task pada satu file (maju berurutan saat approve), `pindahkan` memindahkan `task_touch`, `pecah` membuat task anak berantre, revoke memajukan antrean, cancel melepas semua kunci, auto-grab tanpa task membuat task adhoc, PM tidak pernah memegang kunci.
 
 11. **Property test `invariants.prop.test.ts`** (fast-check, ≥ 300 run × 60 langkah): generator operasi acak `{check(member,path), update(member,path), submit(task), proposePlan(random), decide(proposal, approve), proposeDecision(request, option), cancel(task), revoke(path)}` pada 3 member × 6 file; setelah **setiap** langkah cek I1–I10 (R2 §4) lewat query SQL. Temuan counterexample → perbaiki kode, jangan longgarkan invariant.
 
@@ -75,9 +75,9 @@ Mewujudkan tiga aturan PRD di server: satu file satu penulis, kunci dipesan saat
     7. A submit T-1 → lock review; PM propose review `setujui_beri_tahu` dengan notify B → mc approve → T-1 `selesai`, commit stub, kunci `checkout.ts` pindah ke B (`dipesan`, SV-06), brief B memuat notifikasi.
     8. PM (token member C) memanggil decision → 403 (MA-07).
     9. `GET /v1/events/export` berisi urutan event lengkap yang cocok dengan skenario.
-    Simpan export hasil test ini ke `packages/web/public/demo/events.fixture.json` sebagai bahan awal replay (fase 11).
+    Simpan export hasil test ini ke `packages/server/test/fixtures/flow-export.json` (folder lane sendiri). Imelda menyalinnya ke `packages/web` sebagai bahan awal replay di fase 11D.
 
-13. **Kinerja**: test mikro 1000× `checkWrite` di `:memory:` → p95 < 5 ms. Catat.
+13. **Kinerja**: test mikro di `@cloudflare/vitest-plugin` (`runInDurableObject`, SQLite DO asli): 1000× `checkWrite` → p95 < 5 ms. Catat.
 
 14. Minta review silang (R6 §3 poin 4) bila waktu ada: sesi Sonnet 5 membaca `locks.ts` vs R4.
 
@@ -86,9 +86,9 @@ Mewujudkan tiga aturan PRD di server: satu file satu penulis, kunci dipesan saat
 ## Verifikasi
 
 ```bash
-pnpm --filter @radar/server test          # tabel + property + flow hijau
-pnpm --filter @radar/sync test            # regresi fase 04 tetap hijau
-pnpm --filter @radar/server build && fly deploy   # atau platform terpilih
+pnpm -C radar --filter @radar/server test   # tabel + property + flow hijau
+pnpm -C radar --filter @radar/sync test     # regresi fase 04 tetap hijau
+pnpm -C radar deploy:server                 # wrangler deploy ke Cloudflare
 # smoke ke server deploy (token dari password manager):
 curl -s -X POST $S/v1/locks/check -H "authorization: Bearer $TOK_B" -H 'content-type: application/json' \
   -d '{"paths":["src/utils.ts"],"tool":"write_file","clientTs":0}'
@@ -96,7 +96,7 @@ curl -s -X POST $S/v1/locks/check -H "authorization: Bearer $TOK_B" -H 'content-
 
 ## Kriteria selesai (DoD)
 
-- [ ] SV-02: 11 baris tabel R4 lulus; p95 server < 20 ms (bukti metric/test kinerja).
+- [ ] SV-02: 12 baris tabel R4 lulus; p95 server < 20 ms (bukti metric/test kinerja).
 - [ ] SV-03: update dari bukan pemilik ditolak tanpa mengubah isi (test flow langkah 4).
 - [ ] SV-04: rencana disetujui membuat task + memesan file (langkah 1).
 - [ ] SV-05: blokir berulang tidak menduplikasi permintaan (langkah 3).
@@ -115,6 +115,6 @@ curl -s -X POST $S/v1/locks/check -H "authorization: Bearer $TOK_B" -H 'content-
 
 ## Catatan handoff
 
-- Fase 06: implementasikan `GitWorker.commitTask` & `GET /v1/tasks/:id/diff`; urutan review disetujui R4 §6.3.
+- Fase 06: ganti stub `GitHubCommitter.commitTask` dengan Git Data API & buat `GET /v1/tasks/:id/diff`; kerangka dua transaksi R4 §6.3 sudah ada.
 - Fase 07/08: semua endpoint coder & PM kini nyata — pindahkan radar-mcp & hook dari mock ke server asli.
 - Fase 09: `GET /v1/state` + stream `event` lengkap.

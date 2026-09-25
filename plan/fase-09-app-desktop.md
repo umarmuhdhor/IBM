@@ -30,7 +30,7 @@ Tampilan mengikuti [`../DESIGN.md`](../DESIGN.md) §2–§5 dan mockup hasil `pr
 ## Output
 
 - `docs/ORCA_MAP.md`: peta titik sambung Orca (hasil Bob slice C1)
-- `orca:src/shared/tui-agent.ts`, `orca:src/shared/tui-agent-config.ts`, `orca:src/renderer/src/lib/agent-catalog.tsx`, `orca:src/renderer/src/lib/agent-icon-glyphs.tsx`: agent `bob`
+- Agent `bob` di semua titik registrasi agent Orca (pola agent `kiro`, Orca 1.4.197): `orca:src/shared/{tui-agent.ts, tui-agent-config.ts, tui-agent-display-names.ts, tui-agent-selection.ts, tui-agent-permissions.ts, agent-kind.ts, telemetry-property-schemas.ts, skills-cli-agent-keys.ts}` dan `orca:src/renderer/src/lib/{agent-catalog.tsx, agent-status.ts, agent-favicon-assets.ts, agent-icon-glyphs.tsx}`. Cari ulang dengan `grep -rlw kiro app/src | grep -v .test.` sebelum mulai, karena daftar bisa berubah
 - `orca:electron.vite.config.ts`: alias `@radar/common` dan `@radar/ui`
 - `orca:src/main/radar/secure-store.ts` (Electron `safeStorage`) + IPC `radar:get-connection` / `radar:set-connection`
 - `orca:src/renderer/src/lib/radar/{ws-client,api}.ts`, `orca:src/renderer/src/store/radar-store.ts`
@@ -54,25 +54,26 @@ Tampilan mengikuti [`../DESIGN.md`](../DESIGN.md) §2–§5 dan mockup hasil `pr
 2. **Bob slice C2 — registrasi agent `bob` (Code mode, ±3 Bobcoin).** Prioritas **P1**: Bob IDE adalah alat utama, dan Bob Shell di app hanya pelengkap. Tetap kerjakan kalau waktu ada, karena ini slice Bob yang murah dan bagus sebagai bukti. Tambahkan juga tombol **Open in Bob IDE** di panel Live Collab yang membuka folder workspace di Bob IDE. Prompt: "Tambahkan agent `bob` (label 'IBM Bob', command `bob`, homepage https://bob.ibm.com, glyph huruf B generik, **bukan** logo IBM) mengikuti pola agent `claude` di file-file yang tercantum di `docs/ORCA_MAP.md`. Jangan ubah agent lain." Bukti: `02-register-bob-agent`.
    - Setelah Bob selesai: pastikan `detectCmd`/`expectedProcess` benar (`bob`), dan `promptInjectionMode` mengikuti hasil spike 7 (fase 01). Kalau belum ada hasil spike, pakai mode yang paling konservatif (ketik manual, tanpa injeksi) dan tandai "BELUM DIVERIFIKASI".
    - Update `orca:docs/site/content/docs/agents/supported.mdx` (satu baris) kalau file itu ada.
-   - Test: jalankan test Orca yang terkait registry agent (cari `tui-agent*.test.ts`) dan `pnpm -C app tc`.
+   - Test: jalankan test Orca yang terkait registry agent (cari `tui-agent*.test.ts`) dan `pnpm -C app tc`. `tc` menunjuk `Record<TuiAgent, …>` yang belum punya entri `bob`; lengkapi semuanya, jangan pakai cast.
    - Uji manual: `pnpm -C app dev` → buat worktree → pilih **IBM Bob** → terminal menjalankan `bob` dan Bob menjawab "halo".
 
 ### 09b · Koneksi Live Collab (Sab 02:30–04:00)
 
 3. **Alias Vite.** Di `orca:electron.vite.config.ts` bagian renderer: `resolve.alias['@radar/common'] = radar/packages/common/src`, `['@radar/ui'] = radar/packages/ui/src`. Pastikan tsconfig renderer Orca mengenal path yang sama (`paths`). Uji `pnpm -C app tc`.
 4. **Penyimpanan koneksi.** `orca:src/main/radar/secure-store.ts`: simpan `{server, workspace, member, role, token}` terenkripsi dengan `safeStorage` di `userData/radar/connection.bin`. Nama file tidak mengandung "token" (R5 §8). IPC `radar:get-connection` / `radar:set-connection` / `radar:clear-connection` lewat pola IPC Orca (lihat ORCA_MAP). Token **tidak pernah** dikirim ke renderer log.
-5. **WS client + store.** `lib/radar/ws-client.ts`: `hello { token, client: role === 'pm' ? 'mc' : 'app' }`, lalu `state` → `reset` dan `event` → `applyEvent`. Reconnect backoff 0,5→8 s. Ukur latensi feed. `store/radar-store.ts` (zustand, mengikuti pola store Orca): `state`, `connected`, `now` (ticker 250 ms untuk pulse), `actions`. `lib/radar/api.ts`: `decide`, `revoke`, `cancelTask` (hanya role pm).
+5. **WS client + store.** `lib/radar/ws-client.ts`: `hello { token, client: role === 'pm' ? 'mc' : 'app' }`, lalu `state` → `reset` dan `event` → `applyEvent`. Keepalive `WS_PING_FRAME` tiap `WS_PING_MS` (sama dengan sync, R3 §3). Reconnect backoff 0,5→8 s. Ukur latensi feed. `store/radar-store.ts` (zustand, mengikuti pola store Orca): `state`, `connected`, `now` (ticker 250 ms untuk pulse), `actions`. `lib/radar/api.ts`: `decide`, `revoke`, `cancelTask` (hanya role pm).
    - Test vitest: store menerapkan urutan event fixture dari mock → kolom task dan kunci benar.
 
 ### 09c · Panel Live Collab (Sab 09:00–16:00)
 
-6. **Bob slice C3 — komponen `@radar/ui` (Code mode, ±4 Bobcoin).** Prompt: "Di `radar/packages/ui/src`, buat komponen React presentasional sesuai `DESIGN.md` §2–§3: `AgentTag`, `MemberChip`, `LockChip`, `WritingPulse`, `BobTrace`, `DecisionCard`, `TaskCard`, `FeedItem`, plus `tokens.css` (CSS variables DESIGN §2.1, font IBM Plex dari `@fontsource`). Props murni, tanpa fetch. Tulis test @testing-library untuk `LockChip` (4 status) dan `DecisionCard` (Approve memanggil `onApprove`)." Bukti: `bob-evidence.sh aarief 03 radar_ui_components`. Setelah selesai, umumkan props komponen ke Imelda (dipakai replay).
-   - Claude Code melengkapi sisa komponen (`ReviewCard`, `TerminalFrame`, `PresenceStack`, `BriefMeter`, `views/*`) mengikuti gaya yang dibuat Bob.
+6. **Bob slice C3 — komponen `@radar/ui` (Code mode, ±4 Bobcoin).** Prompt: "Di `radar/packages/ui/src`, buat komponen React presentasional sesuai `DESIGN.md` §2–§3: `AgentTag`, `MemberChip`, `LockChip`, `WritingPulse`, `BobTrace`, `DecisionCard`, `TaskCard`, `FeedItem`. Semua warna & font hanya lewat `var(--lc-*)` (tanpa hex di komponen). Buat `theme-vars.css` (bukan `tokens.css`, R5 §8) yang mengisi `--lc-*` dengan nilai DESIGN §2.1 + font IBM Plex, untuk web/replay saja. Props murni, tanpa fetch. Tulis test @testing-library untuk `LockChip` (4 status) dan `DecisionCard` (Approve memanggil `onApprove`)." Bukti: `bob-evidence.sh aarief 03 radar_ui_components`. Setelah selesai, umumkan props komponen ke Imelda (dipakai replay).
+   - Claude Code melengkapi sisa komponen (`ReviewCard`, `PresenceStack`, `BriefMeter`, `views/*`; `TerminalFrame` P1) mengikuti gaya yang dibuat Bob.
+   - **Di app:** jangan impor `theme-vars.css`. Tambahkan blok aditif di `app/src/renderer/src/assets/main.css` yang mengisi `--lc-*` dari token Orca yang setara (latar, kartu, border, teks, status, font sans/mono Orca) dan mendefinisikan token baru hanya untuk `--lc-person-a/b/c` + `--lc-needs-you` (DESIGN §2.1). Jalankan `pnpm -C app run check:code-quality:changed`: tidak boleh ada warna palet mentah di `app/src/**` selain blok token itu.
    - Halaman `packages/web/app/gallery/page.tsx` (dibuat Imelda di fase 11) menampilkan semua komponen dengan data contoh, dipakai untuk mencocokkan dengan mockup.
 7. **Seksi sidebar** `RadarSidebarSection`: judul **LIVE COLLAB**, item Mission Control (badge jumlah "Needs you"), Team, Files & locks. Disisipkan ke sidebar Orca dengan satu baris import + render (titik dari ORCA_MAP).
 8. **Views** sebagai tab/pane Orca:
    - `MissionControlView` (DESIGN §5.3): Tasks (Draft/Working/Review/Done) · Files & locks · Needs you (DecisionCard/ReviewCard) · Live feed. Tombol Approve/Deny memanggil `api.decide`. Tombol disabled + spinner sampai event `proposal.decided` datang (bukan optimistic). Role `app` (coder) melihat view ini read-only tanpa tombol.
-   - `TeamPanel` (DESIGN §5.2 kanan): anggota, mode Bob, status (idle/writing/blocked dari event), task aktif, tombol **Watch terminal** (aktif di fase 11).
+   - `TeamPanel` (DESIGN §5.2 kanan): anggota, mode Bob, status (idle/writing/blocked dari event), task aktif, tombol **Watch Bob** (membuka `WatchBobView`, fase 11).
    - `FilesLocksView`: pohon file dari `selectors.fileTree`, dengan `LockChip` + `WritingPulse`.
    - `NotificationsPanel`: blokir saya, keputusan, notify dari main agent.
 9. **Settings & status bar.** `RadarSettingsPane` (DESIGN §5.9 versi sederhana): URL server, workspace, member, role, token (field password), tombol **Connect** dan **Test**. Checklist cek: koneksi WS, `bob --version` (lewat IPC `child_process` main), ada `.bob/settings.json` di folder workspace. `RadarStatusItem`: `● Live Collab · 3 online · 1 needs you`.
@@ -80,13 +81,14 @@ Tampilan mengikuti [`../DESIGN.md`](../DESIGN.md) §2–§5 dan mockup hasil `pr
 11. **Kondisi kosong & error**: belum konek → kartu "Connect to a Live Collab workspace". Server putus → badge merah, data terakhir tetap tampil.
 12. **Test & verifikasi visual.** Skill `apple-design`/`emil-design-eng` untuk motion kartu dan pulse. Screenshot panel lewat `electron-automation` atau Playwright `_electron.launch()`, lalu jalankan `better-interface` dan perbaiki temuan HIGH sebelum PR. Unit test `@radar/ui`. Vitest store. Uji manual melawan mock `--scenario demo`: dalam 10 s muncul kartu `[blocked]`, dan Approve memanggil `POST /v1/proposals/:id/decision` (lihat log mock). Ambil 3 screenshot ke `docs/img/` dan bandingkan dengan mockup.
 13. **Security review** (`security-reviewer`): token hanya di main process/safeStorage, tidak ada token di log renderer, tidak ada `nodeIntegration` baru.
-14. Commit per bagian (09a, 09b, 09c) dan PR `lane/app → main` saat Sinkron 1 (Sab 16:00).
+14. Commit per bagian (09a, 09b, 09c). PR per bagian dari branch snapshot `lane/app-f09a`, `-f09b`, `-f09c` (PROMPT langkah 11); `09c` harus ter-merge sebelum Sinkron 1 (Sab 16:00).
 
 ## Verifikasi
 
 ```bash
 pnpm -C app tc                                            # Orca + perubahan kita
-pnpm -C app exec oxlint $(git diff --name-only main -- 'src/**/*.ts' 'src/**/*.tsx')
+pnpm -C app exec oxlint $(git diff --name-only origin/main -- 'src/**/*.ts' 'src/**/*.tsx')
+pnpm -C app run check:code-quality:changed               # tanpa warna palet mentah
 pnpm -C app test -- src/renderer/src/components/radar src/renderer/src/store/radar-store
 pnpm -C radar --filter @radar/ui test
 pnpm -C radar check:ignored
@@ -95,7 +97,7 @@ pnpm -C radar dev:mock &  pnpm -C app dev                 # uji manual melawan m
 
 ## Kriteria selesai (DoD)
 
-- [ ] DA-02: "IBM Bob" bisa dipilih, `bob` jalan di terminal Orca (screenshot).
+- [ ] *(P1)* DA-02: "IBM Bob" bisa dipilih, `bob` jalan di terminal Orca (screenshot).
 - [ ] DA-03/04: seksi Live Collab + koneksi tersimpan aman. Token tidak muncul di log (grep).
 - [ ] UI-01..04, UI-07 tampil dengan data mock, dan setelah Sinkron 1 dengan server asli.
 - [ ] Approve/Deny memanggil endpoint mc, hanya untuk role pm.

@@ -40,7 +40,7 @@ Intinya:
 
 | Komponen | Jalan di | Tech stack | Folder | Lane |
 |---|---|---|---|---|
-| **Collab Server** | **Cloudflare Workers + Durable Objects** | TypeScript, **Hono** (REST), **WebSocket Hibernation API**, **SQLite bawaan Durable Object**, **GitHub REST API** (Octokit) untuk commit, zod, `diff` | `radar/packages/server` | Core (Alief) |
+| **Collab Server** | **Cloudflare Workers + Durable Objects** | TypeScript, **Hono** (REST), **WebSocket Hibernation API**, **SQLite bawaan Durable Object**, **GitHub Git Data API** (`fetch` langsung, R4 §6.3) untuk commit, zod, `diff` | `radar/packages/server` | Core (Alief) |
 | **Sync agent** (`radar` CLI) | laptop | Node, **chokidar** (pantau file), ws | `radar/packages/sync` | Core |
 | **Kontrak bersama** | – | TypeScript types + zod schema + reducer event | `radar/packages/common` | Core |
 | **Hook Bob** | laptop, dipanggil Bob | Script Node kecil, dibundel **esbuild** jadi 1 file | `radar/packages/hooks` → `radar/bob-kit/*/.bob/hooks` | Bob |
@@ -60,20 +60,21 @@ Toolchain: **Node 24 + pnpm 12** di semua laptop (`nvm use 24`).
 | Apa | Di mana | Biaya | Catatan |
 |---|---|---|---|
 | Collab Server | **Cloudflare Workers + Durable Objects** | **gratis** | `wrangler deploy` → `https://live-collab.<akun>.workers.dev`. Tanpa VPS atau volume. DO tidur saat sepi tapi WebSocket tetap tersambung. |
-| Commit ke GitHub | **GitHub REST API** | gratis (5.000 request/jam) | 1 commit ≈ 4 + jumlah file request. Token khusus `toko-demo` = secret Worker. |
+| Commit ke GitHub | **GitHub Git Data API** | gratis (5.000 request/jam) | 1 commit = 4 request berapa pun jumlah file (isi file inline di `POST trees`, tanpa `POST blobs`). Batas plan Free Workers = 50 subrequest per invocation tidak tersentuh; task > 100 file atau > 5 MB ditolak (`too_many_files`). Secondary limit GitHub: 80 request pembuat konten/menit. Commit memakai klaim dua transaksi karena `await fetch` membuka input gate DO (R4 §6.3). Token khusus `toko-demo` = secret Worker. |
 | Landing + replay | **Cloudflare Pages** | gratis | Statis, aman dari server mati. Satu akun dengan Worker. |
 | Dev lokal | `wrangler dev` | gratis | Worker + DO + SQLite jalan di laptop, identik dengan cloud |
 | Cadangan darurat | `wrangler dev` + Cloudflare Tunnel | gratis | Hanya kalau akun Cloudflare bermasalah saat demo |
 | Kode | GitHub `umarmuhdhor/IBM` + `toko-demo` | gratis | – |
-| App `.dmg` | GitHub Release | gratis | Tidak di-sign Apple → klik kanan → Open |
+| App `.dmg` | GitHub Release | gratis | Ad-hoc signed, tidak di-sign/notarize: buka lewat System Settings → Privacy & Security → **Open Anyway** (sejak macOS 15 Sequoia klik kanan → Open tidak lagi melewati Gatekeeper), atau `xattr -dr com.apple.quarantine "/Applications/IBM Bob Live Collab.app"` |
 
-Kuota Workers Free: 100k request/hari. Pesan WebSocket masuk dihitung 20:1, pesan keluar gratis, dan SQLite DO gratis. Semua itu jauh di atas kebutuhan hackathon.
+Kuota plan Free: Workers 100k request/hari; pesan WebSocket masuk dihitung 20:1, pesan keluar gratis, auto-response ping gratis. SQLite DO: **100k rows written/hari** (update index dihitung, `setAlarm` = 1 row) dan 5 juta rows read/hari, 5 GB per akun, 1 GB per DO. Kuota yang paling mungkin habis adalah rows written, jadi heartbeat tidak ditulis ke SQL, alarm hanya aktif selama ada kunci (R4 §7), dan frame terminal digabung per detik (fase 06 P1).
 
 **Tidak dibutuhkan:** VPS, homelab yang nyala terus, database cloud, API key LLM, watsonx, atau OAuth. Token per anggota dibuat oleh `pnpm -C radar admin init`.
 
 **Kenapa Durable Object cocok:**
 - Satu objek per workspace menerima semua koneksi dan memproses pesan satu per satu, jadi dua Bob yang berebut file di milidetik yang sama tidak mungkin sama-sama menang, tanpa lock tambahan.
-- Batas yang relevan: Worker depan 10 ms CPU per request (hanya meneruskan ke DO), DO 30 s CPU per pesan, dan pesan WebSocket hingga 32 MiB.
+- Batas yang relevan: Worker depan 10 ms CPU per request (hanya meneruskan ke DO), 50 subrequest per invocation, DO 30 s CPU per pesan, pesan WebSocket hingga 32 MiB, baris SQLite 2 MB, statement SQL 100 KB / 100 parameter, attachment WebSocket 16 KiB, tag WebSocket tidak bisa diubah setelah `acceptWebSocket`.
+- Hibernasi menghapus state memori dan menjalankan ulang constructor saat bangun. State per koneksi disimpan di `serializeAttachment`, state lain di SQLite.
 
 ---
 

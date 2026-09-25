@@ -1,6 +1,6 @@
 ---
 name: live-collab-app
-description: Rules and commands for working on the IBM Bob Live Collab desktop app (the vendored Orca Electron app in app/) and its shared UI. Use whenever a task touches app/src/**, radar/packages/ui, the Live Collab sidebar/Mission Control/Team/Watch terminal views, the IBM Bob agent registration, or packaging the .app/.dmg.
+description: Rules and commands for working on the IBM Bob Live Collab desktop app (the vendored Orca Electron app in app/) and its shared UI. Use whenever a task touches app/src/**, radar/packages/ui, the Live Collab sidebar/Mission Control/Team/Watch Bob views, the IBM Bob agent registration, or packaging the .app/.dmg.
 ---
 
 # Working on the Live Collab desktop app (Orca fork in `app/`)
@@ -8,12 +8,12 @@ description: Rules and commands for working on the IBM Bob Live Collab desktop a
 ## Ground rules
 1. `app/` is a vendored copy of stablyai/orca @ bf40d35 (MIT). Read `app/AGENTS.md` and `app/CLAUDE.md` first and follow them.
 2. **Additive changes only.** New code goes in `app/src/renderer/src/components/radar/`, `app/src/renderer/src/lib/radar/`, `app/src/renderer/src/store/radar-store.ts`, `app/src/main/radar/`. Touch existing Orca files only with one-line hooks (import + render, registry entries). Never modify the pty daemon, `cloud/`, `mobile/`, or relay code.
-3. **Look & feel = Orca first.** Reuse Orca's existing shadcn/Radix components, Tailwind tokens, icons (lucide) and layout patterns (look at the sidebar, Agent Dashboard and Workspace board code). Live Collab only adds: person colors (A #78A9FF, B #BE95FF, C #FF832B), the "Needs you" magenta accent (#FF7EB6), status colors, and the `BobTrace` mono line. Stitch mockups in `UI Inspo & Design/UI Design/` are **mood/layout guidelines only** — do not copy their invented numbers or serif fonts.
+3. **Look & feel = Orca first.** Reuse Orca's existing shadcn/Radix components, Tailwind tokens, icons (lucide) and layout patterns (look at the sidebar, Agent Dashboard and Workspace board code). Live Collab only adds: person colors (A #78A9FF, B #BE95FF, C #FF832B), the "Needs you" magenta accent (#FF7EB6), and the `BobTrace` mono line. Status colors and fonts come from Orca. **Never write raw hex/palette colors in `app/src/**` components** (`pnpm -C app run check:code-quality:changed` fails): define the new colors once as additive `--lc-person-a/b/c` and `--lc-needs-you` tokens in `app/src/renderer/src/assets/main.css`, map the other `--lc-*` vars to existing Orca tokens there, and use only `var(--lc-*)` in `@radar/ui`. `radar/packages/ui/src/theme-vars.css` (IBM Plex + DESIGN §2.1 hex) is for web/replay only; the app keeps Orca's fonts. The team view button is **Watch Bob** (activity timeline from Bob IDE hooks), not a terminal viewer. Stitch mockups in `UI Inspo & Design/UI Design/` are **mood/layout guidelines only** — do not copy their invented numbers or serif fonts.
 4. File names must not contain `token`, `secret`, `password`, `credentials` and must not be `config.json` (IBM template .gitignore silently ignores them).
 5. Tokens live only in the main process (`safeStorage`). Never log them in the renderer.
 
 ## Toolchain
-Orca needs **Node 24 + pnpm 12** (`app/package.json` engines/packageManager). The `radar/` workspace works on Node 20+.
+Orca needs **Node 24 + pnpm 12** (`app/package.json` engines/packageManager). The `radar/` workspace also uses Node 24 (`engines >=24`, R5); only the hook/MCP bundles target `node20`.
 ```bash
 export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"; nvm use 24
 pnpm -C app install

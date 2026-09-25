@@ -52,6 +52,8 @@ function checkWrite(member, path, via):
   if isIgnored(path):                         return ALLOW('ignored_path')
   if member.role == 'pm':                     return BLOCK('pm_readonly')          # tanpa request
   lock = lockRepo.get(path)
+  if lock != null and taskRepo.get(lock.task_id).commit_started_at != null:
+    return BLOCK('committing')                # §6.3, tanpa request; berlaku juga untuk pemilik
 
   if lock == null:
     # file bebas — tetapi mungkin ada antrean yang tertinggal (tidak boleh terjadi, I4; defensif)
@@ -105,6 +107,7 @@ function blockFor(member, path, via):
 | 9 | `dipegang` oleh orang lain | hook/sync | block | `held_by_other` | request (dedup) + block |
 | 10 | `review` oleh orang lain | hook/sync | block | `in_review_by_other` | request (dedup) + block |
 | 11 | #9 diulang 5× | hook | block | `held_by_other` | tetap 1 request aktif, 5 baris block |
+| 12 | file milik task yang sedang di-commit (`commit_started_at` terisi) | hook/sync | block | `committing` | tanpa request, berlaku juga untuk pemilik |
 
 ### Penerimaan `file.update` (lapis kedua, SY-04 / §6 "Dua lapis penegakan")
 
@@ -206,14 +209,19 @@ Request → `diputuskan` + `outcome`, emit `request.decided`. Ditolak PM → req
 | `setujui_beri_tahu` | seperti `setujui`, lalu `notify` untuk setiap entri `payload.notify` |
 | `kembalikan` | task → `dikerjakan`, lock task → `dipegang`, notifikasi ke owner berisi `notes` |
 Review proposal ditolak PM → proposal `ditolak`, task tetap `review` (PM bisa minta main agent me-review ulang).
-Kalau commit gagal (git error) → transaksi DB tetap di-commit **tanpa** melepas kunci; task tetap `review`; emit `commit.push_failed`/error; MC menampilkan tombol "Coba lagi".
+Kalau commit gagal (error GitHub API) → kunci **tidak** dilepas; task tetap `review`; emit `commit.push_failed`; MC menampilkan tombol "Coba lagi".
 
-Urutan eksekusi untuk review disetujui: (1) git worker menulis file task ke working copy & commit (di luar transaksi DB, serial), (2) kalau sukses → satu transaksi DB untuk status, release, event. Push ke GitHub asinkron setelahnya (gagal push tidak membatalkan commit lokal).
+**Urutan eksekusi review disetujui (`setujui*`) di Durable Object.** Tidak ada binary `git` dan tidak ada working copy. Commit dibuat lewat GitHub Git Data API, dan update ref = push. Karena `await fetch` membuka DO untuk pesan lain (R2 §1), urutannya dua transaksi dengan validasi ulang:
+
+1. **Transaksi 1 (klaim):** proposal harus `menunggu`, task harus `review`, dan tidak ada task lain dengan `commit_started_at` terisi (kalau ada → `409 CONFLICT` "commit lain sedang berjalan", MC boleh coba lagi). Set `task.commit_started_at = now`. Ambil snapshot isi file dari `task_touch.last_version`. Selama klaim aktif, `checkWrite` pada file task ini mengembalikan `block` dengan reason `committing` untuk **semua** member, termasuk pemilik (jendela ±1–3 s).
+2. **I/O (tanpa transaksi):** `GET commits/<head>` → `POST trees` (base = tree `meta.head_commit`, isi file inline di field `content`, hapus = `sha: null`) → `POST commits` → `PATCH refs/heads/<branch>` (tanpa force). Tidak ada `POST blobs`, jadi subrequest tetap 4 berapa pun jumlah file (batas plan Free 50 per invocation). Task dengan > 100 file atau total isi > 5 MB ditolak lebih dulu dengan `commit.push_failed { error: "too_many_files" }`.
+3. **Transaksi 2 (final):** validasi ulang: proposal masih `menunggu` dan `task.commit_started_at` masih milik klaim ini. Lalu set `commit_sha`, task `selesai`, `releaseTaskLocks(task,'approved')`, `meta.head_commit = sha`, proposal `disetujui`, event `commit.created` + efek verdict. Kosongkan `commit_started_at`.
+4. **Gagal di langkah 2** (termasuk ref non-fast-forward `409`/`422` karena ada push langsung ke repo, dan secondary rate limit `403`/`429`): transaksi yang mengosongkan `commit_started_at`, emit `commit.push_failed`, task tetap `review`.
 
 ## 7. Heartbeat & kedaluwarsa (SV-09, P1)
 
-- Sync agent → `heartbeat` tiap 15 s; server set `member.last_heartbeat`, `online=1`.
-- Job tiap 30 s: member coder dengan `now - last_heartbeat > HEARTBEAT_EXPIRE_MS (300000)` dan memegang ≥1 lock → emit `member.stale` sekali; MC menampilkan peringatan + tombol "Cabut kunci" per file (`POST /v1/locks/revoke`).
+- Sync agent → `heartbeat` tiap 15 s; server memperbarui `lastHeartbeat` di attachment WebSocket (`serializeAttachment`), bukan baris SQL. `member.last_heartbeat` di SQL hanya ditulis saat socket tutup atau paling sering 1×/menit. Alasan: kuota plan Free 100k rows written/hari (update index ikut dihitung).
+- Job 30 s (Durable Object **alarm** `ctx.storage.setAlarm`, satu alarm per DO, dijadwalkan ulang di handler `alarm()`; tidak ada cron/setInterval yang hidup di DO yang berhibernasi). Alarm **hanya dijadwalkan selama ada lock `dipegang`/`dipesan`** atau socket yang menunggu `hello` (saat lock pertama dibuat atau socket baru diterima dan `getAlarm()` bernilai `null` → `setAlarm(tenggat terdekat)`); tanpa itu alarm tidak dipasang ulang, supaya DO bisa hibernasi dan kuota durasi/rows tidak habis (`setAlarm` = 1 row written). Handler harus idempotent (alarm at-least-once, retry otomatis). Stale dihitung dari `lastHeartbeat` attachment socket `sync` member (`ctx.getWebSockets()`), atau dari `member.last_heartbeat` kalau socket sudah tidak ada: member coder dengan `now - last_heartbeat > HEARTBEAT_EXPIRE_MS (300000)` dan memegang ≥1 lock → emit `member.stale` sekali; MC menampilkan peringatan + tombol "Cabut kunci" per file (`POST /v1/locks/revoke`).
 - Koneksi WS putus → `online=0`, emit `member.offline` (tanpa mencabut kunci).
 
 ## 8. Penyusun brief (`services/brief.ts`)
@@ -229,6 +237,7 @@ Maksimal 6 baris × 160 karakter, awalan `[Radar] `. Prioritas pengisian (berhen
 6. Aturan singkat: `Jangan edit file milik orang lain. Kalau ditolak: radar why_blocked.`
 
 **kind=prompt** (hanya yang baru sejak `since`)
+0. Blokir terbaru untuk saya (dari catatan yang juga dibaca `why_blocked`, R3 §2.6): `Edit <path> DITOLAK: dipegang <Member> (<T-x>). Jangan coba ulang, jangan lewat shell. <suggestion>`. Ini jalur utama penjelasan blokir ke model, karena stderr hook `PreToolUse` hanya masuk log Bob (R3 §2.2).
 1. Keputusan PM yang menyangkut saya (`request.decided`, `lock.transferred` ke saya, review saya).
 2. Notifikasi `notify.sent` untuk saya.
 3. Kunci baru untuk saya (`lock.reserved`/`lock.transferred` → giliranmu).

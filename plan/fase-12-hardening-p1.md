@@ -3,10 +3,10 @@
 | Field | Nilai |
 |---|---|
 | Jalur | **Lane Alief** (Alief) · branch `lane/core` (Lane Umar membantu BC-05 & SV-10 bila fase 13 cepat selesai) |
-| Slot WITA | Min 27 Sep 05:00 – 11:00 · **berakhir di GATE 2 (feature freeze) Min 11:00** |
+| Slot WITA | Min 27 Sep 04:00 – 11:00 · **berakhir di GATE 2 (feature freeze) Min 11:00** |
 | Estimasi | 5 jam |
 | Prasyarat | 10 |
-| Requirement PRD | SV-09, SV-10, SY-06, SY-07, BC-05, MA-06 (P1); BC-06 (P2, opsional); NFR-01..04 hardening |
+| Requirement PRD | SV-09, SV-10, SY-06, SY-07, BC-05, MA-06 (P1); `bob.turn` opsional (BC-06 inti sudah P0 lewat JT-01); NFR-01..04 hardening |
 | Model | Sonnet 5 · effort medium; **Opus 5.5** · high untuk SY-07 reconnect |
 | Fase berikutnya | 14 |
 
@@ -32,7 +32,7 @@ Kerjakan dari atas. Kalau jam 10:00 belum sampai sebuah item, **item itu dan sem
 | 5 | Pemicu main agent otomatis | SV-10 | Roadmap kuat; opsional di demo | – |
 | 6 | Hapus & ganti nama | SY-06 | Jarang di demo | 2 |
 | 7 | Penanda AI PostToolUse | BC-05 | Nilai audit | 1 |
-| 8 | Hook Stop → ringkasan giliran | BC-06 (P2) | Hanya bila semua di atas selesai | – |
+| 8 | Event `bob.turn` (tanpa ringkasan) | BC-06 (opsional) | Hanya bila semua di atas selesai | – |
 
 ## Langkah kerja
 
@@ -53,14 +53,14 @@ Kerjakan dari atas. Kalau jam 10:00 belum sampai sebuah item, **item itu dan sem
 
 5. **SV-10 pemicu otomatis**: `radar agent --auto --max-cost <n> [--bob-cmd "bob"]` di PC C: pakai token PM dan polling `GET /v1/requests?status=terbuka` tiap 5 s (lebih sederhana daripada WebSocket, dan token mc tidak pernah dipakai proses ini) → untuk setiap request baru tanpa proposal, jalankan `bob run --mode pm-lead --max-cost <n> "<isi pm-rebutan.md + id request>"` (sintaks CLI Bob diverifikasi dari spike/docs; kalau berbeda, sesuaikan & catat). Satu proses sekaligus, timeout 120 s, log ke `.radar/agent.log`. Fitur di balik flag; default demo tetap manual (PRD R0).
 
-6. **SY-06 hapus & ganti nama**: sync agent mengirim `file.delete` pada `unlink` (debounce; `unlink`+`add` < 150 ms dengan hash sama = rename → kirim delete lama + update baru). Server: `checkWrite` untuk delete, versi naik, `file.deleted` ke klien lain (hapus file lokal), `task_touch.deleted=1`, git worker `git rm`. Test integrasi.
+6. **SY-06 hapus & ganti nama**: sync agent mengirim `file.delete` pada `unlink` (debounce; `unlink`+`add` < 150 ms dengan hash sama = rename → kirim delete lama + update baru). Server: `checkWrite` untuk delete, versi naik, `file.deleted` ke klien lain (hapus file lokal), `task_touch.deleted=1`; saat commit, path yang dihapus menjadi entri tree `sha: null` di Git Data API (fase 06, tanpa `git rm`). Test integrasi.
 
 7. **BC-05 PostToolUse**: endpoint `POST /v1/ai-edits` (R3 §2.20) → tandai `file_version.ai=1` untuk versi terbaru yang dibuat member itu dalam 10 s terakhir; event `ai.edit`. Feed menampilkan "Bob A" vs "A (manual)" berdasarkan tanda ini (reducer: `file.changed` + `ai.edit` yang berdekatan). Hook sudah ada dari fase 07.
 
-8. **BC-06 Stop (P2, opsional)**: hook `stop.js` mengirim ringkasan satu baris giliran Bob (dari payload bila tersedia) → event `bob.turn` → feed. **Tidak melepas kunci.**
+8. **BC-06 Stop**: sudah P0 lewat JT-01 (`stop.js` → `bob.activity kind=turn.end`, fase 07). Payload `Stop` hanya berisi session ID, jadi **tidak ada ringkasan giliran**. Opsional di sini: event `bob.turn {memberId}` → feed "Bob A selesai satu giliran". **Tidak melepas kunci.**
 
 9. **Hardening umum** (sisihkan 45 menit):
-   - Rate limit ringan `@fastify/rate-limit` untuk endpoint mc & proposals (mis. 60/menit/token).
+   - Rate limit ringan untuk endpoint mc & proposals (mis. 60/menit/token): middleware Hono di dalam DO dengan counter jendela 1 menit di memori per `principal` (DO tunggal per workspace, jadi counter konsisten). Lebih → `429 RATE_LIMITED`.
    - Validasi ukuran body (1,5 MB WS, 256 KB REST).
    - Uji beban kecil: 5 member simulasi × 2 update/s selama 2 menit (`scripts/sim-3pc.ts --load`) → tidak ada error, p95 tetap dalam target (NFR-01, batas 5 anggota PRD §04).
    - Uji "server restart saat demo": `wrangler deploy` ulang (DO restart) → semua klien tersambung lagi < 10 s, MC memuat ulang state.
@@ -78,9 +78,9 @@ Kerjakan dari atas. Kalau jam 10:00 belum sampai sebuah item, **item itu dan sem
 ## Verifikasi
 
 ```bash
-pnpm test
-pnpm sim -- --server local --runs 2
-pnpm sim -- --server local --load --members 5 --duration 120
+pnpm -C radar test
+pnpm -C radar sim -- --server local --runs 2
+pnpm -C radar sim -- --server local --load --members 5 --duration 120
 curl -s $S/v1/report/session -H "authorization: Bearer $TOK_C" | jq -r .markdown
 ```
 

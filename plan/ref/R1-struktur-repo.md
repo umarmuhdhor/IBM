@@ -14,7 +14,7 @@ Konvensi path di semua file plan:
 - `plan/…`, `PRD.md`, `PLAN.md`, `DESIGN.md`, `bob_sessions/…` = relatif ke root repo.
 - Path kode lain tanpa prefix (`packages/…`, `scripts/…`, `docs/…`, `bob-kit/…`, `examples/…`) = relatif ke **`radar/`**.
 
-Toolchain: `app/` butuh **Node 24 + pnpm 12** (`nvm use 24`, lalu corepack). `radar/` jalan di Node 20+ tapi disarankan Node 24 juga supaya satu shell cukup.
+Toolchain: `app/` butuh **Node 24 + pnpm 12** (`nvm use 24`, lalu corepack). `radar/` juga Node 24 (`engines: >=24`, `.nvmrc` = `24`, CI Node 24). Hanya bundle hook & radar-mcp yang ditarget `node20`, karena bundle itu jalan di mesin anggota lewat Bob IDE.
 
 ## 2. Layout repo
 
@@ -30,7 +30,7 @@ IBM/  (github.com/umarmuhdhor/IBM)
 ├── bob_sessions/<tim>_<nama>_task<NN>_<slug>_summary.png + INDEX.md
 ├── app/                               ← Orca (Electron). Lane Aarief/Imelda menambah:
 │   ├── src/shared/tui-agent.ts        ← + 'bob'
-│   ├── src/shared/tui-agent-config.ts ← + konfigurasi launch/detect bob
+│   ├── src/shared/tui-agent-config.ts ← + konfigurasi launch/detect bob (+ ±10 file registrasi lain, daftar di fase 09)
 │   ├── src/main/radar/                ← BARU: secure-store.ts (safeStorage), sync-supervisor.ts (P1)
 │   ├── src/renderer/src/
 │   │   ├── lib/agent-catalog.tsx, lib/agent-icon-glyphs.tsx   ← + "IBM Bob"
@@ -56,18 +56,19 @@ IBM/  (github.com/umarmuhdhor/IBM)
 
 ```text
 packages/common/src/  index, constants, types, schemas, events, reducer, hook-payload, paths, ignore,
-                      hash, http, config, brief, term (BARU: tipe & zod pesan term.*)
+                      hash (Web Crypto), http, config (hanya Node, subpath `@radar/common/node`), brief, selectors,
+                      term (P1: tipe & zod pesan term.*)
 packages/server/src/  index (Worker, Hono), workspace-do (Durable Object), admin, config, db/{schema.sql, migrate.ts, sql.ts, repo/*.ts: member, access,
                       task, file, lock, allocation, request, proposal, review, event, notification},
                       services/{events, files, locks, tasks, requests, proposals, brief, github, git-message, diff,
-                      heartbeat, report, terminals (BARU: relay + ring buffer)}, http/{auth, errors,
+                      heartbeat, report, activity (`bob/activity`), terminals (P1: relay + ring buffer)}, http/{auth, errors,
                       routes/*.ts}, ws/hub.ts
 packages/sync/src/    cli, agent, watcher, known, writer, sidecar, notify, kit
-packages/hooks/src/   brief, lock_guard, mark_ai_edit, stop
+packages/hooks/src/   brief, lock_guard, mark_ai_edit, stop, activity (helper kirim `bob.activity`, fire-and-forget)
 packages/mcp/src/     main, client, tools/coder/*, tools/pm/*
 packages/ui/src/      AgentTag, MemberChip, LockChip, WritingPulse, BobTrace, BriefMeter, DecisionCard,
                       ReviewCard, TaskCard, FeedItem, TerminalFrame, GuestCursor, PresenceStack,
-                      views/{MissionControl, FilesLocks, TeamPanel}, tokens.css
+                      views/{MissionControl, FilesLocks, TeamPanel}, theme-vars.css (bukan tokens.css, R5 §8)
 packages/web/app/     demo/page.tsx, gallery/page.tsx, install/route.ts (P2)
 ```
 
@@ -76,8 +77,8 @@ packages/web/app/     demo/page.tsx, gallery/page.tsx, install/route.ts (P2)
 | Paket | Runtime deps | Dev deps | Build |
 |---|---|---|---|
 | `@radar/common` | `zod` | `vitest` | `tsc` → `dist/` (ESM) |
-| `@radar/server` | `hono`, `@octokit/rest`, `diff`, `nanoid`, `zod`, `@radar/common` (CLI admin terpisah di `scripts/admin.ts` memakai `commander`) | `wrangler`, `@cloudflare/workers-types`, `@cloudflare/vitest-pool-workers`, `vitest`, `fast-check` | `wrangler deploy` (bundling esbuild bawaan wrangler) |
-| `@radar/sync` | `chokidar@4`, `ws`, `commander`, `ignore`, `picocolors`, `@radar/common` | `vitest` | `tsc`; `bin.radar = dist/cli.js` |
+| `@radar/server` | `hono`, `diff`, `nanoid`, `zod`, `@radar/common` (CLI admin terpisah di `scripts/admin.ts` memakai `commander`) | `wrangler`, `@cloudflare/workers-types`, `@cloudflare/vitest-plugin`, `vitest@^4.1` (plugin belum mendukung vitest 5), `msw@^2.14` + `@msw/cloudflare`, `fast-check` | `wrangler deploy` (bundling esbuild bawaan wrangler) |
+| `@radar/sync` | `chokidar@4`, `ws`, `commander`, `ignore`, `picocolors`, `@radar/common` | `vitest`, `wrangler` (`createTestHarness` untuk test integrasi) | `tsc`; `bin.radar = dist/cli.js` |
 | `@radar/hooks` | (tidak ada saat runtime — dibundel) `@radar/common` | `esbuild`, `vitest` | `esbuild` → `bob-kit/coder/.bob/hooks/*.js` (CJS, node20, tanpa dependensi eksternal) |
 | `@radar/mcp` | `@modelcontextprotocol/sdk`, `zod`, `@radar/common` | `esbuild`, `vitest` | `esbuild` bundle → `bob-kit/*/.bob/radar-mcp.js` (satu file) |
 | `@radar/ui` | `react@19` (peer), `@radar/common`, `lucide-react`, `@fontsource/ibm-plex-sans`, `@fontsource/ibm-plex-mono` | `vitest`, `@testing-library/react` | tanpa build: dikonsumsi sebagai source (alias Vite di Orca, `transpilePackages` di Next) |

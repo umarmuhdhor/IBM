@@ -5,8 +5,11 @@
 ## 1. Prinsip
 
 - Satu **Durable Object** per workspace (`WorkspaceDO`, nama = `WORKSPACE_ID`) dengan SQLite bawaan (`ctx.storage.sql`). Tidak ada file DB atau volume yang kita urus. Data permanen di Cloudflare.
-- **Semua operasi kunci/task/proposal dijalankan di dalam `ctx.storage.transactionSync(...)`** (dibungkus `db.tx`). DO memproses satu pesan pada satu waktu, dan `sql.exec` sinkron, jadi transaksi ini menjadi titik serialisasi tunggal: tidak ada race antar-permintaan.
-- Jangan memakai `PRAGMA journal_mode`/`BEGIN`/`COMMIT` manual di `schema.sql`, karena DO yang mengatur transaksi. Batas ukuran satu baris/nilai 2 MB, sehingga `MAX_FILE_BYTES` 1 MB aman.
+- **Semua operasi kunci/task/proposal dijalankan di dalam `ctx.storage.transactionSync(...)`** (dibungkus `db.tx`). `sql.exec` sinkron, jadi satu transaksi tidak bisa disela: tidak ada race di dalamnya.
+- **Awas `await` di luar transaksi.** Selama handler menunggu `fetch` (mis. GitHub API), DO boleh memproses pesan lain. Jadi state yang dibaca sebelum `await` bisa basi sesudahnya. Pola wajib: transaksi pendek → `await` I/O → transaksi baru yang **memvalidasi ulang** state sebelum menulis (lihat R4 §6.3).
+- Jangan memakai `PRAGMA journal_mode`/`BEGIN`/`COMMIT` manual di `schema.sql`: DO yang mengatur transaksi, dan `journal_mode` tidak ada di daftar pragma yang diizinkan workerd. Batas ukuran satu baris/nilai 2 MB, sehingga `MAX_FILE_BYTES` 1 MB aman. Statement SQL maks 100 KB dan maks 100 bound parameter: isi file selalu lewat bound parameter, batch insert dipecah.
+- Foreign key: **FK ON secara default** di DO (workerd build `SQLITE_DEFAULT_FOREIGN_KEYS=1`, PR cloudflare/workerd#794; `foreign_keys` dan `defer_foreign_keys` ada di daftar pragma yang diizinkan). Akibatnya urutan insert/delete **harus** mengikuti FK (induk dulu saat insert, anak dulu saat delete; `/admin/reset` menghapus tabel dari anak ke induk). Kalau perlu urutan bebas di satu transaksi, pakai `PRAGMA defer_foreign_keys = ON` di awal `transactionSync`. Test fase 03 memastikan FK ditegakkan; test invariant fase 05 tetap berlaku.
+- Kuota plan Free: 100k rows written/hari dan 5 juta rows read/hari per akun. Update index dihitung sebagai row tambahan, `setAlarm` = 1 row, delete juga dihitung. Jangan menulis baris untuk data yang sering berubah tapi tidak perlu awet (heartbeat, R4 §7), dan batasi index ke kolom yang benar-benar dipakai query.
 - Waktu disimpan sebagai epoch milidetik (`INTEGER`). Tampilan memakai zona `Asia/Makassar` (WITA).
 - Path file: POSIX, relatif terhadap root workspace, tanpa `./` di depan, contoh `src/checkout/checkout.ts`.
 - ID manusiawi: task `T-<seq>`, permintaan `R-<seq>`, proposal `P-<seq>`, review `RV-<seq>`. `seq` diambil dari tabel `counter`.
@@ -15,8 +18,7 @@
 ## 2. SQL
 
 ```sql
-PRAGMA journal_mode = WAL;
-PRAGMA foreign_keys = ON;
+-- Tanpa PRAGMA journal/transaksi: Durable Object mengatur sendiri. FK sudah ON secara default (§1).
 
 CREATE TABLE IF NOT EXISTS meta (
   key   TEXT PRIMARY KEY,
@@ -33,7 +35,7 @@ CREATE TABLE IF NOT EXISTS member (
   id             TEXT PRIMARY KEY,                       -- 'A' | 'B' | 'C'
   name           TEXT NOT NULL,
   role           TEXT NOT NULL CHECK (role IN ('coder','pm')),
-  color          TEXT NOT NULL,                          -- '#3B82F6' dsb.
+  color          TEXT NOT NULL,                          -- '#78A9FF' dsb. (R5 §4)
   git_name       TEXT NOT NULL,
   git_email      TEXT NOT NULL,
   active_task_id TEXT,                                   -- FK lunak ke task.id
@@ -62,6 +64,7 @@ CREATE TABLE IF NOT EXISTS task (
   parent_task_id  TEXT,                                  -- untuk hasil keputusan 'pecah'
   submit_summary  TEXT,
   commit_sha      TEXT,
+  commit_started_at INTEGER,                             -- terisi selama commit GitHub berjalan (R4 §6.3)
   edit_count      INTEGER NOT NULL DEFAULT 0,
   created_at      INTEGER NOT NULL,
   updated_at      INTEGER NOT NULL
@@ -218,7 +221,7 @@ CREATE INDEX IF NOT EXISTS metric_name ON metric(name, ts);
 |---|---|
 | `meta` | `schema_version=1`, `workspace_id`, `workspace_name`, `repo_url`, `head_commit` = HEAD hasil clone |
 | `counter` | `task=0`, `request=0`, `proposal=0`, `review=0` |
-| `member` | A (coder, `#3B82F6` biru), B (coder, `#8B5CF6` ungu), C (pm, `#F97316` oranye) |
+| `member` | A (coder, `#78A9FF` biru), B (coder, `#BE95FF` ungu), C (pm, `#FF832B` oranye), sesuai `MEMBER_COLORS` R5 §4 |
 | `token` | 3 token `member` + 1 token `mc` (hanya hash yang disimpan) |
 | `file` | Semua file teks di HEAD yang lolos aturan abaikan (R5 §6), `version=1` |
 | `file_version` | Salinan versi 1 setiap file |

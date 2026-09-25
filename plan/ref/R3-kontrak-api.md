@@ -33,8 +33,11 @@
 | `POST /v1/locks/check`, `GET /v1/brief`, `GET /v1/tasks`, `GET /v1/blocks/last`, `POST /v1/tasks/:id/submit`, `POST /v1/requests`, `GET /v1/activity`, `POST /v1/tasks/:id/activate`, `POST /v1/ai-edits` | ✅ | brief & activity saja | ❌ |
 | `GET /v1/team`, `GET /v1/requests`, `POST /v1/proposals`, `GET /v1/proposals`, `GET /v1/tasks/:id/diff`, `POST /v1/notify`, `GET /v1/report/session` | ❌ | ✅ | ✅ (baca) |
 | `POST /v1/proposals/:id/decision`, `POST /v1/locks/revoke`, `POST /v1/tasks/:id/cancel` | ❌ | ❌ **(MA-07)** | ✅ |
-| `GET /v1/state`, `GET /v1/files/history` | ❌ | ✅ | ✅ |
+| `POST /v1/bob/activity` (§2.24, P0) | ✅ | ✅ | ❌ |
+| `GET /v1/state`, `GET /v1/files/history` | ✅ read-only (dipakai app coder, §3.9) | ✅ | ✅ |
 | `GET /v1/events/export`, `GET /healthz` | ✅ | ✅ | ✅ (export juga tanpa auth bila `PUBLIC_EXPORT=true`) |
+
+Klien WebSocket `app` dengan token coder menerima `state` + `event` read-only (§3.9). Itu konsisten dengan baris `GET /v1/state` di atas: coder boleh membaca, tidak boleh memutuskan.
 
 ## 2. REST endpoint
 
@@ -72,9 +75,11 @@ Response `200`:
 }
 ```
 - `decision` total = `block` kalau salah satu path `block`.
-- `reason` ∈ `own` · `grabbed` · `held_by_other` · `reserved_by_other` · `in_review_by_other` · `pm_readonly` · `ignored_path`.
+- `reason` ∈ `own` · `grabbed` · `held_by_other` · `reserved_by_other` · `in_review_by_other` · `committing` (commit task pemegang sedang berjalan, R4 §6.3) · `pm_readonly` · `ignored_path`.
 - `ignored_path` (mis. `node_modules/…`, `.radar/…`) → `allow`, tanpa kunci.
 - Logika lengkap: R4 §3. Latensi server dicatat ke `metric(lock_check_ms)`.
+- **Jalur `message` ke model: bukan stderr.** Docs lifecycle hooks Bob IDE: stdout `PreToolUse` diabaikan dan stderr hanya ditulis ke log Bob. Keputusan JSON tidak didokumentasikan. Kontrak hook = **exit 2 memblok**, exit 0 mengizinkan. Hook tetap menulis `message` ke stderr (murah, terlihat di log), tetapi desain **tidak bergantung** padanya. Penjelasan ke model lewat tiga jalur tetap: (1) instruksi mode `coder` + rules `.bob/rules-coder/`: "kalau tool edit ditolak, panggil `radar why_blocked` dulu" (tool ini ada di `alwaysAllow` `.bob/mcp.json`, jadi jalan tanpa klik approve); (2) server mencatat `block` sehingga `why_blocked` dan baris pertama brief `UserPromptSubmit` berikutnya memuatnya (stdout `UserPromptSubmit` masuk konteks, R4 §8); (3) lapis kedua sync (`file.rejected`). Spike fase 01 uji 2 hanya mengonfirmasi.
+- **Timeout hook.** Settings memberi `timeout` eksplisit (3 s untuk `PreToolUse`, default Bob 10 s). Hook sendiri menyerah ke server setelah 1,5 s (`HOOK_SERVER_TIMEOUT_MS`) dan fail-open. Perilaku Bob saat hook melewati `timeout` diuji di spike 19.
 
 ### 2.3 `GET /v1/brief?kind=start|prompt&since=<eventId>[&peek=true]` — hook SessionStart / UserPromptSubmit (BC-02, BC-03)
 
@@ -249,7 +254,21 @@ Dipanggil hook kit coder/PM secara fire-and-forget (timeout 800 ms, gagal = diam
   "text": "tambahkan kupon diskon di checkout",                   // prompt ringkas ≤ 200 char (hanya bila shareprompts=on)
   "clientTs": 1790000000000 }
 ```
-Respons `204`. Server menulis event `bob.activity { memberId, …field di atas tanpa isi file }` dan menyiarkannya ke klien `app`/`mc`. Dibatasi 20 event/detik per member (sisanya digabung). Isi file **tidak pernah** dikirim.
+Respons `204`. Server menulis event `bob.activity { memberId, …field di atas tanpa isi file }` dan menyiarkannya ke klien `app`/`mc`. Dibatasi 20 event/detik per member: sisanya dibuang (tetap `204`) dan dihitung di `metric(activity_dropped)`. Isi file **tidak pernah** dikirim.
+
+Sumber tiap `kind` (menurut docs lifecycle hooks Bob; dikonfirmasi spike fase 01):
+
+| kind | Hook | Isi yang tersedia |
+|---|---|---|
+| `session.start` | `SessionStart` | metadata sesi |
+| `prompt` | `UserPromptSubmit` | session ID + teks prompt (dikirim hanya bila `shareprompts=on`) |
+| `tool.pre` | `PreToolUse` (hook `lock_guard` yang sama) | nama tool + input → `paths`, `decision` |
+| `tool.post` | `PostToolUse` | data tool + output → `paths`, `linesChanged` bila bisa dihitung |
+| `turn.end` | `Stop` | **hanya session ID**. Tidak ada ringkasan giliran. |
+
+- `mode` tidak dijamin ada di payload hook. Hook mengisinya dari kit yang terpasang (`.radar/local.json` `role` → `coder`/`pm-lead`).
+- Field payload hook bertanda **provisional** sampai fixture spike 1 (Sab 04:00). Perubahan nama field dilakukan di jendela ubah kontrak fase 02 (04:00–04:30), bukan sesudahnya.
+- Endpoint ini dibangun di **fase 03** (bukan fase 06), karena app (fase 11a) dan milestone butuh jalur ini lebih dulu.
 
 ## 3. WebSocket `wss://<server>/ws`
 
@@ -266,13 +285,13 @@ Amplop setiap pesan: `{ "t": "<tipe>", "id"?: "<id pesan klien>", "d": { ... } }
 | `file.ack` | server → pengirim | `{ id, path, version, hash }` |
 | `file.changed` | server → semua sync lain | `{ path, version, content, hash, deleted, by, taskId, serverTs }` |
 | `file.applied` | sync → server | `{ path, version, serverTs, appliedTs }` (untuk metrik sinkron) |
-| `file.rejected` | server → pengirim | `{ id, path, reason: "held_by_other" \| "pm_readonly" \| "conflict" \| "too_large" \| "binary", holder?, server: { version, hash, content, deleted } }` |
+| `file.rejected` | server → pengirim | `{ id, path, reason: "held_by_other" \| "committing" \| "pm_readonly" \| "conflict" \| "too_large" \| "binary", holder?, server: { version, hash, content, deleted } }` |
 | `lock.changed` | server → semua | `{ path, state: "bebas" \| "dipesan" \| "dipegang" \| "review", taskId, memberId, queue: [taskId…] }` |
 | `event` | server → mc | satu `RadarEvent` (§5) — MC menerapkan reducer |
 | `notice` | server → sync tertentu | `{ level: "info" \| "warn", message }` (ditampilkan di terminal coder) |
 | `proposal.new` / `proposal.decided` | server → mc | `{ proposal }` (juga dikirim sebagai `event`) |
 | `heartbeat` | sync → server | `{ ts }` setiap 15 s (SY-05) |
-| `ping` / `pong` | dua arah | keepalive 20 s |
+| `ping` / `pong` | dua arah | keepalive 20 s. Klien mengirim string persis `{"t":"ping"}` (tanpa `id`/`d`, tanpa spasi); server menjawab `{"t":"pong"}` lewat `setWebSocketAutoResponse` tanpa membangunkan DO |
 | `error` | server → klien | `{ code, message }` lalu tutup untuk `UNAUTHORIZED` |
 
 Aturan koneksi: `hello` harus dikirim ≤ 5 s setelah terhubung; kalau tidak, server menutup koneksi (4401). Satu member boleh punya satu koneksi `sync` aktif (koneksi baru menggantikan lama, event `member.reconnected`).
@@ -373,8 +392,9 @@ Semua event punya `{ id, ts, actor, type, payload }`. Payload minimal:
 | `notify.sent` | `{ notificationId, memberId, message, by }` | feed, brief |
 | `commit.created` | `{ taskId, sha, author, files, pushed: boolean, url? }` | feed, board "Selesai 3f9a2c1" |
 | `commit.push_failed` | `{ taskId, sha, error }` | feed (peringatan) |
+| `bob.activity` | `{ memberId, kind, sessionId, mode, tool?, paths?, decision?, linesChanged?, text? }` (§2.24) | **P0**: timeline "Watching <nama>'s Bob" (JT-01/02), status writing/blocked di Team |
 | `ai.edit` | `{ memberId, paths, tool }` | BC-05 |
-| `bob.turn` | `{ memberId, summary }` | BC-06 (P2) |
+| `bob.turn` | `{ memberId }` (tanpa ringkasan: hook `Stop` hanya membawa session ID) | BC-06 (P2) |
 | `bob.said` | `{ memberId, text }` | hanya untuk replay (kutipan sesi Bob, disisipkan manual) |
 
 ## 6. Reducer bersama (`@radar/common/reducer.ts`)
@@ -389,6 +409,7 @@ export interface RadarState {
   requests: Record<string, RequestView>;
   proposals: Record<string, ProposalView>;
   feed: FeedItem[];                           // maks 200, terbaru di depan
+  bobActivity: Record<string, BobActivityItem[]>; // memberId → maks 100 bob.activity terbaru (P0, JT-01)
   cursor: number;                             // id event terakhir yang diterapkan
 }
 export function initialState(): RadarState;
@@ -396,6 +417,7 @@ export function applyEvent(state: RadarState, ev: RadarEvent): RadarState;   // 
 export function applyEvents(state: RadarState, evs: RadarEvent[]): RadarState;
 ```
 `writingUntil = ev.ts + 3000` pada `file.changed` → UI menampilkan ✎ selama `now < writingUntil` (UI-02). Replay memakai `ts` event, bukan jam dinding.
+`bob.activity` masuk ke `bobActivity[memberId]` (bukan ke `feed`, supaya feed tidak banjir). `tool.pre` dengan `decision: "block"` juga menandai member sebagai `blocked` di `MemberView` sampai `tool.pre` berikutnya yang `allow`.
 
 ## 7. Kontrak tool MCP `radar-mcp`
 

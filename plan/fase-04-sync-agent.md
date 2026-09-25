@@ -3,12 +3,12 @@
 | Field | Nilai |
 |---|---|
 | Jalur | **Lane Alief** (Alief) · branch `lane/core` |
-| Slot WITA | Sab 26 Sep 07:00 – 10:00 |
-| Estimasi | 3 jam |
+| Slot WITA | Sab 26 Sep 06:30 – 09:00 (PR sebelum tidur) |
+| Estimasi | 2,5 jam |
 | Prasyarat | 03 (dan keputusan `SYNC` dari GATE 1 di fase 01) |
 | Requirement PRD | SY-01, SY-02, SY-03, SY-04 (sisi klien), SY-05, dasar SY-07; §8.3; NFR-01 latensi sinkron |
 | Model | **Opus 5.5** · effort high (alt: Sonnet 5 · high) |
-| Fase berikutnya | 05 (setelah tidur Alief: Sab 16:00) |
+| Fase berikutnya | 05 (setelah tidur Alief 09:00–14:00: Sab 14:00) |
 
 ## Tujuan
 
@@ -53,6 +53,7 @@ server ──ws──────▶  │ file.changed → writer.atomicWrite  �
    - Output terminal ringkas berwarna (warna anggota R5 §4): `● terhubung sebagai A (coder) · 42 file · server v0.2`.
 
 2. **Koneksi** (`agent.ts`): `ws` ke `<server>/ws`, kirim `hello {token, client:'sync', knownVersions}`; tangani `welcome`, `snapshot`, `file.ack`, `file.changed`, `file.rejected`, `lock.changed` (simpan peta kunci lokal untuk `radar status` & notifikasi), `notice`, `error`.
+   - Keepalive: kirim `WS_PING_FRAME` (string persis `{"t":"ping"}`, `@radar/common/constants`) tiap `WS_PING_MS`; server menjawab lewat auto-response tanpa membangunkan DO. Tidak ada `pong` dalam 2× interval → tutup dan reconnect.
    - Reconnect: backoff eksponensial 0,5 s → 8 s + jitter. Saat tersambung ulang, kirim `knownVersions` (hanya file yang sudah disepakati).
 
 3. **Snapshot awal (SY-01).**
@@ -83,7 +84,7 @@ server ──ws──────▶  │ file.changed → writer.atomicWrite  �
 
 10. **Log** `.radar/sync.log`: satu baris per kejadian (kirim/terima/tolak/konflik/reconnect) dengan latensi; rotasi sederhana saat > 5 MB.
 
-11. **Test integrasi** (`packages/sync/test/sync.int.test.ts`) — server in-process (`buildApp`, `:memory:`, `seedTestWorkspace`) + `SyncAgent` A, B, C di folder `mkdtemp`:
+11. **Test integrasi** (`packages/sync/test/sync.int.test.ts`) — Worker asli dijalankan di proses test dengan `createTestHarness({ workers: [{ configPath: '../server/wrangler.jsonc', vars: { GITHUB_COMMIT: 'false' }, secrets: { ADMIN_SECRET: 'test' } }] })` dari `wrangler` (`await server.listen()` → URL port acak; `server.reset()` antar-skenario; `server.close()` di `afterAll`; `unstable_startWorker` deprecated), di-seed lewat `POST /admin/init` + `POST /admin/files` (helper `seedTestWorkspace(url)` di `packages/sync/test/helpers.ts`), lalu `SyncAgent` A, B, C di folder `mkdtemp` (R5 §3). Sebelum PR fase 03 masuk, jalankan melawan mock fase 02 (`// TODO(sync:alief)` tidak perlu, fase 03 di lane yang sama):
     - Join → ketiga folder berisi snapshot identik.
     - A menulis `src/utils.ts` → isi sama di B dan C dalam < 1000 ms (poll folder tiap 20 ms, ukur).
     - **Anti-gema:** setelah satu tulis di A, hitung pesan `file.update` yang diterima server selama 2 s = **tepat 1**; B tidak mengirim `file.update` apa pun.
@@ -94,7 +95,7 @@ server ──ws──────▶  │ file.changed → writer.atomicWrite  �
     - Reconnect: matikan & hidupkan server (atau tutup socket) → agent tersambung lagi dan mengejar perubahan yang terlewat via snapshot diff.
     (Test blokir antar-coder A↔B menunggu mesin kunci fase 05; tambahkan di sana.)
 
-12. **Bench** `scripts/bench-sync.ts`: server lokal + 2 agent di satu mesin, 100 penulisan acak berjeda 200 ms, cetak p50/p95/max `appliedTs(B) - writeTs(A)`; mode `--server <url>` untuk server deploy (2 agent lokal ke Worker Cloudflare, mengukur round trip nyata). Simpan hasil ke `docs/EXPERIMENT.md` bagian "Latensi sinkron (bench)".
+12. **Bench** `scripts/bench-sync.ts`: server lokal (`createTestHarness`, sama seperti test) + 2 agent di satu mesin, 100 penulisan acak berjeda 200 ms, cetak p50/p95/max `appliedTs(B) - writeTs(A)`; mode `--server <url>` untuk server deploy (2 agent lokal ke Worker Cloudflare, mengukur round trip nyata). Simpan hasil ke `docs/EXPERIMENT.md` bagian "Latensi sinkron (bench)".
 
 13. Commit `fase-04: sync agent`.
 
@@ -106,9 +107,9 @@ server ──ws──────▶  │ file.changed → writer.atomicWrite  �
 ## Verifikasi
 
 ```bash
-pnpm --filter @radar/sync test
-pnpm bench:sync                      # p95 < 1000 ms lokal (target PRD), catat angka
-pnpm bench:sync -- --server https://live-collab.<akun>.workers.dev --token-a … --token-b …
+pnpm -C radar --filter @radar/sync test
+pnpm -C radar bench:sync             # p95 < 1000 ms lokal (target PRD), catat angka
+pnpm -C radar bench:sync -- --server https://live-collab.<akun>.workers.dev   # token dibaca dari env RADAR_TOKEN_A/B, bukan argumen
 # Manual 2 terminal:
 radar join http://localhost:8787 --workspace toko-demo --as A --token <tokA> --dir /tmp/wsA --no-kit
 radar join http://localhost:8787 --workspace toko-demo --as B --token <tokB> --dir /tmp/wsB --no-kit

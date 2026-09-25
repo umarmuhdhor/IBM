@@ -46,21 +46,21 @@ plan/                         (dipindah ke plan/ di fase 00)
 |---|---|---|---|---|---|---|---|
 | 00 | Fondasi: fork Orca + `radar/` | Alief | `main` | fork, workspace `radar/`, template IBM, toko-demo, CI, ECC | §12, NFR-04/07/10/11 | Jum 23:00–Sab 00:30 | Sonnet 5 |
 | 01 | Spike & GATE 1 | Umar | `lane/bob` | `spike/`, `docs/SPIKE_RESULTS.md` | §17 spike 1–8 | Sab 00:30–04:00 | Sonnet 5 |
-| 02 | Common + mock server | Alief | `main` | tipe, zod, reducer, mock (termasuk `term.*`) = **kontrak beku** | BC-04, UI-04/05, JT | Sab 00:30–02:30 | Sonnet 5 |
-| 03 | Server inti | Alief | `lane/core` | Worker + Durable Object + SQLite DO + auth + WS + deploy | SV-01, SV-08 | Sab 02:30–07:00 | Opus 5.5 |
-| 04 | Sync agent | Alief | `lane/core` | CLI `radar`, watcher, anti-gema | SY-01..05 | Sab 07:00–09:00 | Opus 5.5 |
-| 05 | Kunci, task, permintaan, proposal | Alief | `lane/core` | `/v1/locks/check`, alokasi, antrean | SV-02..06, MA-07 | Sab 14:00–18:00 | Opus 5.5 |
-| 06 | Git + diff + **relay terminal** | Alief | `lane/core` | commit per task, `get_task_diff`, relay `term.*` | SV-07, MA-04, JT-03 | Sab 18:00–21:00 | Opus 5.5 |
+| 02 | Common + mock server | Alief | `lane/core` → PR | tipe, zod, reducer, mock (termasuk `bob.activity`; `term.*` P1) = **kontrak beku** | BC-04, UI-04/05, JT-01/02 | Sab 00:30–02:30 (+ jendela 04:00–04:30) | Sonnet 5 |
+| 03 | Server inti | Alief | `lane/core` | Worker + Durable Object + SQLite DO + auth + WS + deploy | SV-01, SV-08, JT-01 (`bob/activity`) | Sab 02:30–06:30 | Opus 5.5 |
+| 04 | Sync agent | Alief | `lane/core` | CLI `radar`, watcher, anti-gema | SY-01..05 | Sab 06:30–09:00 | Opus 5.5 |
+| 05 | Kunci, task, permintaan, proposal | Alief | `lane/core` | `/v1/locks/check`, alokasi, antrean | SV-02..06, MA-07 | Sab 14:00–17:30 | Opus 5.5 |
+| 06 | Commit GitHub + diff (relay terminal P1) | Alief | `lane/core` | commit per task via Git Data API, `get_task_diff` | SV-07, MA-04 (JT-04 P1) | Sab 17:30–21:00 | Opus 5.5 |
 | 07 | Kit `.bob/` coder | Umar | `lane/bob` | mode `coder`, hook, `radar-mcp` coder | BC-01..04, BC-07 | Sab 09:00–16:00 | Sonnet 5 · high |
 | 08 | Main agent `pm-lead` | Umar | `lane/bob` | mode `pm-lead`, tool PM | MA-01..05 | Sab 16:00–21:00 | Sonnet 5 · high |
 | 09 | App desktop (Orca di `app/`) + `@radar/ui` | Aarief | `lane/app` | agent `bob`, panel Live Collab, `@radar/ui` | DA-01..04, UI-01..04, UI-07 | Sab 00:30–16:00 | Sonnet 5 · high |
-| 10 | Integrasi E2E | Semua | `main` | `sim-3pc`, uji 3 Mac, **milestone Sab 23:00** | semua P0 | Sab 21:00–Min 02:00 | Opus 5.5 |
-| 11 | Tonton terminal + `.dmg` (Aarief) · landing + replay web (Imelda) | Aarief + Imelda | `lane/app`, `lane/web` | JT-01/02, `.dmg`, `/demo` | JT-01..05, DA-01, UI-05 | Sab 16:00–Min 06:00 | Sonnet 5 · high |
+| 10 | Integrasi E2E | Semua | lane masing-masing → PR kecil | `sim-3pc`, uji 3 Mac, **milestone Sab 23:00** | semua P0 | Sab 21:00–Min 02:00 | Opus 5.5 |
+| 11 | Tonton Bob rekan + `.dmg` (Aarief) · landing + replay web (Imelda) | Aarief + Imelda | `lane/app`, `lane/web` | Watch Bob (JT-01..03), `.dmg`, `/demo` | JT-01..03 (JT-04/05 P1/P2), DA-01, UI-05 | Aarief Sab 16:00–Min 11:00 · Imelda mulai setelah fase 00 | Sonnet 5 · high |
 | 12 | Hardening & P1 | Alief | `lane/core` | kedaluwarsa, reconnect, invite | SV-09/10, SY-06/07, IN-02 | Min 04:00–11:00 | Sonnet 5 |
-| 13 | Eksperimen A/B | Umar | `lane/bob` | `docs/EXPERIMENT.md` | §04, §17 | Min 04:00–11:00 | Sonnet 5 |
-| 14 | Submission | Semua | `main` | statement, video ≤ 3 menit, deck, bukti Bob | §15, EV-01..03, NFR-11 | Min 11:00–23:00 | Sonnet 5 |
+| 13 | Eksperimen A/B | Umar | `lane/bob` | `docs/EXPERIMENT.md` | §04, §17 | Min 04:30–11:00 | Sonnet 5 |
+| 14 | Submission | Semua | lane masing-masing → PR | statement, video ≤ 3 menit, deck, bukti Bob | §15, EV-01..03, NFR-11 | Min 11:00–23:00 | Sonnet 5 |
 
-**GATE 1** Sab 04:00 · **Kontrak beku** Sab 02:30 (fase 02 merge) · **Sinkron 1** Sab 16:00 · **Milestone** Sab 23:00 · **GATE 2 / freeze** Min 11:00.
+**GATE 1** Sab 04:00 · **Kontrak beku** Sab 02:30 (PR fase 02 merge; jendela hasil spike 04:00–04:30) · **Sinkron 1** Sab 16:00 · **Milestone** Sab 23:00 · **GATE 2 / freeze** Min 11:00.
 
 ---
 
@@ -68,26 +68,30 @@ plan/                         (dipindah ke plan/ di fase 00)
 
 ```mermaid
 flowchart LR
-  F00[00 Fondasi · main] --> F01[01 Spike · B]
-  F00 --> F02[02 Kontrak + mock · main]
-  F02 --> F03[03 Server · A]
-  F03 --> F04[04 Sync · A]
-  F03 --> F05[05 Kunci · A]
-  F05 --> F06[06 Git + relay · A]
-  F01 --> F07[07 Kit coder · B]
+  F00[00 Fondasi · main] --> F01[01 Spike · Umar]
+  F00 --> F02[02 Kontrak + mock · Alief]
+  F01 -. fixture hook .-> F02
+  F02 --> F03[03 Server · Alief]
+  F03 --> F04[04 Sync · Alief]
+  F03 --> F05[05 Kunci · Alief]
+  F05 --> F06[06 Commit GitHub + diff · Alief]
+  F01 --> F07[07 Kit coder · Umar]
   F02 -. mock .-> F07
-  F07 --> F08[08 PM agent · B]
-  F00 --> F09[09 App desktop · C]
+  F07 --> F08[08 PM agent · Umar]
+  F00 --> F09[09 App desktop · Aarief]
   F02 -. mock .-> F09
-  F09 --> F11[11 Tonton terminal + dmg + replay · C]
-  F06 -. relay .-> F11
+  F09 --> F11A[11 Watch Bob + dmg · Aarief]
+  F03 -. bob.activity .-> F11A
+  F00 --> F11D[11D Landing + replay · Imelda]
+  F02 -. fixture .-> F11D
   F04 --> F10[10 E2E · semua]
   F06 --> F10
   F08 --> F10
   F09 --> F10
-  F10 --> F12[12 Hardening · A]
-  F10 --> F13[13 Eksperimen · B]
-  F11 --> F14[14 Submission]
+  F10 --> F12[12 Hardening · Alief]
+  F10 --> F13[13 Eksperimen · Umar]
+  F11A --> F14[14 Submission]
+  F11D --> F14
   F12 --> F14
   F13 --> F14
 ```

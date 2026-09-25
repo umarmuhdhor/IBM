@@ -185,7 +185,7 @@ Centered hero: huge Inter headline 72px, tight negative letter-spacing, black:
 "Your team's Bobs, working together." with the word "working" wrapped in a soft peach pill (#f6d5b8, fully rounded).
 Serif subhead (Source Serif) in warm gray #615d59: "Multiplayer for IBM Bob. Every teammate's own Bob, one live workspace."
 Button row: filled blue #0075de "Watch the live replay" and ghost button (bg #e6f3fe, blue text) "Download for macOS"
-with tiny caption "unsigned · right-click → Open".
+with tiny caption "unsigned · open via Privacy & Security".
 Below: a large DARK product screenshot of a developer app (Mission Control with a magenta "Needs you" card)
 sitting on the light canvas with a soft shadow 0 4px 12px rgba(0,0,0,.1).
 Next row: three white feature cards: "Live sync", "One file, one Bob", "PM agent proposes, human approves".

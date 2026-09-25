@@ -3,7 +3,7 @@
 | Field | Nilai |
 |---|---|
 | Jalur | **Lane Umar** (Umar) · branch `lane/bob` (+ anggota lain sebagai coder) |
-| Slot WITA | Min 27 Sep 05:00 – 11:00 (PRD §18: eksperimen dijadwalkan Minggu pagi karena Bobcoin) |
+| Slot WITA | Min 27 Sep 04:30 – 11:00 (PRD §18: eksperimen dijadwalkan Minggu pagi karena Bobcoin) |
 | Estimasi | 4 jam |
 | Prasyarat | 10 |
 | Requirement PRD | §04 metrik keberhasilan, §17 "Eksperimen A/B untuk angka pitch", NFR-06, NFR-09 |

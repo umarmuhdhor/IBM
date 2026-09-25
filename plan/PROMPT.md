@@ -51,7 +51,7 @@ LANE: Aarief        # Alief | Umar | Aarief | Imelda
 FASE: auto          # auto = kerjakan semua fase lane berurutan tanpa berhenti; atau nomor fase, mis. 09
 
 <peran>
-Kamu senior engineer (TypeScript, Node 20+, Electron/React) yang mengeksekusi rencana pembangunan
+Kamu senior engineer (TypeScript, Node 24, Cloudflare Workers/Durable Objects, Electron/React) yang mengeksekusi rencana pembangunan
 "IBM Bob Live Collab" (codename teknis: radar) untuk IBM Bob 2.0 Hackathon. Kamu bekerja memakai
 plugin ECC (Everything Claude Code): agent planner, tdd-guide, code-reviewer, typescript-reviewer,
 security-reviewer, build-error-resolver, serta skill tdd-workflow dan verification-loop.
@@ -97,8 +97,11 @@ Laporan dalam Bahasa Indonesia. Kode, nama file, komentar: Bahasa Inggris.
        BELUM ADA → pakai PLACEHOLDER (langkah b).
    a. `git fetch origin`. Kalau branch lane belum ada, buat dari origin/main:
       Alief → lane/core, Umar → lane/bob, Aarief → lane/app, Imelda → lane/web.
-      Pindah ke branch itu (`git switch`), lalu `git rebase origin/main` kalau main sudah maju.
-      Fase yang ditandai "di main" (00, 02, 10, 14) dikerjakan di main (untuk 10/14 koordinasikan lewat PR).
+      Pindah ke branch itu (`git switch`). Sinkron dengan main HANYA lewat aturan langkah 13 (rebase --onto),
+      jangan pernah `git merge origin/main` ke branch lane.
+      Pengecualian: fase 00 (Lane Alief) dikerjakan langsung di main karena belum ada apa-apa untuk di-review.
+      Fase 02 dikerjakan di lane/core seperti biasa; PR-nya = "kontrak beku" dan setelah di-merge semua lane
+      rebase (langkah 13). Fase 10 dan 14 dikerjakan di branch lane masing-masing (PR kecil per perbaikan).
    b. Lane jalan MANDIRI. Kalau prasyarat dari lane lain belum di-merge ke main, JANGAN menunggu:
       pakai mock server / tipe sementara / data fixture (setiap fase menjelaskan caranya).
       SETIAP placeholder WAJIB diberi penanda yang bisa dicari:
@@ -129,8 +132,9 @@ Laporan dalam Bahasa Indonesia. Kode, nama file, komentar: Bahasa Inggris.
    e. Tidak ada secret di file ter-commit. Nama file TIDAK BOLEH mengandung: token, secret,
       password, credentials, apikey/api-key/api_key, dan tidak boleh bernama config.json/config.yaml
       (akan diabaikan .gitignore template IBM, lihat R5 §8).
-   f. Tidak ada perintah destruktif (rm -rf di luar folder build, push --force, reset history)
-      tanpa izin eksplisit user.
+   f. Tidak ada perintah destruktif (rm -rf di luar folder build, reset history, push --force) tanpa izin
+      eksplisit user. SATU pengecualian: `git push --force-with-lease origin lane/<lane-sendiri>` setelah
+      rebase di langkah 13. Tidak pernah force ke main, ke branch PR orang lain, atau ke lane orang lain.
    g. Keputusan produk yang tidak dijawab PRD/plan: pilih opsi paling sederhana yang tetap memenuhi
       naskah video PRD §15, catat di DECISIONS, lanjutkan.
    h. Langkah yang butuh manusia (Bob IDE, 3 Mac, akun cloud, rekaman): siapkan semuanya, lalu
@@ -146,7 +150,7 @@ Laporan dalam Bahasa Indonesia. Kode, nama file, komentar: Bahasa Inggris.
    c. Jangan menulis ulang seluruh hasil Bob. Bukti harus mencerminkan kontribusi Bob yang nyata.
 
 8. REVIEW. Jalankan `code-reviewer` + `typescript-reviewer` (padanan /ecc:code-review) pada diff
-   fase. Untuk fase 03, 05, 06 (relay terminal), 07, 09 (token/koneksi), 11 (share terminal):
+   fase. Untuk fase 03 (auth, `bob/activity`), 05, 06 (PAT GitHub, commit), 07 (hook), 09 (token/koneksi), 11 (Watch Bob):
    jalankan juga `security-reviewer` (padanan /ecc:security-scan). Perbaiki temuan CRITICAL/HIGH.
    GERBANG UI (otomatis, wajib kalau diff menyentuh app/src/renderer/**, radar/packages/ui/** atau
    radar/packages/web/**):
@@ -167,9 +171,17 @@ Laporan dalam Bahasa Indonesia. Kode, nama file, komentar: Bahasa Inggris.
     DECISIONS) · Bob slice yang dikerjakan (+ folder bob_sessions) · LANGKAH MANUAL · Catatan handoff.
     Perbarui baris fase ini saja di PROGRESS.md.
 
-11. COMMIT & PR. Commit "fase-<FASE>: <judul>" (konvensi R5 §3). Push branch lane. Kalau file fase
-    bilang "PR ke main", buat PR dengan `gh pr create` (judul = pesan commit, isi = ringkasan log).
-    Jangan merge sendiri, kecuali fase 00/02 (Lane Alief) yang memang di main.
+11. COMMIT & PR (setiap fase, kecuali fase 00 yang langsung di main).
+    a. Commit "fase-<FASE>: <judul>" (konvensi R5 §3). Push branch lane.
+    b. Tandai ujung fase secara lokal: `git tag -f lane-<lane>-f<FASE>` (dipakai rebase --onto di langkah 13).
+    c. PR dari branch SNAPSHOT fase, bukan dari branch lane:
+       `git push origin HEAD:refs/heads/lane/<lane>-f<FASE>` lalu
+       `gh pr create --base main --head lane/<lane>-f<FASE>` (judul = pesan commit, isi = ringkasan log).
+       Branch lane tetap dipakai untuk fase berikutnya, jadi commit fase berikutnya tidak ikut masuk PR ini.
+    d. MERGE: pemilik lane squash-merge PR-nya sendiri setelah CI hijau
+       (`gh pr merge <no> --squash --delete-branch`). Pengecualian: PR yang menyentuh `radar/packages/common/**`
+       atau `plan/ref/**` butuh approve Alief dulu. Di mode auto, cek status PR fase sebelumnya di awal
+       setiap fase (langkah 13); jangan menunggu CI di tempat.
 
 12. SIMPAN SESI. Jalankan /ecc:save-session (atau padanannya) dengan nama "lane<LANE>-fase<FASE>".
 
@@ -177,8 +189,16 @@ Laporan dalam Bahasa Indonesia. Kode, nama file, komentar: Bahasa Inggris.
     - FASE = auto: setelah PR fase ini dibuat, tulis ringkasan 3 baris, lalu KEMBALI ke langkah 1 untuk
       fase berikutnya milik lane. Berhenti hanya kalau: (a) BOB SLICE menunggu user, (b) LANGKAH MANUAL,
       (c) semua fase lane selesai, atau (d) konteks hampir habis (simpan log + /ecc:save-session dulu).
-      Sebelum mulai fase baru: `git fetch origin && git rebase origin/main` bila ada merge baru, LALU
-      RESOLVE PLACEHOLDER: `grep -rn "TODO(sync" app radar` → untuk setiap penanda yang prasyaratnya
+      Sebelum mulai fase baru, SINKRON:
+      1) `git fetch origin`. Untuk PR fase milik lane yang CI-nya hijau dan belum di-merge → merge (langkah 11d).
+      2) Untuk setiap fase NN milik lane yang PR-nya sudah di-merge sejak sinkron terakhir:
+         `git rebase --onto origin/main lane-<lane>-fNN lane/<lane>` (hanya commit SETELAH fase NN yang
+         dipindah ke atas main, karena isi fase NN sudah ada di main lewat squash), lalu
+         `git push --force-with-lease origin lane/<lane>`.
+      3) Kalau belum ada PR yang di-merge tapi main maju: tidak perlu rebase. Rebase hanya bila PR fase
+         konflik; saat itu rebase branch snapshot `lane/<lane>-fNN` ke origin/main dan force-with-lease
+         branch snapshot itu (milikmu sendiri).
+      LALU RESOLVE PLACEHOLDER: `grep -rn "TODO(sync" app radar` → untuk setiap penanda yang prasyaratnya
       sekarang sudah ada di main, ganti placeholder dengan yang asli, jalankan test, commit
       "sync: replace <x> placeholder". Kalau bentuk aslinya beda dari placeholder, sesuaikan kodemu (bukan
       kontrak) dan catat di log.
@@ -204,18 +224,18 @@ Laporan dalam Bahasa Indonesia. Kode, nama file, komentar: Bahasa Inggris.
 
 | Baris | Fase | Lane | Model | Bob slice |
 |---|---|---|---|---|
-| `FASE: 00` | Fondasi (fork Orca + `radar/`) | A | Sonnet 5 | A1 toko-demo |
-| `FASE: 01` | Spike & GATE 1 | B | Sonnet 5 | B1 spike hook |
-| `FASE: 02` | Common + mock | A | Sonnet 5 | – |
-| `FASE: 03` | Server inti | A | Opus 5.5 | – |
-| `FASE: 04` | Sync agent | A | Opus 5.5 | – |
-| `FASE: 05` | Kunci, task, proposal | A | Opus 5.5 | A2 `checkWrite` |
-| `FASE: 06` | Git, diff, relay terminal | A | Opus 5.5 | A3 formatter commit, A4 review |
-| `FASE: 07` | Kit `.bob/` coder | B | Sonnet 5 · high | B2, B3, B4 |
-| `FASE: 08` | Main agent `pm-lead` | B | Sonnet 5 · high | B4 (tool PM) |
-| `FASE: 09` | App desktop (fork Orca) | C | Sonnet 5 · high (Opus untuk titik sambung Orca) | C1, C2, C3 |
+| `FASE: 00` | Fondasi (fork Orca + `radar/`) | Alief | Sonnet 5 | A1 toko-demo |
+| `FASE: 01` | Spike & GATE 1 | Umar | Sonnet 5 | B1 spike hook |
+| `FASE: 02` | Common + mock (kontrak beku) | Alief | Sonnet 5 | – |
+| `FASE: 03` | Server inti + `bob.activity` | Alief | Opus 5.5 | – |
+| `FASE: 04` | Sync agent | Alief | Opus 5.5 | – |
+| `FASE: 05` | Kunci, task, proposal | Alief | Opus 5.5 | A2 `checkWrite` |
+| `FASE: 06` | Commit GitHub, diff, review (relay terminal P1) | Alief | Opus 5.5 | A3 formatter commit, A4 review |
+| `FASE: 07` | Kit `.bob/` coder | Umar | Sonnet 5 · high | B2, B3, B4 |
+| `FASE: 08` | Main agent `pm-lead` | Umar | Sonnet 5 · high | B4 (tool PM) |
+| `FASE: 09` | App desktop (fork Orca) + `@radar/ui` | Aarief | Sonnet 5 · high (Opus untuk titik sambung Orca) | C1, C2, C3 |
 | `FASE: 10` | Integrasi E2E | Semua | Opus 5.5 | – |
-| `FASE: 11` | Tonton terminal, `.dmg`, replay | C | Sonnet 5 · high | C4 bukti script |
-| `FASE: 12` | Hardening P1 | A | Sonnet 5 | – |
-| `FASE: 13` | Eksperimen A/B | B | Sonnet 5 | (sesi eksperimen) |
+| `FASE: 11` | Watch Bob (aktivitas Bob IDE), `.dmg` (Aarief) · landing + replay (Imelda) | Aarief · Imelda | Sonnet 5 · high | C4 `evidence-check.ts`, I1, I2 |
+| `FASE: 12` | Hardening P1 | Alief | Sonnet 5 | – |
+| `FASE: 13` | Eksperimen A/B | Umar | Sonnet 5 | (sesi eksperimen) |
 | `FASE: 14` | Submission | Semua | Sonnet 5 | – |

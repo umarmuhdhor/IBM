@@ -467,9 +467,9 @@ stateDiagram-v2
 | BC-01 | Custom mode `coder` | Bob mulai dengan `my_tasks`. Setelah diblokir, Bob memanggil `why_blocked`, tidak mencoba ulang, dan tidak mengedit lewat shell. Saat selesai, Bob memanggil `submit_task`. | P0 |
 | BC-02 | Hook `SessionStart` | Mencetak brief paling banyak 6 baris: task saya, file saya, siapa memegang apa. | P0 |
 | BC-03 | Hook `UserPromptSubmit` | Menyisipkan keputusan PM dan pemberitahuan baru sejak prompt terakhir, termasuk file yang baru diubah rekan. | P0 |
-| BC-04 | Hook `PreToolUse` untuk `^(write_file\|apply_diff\|search_and_replace\|insert_content)$` | Payload dinormalisasi dari dua bentuk (`event/tool/input` dan `hook_event_name/tool_name/tool_input`). Blokir menghasilkan exit 2 dan file tidak berubah. | P0 |
-| BC-05 | Hook `PostToolUse` | Menandai perubahan sebagai buatan AI (bukan ketikan manusia) di event log. | P1 |
-| BC-06 | Hook `Stop` | Mengirim ringkasan giliran Bob ke feed. Tidak melepas kunci. | P2 |
+| BC-04 | Hook `PreToolUse` untuk `^(write_file\|apply_diff\|search_and_replace\|insert_content\|office_edit)$` | Payload dinormalisasi dari dua bentuk (`event/tool/input` dan `hook_event_name/tool_name/tool_input`). Blokir menghasilkan exit 2 dan file tidak berubah. | P0 |
+| BC-05 | Hook `PostToolUse` | Menandai perubahan sebagai buatan AI (bukan ketikan manusia) di event log (`file_version.ai`). Catatan: hook `PostToolUse` yang sama sudah mengirim `bob.activity kind=tool.post` sebagai bagian JT-01 (P0); yang P1 hanya penanda AI. | P1 |
+| BC-06 | Hook `Stop` | Mengirim `bob.activity kind=turn.end` (akhir giliran). **Tanpa ringkasan**: menurut docs, payload `Stop` hanya berisi session ID. Tidak melepas kunci. Sinyal akhir giliran adalah bagian JT-01 (P0); ringkasan giliran di luar lingkup. | P0 (lewat JT-01) |
 | BC-07 | Tool MCP coder | `my_tasks`, `why_blocked`, `request_file`, `team_activity`, `submit_task` berfungsi. | P0 |
 
 ### 10.4 Main agent (Bob milik PM)
@@ -504,7 +504,7 @@ Mission Control kini menjadi view di app Live Collab (seksi sidebar **Live Colla
 
 | ID | Requirement | Kriteria penerimaan | Prioritas |
 |---|---|---|---|
-| DA-01 | Build `.app`/`.dmg` macOS | `pnpm -C app build:mac` (atau `build:unpack` + `electron-builder --mac dmg`) menghasilkan `IBM Bob Live Collab.dmg` yang bisa dipasang di Mac lain (arm64). Tidak di-sign. Cara buka dijelaskan di README. | P0 |
+| DA-01 | Build `.app`/`.dmg` macOS | `pnpm -C app build` + `electron-builder --mac dmg` dengan `CSC_NAME=-` (ad-hoc; **bukan** `build:mac`, karena skrip itu ikut membangun helper Computer Use yang butuh signing identity) menghasilkan `IBM Bob Live Collab.dmg` yang bisa dipasang di Mac lain (arm64). Tidak di-sign Developer ID/notarize. Cara buka (Privacy & Security → Open Anyway, atau `xattr`) dijelaskan di README. | P0 |
 | DA-02 | IBM Bob (Shell) sebagai agent Orca | "IBM Bob" muncul di pemilih agent. Memilihnya menjalankan `bob` di terminal worktree. Glyph generik "B", bukan logo IBM. Tombol **Open in Bob IDE** membuka folder workspace di Bob IDE. | P1 (Bob IDE tetap alat utama) |
 | DA-03 | Seksi sidebar Live Collab | Item Mission Control, Team, Files & locks, dengan badge jumlah "Needs you". | P0 |
 | DA-04 | Koneksi Live Collab | Settings → Live Collab: URL server + token (atau kode undangan). Status koneksi tampil di status bar. Token disimpan di storage aman Electron (`safeStorage`), tidak di repo. | P0 |
@@ -614,11 +614,11 @@ Hook dan tool MCP memakai REST karena singkat dan sinkron. Sync agent dan app me
 | Bagian | Pilihan | Alasan |
 |---|---|---|
 | App desktop | **Fork Orca** (Electron 43, electron-vite, React, zustand, xterm, Monaco), MIT | Sudah punya terminal agent, worktree, board, editor. Kita menambah agent `bob` dan panel Live Collab saja. |
-| Kode Live Collab | TypeScript di Node 20+, workspace pnpm **terpisah** di `radar/` (seperti `mobile/` di Orca) | Tidak menyentuh graph paket Orca |
+| Kode Live Collab | TypeScript di Node 24, workspace pnpm **terpisah** di `radar/` (seperti `mobile/` di Orca). Bundle hook & radar-mcp ditarget `node20`. | Tidak menyentuh graph paket Orca |
 | Komponen UI bersama | `@radar/ui` (React), diimpor app lewat alias Vite dan dipakai web replay | Satu set komponen untuk app dan replay |
 | Sync agent | CLI Node: `chokidar` + `ws` | Pemantau file yang matang di semua OS |
-| Server | **Cloudflare Workers + Durable Objects** (Hono, WebSocket Hibernation API, SQLite bawaan DO), commit lewat **GitHub REST API** (Octokit). Plan Workers Free. | Serverless tapi stateful: satu DO per workspace menahan semua WebSocket dan memproses pesan satu per satu (cek kunci bebas race), URL tetap, gratis, dan tidak ada mesin yang harus dijaga. Lokal: `wrangler dev`. |
-| Hook | Script Node kecil yang dibundel esbuild | Jalan di Bob IDE dan Bob Shell tanpa `npm install` |
+| Server | **Cloudflare Workers + Durable Objects** (Hono, WebSocket Hibernation API, SQLite bawaan DO), commit lewat **GitHub Git Data API** (`fetch` langsung, alur dua transaksi R4 §6.3). Plan Workers Free. | Serverless tapi stateful: satu DO per workspace menahan semua WebSocket dan memproses pesan satu per satu (cek kunci bebas race), URL tetap, gratis, dan tidak ada mesin yang harus dijaga. Lokal: `wrangler dev`. |
+| Hook | Script Node kecil yang dibundel esbuild | Jalan di Bob IDE (komponen inti; Bob Shell opsional) tanpa `npm install` |
 | radar-mcp | MCP TypeScript SDK, transport stdio | Dipakai mode `coder` dan `pm-lead` |
 | Landing + replay web | Next.js (`output: 'export'`) di **Cloudflare Pages**, statis | Tetap hidup walaupun server mati. Satu akun Cloudflare dengan server. |
 | Cara membangun | Claude Code + plugin **ECC** (planner, tdd-guide, code-reviewer, security-reviewer) + **IBM Bob IDE** untuk Bob slice | Lihat [`PLAN.md`](PLAN.md) §4 dan §7 |
@@ -727,7 +727,7 @@ Detail kontrak pesan `term.*` ada di `plan/ref/R3-kontrak-api.md` §3.9.
 
 ### Konfigurasi Bob
 
-Kit yang sama dipakai **Bob IDE** dan **Bob Shell**. Bob Shell membaca `.bob/settings.json` (workspace) dan `~/.bob/settings/settings.json` (global) dengan format hook yang sama. Nama grup tool dan kanal pesan blokir dipastikan saat spike.
+Kit yang sama dipakai **Bob IDE** dan **Bob Shell**. Keduanya membaca `.bob/settings.json` (workspace) dan `~/.bob/settings/settings.json` (global) dengan format hook yang sama. Workspace harus di-**trust** (Bob IDE ≥ 2.0.2): folder untrusted melewati hook, MCP, dan rules tanpa error. Grup shell bernama `execute` (docs custom modes). Tool MCP butuh `alwaysAllow` di `.bob/mcp.json` supaya jalan tanpa klik approve. Kanal pesan blokir dipastikan saat spike.
 
 ```yaml
 # .bob/custom_modes.yaml  (nama grup tool diverifikasi saat spike)
@@ -741,7 +741,7 @@ customModes:
          Panggil radar.why_blocked, beri tahu user, lalu kerjakan bagian lain.
       3. File bisa berubah karena rekan. Baca ulang file sebelum mengeditnya.
       4. Saat task selesai, panggil radar.submit_task dengan ringkasan singkat.
-    groups: [read, edit, command, mcp]
+    groups: [read, edit, execute, mcp]
   - slug: pm-lead
     name: Live Collab PM Lead
     roleDefinition: Kamu adalah main agent yang membantu PM mengatur tim coder. Kamu tidak menulis kode.
@@ -761,11 +761,11 @@ customModes:
     "SessionStart":     [{ "hooks": [{ "type": "command", "command": "node .bob/hooks/brief.js start",  "timeout": 5 }] }],
     "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "node .bob/hooks/brief.js prompt", "timeout": 5 }] }],
     "PreToolUse": [{
-      "matcher": "^(write_file|apply_diff|search_and_replace|insert_content)$",
+      "matcher": "^(write_file|apply_diff|search_and_replace|insert_content|office_edit)$",
       "hooks": [{ "type": "command", "command": "node .bob/hooks/lock_guard.js", "timeout": 3 }]
     }],
     "PostToolUse": [{
-      "matcher": "^(write_file|apply_diff|search_and_replace|insert_content)$",
+      "matcher": "^(write_file|apply_diff|search_and_replace|insert_content|office_edit)$",
       "hooks": [{ "type": "command", "command": "node .bob/hooks/mark_ai_edit.js", "timeout": 3 }]
     }]
   }
@@ -798,7 +798,7 @@ customModes:
 | NFR-05 | Privasi | MVP menyimpan isi file di server tim. Roadmap: server self-hosted di jaringan perusahaan. |
 | NFR-06 | Biaya Bobcoin | Brief ≤ 6 baris. Main agent dipanggil hanya saat ada usulan yang dibutuhkan. `--max-cost` untuk pemicu otomatis. |
 | NFR-07 | Data | Repo contoh dengan data sintetis. Tidak ada data pribadi, klien, atau media sosial. |
-| NFR-08 | Kompatibilitas | **Bob IDE ≥ 2.0.2** (v1.0.3 dan v2.0.0 berhenti berfungsi 30 Sep 2026), login akun hackathon `ibm-coding-challenge-uat` (us-east), Bob Shell 2.x, Node 20+, git ≥ 2.38. App desktop: **macOS arm64** (R0). Sync agent, hook, dan server: macOS, Windows, dan Linux. |
+| NFR-08 | Kompatibilitas | **Bob IDE ≥ 2.0.2** (v1.0.3 dan v2.0.0 berhenti berfungsi 30 Sep 2026), login akun hackathon `ibm-coding-challenge-uat` (us-east), Bob Shell opsional (bukan syarat P0), Node 24 untuk membangun (bundle hook/radar-mcp jalan di Node ≥ 20), git ≥ 2.38. App desktop: **macOS arm64** (R0). Sync agent, hook, dan server: macOS, Windows, dan Linux. |
 | NFR-09 | Bisa diaudit | Setiap keputusan PM, usulan main agent, commit, aktivitas Bob, dan share terminal tercatat di event log. Setiap task Bob IDE yang terkait submission punya screenshot ringkasan task di `bob_sessions/` (penamaan R7). |
 | NFR-10 | Lisensi & atribusi | Fork Orca mempertahankan `LICENSE` MIT dan menyebut Orca di README dan About. Tidak memakai logo IBM. Tertulis "community hackathon project, not an official IBM product". |
 | NFR-11 | Kepatuhan template IBM | Repo memuat `.gitignore`, `.bobignore`, `SECURITY.MD`, dan `.env.example` dari [ibm-hackathon-template](https://github.com/watsonxhackathon/ibm-hackathon-template), digabung dengan `.gitignore` Orca. Tidak ada nama file yang tertangkap pola template (`*token*`, `*secret*`, `*password*`, `*credentials*`, `config.json`), dan hal ini dicek di CI. |
@@ -839,7 +839,7 @@ Edit bersama di baris yang sama (CRDT), chat tim, file biner, OAuth, Slack, apli
 
 ### Kalau waktu mepet, potong dengan urutan ini
 
-1. Ketik sebagai tamu (JT-04)
+1. Ketik sebagai tamu (JT-05) dan relay terminal Bob Shell (JT-04)
 2. Tag agent live di editor (UI-08)
 3. Hook `PostToolUse` penanda AI (BC-05)
 4. Hapus dan ganti nama file (SY-06)
@@ -891,7 +891,7 @@ Rencana lengkap per lane, branch, titik sinkron, anggaran Bobcoin, dan cara menj
 | Risiko | Dampak | Mitigasi |
 |---|---|---|
 | Codebase Orca besar (~23k file), tooling ketat (oxlint, ratchet) | Lane Aarief/Imelda lambat | Perubahan aditif di folder `components/radar/` baru. Bob slice C1 memetakan titik sambung. Jalankan `pnpm -C app tc` + oxlint file yang diubah saja. |
-| Build `.dmg` gagal (native helper, signing) | Teman tidak bisa pasang | Coba `build:unpack` sebelum kickoff. Fallback: `pnpm -C app dev` di 3 Mac. App tidak di-sign → klik kanan → Open. |
+| Build `.dmg` gagal (native helper, signing) | Teman tidak bisa pasang | Coba `build:unpack` sebelum kickoff. Fallback: `pnpm -C app dev` di 3 Mac. App tidak di-sign → System Settings → Privacy & Security → Open Anyway (macOS 15+), atau `xattr -dr com.apple.quarantine`. |
 | Hook di Bob IDE tidak jalan (docs menyatakan didukung) | Coder IDE tidak diblokir oleh Bob-nya sendiri | Lapis 2 di server + sync agent. Bob menjelaskan lewat brief/`why_blocked`. |
 | Juri menilai Bob IDE kurang "inti" | Tidak lolos penjurian (syarat wajib) | Semua coder dan PM bekerja di Bob IDE di video. Custom mode, hook, MCP, dan skill semuanya dikonfigurasi di Bob IDE. Pembangunan juga memakai Bob IDE (Bob slice + `bob_sessions/`). |
 | `.gitignore` template IBM mengabaikan nama file berisi `token`, `secret`, `password`, `credentials`, `config.json` | Kode hilang diam-diam dari repo | Larangan nama file di R5. CI menjalankan `radar/scripts/check-ignored.sh`. |

@@ -38,7 +38,7 @@ Semua fase dijalankan di **Claude Code dengan plugin ECC** (`/plugin install ecc
 | 03 Server inti | **Opus 5.5** | high | Sonnet 5 (high) | WebSocket hub, versi file, transaksi SQLite, auth — kesalahan di sini merambat ke semua fase | "Code" (+ "Plan"/"Architect" bila tersedia untuk review desain) |
 | 04 Sync agent | **Opus 5.5** | high | Sonnet 5 (high) | Race watcher ↔ penulisan server, anti-gema, penulisan atomik, lintas OS | "Code" |
 | 05 Kunci/task/proposal | **Opus 5.5** | high | – (jangan diturunkan) | Jantung produk. Tabel keputusan R4 + property test invariant | "Code" |
-| 06 Git + diff + relay terminal | **Opus 5.5** | high | Sonnet 5 (high) | Git worker serial, kegagalan push, analisis importer, relay `term.*` + ring buffer | Bob slice A3/A4 |
+| 06 Commit GitHub + diff (relay terminal P1) | **Opus 5.5** | high | Sonnet 5 (high) | GitHub Git Data API dengan klaim dua transaksi (R4 §6.3), kegagalan push, analisis importer; relay `term.*` hanya P1 | Bob slice A3/A4 |
 | 07 Bob coder kit | Sonnet 5 | high | – | Integrasi Bob sesuai hasil spike; banyak detail kecil tapi tidak rumit secara algoritmik. **Jalankan di Bob** untuk bukti | "Code" di Bob (wajib ekspor sesi) |
 | 08 Main agent PM | Sonnet 5 | high | Opus 5.5 untuk menulis deskripsi tool & instruksi mode | Kualitas deskripsi tool menentukan perilaku main agent | "Code" di Bob (wajib ekspor sesi) |
 | 09 App desktop (fork Orca) | Sonnet 5 | high | Opus 5.5 untuk titik sambung Orca (renderer ↔ xterm, alias Vite) | Codebase besar & tooling ketat; perubahan aditif | Bob slice C1–C3 di Bob IDE (Ask/Plan untuk onboarding, Code untuk registrasi agent & komponen) |

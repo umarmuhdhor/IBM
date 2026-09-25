@@ -49,7 +49,7 @@ Pola: `<tim>_<nama>_task<NN>_<slug_pakai_underscore>_summary.png`. `<tim>` = `ua
 
 **Otomatis penuh (dicoba di spike fase 01, opsional):** Bob IDE adalah aplikasi Electron/VS Code. Kalau Bob IDE dibuka dengan `--remote-debugging-port=9223`, skill `electron-automation` (agent-browser) bisa mengklik **Tasks → task → header** sendiri, lalu script mengambil screenshot. Kalau berhasil, langkah 3 juga tidak perlu manusia. Kalau gagal, pakai alur di atas.
 
-## 3. `bob-evidence.sh` (spesifikasi; stub di fase 00, lengkap di Bob slice C4 fase 11)
+## 3. `bob-evidence.sh` (spesifikasi; tangkapan layar default + `--interactive` final di fase 00, opsi `--md` + sensor ditambah Bob slice C4 fase 11)
 
 ```text
 usage: bob-evidence.sh <nama> <NN> <slug> [--md <path>] [--interactive]

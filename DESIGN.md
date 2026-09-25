@@ -33,6 +33,8 @@
 
 ### 2.1 Warna (dark default)
 
+> **Di app (`app/`) gaya Orca menang.** Orca melarang warna palet mentah (`check:code-quality:changed`). Karena itu token di tabel ini **tidak** ditulis ulang di app: setiap token netral/status dipetakan ke token Orca yang setara di `app/src/renderer/src/assets/main.css` (sumber kanonik Orca). Yang ditambahkan secara aditif ke `main.css` hanya token yang tidak dimiliki Orca: warna orang `--lc-person-a/b/c` dan `--lc-needs-you`. Komponen `@radar/ui` hanya memakai `var(--lc-*)`. Nilai hex di tabel ini dipakai langsung oleh web/replay lewat `radar/packages/ui/src/theme-vars.css`, dan di app `--lc-*` diisi dari token Orca.
+
 | Token | Hex | Pakai |
 |---|---|---|
 | `--bg` | `#0E0E10` | latar app |
@@ -56,7 +58,7 @@
 | Anggota | Peran | Hex | Nama |
 |---|---|---|---|
 | A · Andi | coder (Bob IDE) | `#78A9FF` | Blue 40 |
-| B · Budi | coder (Bob Shell di IBM Bob Live Collab) | `#BE95FF` | Purple 40 |
+| B · Budi | coder (Bob IDE) | `#BE95FF` | Purple 40 |
 | C · Citra | PM + main agent `pm-lead` | `#FF832B` | Orange 40 |
 
 Aturan: warna orang **hanya** dipakai untuk chip inisial, tag agent, garis kiri kartu, dan border terminal yang ditonton. Status tidak pernah memakai warna orang.
@@ -71,7 +73,7 @@ Mode terang (P2): tukar ke Carbon White theme. Tidak dikerjakan untuk demo.
 | Kode, path, terminal, meta | **IBM Plex Mono** 400/500 | 12/18 (terminal 13/18) | tag agent juga mono |
 | Angka metrik | IBM Plex Mono 500 tabular | 24/28 | counter di replay dan cover |
 
-Kedua font berlisensi OFL. Dibundel lokal di app lewat `@fontsource/ibm-plex-sans` dan `@fontsource/ibm-plex-mono`.
+Kedua font berlisensi OFL. **Hanya untuk web/replay** (landing, `/demo`, gallery), dibundel lewat `@fontsource/ibm-plex-sans` dan `@fontsource/ibm-plex-mono`. **App memakai font Orca** (sans & mono bawaan `main.css`), supaya panel Live Collab tidak terlihat asing di dalam Orca. `@radar/ui` memakai `var(--lc-font-sans)`/`var(--lc-font-mono)`.
 
 ### 2.3 Spasi, radius, bayangan
 
@@ -109,7 +111,7 @@ Kedua font berlisensi OFL. Dibundel lokal di app lewat `@fontsource/ibm-plex-san
 
 ## 4. Tempat Live Collab di dalam Orca (peta integrasi)
 
-| Bagian Orca | Perubahan | File (prefix `orca:` = root repo) |
+| Bagian Orca | Perubahan | File (prefix `orca:` = folder `app/` di repo ini) |
 |---|---|---|
 | Daftar agent | Tambah `bob` (label "IBM Bob", cmd `bob`, homepage bob.ibm.com, glyph "B" generik, **bukan** logo IBM) | `orca:src/shared/tui-agent.ts`, `orca:src/shared/tui-agent-config.ts`, `orca:src/renderer/src/lib/agent-catalog.tsx`, `orca:src/renderer/src/lib/agent-icon-glyphs.tsx` |
 | Sidebar kiri | Seksi baru **Live Collab** di bawah "Agent Dashboard": `Mission Control`, `Team`, `Files & locks` + badge jumlah "Needs you" | `orca:src/renderer/src/components/radar/RadarSidebarSection.tsx` (+ 1 baris di komponen sidebar Orca) |
@@ -144,7 +146,7 @@ Semua ukuran dirancang untuk 1512×982 (MacBook 14") dan tetap rapi di 1920×108
 └──────────────────┴───────────────────────────────────────────────────────────────┘
 ```
 
-### 5.2 Workspace — tampilan coder (Budi, Bob Shell di dalam app)
+### 5.2 Workspace — tampilan coder (Budi: Bob IDE + app Live Collab)
 
 ```text
 ┌──────────┬─ EXPLORER ────────┬─ checkout.ts ─────────────────────────┬─ TEAM ───────────────┐
@@ -153,11 +155,11 @@ Semua ukuran dirancang untuk 1512×982 (MacBook 14") dan tetap rapi di 1920×108
 │          │   checkout.ts ✎(A)│ 14    const sub = sum(items…)  [Andi · Bob coder]│ (A) Andi   │
 │          │   coupon.ts   (A) │ 15    return applyCoupon(sub…)        │  ◐ coder  writing ✎  │
 │          │  ui/              │                                       │  T-1 Kupon · 3 files │
-│          │   theme.css   (B)●│                                       │  [Watch terminal]    │
+│          │   theme.css   (B)●│                                       │  [Watch Bob]         │
 │          │   Header.tsx  (B)○│                                       │ (B) Budi (you)       │
 │          │  routes.ts (A) q:B│                                       │  ◐ coder  blocked    │
 │          │  utils.ts    free │                                       │  T-2 Dark mode       │
-│          ├───────────────────┴─ AGENT · TERMINAL (bob) ──────────────┤ ─ NOTIFICATIONS ─    │
+│          ├───────────────────┴─ BOB TRACE · Bob IDE ─────────────────┤ ─ NOTIFICATIONS ─    │
 │          │ > ubah checkout.ts untuk toggle tema                      │ ⛔ checkout.ts held   │
 │          │ ⚓ hook · PreToolUse · lock_guard → blocked · 84 ms          │   by Andi (T-1)      │
 │          │ ⧉ mcp · radar.why_blocked                                   │ ✓ Plan approved      │
@@ -247,7 +249,7 @@ Kalau ada item merah, tampilkan satu kalimat perbaikan dan tombol **Retry**.
 Landing sengaja **terang dan hangat**, berbeda dari app yang gelap. Tujuannya supaya juri yang membuka URL langsung merasa ini produk jadi. Screenshot app yang gelap tampil di dalamnya sebagai mockup produk. Spesifikasi lengkap ada di [`UI Inspo & Design/landing-style/README.md`](UI%20Inspo%20%26%20Design/landing-style/README.md) (turunan style reference Refero untuk notion.com).
 
 - Kanvas `#f6f5f4`, kartu putih dengan border 1px `rgba(0,0,0,.08)`, tanpa shadow, radius 12.
-- Satu tombol biru `#0075de` (**Watch the live replay**) dan satu tombol ghost (**Download for macOS**, dengan catatan kecil "unsigned · right-click → Open").
+- Satu tombol biru `#0075de` (**Watch the live replay**) dan satu tombol ghost (**Download for macOS**, dengan catatan kecil "unsigned · open via Privacy & Security → Open Anyway").
 - Headline 72px dengan tracking negatif dan **pill highlight** di satu kata kerja. Subhead serif (Source Serif 4). Font Inter.
 - Blok aksen marigold untuk GIF near-miss, dan satu "dark island" `#02093a` untuk "Built on IBM Bob primitives".
 - **Jangan** meniru merek Notion: tanpa logo, nama, ilustrasi karakter, atau font proprietary mereka.

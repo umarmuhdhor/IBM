@@ -3,12 +3,12 @@
 | Field | Nilai |
 |---|---|
 | Jalur | **Aarief**: bagian A, B, C, E (`lane/app`) · **Imelda**: bagian D, landing + replay (`lane/web`) |
-| Slot WITA | 11a Sab 16:00–21:00 · 11b Sab 23:00–Min 01:00 · tidur 01:00–06:00 · 11c Min 06:00–11:00 |
+| Slot WITA | Aarief: 11a Sab 16:00–21:00 · 11b Sab 23:00–Min 01:00 · tidur 01:00–06:00 · 11c Min 06:00–11:00 · Imelda (D): mulai setelah fase 00, pakai fixture; replay dari rekaman nyata Min pagi |
 | Estimasi | 9 jam |
-| Prasyarat | 09. Relay `term.*` server dari fase 06 (sebelum siap, pakai mock fase 02 yang sudah mendukung `term.*`). Rekaman nyata dari fase 10 untuk replay. |
+| Prasyarat | A/B/C/E: 09, dan `POST /v1/bob/activity` + event `bob.activity` dari fase 03 (sebelum masuk `main`, pakai mock fase 02 `--scenario demo`) · D: fase 00, fixture `packages/server/test/fixtures/flow-export.json` (fase 05) dan `bob-kit/prompts/bob-quotes.json` (fase 07), disalin ke `packages/web`; sebelum ada, fixture sintetis bertanda `TODO(sync:…)`. Rekaman nyata dari fase 10 untuk replay final. Relay `term.*` hanya untuk P1. |
 | Requirement PRD | JT-01, JT-02, JT-03 (sisi klien), DA-01, UI-05, UI-09, EV-02 (P0) · JT-04, UI-06, UI-08, DA-05 (P1) · JT-05 (P2) |
 | Model | Sonnet 5 · effort high (Opus 5.5 kalau tap xterm atau flow control bermasalah) |
-| Bob slice | **C4** `bob-evidence.sh` versi lengkap + `evidence-check.ts` |
+| Bob slice | **C4** opsi `--md` di `bob-evidence.sh` + `evidence-check.ts` |
 | Fase berikutnya | 10 (bergabung ke integrasi), lalu 14 |
 
 ## Tujuan
@@ -27,7 +27,7 @@
 - `orca:src/renderer/src/components/radar/WatchBobView.tsx` (P0); `lib/radar/terminal-share.ts`, `components/radar/{ShareTerminalButton,WatchTerminalView}.tsx` (P1)
 - Build: `IBM Bob Live Collab-<ver>-arm64.dmg` di GitHub Release `v0.3.0` + `radar-cli.tgz`
 - `packages/web/app/page.tsx` (landing = **Application URL** di form lablab), `packages/web/app/demo/page.tsx`, `packages/web/lib/replay-player.ts`, `scripts/export-replay.ts` → `packages/web/public/demo/{events.json,meta.json,bob-quotes.json}`
-- `scripts/bob-evidence.sh` (lengkap), `scripts/evidence-check.ts`
+- `scripts/bob-evidence.sh` (tambah opsi `--md`), `scripts/evidence-check.ts` (dua file ini pengecualian folder untuk Aarief, PLAN §2)
 - Deploy Cloudflare Pages `ibm-bob-live-collab.pages.dev` (`pnpm -C radar deploy:web`)
 
 ## Langkah kerja
@@ -60,7 +60,7 @@
    Untuk `.dmg`: ganti `--dir` dengan `--mac dmg`. `CSC_NAME=-` wajib, karena tanpa itu `codesign` memakai sertifikat "Apple Development" di keychain dan gagal non-interaktif.
 10. Ikon app dari `prompt_ui.md` #11 → `resources/` (`.icns` via script `build:icons` Orca kalau cocok, atau `iconutil`). `electron-builder.config.cjs`: `productName`, `appId: dev.livecollab.app`, `mac.target: dmg`, `arch: arm64`, **tanpa** signing/notarize (`identity: null`). Kalau `build:mac` memaksa native helper yang gagal, pakai `build:unpack` + `electron-builder --mac dmg --prepackaged`.
 11. Paket CLI: `pnpm -C radar --filter @radar/sync pack` → `radar-cli.tgz` (bundle hook + MCP + kit di dalamnya).
-12. GitHub Release `v0.3.0` (`gh release create`): `.dmg`, `radar-cli.tgz`, catatan pasang (klik kanan → Open, atau `xattr -dr com.apple.quarantine "/Applications/IBM Bob Live Collab.app"`).
+12. GitHub Release `v0.3.0` (`gh release create`): `.dmg`, `radar-cli.tgz`, catatan pasang (System Settings → Privacy & Security → **Open Anyway**; sejak macOS 15 Sequoia klik kanan → Open tidak lagi melewati Gatekeeper; alternatif `xattr -dr com.apple.quarantine "/Applications/IBM Bob Live Collab.app"`). Uji di Mac kedua: unduh `.dmg` lewat browser (supaya dapat atribut quarantine), pasang, buka, catat pesan Gatekeeper yang muncul.
 13. Uji pasang di **Mac teman** dari nol: unduh → pasang → Settings → Connect → tersinkron. Catat waktunya (metrik "< 3 menit").
 
 ### D. [Imelda] Landing + replay web (P0) · Bob slice **I1** pemutar replay + `/demo`, **I2** landing
@@ -71,12 +71,12 @@ Imelda memakai komponen `@radar/ui` buatan Aarief (fase 09 langkah 6). Sebelum k
 15. **`lib/replay-player.ts`**: play/pause/seek/speed. Seek = `applyEvents` sampai `t`, plus timeline aktivitas Bob sampai `t` (snapshot tiap 10 s untuk seek cepat).
 16. **`/demo`** (DESIGN §5.8): header + badge `no login · no API key`. Counter. Tiga kolom: Andi (timeline aktivitas Bob IDE), Mission Control (views `@radar/ui` read-only), Budi (timeline aktivitas Bob IDE). Timeline chapter. Panel **Bob inside**: untuk event yang dipilih, tampilkan primitif Bob (hook/MCP/mode), payload ringkas, kutipan Bob, dan link ke `bob_sessions/...` di GitHub. Autoplay 2×, jeda > 5 s dipadatkan.
 17. Statis penuh: `next.config` `output: 'export'` (hasil di `packages/web/out/`, dideploy ke Cloudflare Pages), tanpa panggilan jaringan selain origin. Playwright `e2e/demo.spec.ts` (skill `e2e-testing`): autoplay jalan, near-miss muncul ≤ 30 s di 8×, klik event → Bob inside, dan tidak ada request ke domain lain.
-18. **Landing `/`** (UI-09, gaya warm paper: DESIGN §5.11 + `UI Inspo & Design/landing-style/README.md`, ±45 menit): hero (judul, tagline, GIF near-miss), tombol utama **Watch the live replay** → `/demo`, tombol **Download for macOS** → `.dmg` di Release terbaru (URL dari `meta.json`), 3 langkah pasang (termasuk klik kanan → Open), dan link Repo · bob_sessions · Video · Deck. Tambahkan kalimat "Community hackathon project, not an official IBM product · built on Orca (MIT)". Statis, tanpa login. Setelah jadi: screenshot Playwright (desktop 1440 + mobile 390) lalu jalankan skill `better-interface`. Perbaiki temuan HIGH.
+18. **Landing `/`** (UI-09, gaya warm paper: DESIGN §5.11 + `UI Inspo & Design/landing-style/README.md`, ±45 menit): hero (judul, tagline, GIF near-miss), tombol utama **Watch the live replay** → `/demo`, tombol **Download for macOS** → `.dmg` di Release terbaru (URL dari `meta.json`), 3 langkah pasang (termasuk Privacy & Security → Open Anyway), dan link Repo · bob_sessions · Video · Deck. Tambahkan kalimat "Community hackathon project, not an official IBM product · built on Orca (MIT)". Statis, tanpa login. Setelah jadi: screenshot Playwright (desktop 1440 + mobile 390) lalu jalankan skill `better-interface`. Perbaiki temuan HIGH.
 19. Deploy Cloudflare Pages (`pnpm -C radar deploy:web`). Buka `/` dan `/demo` dari incognito dan ponsel (tab A/MC/B).
 
 ### E. Bob slice C4 — script bukti (kapan saja di fase ini, ±2 Bobcoin)
 
-20. Prompt: "Lengkapi `radar/scripts/bob-evidence.sh` dan buat `radar/scripts/evidence-check.ts` sesuai `plan/ref/R7-bukti-bob.md` §3–§4. Bash POSIX + macOS `screencapture`. `evidence-check.ts` membaca `plan/team.json`, `bob_sessions/`, dan trailer `Bob-Assisted` dari `git log --all`." Bukti: `04-evidence-scripts`. Claude Code menambah test untuk `evidence-check.ts` (fixture folder palsu).
+20. Prompt: "Tambahkan opsi `--md <path>` (salin ekspor md task + sensor) ke `radar/scripts/bob-evidence.sh` tanpa mengubah perilaku default, dan buat `radar/scripts/evidence-check.ts` sesuai `plan/ref/R7-bukti-bob.md` §3–§4. Bash POSIX + macOS `screencapture`. `evidence-check.ts` membaca `plan/team.json`, `bob_sessions/`, dan trailer `Bob-Assisted` dari `git log --all`." Bukti: `04-evidence-scripts`. Claude Code menambah test untuk `evidence-check.ts` (fixture folder palsu).
 
 ## Verifikasi
 
@@ -93,7 +93,7 @@ ls -lh dist/*.dmg                  # atau lokasi output electron-builder
 - [ ] DA-01: `.dmg` terpasang di Mac teman dari nol (< 3 menit), Release `v0.3.0` publik.
 - [ ] UI-05: `/demo` jalan tanpa login, API key, atau server. Panel Bob inside berfungsi.
 - [ ] UI-09: landing `/` live di Cloudflare Pages, dengan tombol replay dan download `.dmg` yang berfungsi.
-- [ ] EV-02: `bob-evidence.sh` lengkap dan dipakai minimal sekali oleh anggota lain.
+- [ ] EV-02: `bob-evidence.sh --md` berfungsi dan `evidence:check` hijau untuk isi `bob_sessions/` saat ini.
 - [ ] JT-04 selesai **atau** ditunda dengan alasan tercatat (urutan potong PRD §16).
 
 ## Risiko & fallback
@@ -103,7 +103,7 @@ ls -lh dist/*.dmg                  # atau lokasi output electron-builder
 | Titik tap xterm sulit dijangkau (output lewat worker/webgl) | Tap di level IPC data pty yang masuk ke renderer (sebelum ke xterm). Pilihan terakhir: tap di main process pada listener pty, tanpa mengubah alurnya. Catat D-app-.. |
 | Frame terlalu besar (TUI Bob me-redraw penuh) | Batasi 20 fps, gabungkan frame, kirim snapshot setiap 5 s dan buang frame lama |
 | `.dmg` gagal dibuat | Kirim `.app` di dalam `.zip` (`--dir` + `ditto -c -k`). Demo tetap memakai `pnpm -C app dev`. |
-| Gatekeeper memblokir app | Instruksi `xattr` di README + Release notes |
+| Gatekeeper memblokir app / "app is damaged" | Instruksi Open Anyway + `xattr` di README + Release notes. Pastikan build memakai `CSC_NAME=-` (ad-hoc): app arm64 tanpa signature sama sekali tidak bisa jalan |
 | Rekaman nyata belum ada | Replay memakai `sim-3pc` + frame rekaman lokal. Ganti setelah rekaman Minggu 09:00. |
 
 ## Catatan handoff
