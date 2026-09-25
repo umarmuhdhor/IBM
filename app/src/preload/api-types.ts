@@ -49,6 +49,7 @@ import type { PetApi } from './api/pet-api'
 import type { PluginsApi } from './api/plugin-host-api'
 import type { PreflightApi } from './api/preflight-api'
 import type { PtyApi } from './api/pty-api'
+import type { RadarApi } from './api/radar-bridge'
 import type { ProjectGroupsApi, ProjectsApi, RepositoryApi } from './api/repository-api'
 import type { RuntimeApi } from './api/runtime-api'
 import type { KeybindingsApi, SettingsApi } from './api/settings-api'
@@ -82,6 +83,7 @@ export type PreloadApi = {
   workspaceSpace: WorkspaceSpaceApi
   workspacePorts: WorkspacePortsApi
   pty: PtyApi
+  radar: RadarApi
   feedback: FeedbackApi
   crashReports: CrashReportsApi
   export: ExportApi
