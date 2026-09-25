@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
@@ -86,6 +86,14 @@ describe('lock_guard (PreToolUse, BC-04)', () => {
       lastBlock?: { path: string; message: string };
     };
     expect(state.lastBlock).toMatchObject({ path: 'src/checkout/checkout.ts', message: BLOCK_MESSAGE });
+  });
+
+  it('still blocks (exit 2) when .radar/state.json cannot be written', async () => {
+    const ws = makeWorkspace();
+    mkdirSync(join(ws, '.radar', 'state.json')); // a directory where the file should be
+    const r = await runHook(bundles.lock_guard, [], prePayload(ws, 'src/checkout/checkout.ts'), { ...env, RADAR_ROOT: ws }, ws);
+    expect(r.code).toBe(2);
+    expect(r.stderr).toContain('Alice');
   });
 
   it('reports tool.pre with the decision to /v1/bob/activity (JT-01)', async () => {

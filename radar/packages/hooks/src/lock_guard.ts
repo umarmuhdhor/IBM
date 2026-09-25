@@ -1,6 +1,6 @@
 // PreToolUse hook (BC-04). Checks whether the tool's target paths are locked by another member.
 // Any error or timeout fails open (exit 0) and is logged — only a real `block` decision exits 2.
-// Never prints to stdout (PreToolUse stdout is injected into the Bob transcript).
+// Never prints to stdout. The block message goes to stderr: Bob IDE 2.2.0 passes it to the model (D-umar-01).
 import { sendActivity } from './activity.js';
 import { loadContext, logLine, radarFetch, settleWithin } from './_shared.js';
 import { EDIT_TOOLS_REGEX, HOOK_SERVER_TIMEOUT_MS, type LockCheckRes, saveState } from './placeholder/common.js';
@@ -44,7 +44,13 @@ async function main(): Promise<void> {
 
   if (decision === 'block') {
     process.stderr.write(res.message + '\n');
-    saveState(cfg.root, { lastBlock: { path: hook.paths[0]!, message: res.message, ts: Date.now() } });
+    try {
+      const blocked = res.results.find((r) => r.decision === 'block')?.path ?? hook.paths[0] ?? '';
+      saveState(cfg.root, { lastBlock: { path: blocked, message: res.message, ts: Date.now() } });
+    } catch (err) {
+      // a local state file must never turn a block into an allow
+      logLine(cfg.root, 'lock_guard', `lastBlock not saved: ${String(err)}`);
+    }
     process.exit(2);
   }
 }

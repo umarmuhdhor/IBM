@@ -4,7 +4,14 @@
 // Always exits 0; server errors print nothing (fail-open).
 import { sendActivity } from './activity.js';
 import { loadContext, logLine, radarFetch, settleWithin } from './_shared.js';
-import { ACTIVITY_TIMEOUT_MS, BRIEF_MAX_LINES, type BriefRes, loadState, saveState } from './placeholder/common.js';
+import {
+  ACTIVITY_TIMEOUT_MS,
+  BRIEF_MAX_LINES,
+  HOOK_SERVER_TIMEOUT_MS,
+  type BriefRes,
+  loadState,
+  saveState,
+} from './placeholder/common.js';
 
 async function main(): Promise<void> {
   const arg = process.argv[2] as 'start' | 'prompt' | undefined;
@@ -18,7 +25,7 @@ async function main(): Promise<void> {
 
   let brief: BriefRes | null = null;
   try {
-    brief = await radarFetch<BriefRes>(cfg, 'GET', path, undefined, ACTIVITY_TIMEOUT_MS);
+    brief = await radarFetch<BriefRes>(cfg, 'GET', path, undefined, HOOK_SERVER_TIMEOUT_MS);
   } catch (err) {
     logLine(cfg.root, 'brief', `brief fetch failed: ${String(err)}`);
   }
@@ -26,7 +33,11 @@ async function main(): Promise<void> {
   if (brief) {
     const lines = brief.lines.slice(0, BRIEF_MAX_LINES);
     if (lines.length > 0) process.stdout.write(lines.join('\n') + '\n');
-    saveState(cfg.root, { briefCursor: brief.cursor });
+    try {
+      saveState(cfg.root, { briefCursor: brief.cursor });
+    } catch (err) {
+      logLine(cfg.root, 'brief', `cursor not saved: ${String(err)}`);
+    }
   }
 
   await settleWithin(
