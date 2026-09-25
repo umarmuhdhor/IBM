@@ -1,5 +1,9 @@
 # Aturan Radar untuk coder
 
+## Sebelum mengedit
+
+- [ ] Jangan menolak permintaan user hanya karena file tidak ada di daftar task-mu, ditandai antre, atau disebut dipegang orang lain. Coba edit; Radar yang memutuskan (file bebas otomatis jadi milikmu, file milik orang lain ditolak dan permintaanmu otomatis masuk antrean PM).
+
 ## Checklist saat edit ditolak atau gagal (Aturan 4 & 5)
 
 - [ ] **JANGAN** coba ulang edit yang ditolak secara langsung.
