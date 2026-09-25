@@ -8,8 +8,8 @@ Syarat: plugin ECC terpasang (`/plugin install ecc@ecc`, lihat [`../PLAN.md`](..
 |---|---|
 | Alief · Core | `00 → 02 → 03 → 04 → 05 → 06 → 10 → 12 → 14` |
 | Umar · Bob | `01 → 07 → 08 → 10 → 13 → 14` |
-| Aarief · App desktop | `09 (a, b, c) → 11 (A, B, C) → 10 → 14` (09a/b boleh mulai sebelum 02, memakai mock) |
-| Imelda · UI & web | `09 (langkah 6) → 11 (D) → 10 → 14` |
+| Aarief · App desktop + `@radar/ui` | `09 → 11 (A, B, C, E) → 10 → 14` (09a/b boleh mulai sebelum 02, memakai mock) |
+| Imelda · web & media | `11 (D) → 10 → 14` (boleh mulai setelah fase 00, memakai data fixture) |
 | Solo | `00 → 01 → … → 14` |
 
 Alternatif tanpa salin-tempel: ubah dua baris di file ini, lalu ketik ke Claude Code: `Jalankan instruksi di plan/PROMPT.md`.

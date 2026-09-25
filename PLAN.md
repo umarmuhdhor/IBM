@@ -47,11 +47,11 @@ Empat orang, tiga lane, semua berjalan paralel. **Batas lane = batas folder**, s
 |---|---|---|---|---|
 | **Alief · Core** | Alief | Collab Server di **Cloudflare Workers + Durable Objects**, sync agent, mesin kunci, commit via GitHub API, relay terminal | 00, 02, 03, 04, 05, 06, 12 | `radar/packages/{common,server,sync}`, `radar/scripts/{sim-3pc,bench-sync,mock-server}.ts`, `radar/examples/toko-demo`, root `radar/` config |
 | **Umar · Bob** | Umar | Kit `.bob/`: mode `coder` + `pm-lead`, hook, `radar-mcp`, spike Bob, eksperimen, **koordinator bukti Bob** | 01, 07, 08, 13 | `radar/packages/{hooks,mcp}`, `radar/bob-kit`, `radar/spike`, `radar/scripts/{ab,metrics}*`, `bob_sessions/INDEX.md`, `BOB_DEVELOPMENT.md` |
-| **Aarief/Imelda · App** | **Aarief** | App desktop (Orca di `app/`): agent `bob`, panel Live Collab, tonton terminal, `.dmg` | 09 (a, b, c-wiring), 11 (A, B, C) | `app/**`, `resources/` ikon |
-| | **Imelda** | Komponen UI bersama `@radar/ui`, landing + replay web (Cloudflare Pages), video, deck, cover, statement submission | 09 (langkah 6: komponen), 11 (D: landing + replay), 14 (media & statement) | `radar/packages/{ui,web}`, `radar/docs/{deck,video,SUBMISSION.md}` |
+| **Aarief/Imelda · App** | **Aarief** | App desktop (Orca di `app/`): agent `bob`, **komponen UI `@radar/ui`**, panel Live Collab, tonton terminal, `.dmg` | 09 (semua), 11 (A, B, C, E) | `app/**`, `radar/packages/ui`, `resources/` ikon |
+| | **Imelda** | Landing + replay web (Cloudflare Pages) yang **memakai** komponen `@radar/ui` dari Aarief, video, deck, cover, statement submission | 11 (D: landing + replay), 14 (media & statement) | `radar/packages/web`, `radar/scripts/export-replay.ts`, `radar/docs/{deck,video,SUBMISSION.md}` |
 | Bersama | Semua | Integrasi E2E, submission | 10, 14 | Masing-masing di foldernya sendiri |
 
-Branch: `lane/core` (Alief), `lane/bob` (Umar), `lane/app` (Aarief), `lane/web` (Imelda). Aarief dan Imelda sama-sama merge ke `main`. Imelda mengubah `@radar/ui` dan Aarief memakainya di app, jadi sepakati props komponen di awal (DESIGN.md §3).
+Branch: `lane/core` (Alief), `lane/bob` (Umar), `lane/app` (Aarief), `lane/web` (Imelda). Aarief dan Imelda sama-sama merge ke `main`. Aarief membuat `@radar/ui`, dan Imelda memakainya di replay. Aarief mengumumkan props setiap komponen begitu selesai, sementara Imelda bisa mulai dengan data contoh (DESIGN.md §3).
 
 **Kontrak** (`radar/packages/common/**`, `plan/ref/**`) hanya diubah oleh **Lane Alief** lewat "contract PR". Lane Umar dan Lane Aarief/Imelda yang butuh perubahan menulis entri `DECISIONS.md` (prefix `D-umar-..`/`D-app-..`) lalu mention Lane Alief.
 
@@ -144,13 +144,13 @@ Kode proyek baru mulai ditulis setelah kickoff. Setup lingkungan boleh dilakukan
 
 | Waktu | Alief · Core | Umar · Bob | Aarief · App desktop | Imelda · UI & web |
 |---|---|---|---|---|
-| Jum 23:00–Sab 00:30 | **00 Fondasi** di `main` | Kickoff: baca guide 2.0, catat aturan bukti & Bobcoin | **Bob slice C1**: Bob memetakan titik sambung Orca | Kickoff. Siapkan `@radar/ui` (tokens, Tailwind) setelah 00 |
-| Sab 00:30–02:30 | **02 Common + mock** → `main` = **kontrak beku** | **01 Spike** | **09a** agent `bob` + ganti appId | **Bob slice I1**: `LockChip`, `AgentTag`, `DecisionCard` |
-| Sab 02:30–04:00 | 03 Server (Worker + DO) mulai | 01 → **GATE 1 (04:00)** | 09b koneksi Live Collab melawan mock | sisa komponen + halaman `/gallery` |
+| Jum 23:00–Sab 00:30 | **00 Fondasi** di `main` | Kickoff: baca guide 2.0, catat aturan bukti & Bobcoin | **Bob slice C1**: Bob memetakan titik sambung Orca | Kickoff. Kerangka Next.js `radar/packages/web` + deploy kosong ke Cloudflare Pages |
+| Sab 00:30–02:30 | **02 Common + mock** → `main` = **kontrak beku** | **01 Spike** | **09a** agent `bob` + ganti appId | **Bob slice I2**: landing page `/` |
+| Sab 02:30–04:00 | 03 Server (Worker + DO) mulai | 01 → **GATE 1 (04:00)** | 09b koneksi Live Collab melawan mock | polish landing, draf naskah video |
 | Sab 04:00–09:00 | 03 → 04 Sync agent | Tidur | Tidur | Tidur |
-| Sab 09:00–16:00 | Tidur 09–14 → 05 Kunci/task/proposal | **07** Kit coder (**di Bob IDE**) | **09c** pasang panel Live Collab di app | views `MissionControl`/`TeamPanel`/`FilesLocks` di `@radar/ui` + **I2** landing |
+| Sab 09:00–16:00 | Tidur 09–14 → 05 Kunci/task/proposal | **07** Kit coder (**di Bob IDE**) | **09c** **Bob slice C3** komponen `@radar/ui` + views, lalu pasang di app | **Bob slice I1**: pemutar replay + `/demo` dengan data fixture (memakai komponen Aarief) |
 | **Sab 16:00** | **Sinkron 1:** semua lane merge ke `main`, uji melawan Worker staging | | | |
-| Sab 16:00–21:00 | 05 → 06 GitHub API + diff + relay terminal | **08** `pm-lead` (**di Bob IDE**) | **11a** tonton terminal | **11 D** replay player + `/demo` (fixture) |
+| Sab 16:00–21:00 | 05 → 06 GitHub API + diff + relay terminal | **08** `pm-lead` (**di Bob IDE**) | **11a** tonton terminal | `/demo`: panel Bob inside, `export-replay.ts`, halaman `/gallery` |
 | **Sab 21:00–23:00** | **10 Integrasi E2E** di `main` → **Milestone 23:00** di 4 laptop | | | |
 | Sab 23:00–Min 04:00 | Perbaikan E2E, tidur bergilir | Tidur 23:30–04:30 | **11b** `.dmg`, tidur 01:00–06:00 | naskah video + storyboard, tidur 00:00–05:00 |
 | Min 04:00–11:00 | **12** Hardening | **13** Eksperimen, cek `bob_sessions/` | 11c polish + ketik tamu (bonus) | rekam footage 09:00, replay dari rekaman nyata |
@@ -206,7 +206,8 @@ Aturan: *"Your repository must include the code/files where IBM Bob assisted, pl
 | C1 | Aarief | **Onboarding Orca dengan Bob:** "di mana agent didefinisikan dan cara menambah agent baru" → laporan HTML Bob | Ask/Plan | 3 |
 | C2 | Aarief | Registrasi agent `bob` di Orca (3 file) | Code | 3 |
 | C4 | Aarief | Script `bob-evidence.sh` + `evidence:check` | Code | 2 |
-| I1 | Imelda | Komponen `@radar/ui`: `LockChip`, `AgentTag`, `DecisionCard` + test | Code | 4 |
+| C3 | Aarief | Komponen `@radar/ui`: `LockChip`, `AgentTag`, `DecisionCard` + test | Code | 4 |
+| I1 | Imelda | Pemutar replay (`replay-player.ts`) + halaman `/demo` | Code | 4 |
 | I2 | Imelda | Landing page `/` (Application URL) | Code | 3 |
 | I3 | Imelda | Draf Long Description + outline deck dari PRD (**document understanding** Bob: baca `PRD.md`, hasilkan `.docx`/HTML) | Ask/Code | 3 |
 

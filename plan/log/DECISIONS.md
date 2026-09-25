@@ -69,3 +69,9 @@ Format:
 - Alasan: gratis, tanpa VPS atau homelab yang harus nyala terus, URL tetap, dan DO memproses pesan satu per satu sehingga cek kunci bebas race. Tim meminta penamaan per orang supaya lebih mudah dibaca.
 - Alternatif yang ditolak: Railway/Fly.io (butuh volume, tidak gratis penuh), homelab + Cloudflare Tunnel (laptop harus nyala 24 jam, URL berubah; tetap dipakai sebagai cadangan darurat), Vercel/Netlify Functions (stateless, tidak bisa menahan WebSocket), Supabase/Firebase (tetap butuh server untuk commit dan relay terminal).
 - Dampak: ARCHITECTURE §1–§3, PRD §12, R1 §3–§5, R2 §1, R5 §5, fase 03 (rewrite), 06 (GitHub API), 02 (mock Hono), 04, 10, 11, 12, 14, PLAN §1/§2/§5.2/§7/§11, PROGRESS, R7.
+
+## D-004 · 25 Sep 2026 · pra-kickoff · `@radar/ui` dipegang Aarief
+
+- Keputusan: komponen UI bersama `@radar/ui` (fase 09 langkah 6, Bob slice C3) dipegang **Aarief**. Imelda memakai komponen itu di landing dan replay web, dengan Bob slice I1 = pemutar replay + `/demo`, I2 = landing, I3 = Long Description + outline deck.
+- Alasan: bentuk komponen ditentukan oleh app desktop. Permintaan Aarief.
+- Dampak: PLAN §2/§5.2/§7, fase 09, fase 11 D, PROGRESS, PROMPT.

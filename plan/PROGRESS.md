@@ -14,7 +14,7 @@ Waktu dalam WITA. Setiap lane **hanya mengedit baris fasenya sendiri** (supaya m
 | 06 | Git, diff, relay terminal | Alief | lane/core | [ ] | | | | log/fase-06.md |
 | 07 | Kit `.bob/` coder | Umar | lane/bob | [ ] | | | | log/fase-07.md |
 | 08 | Main agent `pm-lead` | Umar | lane/bob | [ ] | | | | log/fase-08.md |
-| 09 | App desktop (Orca di `app/`) + `@radar/ui` | Aarief + Imelda | lane/app, lane/web | [ ] | | | | log/fase-09.md |
+| 09 | App desktop (Orca di `app/`) + `@radar/ui` | Aarief | lane/app | [ ] | | | | log/fase-09.md |
 | 10 | Integrasi E2E | Semua | main | [ ] | | | | log/fase-10.md |
 | 11 | Tonton terminal + `.dmg` (Aarief) · landing + replay (Imelda) | Aarief + Imelda | lane/app, lane/web | [ ] | | | | log/fase-11.md |
 | 12 | Hardening & P1 | Alief | lane/core | [ ] | | | | log/fase-12.md |
@@ -68,6 +68,7 @@ Waktu dalam WITA. Setiap lane **hanya mengedit baris fasenya sendiri** (supaya m
 | C1 onboarding Orca | App | Aarief | | [ ] | |
 | C2 agent bob | App | Aarief | | [ ] | |
 | C4 script bukti | App | Aarief | | [ ] | |
-| I1 komponen `@radar/ui` | App | Imelda | | [ ] | |
+| C3 komponen `@radar/ui` | App | Aarief | | [ ] | |
+| I1 pemutar replay + `/demo` | App | Imelda | | [ ] | |
 | I2 landing | App | Imelda | | [ ] | |
 | I3 Long Description + outline deck | App | Imelda | | [ ] | |

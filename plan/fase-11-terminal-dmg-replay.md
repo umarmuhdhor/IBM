@@ -65,7 +65,9 @@
 12. GitHub Release `v0.3.0` (`gh release create`): `.dmg`, `radar-cli.tgz`, catatan pasang (klik kanan → Open, atau `xattr -dr com.apple.quarantine "/Applications/IBM Bob Live Collab.app"`).
 13. Uji pasang di **Mac teman** dari nol: unduh → pasang → Settings → Connect → tersinkron. Catat waktunya (metrik "< 3 menit").
 
-### D. [Imelda] Landing + replay web (P0) · Bob slice **I2** landing
+### D. [Imelda] Landing + replay web (P0) · Bob slice **I1** pemutar replay + `/demo`, **I2** landing
+
+Imelda memakai komponen `@radar/ui` buatan Aarief (fase 09 langkah 6). Sebelum komponennya siap, pakai data fixture dan placeholder sederhana. Tambahkan juga halaman `/gallery` yang menampilkan semua komponen untuk pengecekan visual.
 
 14. **`scripts/export-replay.ts`**: input export server (`GET /v1/events/export?withTerminals=true` dari sesi rekaman dengan `RECORD_TERMINALS=true`) + `bob-quotes.src.json`. Output `events.json` (sensor: gagal kalau ada `rdr_`, `ghp_`, `sk-`), `frames.json` (frame terminal A dan B, dikompresi, target < 3 MB), dan `meta.json` (chapter Plan/Live/Near-miss/Review/Commit, link repo/bob_sessions/video/deck).
 15. **`lib/replay-player.ts`**: play/pause/seek/speed. Seek = `applyEvents` sampai `t`, plus memutar ulang frame terminal sampai `t` (snapshot tiap 10 s untuk seek cepat).

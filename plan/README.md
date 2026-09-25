@@ -53,7 +53,7 @@ plan/                         (dipindah ke plan/ di fase 00)
 | 06 | Git + diff + **relay terminal** | Alief | `lane/core` | commit per task, `get_task_diff`, relay `term.*` | SV-07, MA-04, JT-03 | Sab 18:00–21:00 | Opus 5.5 |
 | 07 | Kit `.bob/` coder | Umar | `lane/bob` | mode `coder`, hook, `radar-mcp` coder | BC-01..04, BC-07 | Sab 09:00–16:00 | Sonnet 5 · high |
 | 08 | Main agent `pm-lead` | Umar | `lane/bob` | mode `pm-lead`, tool PM | MA-01..05 | Sab 16:00–21:00 | Sonnet 5 · high |
-| 09 | App desktop (Orca di `app/`) + `@radar/ui` | Aarief + Imelda | `lane/app`, `lane/web` | agent `bob`, panel Live Collab, `@radar/ui` | DA-01..04, UI-01..04, UI-07 | Sab 00:30–16:00 | Sonnet 5 · high |
+| 09 | App desktop (Orca di `app/`) + `@radar/ui` | Aarief | `lane/app` | agent `bob`, panel Live Collab, `@radar/ui` | DA-01..04, UI-01..04, UI-07 | Sab 00:30–16:00 | Sonnet 5 · high |
 | 10 | Integrasi E2E | Semua | `main` | `sim-3pc`, uji 3 Mac, **milestone Sab 23:00** | semua P0 | Sab 21:00–Min 02:00 | Opus 5.5 |
 | 11 | Tonton terminal + `.dmg` (Aarief) · landing + replay web (Imelda) | Aarief + Imelda | `lane/app`, `lane/web` | JT-01/02, `.dmg`, `/demo` | JT-01..05, DA-01, UI-05 | Sab 16:00–Min 06:00 | Sonnet 5 · high |
 | 12 | Hardening & P1 | Alief | `lane/core` | kedaluwarsa, reconnect, invite | SV-09/10, SY-06/07, IN-02 | Min 04:00–11:00 | Sonnet 5 |
