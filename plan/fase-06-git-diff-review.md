@@ -79,7 +79,12 @@ Saat PM menyetujui review, server meng-commit **hanya file milik task itu** ke r
 
 7. Commit `fase-06: GitHub API committer, task diff, impact analysis`.
 
-## Bagian v0.3 — Relay terminal (JT-03, JT-05, NFR-12)
+## Bagian v0.3 — Aktivitas Bob (P0) + relay terminal Bob Shell (P1)
+
+0. **P0 dulu: `POST /v1/bob/activity`** (R3 §2.24): validasi zod, batasi 20 event/detik per member, tulis event `bob.activity` (tanpa isi file), siarkan ke klien `app`/`mc`. Test: coder mengirim aktivitas → app lain menerima < 1 s; field `text` dibuang kalau member mematikan `shareprompts`.
+
+Sisanya (relay terminal `term.*`) adalah **P1**. Kerjakan hanya setelah semua P0 fase ini hijau:
+
 
 1. `services/terminals.ts`: registry `termId → {owner, title, agent, viewers:Set, ring: RingBuffer(262144), grant?}`. Hanya pemilik (`principal.member === owner`) yang boleh `share/unshare/frame/snapshot/resize/grant/revoke`. Penonton harus anggota workspace yang sama.
 2. Hub WS: routing pesan sesuai R3 §3.9. `term.subscribe` → kirim isi ring buffer, lalu minta `term.need_snapshot` ke host. Host putus → `term.ended {reason:"host_offline"}`.

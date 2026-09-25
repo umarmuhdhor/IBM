@@ -44,7 +44,7 @@ Radar-Plan: fase-<XX>
 Commit yang kodenya dibuat IBM Bob (Bob slice, R7) menambah trailer:
 
 ```text
-Bob-Assisted: bob_sessions/<nama>/<NN-slug>
+Bob-Assisted: bob_sessions/<png>
 ```
 
 Commit yang dibuat **server Radar** di repo toko-demo punya format sendiri (fase 06):

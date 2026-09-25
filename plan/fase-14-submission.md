@@ -84,7 +84,9 @@ Cek kata: `wc -w` pada kedua statement harus ≤ 500. Simpan hasilnya di log.
     - [ ] Release `.dmg` bisa diunduh.
     - [ ] Video ≤ 3:00 bisa diputar. Solusi berjalan ≥ 90 s.
     - [ ] Kedua statement ≤ 500 kata (angka `wc -w` di log).
-    - [ ] `evidence:check` hijau. Screenshot dari **ketiga** anggota ada di repo dan di form.
+    - [ ] `evidence:check` hijau. Screenshot ringkasan task Bob IDE dari **keempat** anggota ada di `bob_sessions/` dengan pola `livecollab_<nama>_task<NN>_<slug>_summary.png`.
+    - [ ] `DATA_SOURCES.md` lengkap (guide: daftar situs data publik). Semua data sintetis.
+    - [ ] Video menunjukkan **Bob IDE** sebagai alat utama (syarat lolos penjurian).
     - [ ] Gitleaks bersih. Tidak ada token di video/deck/replay JSON.
 17. Commit `fase-14: submission`, tag `v0.3.0-submit`, push. Retrospektif 10 baris di log.
 

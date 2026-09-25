@@ -169,7 +169,7 @@ Semua ukuran dirancang untuk 1512×982 (MacBook 14") dan tetap rapi di 1920×108
 
 - Explorer: `LockChip` di kanan setiap file. File milik saya = solid, milik rekan = outline berwarna pemilik. `✎` = sedang ditulis.
 - Editor: saat file berubah karena Bob rekan, baris yang berubah diberi `AgentTag` selama 3 s (P1, dekorasi Monaco).
-- Terminal: Bob Shell (`bob`) di terminal Orca. `BobTrace` dicetak oleh hook/brief ke stdout sehingga terlihat di terminal.
+- Coder bekerja di **Bob IDE** (jendela kiri). App Live Collab di jendela kanan menampilkan Team, Notifications, dan jejak `BobTrace` dari event `bob.activity`. Terminal Bob Shell di app bersifat opsional.
 
 ### 5.3 Mission Control — tampilan PM (Citra)
 
@@ -207,31 +207,31 @@ Urutan yang harus terasa dalam ±3 detik:
 
 `ReviewCard` memakai `diff` ringkas (hanya hunk yang berubah), bagian **Impact** ("`calculateTotal()` now takes `shipping`; called in `Header.tsx` owned by Budi"), verdict main agent, dan tombol **Approve & commit**. Setelah commit: toast `✓ 3f9a2c1 · T-0 Ongkir · co-authored by IBM Bob` dengan link GitHub.
 
-### 5.6 Tonton terminal Bob rekan (P0)
+### 5.6 Tonton Bob rekan: timeline aktivitas Bob IDE (P0)
 
 ```text
-┌─ Watching Andi's Bob · coder · live ─────────────────────── (A) ─ [Stop watching] ┐
-│ ▌border 1px #78A9FF                                                               │
-│ > tambahkan kupon diskon di checkout                                              │
-│ ⚓ hook · SessionStart · brief 5/6 lines                                           │
-│ Bob: Saya ambil T-1. File saya: checkout.ts, coupon.ts, routes.ts.                │
-│ ⚓ hook · PreToolUse · lock_guard → allowed (held by T-1) · 61 ms                  │
-│ ✎ write_file src/checkout/coupon.ts                                               │
-│ …                                                                                 │
-│ ─ read-only · Andi shares this terminal · 2 watching (B)(C) ─ [Ask to type] ─────  │
-└───────────────────────────────────────────────────────────────────────────────────┘
+┌─ Watching Andi's Bob · Bob IDE · coder · live ───────────────── (A) ─ [Stop watching] ┐
+│ ▌border 1px #78A9FF                                                                   │
+│ 21:04  💬 prompt   "tambahkan kupon diskon di checkout"                                │
+│ 21:04  ◐ mode coder · hook · SessionStart · brief 5/6 lines                           │
+│ 21:05  📖 read     src/checkout/checkout.ts                                           │
+│ 21:05  ✎ write    src/checkout/coupon.ts   +18   hook · PreToolUse → allowed · 61 ms  │
+│ 21:06  ✎ edit     src/checkout/checkout.ts  +8 −2                                     │
+│ 21:06  ✓ turn end "Kupon selesai, lanjut test"                                        │
+│ ─ prompts shared by Andi · 2 watching (B)(C) ────────────────────────────────────────  │
+└───────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-Dibuka dari tombol **Watch terminal** di panel Team. Host melihat indikator `👁 2 watching` di header tab terminalnya.
+Dibuka dari tombol **Watch** di panel Team. Datanya dari hook Bob IDE (`bob.activity`), bukan dari layar, sehingga jalan untuk semua orang yang memakai Bob IDE. Kalau Andi mematikan "Share my prompts", baris 💬 hilang dan hanya aktivitas file yang tampil.
 
-### 5.7 Ikut mengetik sebagai tamu (bonus)
+### 5.7 Tonton terminal Bob Shell (P1, opsional)
 
-Tombol **Ask to type** memunculkan toast di laptop host: "Budi wants to type in your Bob terminal · [Allow 10 min] [Deny]". Saat diizinkan, `GuestCursor` "Budi" (ungu) tampil di baris input, dan footer berubah menjadi `Budi is typing · uses Andi's Bobcoin`.
+Hanya untuk anggota yang memakai Bob Shell di terminal app. Tombol **Share** di tab terminal membuka `WatchTerminalView` (xterm read-only) di laptop penonton. Ketik sebagai tamu = P2, tidak dikerjakan untuk hackathon.
 
 ### 5.8 Replay web untuk juri (`/demo`)
 
 - Header: `IBM Bob Live Collab — session replay` · badge `no login · no API key` · link Repo · bob_sessions · Video · Deck.
-- Tiga kolom: **Andi (Bob IDE)** | **Mission Control (Citra)** | **Budi (Bob Shell in Live Collab)**. Setiap kolom coder menampilkan cuplikan terminal hasil rekaman (`term.frame`) yang diputar ulang.
+- Tiga kolom: **Andi (Bob IDE)** | **Mission Control (Citra)** | **Budi (Bob IDE)**. Setiap kolom coder menampilkan timeline aktivitas Bob (§5.6) yang diputar ulang.
 - Timeline bawah: chapter `Plan · Live · Near-miss · Review · Commit`, kecepatan 1×/2×/4×, autoplay 2×.
 - Panel kanan **Bob inside** (pembeda juri): setiap event yang diklik menampilkan primitif Bob yang bekerja (hook mana, payload ringkas, tool MCP, mode), kutipan dari `bob_sessions/…` dan link ke file sesinya.
 - Counter di atas: `near-misses prevented 3 · merge conflicts 0 · decisions 4 · median decision 38 s`.

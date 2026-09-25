@@ -88,10 +88,10 @@ Laporan dalam Bahasa Indonesia. Kode, nama file, komentar: Bahasa Inggris.
 7. BOB SLICE (wajib kalau file fase punya bagian "Bob slice"). Lihat plan/ref/R7-bukti-bob.md.
    a. Siapkan semua konteks, lalu BERHENTI dan cetak blok berjudul "BOB SLICE <id>" berisi:
       mode Bob yang dipakai, prompt siap tempel untuk Bob IDE, file yang diharapkan berubah, dan
-      perintah bukti: `radar/scripts/bob-evidence.sh <nama> <NN-slug>`.
+      perintah bukti: `radar/scripts/bob-evidence.sh <nama> <NN> <slug>`.
    b. Tunggu user menjawab "bob selesai". Setelah itu review hasil Bob dengan `code-reviewer`
       (perbaiki seperlunya, catat apa yang diubah dari hasil Bob), jalankan test, lalu commit
-      dengan trailer `Bob-Assisted: bob_sessions/<nama>/<NN-slug>`.
+      dengan trailer `Bob-Assisted: bob_sessions/<png>`.
    c. Jangan menulis ulang seluruh hasil Bob. Bukti harus mencerminkan kontribusi Bob yang nyata.
 
 8. REVIEW. Jalankan `code-reviewer` + `typescript-reviewer` (padanan /ecc:code-review) pada diff

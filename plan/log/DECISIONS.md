@@ -75,3 +75,15 @@ Format:
 - Keputusan: komponen UI bersama `@radar/ui` (fase 09 langkah 6, Bob slice C3) dipegang **Aarief**. Imelda memakai komponen itu di landing dan replay web, dengan Bob slice I1 = pemutar replay + `/demo`, I2 = landing, I3 = Long Description + outline deck.
 - Alasan: bentuk komponen ditentukan oleh app desktop. Permintaan Aarief.
 - Dampak: PLAN §2/§5.2/§7, fase 09, fase 11 D, PROGRESS, PROMPT.
+
+## D-005 · 25 Sep 2026 · pra-kickoff · Disesuaikan dengan hackathon guide 2.0 resmi
+
+- Keputusan:
+  1. **Bob IDE = komponen inti** (syarat lolos penjurian). Semua coder dan PM di demo bekerja di Bob IDE. Bob Shell opsional. Docs resmi mengonfirmasi Bob IDE mendukung 5 hook (blokir exit 2 di `PreToolUse`, stdout `SessionStart`/`UserPromptSubmit` masuk konteks).
+  2. "Tonton Bob rekan" (P0) diubah dari streaming terminal menjadi **stream aktivitas Bob IDE dari hook** (`POST /v1/bob/activity`, event `bob.activity`, R3 §2.24). Streaming terminal Bob Shell turun ke P1, dan ketik tamu ke P2. Registrasi agent `bob` di Orca menjadi P1.
+  3. Bukti Bob mengikuti penamaan resmi: PNG di `bob_sessions/` dengan pola `livecollab_<nama>_task<NN>_<slug>_summary.png`, untuk setiap task Bob IDE terkait submission, dari keempat anggota. `bob-evidence.sh` menangkap jendela Bob IDE otomatis (window id) dan dijalankan oleh Claude Code. Manusia hanya membuka ringkasan task. Otomatisasi klik via CDP dicoba di spike.
+  4. Setup: IBMid, Bob IDE ≥ 2.0.2, instance `ibm-coding-challenge-uat` (us-east), Bobcoin dipantau di Settings → General.
+  5. `DATA_SOURCES.md` ditambahkan (guide: daftar situs data publik). Semua data kita sintetis.
+  6. Alur branch & merge ditulis langkah demi langkah (PLAN §6), dan PR boleh dibuat lewat fitur PR Bob IDE.
+- Sumber: https://lablab-ibm-bob-2-hackathon-guide.s3.us.cloud-object-storage.appdomain.cloud/index.html dan https://bob.ibm.com/docs/ide/configuration/lifecycle-hooks
+- Dampak: PRD §01/§02/§05/§10.6–10.7/§15/§17/§18, DESIGN §5.2/§5.6–5.8, ARCHITECTURE, PLAN §0/§1/§5/§6/§7/§12/§13, R3 §2.24, R7, fase 01/06/07/09/10/11/14, CLAUDE.md.

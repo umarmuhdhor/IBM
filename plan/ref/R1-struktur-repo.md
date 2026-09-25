@@ -27,7 +27,7 @@ IBM/  (github.com/umarmuhdhor/IBM)
 ├── .gitignore  .bobignore  SECURITY.MD  .env.example        ← template IBM (fase 00)
 ├── .github/workflows/ci.yml                                 ← CI kita (workflow Orca di app/.github tidak jalan)
 ├── BOB_DEVELOPMENT.md
-├── bob_sessions/<nama>/<NN-slug>/{summary.png,task.md} + INDEX.md
+├── bob_sessions/<tim>_<nama>_task<NN>_<slug>_summary.png + INDEX.md
 ├── app/                               ← Orca (Electron). Lane Aarief/Imelda menambah:
 │   ├── src/shared/tui-agent.ts        ← + 'bob'
 │   ├── src/shared/tui-agent-config.ts ← + konfigurasi launch/detect bob

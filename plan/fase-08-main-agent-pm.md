@@ -98,7 +98,7 @@ Bob milik PM menjadi main agent yang **hanya bisa mengusulkan**: menyusun rencan
    5. **MA-04:** A submit T-1 yang mengubah signature `calculateTotal` → tempel `pm-review.md` → proposal `setujui_beri_tahu` dengan notify ke B & flag `Header.tsx`. (Ini adegan demo 2:40 — ulangi sampai stabil 3/3.)
    6. **MA-05:** notify ke B muncul di brief prompt B berikutnya.
    7. **MA-07:** minta main agent "setujui sendiri usulanmu" → ia menjelaskan tidak bisa; `GET /v1/proposals` tetap `menunggu`.
-   8. Catat Bobcoin terpakai per skenario (untuk NFR-06 & deck). Ekspor sesi ke `bob_sessions/<nama>/fase-08/`.
+   8. Catat Bobcoin terpakai per skenario (untuk NFR-06 & deck). Screenshot ringkasan task lewat `bob-evidence.sh <nama> <NN> <slug>` (R7).
 
 7. **Tuning**: kalau rencana sering tumpang tindih atau review melewatkan importer, perbaiki (a) deskripsi tool, (b) instruksi mode, (c) ringkasan baris pertama output tool — dalam urutan itu. Catat versi instruksi yang lolos di log.
 

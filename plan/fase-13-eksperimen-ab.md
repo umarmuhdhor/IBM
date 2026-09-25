@@ -54,7 +54,7 @@ Menghasilkan angka jujur untuk pitch: berapa konflik merge, menit resolusi, dan 
 
 6. **Tabel metrik final** untuk `BOB_DEVELOPMENT.md` & deck (fase 14): target vs hasil untuk setiap baris PRD §04, status ✅/⚠️/❌ jujur.
 
-7. **Ekspor sesi Bob** kedua putaran ke `bob_sessions/<nama>/eksperimen-a|b/`.
+7. **Ekspor sesi Bob** kedua putaran lewat `bob-evidence.sh <nama> <NN> eksperimen_a` / `eksperimen_b` (R7).
 
 8. Commit `fase-13: A/B experiment and metrics`.
 

@@ -64,7 +64,7 @@ glyph and an outlined blue chip "A", "coupon.ts" blue outlined chip "A", "ui/", 
 Center top: code editor tab "checkout.ts" showing TypeScript lines 12–16 of a function "calculateTotal(items, shipping = 0)",
 line 14 highlighted faintly blue with a floating monospace pill "Andi · Bob coder" at the end of the line
 (shows a teammate's AI just wrote it).
-Center bottom: terminal panel with tabs "AGENT" and "TERMINAL · bob" (selected). Terminal content in IBM Plex Mono:
+Center bottom: Bob activity panel (from IBM Bob IDE hooks) showing the latest lines. Terminal content in IBM Plex Mono:
 "> make the header toggle dark mode, also update checkout.ts"
 dim line with anchor icon: "hook · PreToolUse · lock_guard → blocked · 84 ms" (text slightly red)
 dim line: "mcp · radar.why_blocked"
@@ -109,30 +109,22 @@ Right panel: a single decision card with magenta left border: "[blocked] Budi ne
 Between the panels a thin line connecting the red terminal line to the card. Calm, premium, cinematic but flat.
 ```
 
-## 05 · Tonton terminal Bob rekan
+## 05 · Tonton Bob rekan (timeline aktivitas Bob IDE)
 
 ```text
-Screen: a tab titled "Watching Andi's Bob · coder · live" inside IBM Bob Live Collab.
-Large read-only terminal with 1px blue (#78A9FF) border and a small blue "A" chip in the header, right button "Stop watching".
-Terminal lines in IBM Plex Mono:
-"> add coupon discount to checkout"
-"hook · SessionStart · team brief 5/6 lines"
-"Bob: Taking T-1. My files: checkout.ts, coupon.ts, routes.ts."
-"hook · PreToolUse · lock_guard → allowed (held by T-1) · 61 ms" in green-dim
-"write_file src/checkout/coupon.ts"
-"apply_diff src/checkout/checkout.ts (+8 −2)"
-Footer bar inside the frame: "read-only · Andi shares this terminal · 2 watching" with chips B and C, and a small button "Ask to type".
-Left sidebar visible with "Team" selected.
+Screen: a tab titled "Watching Andi's Bob · Bob IDE · coder · live" inside IBM Bob Live Collab.
+A vertical live timeline card with 1px blue (#78A9FF) border, small blue "A" chip in the header, right button "Stop watching".
+Rows in IBM Plex Mono with time, icon and text:
+"21:04  prompt   \"add coupon discount to checkout\""
+"21:04  mode coder · hook · SessionStart · team brief 5/6 lines"
+"21:05  read     src/checkout/checkout.ts"
+"21:05  write    src/checkout/coupon.ts  +18   hook · PreToolUse → allowed · 61 ms" (green-dim trace)
+"21:06  edit     src/checkout/checkout.ts  +8 −2"
+"21:06  turn end \"Coupon done, moving to tests\""
+Footer: "prompts shared by Andi · 2 watching" with chips B and C. Left sidebar with "Team" selected.
 ```
 
-## 06 · Ikut mengetik sebagai tamu (bonus)
-
-```text
-Same terminal as screen 05 but the input line shows "> also validate the coupon code format" being typed,
-with a small purple name pill "Budi" floating right above the text cursor, like a Google Docs collaborator cursor.
-Footer: "Budi is typing · runs on Andi's Bob · uses Andi's Bobcoin". Top-right corner shows a small toast on the host side:
-"Budi wants to type in your Bob terminal — Allow 10 min / Deny".
-```
+## 06 · (dihapus: ketik tamu di terminal jadi P2)
 
 ## 07 · Review card detail
 
@@ -152,7 +144,7 @@ After-state toast bottom-right: "✓ 3f9a2c1 · T-0 Shipping · co-authored by I
 Web page, 16:9, dark dotted halftone background. Header: "IBM Bob Live Collab — session replay", badge "no login · no API key",
 links "Repo", "bob_sessions", "Video", "Deck".
 Top counters in large monospace numbers: "3 near-misses prevented", "0 merge conflicts", "4 decisions", "38 s median decision".
-Three columns: "Andi · Bob IDE" (blue header, mini terminal replay), "Mission Control · Citra" (orange header,
+Three columns: "Andi · Bob IDE" (blue header, activity timeline), "Mission Control · Citra" (orange header,
 compact board + decision card), "Budi · Bob Shell in Live Collab" (purple header, mini terminal replay with a red blocked line).
 Right side panel "Bob inside" showing for the selected event: "hook PreToolUse · lock_guard", a small JSON payload excerpt,
 "mcp radar.why_blocked", "mode coder", and a quote bubble from Bob with a link "bob_sessions/budi/03-blocked.md".

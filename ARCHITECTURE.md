@@ -9,14 +9,14 @@
 ```text
   LAPTOP SETIAP ANGGOTA (macOS)                         CLOUDFLARE (serverless, plan Free)
  ┌────────────────────────────────────────┐
- │ IBM Bob (IDE atau Bob Shell)           │  REST: cek kunci,   ┌───────────────────────────────────┐
+ │ IBM Bob IDE (wajib; Bob Shell opsional) │  REST: cek kunci,   ┌───────────────────────────────────┐
  │   ├─ mode coder / pm-lead (.bob/)      │  task, usulan       │ Worker "live-collab" (Hono)       │
  │   ├─ hook: lock_guard, brief ──────────┼───────────────────► │   meneruskan semua ke ↓           │
  │   └─ MCP: radar-mcp ───────────────────┼───────────────────► │ Durable Object "toko-demo"        │
  │                                        │                     │   · WebSocket Hibernation         │
  │ App "IBM Bob Live Collab" (Electron)   │  WebSocket: event,  │   · SQLite bawaan: file, kunci,   │
  │   ├─ terminal bob, panel Live Collab ◄─┼─ persetujuan,       │     task, event, token (hash)     │
- │   └─ Share / Watch terminal ◄──────────┼─ frame terminal ──► │   · relay terminal                │
+ │   └─ Watch teammate's Bob ◄────────────┼─ aktivitas Bob ───► │   · siaran aktivitas Bob          │
  │                                        │                     │   · pesan diproses 1 per 1        │
  │ Sync agent (CLI `radar`) ◄─────────────┼─ WebSocket: file ─► │     (kunci bebas race)            │
  │   pantau folder proyek ↔ server        │                     │   · commit via GitHub API ────────┼──► GitHub toko-demo
@@ -84,7 +84,7 @@ Kuota Workers Free: 100k request/hari. Pesan WebSocket masuk dihitung 20:1, pesa
 | 1 | **Edit live** | Bob A menulis file → sync agent A mengirim `file.update` → server menyimpan versi baru → `file.changed` ke laptop lain → file muncul di disk B & C (< 1 s) |
 | 2 | **Blokir** | Bob B mau menulis `checkout.ts` → hook `PreToolUse` → `POST /v1/locks/check` → milik A → **exit 2** (edit batal) → Bob B memanggil MCP `why_blocked` → permintaan masuk ke "Needs you" PM |
 | 3 | **Keputusan PM** | main agent C (`pm-lead`) memanggil MCP `propose_decision` → kartu di Mission Control → **manusia** C klik Approve → server menerapkan → brief di prompt B berikutnya |
-| 4 | **Tonton terminal** | app A: Share → `term.frame` ke server → server me-relay ke penonton → xterm read-only di app B (< 500 ms) |
+| 4 | **Tonton Bob rekan** | hook Bob IDE A (`UserPromptSubmit`/`PreToolUse`/`PostToolUse`/`Stop`) → `POST /v1/bob/activity` → DO menyiarkan `bob.activity` → timeline "Watching Andi's Bob" di app B (< 1 s). Bonus P1: terminal Bob Shell via `term.frame`. |
 | 5 | **Review & commit** | B submit task → main agent `get_task_diff` + `propose_review` → C Approve → DO membuat commit lewat GitHub API (author coder, `Co-authored-by: IBM Bob`) → kunci dilepas / pindah antrean |
 
 Dua lapis penegakan: **hook** mencegah Bob menulis, dan **server** menolak `file.update` dari bukan pemilik kunci. Lapis kedua ini juga menangkap edit manual dan `sed`.
@@ -95,8 +95,8 @@ Dua lapis penegakan: **hook** mencegah Bob menulis, dan **server** menolak `file
 
 | Terpasang | Untuk apa |
 |---|---|
-| IBM Bob IDE dan/atau Bob Shell (akun hackathon sendiri) | agent AI masing-masing |
-| App IBM Bob Live Collab (`.dmg`) | terminal `bob`, Mission Control, Team, tonton terminal |
+| **IBM Bob IDE ≥ 2.0.2** (akun hackathon `ibm-coding-challenge-uat`, us-east); Bob Shell opsional | agent AI masing-masing (wajib Bob IDE) |
+| App IBM Bob Live Collab (`.dmg`) | Mission Control, Team, tonton Bob rekan (di samping Bob IDE) |
 | `radar` CLI (sync agent) | sinkron folder proyek. Nanti dijalankan otomatis oleh app (P1). |
 | `.bob/` kit di folder proyek (dipasang `radar join`) | mode, hook, `radar-mcp` |
 | `.radar/local.json` (tidak di-commit) | URL server, member, token |
@@ -108,7 +108,7 @@ Dua lapis penegakan: **hook** mencegah Bob menulis, dan **server** menolak `file
 - Token per anggota disimpan di server sebagai hash. Token PM (Mission Control) terpisah, dan hanya token itu yang bisa menyetujui usulan.
 - Main agent **tidak punya** tool untuk menyetujui usulannya sendiri.
 - Di app, token disimpan lewat Electron `safeStorage`, tidak masuk log.
-- Share terminal mati secara default. Ketik tamu butuh izin host dan dibatasi 10 menit.
+- Aktivitas Bob tidak pernah berisi isi file. Prompt hanya dibagikan kalau anggota menyalakan "Share my prompts". Share terminal Bob Shell (P1) mati secara default.
 - Hook berjalan dengan izin penuh user. Hal ini diakui di dokumen keamanan.
 - Repo publik: memakai `.gitignore`/`.bobignore` template IBM dan gitleaks di CI.
 

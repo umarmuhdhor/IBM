@@ -1,4 +1,4 @@
-# Fase 11 — Tonton terminal Bob rekan, `.dmg`, replay web untuk juri
+# Fase 11 — Tonton Bob rekan (aktivitas Bob IDE), `.dmg`, landing + replay web
 
 | Field | Nilai |
 |---|---|
@@ -6,16 +6,16 @@
 | Slot WITA | 11a Sab 16:00–21:00 · 11b Sab 23:00–Min 01:00 · tidur 01:00–06:00 · 11c Min 06:00–11:00 |
 | Estimasi | 9 jam |
 | Prasyarat | 09. Relay `term.*` server dari fase 06 (sebelum siap, pakai mock fase 02 yang sudah mendukung `term.*`). Rekaman nyata dari fase 10 untuk replay. |
-| Requirement PRD | JT-01, JT-02, JT-03 (sisi klien), JT-05, DA-01, UI-05, EV-02 (P0) · JT-04, UI-06, UI-08, DA-05 (P1) |
+| Requirement PRD | JT-01, JT-02, JT-03 (sisi klien), DA-01, UI-05, UI-09, EV-02 (P0) · JT-04, UI-06, UI-08, DA-05 (P1) · JT-05 (P2) |
 | Model | Sonnet 5 · effort high (Opus 5.5 kalau tap xterm atau flow control bermasalah) |
 | Bob slice | **C4** `bob-evidence.sh` versi lengkap + `evidence-check.ts` |
 | Fase berikutnya | 10 (bergabung ke integrasi), lalu 14 |
 
 ## Tujuan
 
-1. **Momen multiplayer:** Budi klik "Watch terminal", dan terminal Bob milik Andi tampil live di laptop Budi.
+1. **Momen multiplayer:** Budi klik "Watch Andi's Bob", dan prompt serta file yang sedang ditulis Bob IDE Andi tampil live di laptop Budi.
 2. **Bisa dipasang:** file `IBM Bob Live Collab.dmg` yang dipasang di 3 Mac.
-3. **Juri bisa menonton sendiri:** `/demo` memutar ulang sesi nyata, termasuk frame terminal dan panel "Bob inside".
+3. **Juri bisa menonton sendiri:** `/demo` memutar ulang sesi nyata, termasuk timeline aktivitas Bob dan panel "Bob inside".
 
 ## Bacaan wajib
 
@@ -24,25 +24,23 @@
 
 ## Output
 
-- `orca:src/renderer/src/lib/radar/terminal-share.ts`, `components/radar/{ShareTerminalButton,WatchTerminalView,GuestInputBar}.tsx`
+- `orca:src/renderer/src/components/radar/WatchBobView.tsx` (P0); `lib/radar/terminal-share.ts`, `components/radar/{ShareTerminalButton,WatchTerminalView}.tsx` (P1)
 - Build: `IBM Bob Live Collab-<ver>-arm64.dmg` di GitHub Release `v0.3.0` + `radar-cli.tgz`
-- `packages/web/app/page.tsx` (landing = **Application URL** di form lablab), `packages/web/app/demo/page.tsx`, `packages/web/lib/replay-player.ts`, `scripts/export-replay.ts` → `packages/web/public/demo/{events.json,frames.json,meta.json,bob-quotes.json}`
+- `packages/web/app/page.tsx` (landing = **Application URL** di form lablab), `packages/web/app/demo/page.tsx`, `packages/web/lib/replay-player.ts`, `scripts/export-replay.ts` → `packages/web/public/demo/{events.json,meta.json,bob-quotes.json}`
 - `scripts/bob-evidence.sh` (lengkap), `scripts/evidence-check.ts`
 - Deploy Cloudflare Pages `ibm-bob-live-collab.pages.dev` (`pnpm -C radar deploy:web`)
 
 ## Langkah kerja
 
-### A. Tonton terminal (11a, P0)
+### A. Tonton Bob rekan: stream aktivitas Bob IDE (11a, P0)
 
-1. **Tap output.** Di titik tempat renderer Orca menulis data pty ke xterm (dari ORCA_MAP), tambah hook ringan: kalau `termId` sedang dibagikan, salin `data` ke `terminal-share.ts`. **Jangan** mengubah alur data Orca atau flow control. Salin saja, secara async. Terminal yang dibagikan hanya terminal agent di tab yang dipilih host.
-2. **`terminal-share.ts`**: `share(termId, title)` → kirim `term.share`. Gabungkan data 16 ms → `term.frame {seq, data base64, ts}` (maks 32 KB, pecah kalau lebih). Balas `term.need_snapshot` dengan `SerializeAddon.serialize()` (addon sudah dipakai Orca, cek ORCA_MAP). `unshare` saat tab ditutup, app keluar, atau tombol dimatikan.
-3. **`ShareTerminalButton`** di header tab terminal agent: ikon + teks **Share** / `👁 2 watching`. Default mati (NFR-12).
-4. **`WatchTerminalView`**: tab baru "Watching <nama>'s Bob · <mode>". Membuat `@xterm/xterm` read-only (`disableStdin: true`), `TerminalFrame` dengan border warna pemilik, menerapkan `term.snapshot` lalu frame berurutan `seq` (buang duplikat, minta snapshot ulang kalau ada celah). Mengirim `term.ack` setiap 50 frame untuk metrik latensi. Menampilkan `term.ended`.
-5. **Tombol Watch** di `TeamPanel` aktif kalau `term.list` punya terminal milik anggota itu.
-6. **Uji:** dua instance app di satu Mac (`pnpm -C app dev` + `pnpm -C app dev-stable-name` dengan userData berbeda) atau dua Mac → p95 latensi < 500 ms (log `term.latency`). Ketik `ls`, jalankan `bob`, dan warna/ANSI tampil sama. Tutup share → penonton melihat "host stopped sharing" < 1 s.
-7. **Security review** (`security-reviewer`): frame hanya ke anggota workspace, tidak ada input dari penonton di P0, dan tidak ada data terminal di log.
+1. **`WatchBobView`** (tab "Watching <nama>'s Bob · <mode>"): timeline live dari event `bob.activity` + event server terkait member itu (edit file, blokir, submit). Setiap baris berisi jam, ikon jenis (prompt, baca, tulis, blokir, giliran selesai), path, jumlah baris, dan jejak `BobTrace` (`hook · PreToolUse · lock_guard → blocked`, `mcp · radar.why_blocked`, mode). Border warna pemilik.
+2. **Tombol Watch** di `TeamPanel` untuk setiap anggota yang online. Indikator "writing ✎" dan "blocked" di kartu anggota berasal dari event yang sama.
+3. **Privasi** (JT-03): toggle "Share my prompts" di Settings → Live Collab, yang menulis `shareprompts` ke `.radar/local.json` untuk dibaca hook.
+4. **Uji:** 2 laptop, keduanya Bob IDE. Prompt di A → muncul di app B < 1 s (log latensi). Blokir di B terlihat di timeline A dan di Mission Control.
+5. **Tonton terminal Bob Shell (P1, JT-04, hanya kalau P0 lain hijau):** tap output xterm → `term.frame` → `WatchTerminalView` read-only (spesifikasi relay R3 §3.9). Tidak dibutuhkan untuk demo, karena demo memakai Bob IDE.
 
-### B. Ketik sebagai tamu (P1 — bonus, kerjakan hanya kalau A, C, D hijau)
+### B. Ketik sebagai tamu di terminal Bob Shell (P2, lewati untuk hackathon)
 
 8. `GuestInputBar` di `WatchTerminalView` → `term.input.request`. Host melihat toast Allow 10 min / Deny → `term.input.grant`. Keystroke tamu → `term.input` → host menulis ke pty lewat jalur input Orca yang sama dengan keyboard (dari ORCA_MAP), hanya selama grant aktif. Pill `GuestCursor` "Budi" di baris input host. Semua grant/revoke tercatat di event.
 
@@ -69,9 +67,9 @@
 
 Imelda memakai komponen `@radar/ui` buatan Aarief (fase 09 langkah 6). Sebelum komponennya siap, pakai data fixture dan placeholder sederhana. Tambahkan juga halaman `/gallery` yang menampilkan semua komponen untuk pengecekan visual.
 
-14. **`scripts/export-replay.ts`**: input export server (`GET /v1/events/export?withTerminals=true` dari sesi rekaman dengan `RECORD_TERMINALS=true`) + `bob-quotes.src.json`. Output `events.json` (sensor: gagal kalau ada `rdr_`, `ghp_`, `sk-`), `frames.json` (frame terminal A dan B, dikompresi, target < 3 MB), dan `meta.json` (chapter Plan/Live/Near-miss/Review/Commit, link repo/bob_sessions/video/deck).
-15. **`lib/replay-player.ts`**: play/pause/seek/speed. Seek = `applyEvents` sampai `t`, plus memutar ulang frame terminal sampai `t` (snapshot tiap 10 s untuk seek cepat).
-16. **`/demo`** (DESIGN §5.8): header + badge `no login · no API key`. Counter. Tiga kolom: Andi (mini xterm replay), Mission Control (views `@radar/ui` read-only), Budi (mini xterm replay). Timeline chapter. Panel **Bob inside**: untuk event yang dipilih, tampilkan primitif Bob (hook/MCP/mode), payload ringkas, kutipan Bob, dan link ke `bob_sessions/...` di GitHub. Autoplay 2×, jeda > 5 s dipadatkan.
+14. **`scripts/export-replay.ts`**: input export server (`GET /v1/events/export`, termasuk event `bob.activity`) + `bob-quotes.src.json`. Output `events.json` (sensor: gagal kalau ada `rdr_`, `ghp_`, `sk-`), dan `meta.json` (chapter Plan/Live/Near-miss/Review/Commit, link repo/bob_sessions/video/deck).
+15. **`lib/replay-player.ts`**: play/pause/seek/speed. Seek = `applyEvents` sampai `t`, plus timeline aktivitas Bob sampai `t` (snapshot tiap 10 s untuk seek cepat).
+16. **`/demo`** (DESIGN §5.8): header + badge `no login · no API key`. Counter. Tiga kolom: Andi (timeline aktivitas Bob IDE), Mission Control (views `@radar/ui` read-only), Budi (timeline aktivitas Bob IDE). Timeline chapter. Panel **Bob inside**: untuk event yang dipilih, tampilkan primitif Bob (hook/MCP/mode), payload ringkas, kutipan Bob, dan link ke `bob_sessions/...` di GitHub. Autoplay 2×, jeda > 5 s dipadatkan.
 17. Statis penuh: `next.config` `output: 'export'` (hasil di `packages/web/out/`, dideploy ke Cloudflare Pages), tanpa panggilan jaringan selain origin. Playwright `e2e/demo.spec.ts` (skill `e2e-testing`): autoplay jalan, near-miss muncul ≤ 30 s di 8×, klik event → Bob inside, dan tidak ada request ke domain lain.
 18. **Landing `/`** (UI-09, gaya warm paper: DESIGN §5.11 + `UI Inspo & Design/landing-style/README.md`, ±45 menit): hero (judul, tagline, GIF near-miss), tombol utama **Watch the live replay** → `/demo`, tombol **Download for macOS** → `.dmg` di Release terbaru (URL dari `meta.json`), 3 langkah pasang (termasuk klik kanan → Open), dan link Repo · bob_sessions · Video · Deck. Tambahkan kalimat "Community hackathon project, not an official IBM product · built on Orca (MIT)". Statis, tanpa login. Setelah jadi: screenshot Playwright (desktop 1440 + mobile 390) lalu jalankan skill `better-interface`. Perbaiki temuan HIGH.
 19. Deploy Cloudflare Pages (`pnpm -C radar deploy:web`). Buka `/` dan `/demo` dari incognito dan ponsel (tab A/MC/B).
@@ -91,7 +89,7 @@ ls -lh dist/*.dmg                  # atau lokasi output electron-builder
 
 ## Kriteria selesai (DoD)
 
-- [ ] JT-01/02: tonton terminal Bob rekan di 2 Mac, p95 < 500 ms (angka dari log), dan share mati secara default.
+- [ ] JT-01/02/03: "Watching <nama>'s Bob" menampilkan aktivitas Bob IDE rekan di 2 Mac, p95 < 1 s (angka dari log), dan toggle share prompt berfungsi.
 - [ ] DA-01: `.dmg` terpasang di Mac teman dari nol (< 3 menit), Release `v0.3.0` publik.
 - [ ] UI-05: `/demo` jalan tanpa login, API key, atau server. Panel Bob inside berfungsi.
 - [ ] UI-09: landing `/` live di Cloudflare Pages, dengan tombol replay dan download `.dmg` yang berfungsi.

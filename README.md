@@ -17,6 +17,7 @@
 | – | `app/` | Kode app desktop = Orca (stablyai/orca@bf40d35, MIT). Node 24 + pnpm 12: `pnpm -C app install && pnpm -C app dev` | Lane Aarief/Imelda |
 | – | `CLAUDE.md` / `AGENTS.md` | Aturan otomatis untuk AI (lane, skill, gerbang UI, larangan nama file). Dibaca Claude Code/Bob setiap sesi. | semua |
 | – | `.claude/` | Skill & agent bersama: `live-collab-app`, `electron-automation`, `electron-pro`, skill UI (`apple-design`, `better-interface` + `better-*`, `emil-design-eng`, `review-animations`), `brag-slim` (PLAN.md §11) | semua |
+| – | [`DATA_SOURCES.md`](DATA_SOURCES.md) | Daftar sumber data (wajib menurut guide). Semua data kita sintetis. | semua |
 | – | [`arsip/`](arsip/README.md) | Dokumen lama (v0.1, v0.2, riset ide, roast). Hanya referensi. | – |
 
 ## Mulai kerja dalam 3 langkah (per orang)

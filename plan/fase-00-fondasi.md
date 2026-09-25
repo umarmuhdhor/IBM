@@ -94,7 +94,7 @@ Dokumen (PRD, PLAN, DESIGN, `plan/`) **tetap di root**, tidak dipindah.
 7. **Script bukti & pemeriksa nama file.**
    - `radar/scripts/check-ignored.sh` sesuai R5 §8 (bisa dijalankan dari root atau `radar/`).
    - `radar/scripts/bob-evidence.sh`: **stub** yang sudah bisa membuat folder, menjalankan `screencapture -i`, dan menambah baris INDEX. Versi lengkap (tunggu md di Downloads, sensor) dibuat di Bob slice C4 (fase 11). Stub ini dibutuhkan supaya Bob slice A1 dan B1 bisa dibuktikan sejak jam pertama.
-   - `plan/team.json`: `[{"id":"alief","lane":"core"},{"id":"umar","lane":"bob"},{"id":"aarief","lane":"app"},{"id":"imelda","lane":"app"}]` (tanpa email). Dipakai `evidence:check`.
+   - `plan/team.json`: `{"team":"livecollab","members":[{"id":"alief","lane":"core"},{"id":"umar","lane":"bob"},{"id":"aarief","lane":"app"},{"id":"imelda","lane":"app"}]}` (tanpa email). Dipakai `evidence:check`.
 
 8. **Rapikan referensi UI.** Folder `UI Inspo & Design/` sudah di root (inspirasi + mockup Stitch). Tambahkan `UI Inspo & Design/README.md` yang menjelaskan bahwa mockup Stitch **hanya pedoman**, dan gaya app mengikuti Orca (DESIGN.md §0). Jangan commit video di atas 10 MB.
 
@@ -121,7 +121,7 @@ Dokumen (PRD, PLAN, DESIGN, `plan/`) **tetap di root**, tidak dipindah.
 
 - **Mode Bob:** Code. **Siapa:** Alief (atau siapa pun yang Bob-nya menganggur).
 - **Prompt siap tempel:** "Buat repo contoh di `radar/examples/toko-demo/` sesuai tabel file di `plan/fase-00-fondasi.md` langkah 6. Vite + React + TypeScript, data sintetis, `Header.tsx` harus memanggil `calculateTotal(items)`. Tulis juga `EXPERIMENT_TASKS.md` dengan 6 task. Jalankan `npm install && npm run build` dan pastikan hijau."
-- **Bukti:** `radar/scripts/bob-evidence.sh <nama> 01-toko-demo`.
+- **Bukti:** `radar/scripts/bob-evidence.sh <nama> 01 toko_demo`.
 - Claude Code lalu hanya me-review hasilnya dan menjalankan build.
 
 ## Verifikasi
@@ -140,7 +140,7 @@ git check-ignore -v .env && git status --short   # .env ter-ignore, tidak ada to
 - [ ] `app/LICENSE` Orca utuh. Atribusi di README root.
 - [ ] File template IBM ada di root. `.gitignore` gabungan tidak menghapus pola template. `check:ignored` hijau.
 - [ ] `radar/` build/typecheck/lint/test hijau (7 paket). `pnpm -C app tc` Orca hijau.
-- [ ] toko-demo build hijau, dikerjakan Bob (folder `bob_sessions/<nama>/01-toko-demo/` lengkap).
+- [ ] toko-demo build hijau, dikerjakan Bob (`bob_sessions/livecollab_alief_task01_toko_demo_summary.png` ada).
 - [ ] Tiga branch lane ada di remote.
 - [ ] Nama command ECC tercatat (D-alief-00). Checklist kickoff tertulis.
 

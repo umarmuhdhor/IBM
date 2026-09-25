@@ -37,7 +37,7 @@ Membuktikan (atau membantah) enam asumsi teknis yang menopang PRD sebelum menuli
 
 ### A. Siapkan artefak (agent)
 
-0. **Bob slice B1.** Langkah 1 dan 5 di bawah ditulis oleh **Bob IDE** (mode Code) dengan prompt: "Buat `radar/spike/hooks/log_payload.js` dan `radar/spike/.bob/custom_modes.yaml` sesuai `plan/fase-01-spike-gate1.md` langkah A1 dan A5." Bukti: `bob-evidence.sh <nama> 01-spike-hooks`. Claude Code mengerjakan sisanya.
+0. **Bob slice B1.** Langkah 1 dan 5 di bawah ditulis oleh **Bob IDE** (mode Code) dengan prompt: "Buat `radar/spike/hooks/log_payload.js` dan `radar/spike/.bob/custom_modes.yaml` sesuai `plan/fase-01-spike-gate1.md` langkah A1 dan A5." Bukti: `bob-evidence.sh <nama> 01 spike_hooks`. Claude Code mengerjakan sisanya.
 1. **`spike/hooks/log_payload.js`** — CommonJS, tanpa dependensi:
    - Baca seluruh stdin (timeout 1 s), `JSON.parse` kalau bisa.
    - Tulis `spike/out/<event>-<timestamp>.json` berisi `{ argv, env: <hanya var berawalan BOB_/HOOK_/CLAUDE_>, cwd, stdinRaw, stdinJson }`.
@@ -80,7 +80,9 @@ Buka folder `radar/spike/` sebagai workspace di Bob IDE **dan** di Bob Shell (`c
 | 11 | **Bob Shell di terminal Orca** (spike 7) | Lane Aarief/Imelda: `pnpm -C app dev` app fork → pilih agent (sementara "custom command" `bob`) → jalankan `bob` di folder `spike/` → ulangi uji 1 & 3 dari terminal itu | Bob interaktif normal (warna, input, TUI), hook terpicu sama seperti di Terminal macOS. Catat mode injeksi prompt yang aman untuk `promptInjectionMode`. |
 | 12 | **Tap output xterm** (spike 7b) | Lane Aarief/Imelda: tambahkan `console.debug` sementara di titik `term.write` renderer (lihat Bob slice C1) | Data dari sesi `bob` bisa disalin tanpa mengganggu tampilan. Catat ukuran frame/detik saat Bob menjawab. |
 | 13 | **Build app** (spike 8) | Lane Aarief/Imelda: `pnpm -C app build:unpack` (atau `build:mac`) di Mac tim | `.app` terbentuk dan bisa dibuka. Catat durasi dan error native helper. |
-| 14 | **Login akun** | `bob` CLI dan Bob IDE memakai akun hackathon yang sama | Keduanya jalan. Catat cara login CLI. |
+| 14 | **Login akun** | Bob IDE ≥ 2.0.2, login IBMid, instance **`ibm-coding-challenge-uat` (us-east)** di Settings → General. `bob` CLI opsional. | Bob IDE memakai akun hackathon, dan Bobcoin terlihat di Settings → General |
+| 15 | **Payload aktivitas** | Log `PostToolUse` untuk tool baca/tulis/perintah, `UserPromptSubmit` (ada teks prompt?), `Stop` di **Bob IDE** | Field yang tersedia cukup untuk `POST /v1/bob/activity` (R3 §2.24). Catat nama field. |
+| 16 | **Screenshot otomatis** (opsional) | (a) `bob-evidence.sh` versi stub: tangkap jendela Bob IDE via window id. (b) Buka Bob IDE dengan `--remote-debugging-port=9223` (`open -a "<nama app Bob IDE>" --args --remote-debugging-port=9223`), lalu coba skill `electron-automation`: klik Tasks → task → header | (a) PNG jendela Bob terbentuk tanpa crop manual. (b) Kalau bisa diklik otomatis, catat selector-nya di DECISIONS (dipakai C4). |
 
 ### C. Keputusan GATE 1 (Sab 04:00)
 

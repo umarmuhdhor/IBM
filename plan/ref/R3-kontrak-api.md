@@ -235,6 +235,22 @@ Isi file TIDAK dikirim (hemat). Bentuk `state` = bentuk `RadarState` di reducer 
 `200 { "workspace": "toko-demo", "exportedAt": …, "events": [ { "id": 1, "ts": …, "actor": "server", "type": "workspace.created", "payload": {…} } ] }`.
 Payload `file.changed` di export **menyertakan patch**, bukan isi utuh (ukuran kecil, cukup untuk diff viewer replay).
 
+### 2.24 `POST /v1/bob/activity` — hook Bob (JT-01, v0.3)
+
+Dipanggil hook kit coder/PM secara fire-and-forget (timeout 800 ms, gagal = diam). Role: coder, pm.
+
+```json
+{ "kind": "prompt" | "tool.pre" | "tool.post" | "turn.end" | "session.start",
+  "sessionId": "…", "mode": "coder" | "pm-lead" | "…",
+  "tool": "write_file" | "apply_diff" | "read_file" | "…",       // untuk tool.*
+  "paths": ["src/checkout/checkout.ts"],                          // relatif workspace
+  "decision": "allow" | "block",                                  // untuk tool.pre (dari hasil /v1/locks/check)
+  "linesChanged": 12,                                             // untuk tool.post, bila bisa dihitung
+  "text": "tambahkan kupon diskon di checkout",                   // prompt ringkas ≤ 200 char (hanya bila shareprompts=on)
+  "clientTs": 1790000000000 }
+```
+Respons `204`. Server menulis event `bob.activity { memberId, …field di atas tanpa isi file }` dan menyiarkannya ke klien `app`/`mc`. Dibatasi 20 event/detik per member (sisanya digabung). Isi file **tidak pernah** dikirim.
+
 ## 3. WebSocket `wss://<server>/ws`
 
 Amplop setiap pesan: `{ "t": "<tipe>", "id"?: "<id pesan klien>", "d": { ... } }`.
@@ -261,7 +277,7 @@ Amplop setiap pesan: `{ "t": "<tipe>", "id"?: "<id pesan klien>", "d": { ... } }
 
 Aturan koneksi: `hello` harus dikirim ≤ 5 s setelah terhubung; kalau tidak, server menutup koneksi (4401). Satu member boleh punya satu koneksi `sync` aktif (koneksi baru menggantikan lama, event `member.reconnected`).
 
-### 3.9 Klien `app` dan relay terminal `term.*` (v0.3, JT-01..05)
+### 3.9 Klien `app` dan relay terminal `term.*` (v0.3, JT-04/05, **P1**; aktivitas Bob IDE lewat §2.24 adalah P0)
 
 **Klien `app`.** App desktop coder terhubung dengan `hello { token: <token member>, client: "app" }`. Server membalas `state` (sama seperti `mc`, read-only) dan meneruskan `event`. App PM memakai `client: "mc"` dengan token mc (satu-satunya yang boleh memanggil endpoint persetujuan). Satu member boleh punya satu koneksi `sync` **dan** satu koneksi `app` sekaligus.
 

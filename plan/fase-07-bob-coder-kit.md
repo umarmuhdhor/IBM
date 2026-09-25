@@ -118,7 +118,7 @@ Membuat Bob milik coder "sadar Radar": di awal sesi dan setiap prompt ia mendapa
     3. Prompt "Kerjakan task aktifmu" → Bob memanggil `my_tasks` lebih dulu (BC-01).
     4. Minta Bob B mengedit `src/checkout/checkout.ts` (milik A) → edit diblokir, file tidak berubah, Bob memanggil `why_blocked` dan menjelaskan pemilik + pindah ke file lain, **tidak mencoba ulang dan tidak memakai shell** (BC-01, BC-04). Ulangi 3× dengan kata-kata berbeda, catat hasil.
     5. Minta Bob menyelesaikan task → Bob memanggil `submit_task` (BC-07).
-    6. Ekspor sesi Bob ke `bob_sessions/<nama>/fase-07/`.
+    6. Screenshot ringkasan task setiap sesi Bob lewat `bob-evidence.sh umar <NN> <slug>` (R7).
     Tulis hasil setiap langkah (lulus/gagal + kutipan jawaban Bob) di log fase — kutipan ini dipakai lagi di replay (fase 11) dan video.
 
 14. **Perbaikan perilaku**: kalau Bob mencoba ulang / memakai shell, perkuat instruksi mode (kalimat tegas, contoh), tambahkan kalimat penutup di pesan blokir. Uji ulang sampai 3 dari 3 percobaan benar.
@@ -127,8 +127,9 @@ Membuat Bob milik coder "sadar Radar": di awal sesi dan setiap prompt ia mendapa
 
 ## Tambahan v0.3
 
-- Kit yang sama harus jalan di **Bob IDE dan Bob Shell**. Uji manual kedua permukaan (hasil spike 1/7 menentukan kanal blokir masing-masing).
-- Brief dan hook mencetak jejak `BobTrace` satu baris (mis. `⚓ hook · PreToolUse · lock_guard → blocked · 84 ms`) ke kanal yang terlihat di terminal Bob Shell, supaya momen near-miss terlihat di video. Jejak ini termasuk dalam batas 6 baris brief.
+- **Target utama = Bob IDE** (aturan hackathon: Bob IDE wajib jadi komponen inti). Docs resmi menyatakan Bob IDE mendukung 5 hook, blokir exit 2 di `PreToolUse`, dan stdout `SessionStart`/`UserPromptSubmit` masuk konteks. Bob Shell cukup diuji sekali (opsional).
+- **Stream aktivitas (JT-01, P0):** semua hook memanggil `POST /v1/bob/activity` secara fire-and-forget (≤ 800 ms, gagal = diam): `UserPromptSubmit` → `kind:"prompt"` (ringkasan ≤ 200 karakter, hanya bila `shareprompts` di `.radar/local.json` = true), `PreToolUse` → `tool.pre` + hasil cek kunci, `PostToolUse` (matcher semua tool, bukan hanya edit) → `tool.post` + path + jumlah baris berubah, `Stop` → `turn.end`, `SessionStart` → `session.start` + mode. Isi file tidak pernah dikirim.
+- Jejak `BobTrace` (mis. `hook · PreToolUse · lock_guard → blocked · 84 ms`) dibentuk dari event `bob.activity` di app. Di Bob IDE, stdout `PreToolUse` diabaikan, jadi jejak blokir di chat Bob berasal dari pesan penolakan + penjelasan `why_blocked`.
 - `RADAR_LANG=en` (default demo) atau `id` untuk teks brief/blokir.
 
 ## Verifikasi
