@@ -33,7 +33,7 @@ Aturan yang tetap berlaku: `CLAUDE.md`, `plan/PROMPT.md` (LANE Aarief, FASE auto
 ## Checklist langkah
 
 - [x] 0. Identitas app terpisah dari Orca asli — commit `fe2de749`. `appId` `dev.livecollab.app`, `productName`/nama runtime `IBM Bob Live Collab`, userData dev `IBM Bob Live Collab Dev` (juga memisahkan item Keychain safeStorage). TDD: 6 test merah → hijau.
-- [x] 1. BOB SLICE C1 (Ask mode, otomatis penuh via CDP, 00:25–00:27) — commit `41154319`, bukti `bob_sessions/uaai_aarief_task01_orca_onboarding_summary.png` (0.709 Bobcoin, konteks 22.3k). Laporan `radar/docs/ORCA_MAP.html`. Verifikasi path:baris + `ORCA_MAP.md`: **belum**.
+- [x] 1. BOB SLICE C1 (Ask mode, otomatis penuh via CDP, 00:25–00:27) — commit `41154319`, bukti `bob_sessions/uaai_aarief_task01_orca_onboarding_summary.png` (0.709 Bobcoin, konteks 22.3k). Laporan `radar/docs/ORCA_MAP.html`; path:baris diverifikasi di `radar/docs/ORCA_MAP.md`. Koreksi: `runtime-terminal-inspection.ts:251` adalah input PTY, union tab ada di `shared/tab-types.ts:20`, filter sidebar ada di menu workspace, dan `extraResources` berada di blok per platform.
 - [ ] 2. BOB SLICE C2 (P1).
 - [ ] 3–5. 09b.
 - [ ] 6–14. 09c.
@@ -42,7 +42,7 @@ Aturan yang tetap berlaku: `CLAUDE.md`, `plan/PROMPT.md` (LANE Aarief, FASE auto
 
 - `app/config/electron-builder.config.cjs`, `app/config/scripts/electron-builder-mac-channel-config.test.mjs`, `app/src/main/startup/{dev-instance-identity,configure-process}{,.test}.ts`
 - `radar/docs/ORCA_MAP.html`, `radar/docs/SPIKE_RESULTS.md` (append), `bob_sessions/uaai_aarief_task01_orca_onboarding_summary.png`, `bob_sessions/index/aarief.md`
-- `radar/packages/ui/src/types-temp.ts` (placeholder)
+- `radar/packages/ui/src/types-temp.ts` (placeholder), `radar/docs/ORCA_MAP.md` (verifikasi C1), `app/src/shared/tui-agent-{config,selection}.test.ts` (test merah C2)
 - `plan/PROGRESS.md` (baris 09 `[~]`)
 
 ## Placeholder aktif
@@ -58,6 +58,7 @@ Aturan yang tetap berlaku: `CLAUDE.md`, `plan/PROMPT.md` (LANE Aarief, FASE auto
 ## Deviasi
 
 - Model Opus 5.5 (lihat atas). Otomasi Bob memakai CDP langsung ke iframe webview karena `agent-browser` tidak bisa masuk frame (SPIKE_RESULTS).
+- Batas koneksi, role, token UI, dan drawer dicatat di D-aarief-01.
 
 ## LANGKAH MANUAL
 
