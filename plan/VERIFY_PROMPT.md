@@ -54,12 +54,12 @@ H. KEAMANAN & REPO PUBLIK: token/secret, .gitignore template IBM (nama file terl
 <format_jawaban>
 1. Ringkasan pemahaman dalam poin (maks 12 poin).
 2. Verdict: SIAP / SIAP DENGAN CATATAN / BELUM SIAP, plus alasan satu kalimat.
-3. Daftar temuan dalam bentuk poin (JANGAN pakai tabel), diurutkan dari yang paling parah. Format tiap poin:
-   - [KRITIS|TINGGI|SEDANG|RENDAH] file § bagian: masalah → usulan perbaikan
-   Maks 25 poin. Setiap temuan harus menyebut file dan bagian yang spesifik. Jangan menebak.
+3. Tabel temuan, diurutkan dari yang paling parah:
+   | # | Tingkat (KRITIS/TINGGI/SEDANG/RENDAH) | File § bagian | Masalah | Usulan perbaikan |
+   Maks 25 baris. Setiap temuan harus menyebut file dan bagian yang spesifik. Jangan menebak.
 4. Kontradiksi antar-dokumen, satu poin per pasangan file yang bertentangan.
 5. Lima risiko terbesar untuk demo dan penjurian, satu poin per risiko + mitigasinya.
 6. Pertanyaan yang harus dijawab tim sebelum kickoff (maks 8).
-Semua jawaban berupa poin (bullet), tanpa tabel. Kalau suatu bagian tidak bisa diverifikasi (mis. URL tidak bisa dibuka), katakan terus terang.
+Kalau suatu bagian tidak bisa diverifikasi (mis. URL tidak bisa dibuka), katakan terus terang.
 </format_jawaban>
 ```
