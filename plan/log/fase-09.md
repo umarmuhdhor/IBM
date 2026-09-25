@@ -43,6 +43,7 @@ Aturan yang tetap berlaku: `CLAUDE.md`, `plan/PROMPT.md` (LANE Aarief, FASE auto
 - [x] 7. Seksi LIVE COLLAB disisipkan setelah header sidebar dengan Mission Control, Team, Files & locks, Settings; badge Needs you dihitung dari proposal pending. Drawer mengikuti pola Sheet Orca.
 - [~] 8–9. Mission Control menampilkan task, keputusan, feed, ringkasan lock, dan notifikasi blocked/decision; Team dan Files & locks membaca state WS; Settings menyimpan koneksi melalui IPC dan status bar menampilkan ringkasan. Tombol Open in Bob IDE memakai launcher editor Orca pada worktree aktif. Test coder read-only dan keputusan MC menunggu event server lulus. Checklist Settings dan verifikasi mock masih berjalan; `radar dev:mock` saat ini hanya placeholder fase 02.
 - [x] 8a. Renderer yang baru mount meminta `radar:refresh` setelah berlangganan update, agar frame `state` tidak hilang bila WS main tersambung sebelum UI siap. Handler membaca koneksi aman di main dan memulai ulang WS; token tidak dikirim ke renderer. Test IPC merah dahulu, lalu 5/5 lulus dan `app tc` hijau.
+- [x] 8b. Perbaikan startup dari uji manual: `app/vite.web.config.ts` belum memiliki alias `@radar/ui`/`@radar/common`, walau config Electron/Vitest sudah. `pnpm -C app build:web` gagal persis seperti laporan user sebelum patch, lalu hijau setelah alias dan dedupe React/lucide ditambah. `ORCA_BACKGROUND_LAUNCH=1 pnpm -C app dev` mencapai `starting electron app` + CDP 9339; proses dihentikan setelah verifikasi startup.
 - [ ] 10–14. Branding, error/empty state lanjutan, gerbang UI, security review, snapshot PR.
 
 ## File dibuat/diubah
@@ -59,6 +60,7 @@ Aturan yang tetap berlaku: `CLAUDE.md`, `plan/PROMPT.md` (LANE Aarief, FASE auto
 - 09c tema app: blok `--lc-*` aditif di `app/src/renderer/src/assets/main.css`; nilai netral/status/font merujuk variabel Orca, nilai mentah hanya warna anggota dan kebutuhan PM.
 - 09c panel: `app/src/renderer/src/components/radar/*`, sisipan `sidebar/index.tsx` dan `status-bar/StatusBarSurface.tsx`; `radar/packages/ui/src/AgentTag.tsx` dilengkapi status idle/writing/blocked dan `DecisionCard.tsx` dibersihkan dari variabel tidak terpakai.
 - 09c refresh state: `app/src/main/radar/connection-ipc{,.test}.ts`, `app/src/preload/api/radar-bridge.ts`, `app/src/renderer/src/components/radar/use-radar-session.ts`.
+- 09c startup: `app/vite.web.config.ts` (alias untuk build pairing web).
 - 09c notifikasi dan Bob IDE: `app/src/renderer/src/components/radar/{NotificationsPanel{,.test},TeamPanel,MissionControlView}.tsx`.
 - `plan/PROGRESS.md` (baris 09 `[~]`)
 
@@ -91,7 +93,7 @@ Aturan yang tetap berlaku: `CLAUDE.md`, `plan/PROMPT.md` (LANE Aarief, FASE auto
 ## LANGKAH MANUAL
 
 1. Bob Shell CLI ditemukan: versi 2.0.5 hanya berjalan dengan Node 24; Node 20 gagal `ERR_UNKNOWN_BUILTIN_MODULE: node:sqlite`. Jalankan `nvm use 24` pada shell yang akan menjalankan Bob. Jangan kirim kredensial ke repo atau chat. Bob IDE tetap jalur P0; ini verifikasi P1 DA-02.
-2. Jalankan `ORCA_BACKGROUND_LAUNCH=1 pnpm -C app dev`, buka UI, buat worktree, pilih **IBM Bob**, lalu cek terminal menjalankan `bob` dan menjawab "halo". Jika CLI meminta login, selesaikan sendiri di aplikasi Bob; agent tidak melakukan login atau mengetik token.
+2. Untuk uji manual yang terlihat, jalankan `pnpm -C app dev` **tanpa** `ORCA_BACKGROUND_LAUNCH=1` (opsi itu menyembunyikan jendela untuk otomasi). Buka UI, buat worktree, pilih **IBM Bob**, lalu cek terminal menjalankan `bob` dan menjawab "halo". Jika CLI meminta login, selesaikan sendiri di aplikasi Bob; agent tidak melakukan login atau mengetik token.
 3. Balas **"manual selesai"** beserta hasil singkat (jalan/gagal dan pesan error tanpa kredensial). Gerbang screenshot UI dan uji skenario demo memerlukan mock server fase 02: saat ini `pnpm -C radar dev:mock` hanya mencetak placeholder. Setelah fase 02 masuk main, lanjutkan screenshot dan uji data live.
 4. Jika ingin GitHub menampilkan akun/avatar IBM Bob sebagai co-author, konfirmasi alamat email GitHub IBM Bob untuk mengganti default `bob@ibm.com` (plan/TODO.md B6) sebelum snapshot 09a didorong. Trailer co-author sudah ada di commit C2; identitas pendorong branch tidak menentukan co-author commit.
 
