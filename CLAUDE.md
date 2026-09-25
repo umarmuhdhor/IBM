@@ -24,6 +24,7 @@ Start with `README.md` → `PLAN.md` → `ARCHITECTURE.md`. Phase work is driven
 - Bob evidence is YOUR job, automatically: after the human says "bob selesai", run `radar/scripts/bob-evidence.sh <name> <NN> <slug>` (captures the Bob IDE window, names it `bob_sessions/uaai_<name>_task<NN>_<slug>_summary.png`, updates INDEX.md). The human only opens Tasks → task → header in Bob IDE.
 - Git flow (PLAN.md §6): work on your lane branch; after each phase push and open a PR to `main` with `gh pr create`; squash-merge when CI is green; then everyone rebases on `origin/main`. Never merge `main` into a lane branch; never force-push shared branches (only `--force-with-lease` on your own lane after the one-time rebase).
 - Data: synthetic only; log any new external data source in `DATA_SOURCES.md`.
+- **Check GitHub before depending on another lane**: `git fetch origin`, read `origin/main:plan/PROGRESS.md`, `gh pr list --state all`. If it's not on `main` yet, don't wait: build against a placeholder (mock/fixture/temporary type) marked `// TODO(sync:<owner>): <what> — replace after <phase/PR>`. After every rebase, `grep -rn "TODO(sync" app radar` and replace placeholders whose real version landed. Phase 10 (integration) requires zero `TODO(sync` left.
 
 ## UI gate — automatic before any commit/PR that touches UI
 Triggered when the diff touches `app/src/renderer/**`, `radar/packages/ui/**`, or `radar/packages/web/**`:

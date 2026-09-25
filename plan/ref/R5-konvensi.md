@@ -120,7 +120,7 @@ Selalu diabaikan: `.git/`, `node_modules/`, `.radar/`, `.bob/`, `bob_sessions/`,
 
 - [ ] Semua "Kriteria selesai" di file fase terpenuhi dengan bukti.
 - [ ] `pnpm typecheck`, `pnpm lint`, `pnpm test` hijau untuk paket yang disentuh.
-- [ ] Tidak ada `TODO` tanpa nomor fase tujuan (`// TODO(fase-12): …`).
+- [ ] Tidak ada `TODO` tanpa nomor fase tujuan (`// TODO(fase-12): …`). Placeholder yang menunggu lane lain memakai `// TODO(sync:<lane>): … — ganti setelah <fase/PR>` dan harus habis sebelum fase 10.
 - [ ] Tidak ada secret di diff (`pnpm secrets:scan` bila gitleaks terpasang).
 - [ ] Kontrak `ref/` sesuai kode; deviasi tercatat di `log/DECISIONS.md`.
 - [ ] `log/fase-XX.md` dan `PROGRESS.md` diperbarui; requirement P0 terkait diberi bukti di tabel PROGRESS.

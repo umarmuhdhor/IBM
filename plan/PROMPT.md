@@ -89,13 +89,21 @@ Laporan dalam Bahasa Indonesia. Kode, nama file, komentar: Bahasa Inggris.
    Untuk LANE Aarief/Imelda: baca juga orca:AGENTS.md dan orca:CLAUDE.md dan patuhi aturannya.
 
 3. BRANCH & PRASYARAT (otomatis, jangan minta user mengetik perintah git):
+   a0. CEK GITHUB DULU (setiap mulai fase): `git fetch origin`, baca `origin/main:plan/PROGRESS.md`,
+       lalu `gh pr list --state all --limit 30` untuk melihat apa yang sudah di-merge atau sedang di-PR
+       oleh lane lain. Tentukan untuk setiap prasyarat lintas-lane: SUDAH ADA di main → pakai yang asli;
+       BELUM ADA → pakai PLACEHOLDER (langkah b).
    a. `git fetch origin`. Kalau branch lane belum ada, buat dari origin/main:
       Alief → lane/core, Umar → lane/bob, Aarief → lane/app, Imelda → lane/web.
       Pindah ke branch itu (`git switch`), lalu `git rebase origin/main` kalau main sudah maju.
       Fase yang ditandai "di main" (00, 02, 10, 14) dikerjakan di main (untuk 10/14 koordinasikan lewat PR).
    b. Lane jalan MANDIRI. Kalau prasyarat dari lane lain belum di-merge ke main, JANGAN menunggu:
-      pakai mock server / tipe sementara / data fixture (setiap fase menjelaskan caranya), tandai
-      "memakai mock" di log, dan sambungkan ke yang asli nanti setelah rebase. Pengecualian:
+      pakai mock server / tipe sementara / data fixture (setiap fase menjelaskan caranya).
+      SETIAP placeholder WAJIB diberi penanda yang bisa dicari:
+        `// TODO(sync:<lane-pemilik>): <apa yang diganti> — ganti setelah <fase/PR> masuk main`
+        contoh: `// TODO(sync:alief): tipe BobActivity sementara, ganti dengan @radar/common setelah fase 02`
+      Simpan placeholder di file sendiri kalau bisa (mis. `src/…/placeholder/*.ts`, `fixtures/*.json`)
+      supaya gampang dihapus. Catat daftar placeholder di log fase (bagian "Placeholder aktif"). Pengecualian:
       prasyarat di lane SENDIRI harus selesai dulu (fase di dalam satu lane berurutan).
    c. Jangan membuat file di luar folder lane (PLAN.md §2). Kalau butuh kerangka `radar/` dari fase 00
       yang belum ada, buat paketmu sendiri sebagai paket mandiri di foldermu, dan rapikan setelah
@@ -167,7 +175,11 @@ Laporan dalam Bahasa Indonesia. Kode, nama file, komentar: Bahasa Inggris.
     - FASE = auto: setelah PR fase ini dibuat, tulis ringkasan 3 baris, lalu KEMBALI ke langkah 1 untuk
       fase berikutnya milik lane. Berhenti hanya kalau: (a) BOB SLICE menunggu user, (b) LANGKAH MANUAL,
       (c) semua fase lane selesai, atau (d) konteks hampir habis (simpan log + /ecc:save-session dulu).
-      Sebelum mulai fase baru: `git fetch origin && git rebase origin/main` bila ada merge baru.
+      Sebelum mulai fase baru: `git fetch origin && git rebase origin/main` bila ada merge baru, LALU
+      RESOLVE PLACEHOLDER: `grep -rn "TODO(sync" app radar` → untuk setiap penanda yang prasyaratnya
+      sekarang sudah ada di main, ganti placeholder dengan yang asli, jalankan test, commit
+      "sync: replace <x> placeholder". Kalau bentuk aslinya beda dari placeholder, sesuaikan kodemu (bukan
+      kontrak) dan catat di log.
     - FASE = nomor: laporan ringkas (maks 15 baris), baris terakhir PERSIS
       "Lanjut: LANE <x> · FASE <nomor berikutnya>", lalu berhenti.
 </langkah>

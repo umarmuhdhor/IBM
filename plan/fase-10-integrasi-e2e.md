@@ -73,7 +73,10 @@ Membuktikan alur penuh PRD berjalan: **rencana → live → blokir → keputusan
 
 7. Commit `fase-10: e2e simulator, fixes, milestone run`.
 
-## Tambahan v0.3 — uji di 3 Mac dengan app
+## Tambahan v0.3 — nol placeholder + uji dengan app
+
+0. **Bersihkan placeholder:** `grep -rn "TODO(sync" app radar` harus kosong sebelum milestone. Setiap lane menyelesaikan penandanya sendiri. Sisa penanda yang tidak bisa diselesaikan dicatat di DECISIONS dengan alasan.
+
 
 1. Semua coder dan PM bekerja di **Bob IDE** (akun hackathon masing-masing), dengan app Live Collab di samping (build `pnpm -C app dev` atau `.app`). A: Bob IDE + panel Team. B: Bob IDE + panel Team. C: Bob IDE mode `pm-lead` + Mission Control.
 2. Tambahkan ke milestone Sab 23:00: B membuka **Watching Andi's Bob** dan melihat prompt serta file yang ditulis Bob IDE A secara live (JT-01/02), dengan latensi p95 tercatat.
