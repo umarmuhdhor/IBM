@@ -64,7 +64,7 @@ Catatan pnpm: `pnpm` global di Mac Alief rusak (placeholder binary pnpm 12). Ver
 - [x] `radar/` build/typecheck/lint/test hijau (7 paket). `pnpm -C app tc` hijau.
 - [ ] toko-demo build hijau oleh Bob + `bob_sessions/uaai_alief_task01_toko_demo_summary.png`. Menunggu Bob slice A1.
 - [ ] Empat branch lane di remote. Setelah commit toko-demo.
-- [ ] `bob-evidence.sh` menghasilkan PNG tanpa klik. Menunggu izin Screen Recording.
+- [x] `bob-evidence.sh` menghasilkan PNG tanpa klik (uji 26 Sep 00:14, PNG uji dihapus).
 - [x] Nama ECC tercatat (D-alief-00). Checklist kickoff tertulis (bawah).
 
 ## Deviasi
@@ -109,6 +109,8 @@ Cakupan: `radar/packages/web/app/{layout,page,demo/page}.tsx` hasil `next build`
 ## Bob slice
 
 - A1 toko-demo: **menunggu** Bob IDE (mode Code). Bukti: `bob_sessions/uaai_alief_task01_toko_demo_summary.png` via `radar/scripts/bob-evidence.sh alief 01 toko_demo`.
+- Sab 26 Sep 00:11 WITA: percobaan otomatis lewat CDP (Bob IDE 2.2.0, port 9223). Buka app, ketik prompt, dan kirim **berhasil**. Bob menjawab "Request Failed": log ekstensi `ProviderError … Caused by: Forbidden` + `Model information unavailable`, Retry gagal sama. Status bar: instance `ibm-coding-challenge-2`, bukan `ibm-coding-challenge-uat`. Masalah akun/instance (TODO D2), bukan otomasi. Detail + selector: `radar/docs/SPIKE_RESULTS.md` bagian "Bob IDE UI automation over CDP".
+- Uji `bob-evidence.sh alief 99 uji --force`: PNG jendela Bob IDE tertangkap tanpa klik (izin Screen Recording sudah ada). PNG uji + baris indeks sudah dihapus. LANGKAH MANUAL 1 selesai untuk Mac Alief.
 
 ## LANGKAH MANUAL
 
