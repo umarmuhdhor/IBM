@@ -48,7 +48,7 @@ Intinya:
 | **Custom mode** `coder`, `pm-lead` | laptop (Bob) | YAML `.bob/custom_modes.yaml` | `radar/bob-kit` | Bob |
 | **App desktop** | laptop | **Electron 43** + **React 19** + zustand + **xterm** + Monaco + Tailwind/shadcn (basis: **Orca**) | `app/` | App |
 | **Komponen UI bersama** | app + web | React | `radar/packages/ui` | App |
-| **Landing + replay** | **Cloudflare Pages** | **Next.js 15** (`output: 'export'`, statis) + xterm (putar ulang terminal) | `radar/packages/web` | App (Imelda) |
+| **Landing + replay** | **Cloudflare Pages** | **Next.js 15** (`output: 'export'`, statis) + xterm (putar ulang terminal) | `radar/packages/web` | Web (Imelda) |
 | **Repo demo** `toko-demo` | GitHub | Vite + React (data sintetis) | `radar/examples/toko-demo` → repo terpisah | Core |
 
 Toolchain: **Node 24 + pnpm 12** di semua laptop (`nvm use 24`).
@@ -96,7 +96,7 @@ Dua lapis penegakan: **hook** mencegah Bob menulis, dan **server** menolak `file
 
 | Terpasang | Untuk apa |
 |---|---|
-| **IBM Bob IDE ≥ 2.0.2** (akun hackathon `ibm-coding-challenge-uat`, us-east); Bob Shell opsional | agent AI masing-masing (wajib Bob IDE) |
+| **IBM Bob IDE ≥ 2.1.0** (akun hackathon `ibm-coding-challenge-uat`, us-east); Bob Shell opsional | agent AI masing-masing (wajib Bob IDE) |
 | App IBM Bob Live Collab (`.dmg`) | Mission Control, Team, tonton Bob rekan (di samping Bob IDE) |
 | `radar` CLI (sync agent) | sinkron folder proyek. Nanti dijalankan otomatis oleh app (P1). |
 | `.bob/` kit di folder proyek (dipasang `radar join`) | mode, hook, `radar-mcp` |

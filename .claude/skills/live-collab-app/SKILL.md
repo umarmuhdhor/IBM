@@ -21,7 +21,9 @@ pnpm -C app dev            # run the app
 pnpm -C app tc             # typecheck (run after every change)
 pnpm -C app exec oxlint <changed files>   # do NOT run the full `pnpm lint` (very slow ratchets)
 pnpm -C app test -- src/renderer/src/components/radar
-pnpm -C app build:unpack   # .app without signing; dmg: see radar/plan/fase-11
+# .app / .dmg: follow plan/fase-11-terminal-dmg-replay.md step 9 exactly. It ends with
+CSC_NAME=- CSC_IDENTITY_AUTO_DISCOVERY=false pnpm -C app exec electron-builder --config config/electron-builder.config.cjs --dir
+# without CSC_NAME=- codesign picks the keychain "Apple Development" cert and fails non-interactively
 ```
 
 ## Visual feedback loop (see your own UI)

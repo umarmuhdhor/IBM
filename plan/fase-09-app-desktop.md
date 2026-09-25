@@ -9,7 +9,7 @@
 | Requirement PRD | DA-02, DA-03, DA-04, DA-06, UI-01..04, UI-07 (P0) · DA-05, UI-08 (P1) · NFR-10 |
 | Model | Sonnet 5 · effort high. Opus 5.5 untuk langkah 2 dan 6 (titik sambung Orca). |
 | Bob slice | **C1** onboarding Orca · **C2** registrasi agent `bob` · **C3** komponen `@radar/ui` |
-| Fase berikutnya | 11 |
+| Fase berikutnya | 11a (lalu 10 pada Sab 21:00) |
 
 ## Tujuan
 
@@ -109,7 +109,7 @@ pnpm -C radar dev:mock &  pnpm -C app dev                 # uji manual melawan m
 | Risiko | Fallback |
 |---|---|
 | Menyisipkan seksi ke sidebar Orca rumit | Buka Live Collab sebagai tab khusus dari Command palette Orca + satu tombol di status bar |
-| Alias Vite ke `radar/` bentrok dengan tsconfig Orca | Salin build `@radar/ui` (`tsc` → `dist`) dan impor dari `dist`. Catat D-app-.. |
+| Alias Vite ke `radar/` bentrok dengan tsconfig Orca | Salin build `@radar/ui` (`tsc` → `dist`) dan impor dari `dist`. Catat D-aarief-.. |
 | `bob` tidak terdeteksi sebagai agent (status heuristik Orca) | Tidak apa-apa untuk R0: terminal tetap jalan. Status agent diambil dari event Live Collab. |
 | Waktu habis | Potong: NotificationsPanel → gabung ke TeamPanel. Settings cukup form tanpa checklist. |
 

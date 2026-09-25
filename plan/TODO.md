@@ -10,10 +10,10 @@ Urutan: **A** memblokir commit, **B** memblokir fase 03 dan 06, **C** koordinasi
 |---|---|---|---|---|
 | A1 | Bagaimana perubahan plan di-commit? | Working tree berisi perubahan lama (31 file, sudah ada sebelum sesi riset) dan edit D-007 di file yang sama | (a) satu commit gabungan · (b) dua commit: perubahan lama dulu, lalu D-007 · (c) biarkan, commit sendiri | D-007 sudah di `main` (`523c4668`). Sisa `plan/TODO.md` + `plan/README.md` ikut commit fase 00 (Alief, 25 Sep 17:20) |
 | A2 | Perubahan lama itu milik siapa, dan boleh ikut di-commit? | Agent tidak tahu asal perubahan itu, jadi tidak boleh meng-commit tanpa izin | ya / tidak / sebagian (sebutkan file) | ya: `plan/TODO.md`, `plan/README.md` ikut commit fase 00 (Alief, 25 Sep 17:20) |
-| A3 | Commit langsung ke `main` atau lewat PR? | Aturan repo: hanya fase 00 langsung ke `main`. Ini perubahan dokumen plan + kontrak R1–R5 | (a) langsung `main` (dokumen plan) · (b) PR dari branch `docs/d-007` | |
-| A4 | Setujui perubahan kontrak R1–R5 di D-007? | Kontrak hanya boleh diubah Alief. Ringkasan: `execute`, `alwaysAllow`, `office_edit`, tool test baru, commit 4 request, FK ON, heartbeat di attachment, alarm bersyarat, WS tanpa tag, `/admin/files`, `WS_PING_FRAME`, `.github/workflows/` diabaikan | setuju semua / tolak nomor … | |
-| A5 | Batas `too_many_files` baru: > 100 file **atau** > 5 MB per task. Cocok? | Angka ini pilihan kita (bukan batas resmi GitHub) setelah blob POST dihapus | setuju / angka lain | |
-| A6 | Boleh `alwaysAllow` untuk 8 tool MCP PM? | Tanpa itu PM harus klik approve setiap tool. Risikonya kecil karena semua usulan tetap menunggu persetujuan di Mission Control (MA-07) | ya / hanya tool baca (`team_status`, `list_requests`, `get_task_diff`) | |
+| A3 | Commit langsung ke `main` atau lewat PR? | Aturan repo: hanya fase 00 langsung ke `main`. Ini perubahan dokumen plan + kontrak R1–R5 | (a) langsung `main` (dokumen plan) · (b) PR dari branch `docs/d-007` | (a): D-007 sudah di `main` (`523c4668`), begitu juga perbaikan dokumen berikutnya (`bacb4101`, `11564dc3`) |
+| A4 | Setujui perubahan kontrak R1–R5 di D-007? | Kontrak hanya boleh diubah Alief. Ringkasan: `execute`, `alwaysAllow`, `office_edit`, tool test baru, commit 4 request, FK ON, heartbeat di attachment, alarm bersyarat, WS tanpa tag, `/admin/files`, `WS_PING_FRAME`, `.github/workflows/` diabaikan | setuju semua / tolak nomor … | setuju semua (default D-alief-01; fase 02–07 sudah ditulis di atas kontrak ini). Tolak nomor tertentu lewat DECISIONS bila berubah pikiran |
+| A5 | Batas `too_many_files` baru: > 100 file **atau** > 5 MB per task. Cocok? | Angka ini pilihan kita (bukan batas resmi GitHub) setelah blob POST dihapus | setuju (default D-alief-01) |
+| A6 | Boleh `alwaysAllow` untuk 8 tool MCP PM? | Tanpa itu PM harus klik approve setiap tool. Risikonya kecil karena semua usulan tetap menunggu persetujuan di Mission Control (MA-07) | ya (default D-alief-01): semua usulan tetap butuh Approve di Mission Control |
 
 ## B. Akses dan secret (memblokir fase 03 dan 06)
 
@@ -27,7 +27,7 @@ Jangan tempel nilai secret di chat atau di file repo. Agent hanya perlu tahu bah
 | B4 | GitHub fine-grained PAT untuk `toko-demo` | Hanya repo `toko-demo`, izin **Contents: read & write**, **tanpa** Workflows. Simpan dengan `npx wrangler secret put GITHUB_TOKEN` (diketik di prompt wrangler) | [ ] |
 | B5 | `ADMIN_SECRET` | Buat string acak, simpan di password manager tim, lalu `npx wrangler secret put ADMIN_SECRET` | [ ] |
 | B6 | Email co-author IBM Bob untuk trailer commit | R5 §3: nilai `BOB_COAUTHOR` "dikonfirmasi saat kickoff". Default sekarang `IBM Bob <bob@ibm.com>`; pastikan email ini benar atau ganti | [ ] |
-| B7 | Tempat menyimpan token member (A, B, C, mc) hasil `admin init` | Password manager tim, bukan chat publik | [ ] |
+| B7 | Tempat menyimpan token member (A, B, C, D, mc) hasil `admin init` | Password manager tim, bukan chat publik | [ ] |
 
 ## C. Koordinasi lane (kabari tim)
 

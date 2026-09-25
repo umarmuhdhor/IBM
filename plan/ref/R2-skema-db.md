@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS task (
   parent_task_id  TEXT,                                  -- untuk hasil keputusan 'pecah'
   submit_summary  TEXT,
   commit_sha      TEXT,
-  commit_started_at INTEGER,                             -- terisi selama commit GitHub berjalan (R4 §6.3)
+  commit_started_at INTEGER,                             -- terisi selama commit GitHub berjalan; kedaluwarsa setelah COMMIT_CLAIM_TTL_MS (R4 §6.3 poin 5)
   edit_count      INTEGER NOT NULL DEFAULT 0,
   created_at      INTEGER NOT NULL,
   updated_at      INTEGER NOT NULL

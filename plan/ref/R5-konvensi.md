@@ -74,6 +74,7 @@ Co-authored-by: IBM Bob <bob@ibm.com>
 | `BRIEF_MAX_LINES` | 6 | NFR-06 |
 | `BRIEF_MAX_LINE_CHARS` | 160 | NFR-06 |
 | `WS_HELLO_TIMEOUT_MS` | 5_000 | – |
+| `COMMIT_CLAIM_TTL_MS` | 60_000 | R4 §6.3 poin 5 (klaim commit yang tertinggal) |
 | `WS_PING_MS` | 20_000 | – |
 | `WS_PING_FRAME` / `WS_PONG_FRAME` | `'{"t":"ping"}'` / `'{"t":"pong"}'` | R3 §3: string persis untuk `setWebSocketAutoResponse`; jangan dibentuk ulang lewat `JSON.stringify` objek lain |
 | `MEMBER_COLORS` | A `#78A9FF`, B `#BE95FF`, C `#FF832B`, D `#08BDBA` (Carbon 40) | DESIGN.md §2.1 |

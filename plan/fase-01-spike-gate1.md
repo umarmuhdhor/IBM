@@ -2,7 +2,7 @@
 
 | Field | Nilai |
 |---|---|
-| Jalur | **Lane Umar** (spike 1–3, 5–7, branch `lane/bob`) + Lane Alief (spike 4, 30 menit) + **Lane Aarief/Imelda** (spike 8, dan membantu spike 7 di `lane/app`) |
+| Jalur | **Lane Umar** (spike 1–3, 5–7, branch `lane/bob`) + Lane Alief (spike 4, 30 menit) + **Lane Aarief** (spike 8, dan membantu spike 7 di `lane/app`) |
 | Slot WITA | Sab 26 Sep 00:30 – 04:00 · **GATE 1 Sab 04:00** |
 | Estimasi | 3 jam (≈ 40% menyiapkan script, 60% uji manual di Bob IDE) |
 | Prasyarat | 00 |
@@ -82,7 +82,7 @@ Buka folder `radar/spike/` sebagai workspace di **Bob IDE** (komponen inti, waji
 | 11 | *(opsional, P1)* **Bob Shell di terminal Orca** (spike 7) | Lane Aarief/Imelda: `pnpm -C app dev` app fork → pilih agent (sementara "custom command" `bob`) → jalankan `bob` di folder `spike/` → ulangi uji 1 & 3 dari terminal itu | Bob interaktif normal (warna, input, TUI), hook terpicu sama seperti di Terminal macOS. Catat mode injeksi prompt yang aman untuk `promptInjectionMode`. |
 | 12 | *(opsional, P1)* **Tap output xterm** (spike 7b) | Lane Aarief/Imelda: tambahkan `console.debug` sementara di titik `term.write` renderer (lihat Bob slice C1) | Data dari sesi `bob` bisa disalin tanpa mengganggu tampilan. Catat ukuran frame/detik saat Bob menjawab. |
 | 13 | **Build app** (spike 8) | Lane Aarief/Imelda: `pnpm -C app build:unpack` di Mac tim. **Jangan** `build:mac`: skrip itu ikut membangun helper Computer Use (`computer-macos`) yang melempar error tanpa signing identity | `.app` terbentuk dan bisa dibuka. Catat durasi dan error native helper. |
-| 14 | **Login akun** | Bob IDE ≥ 2.0.2, login IBMid, instance **`ibm-coding-challenge-uat` (us-east)** di Settings → General. `bob` CLI opsional. | Bob IDE memakai akun hackathon, dan Bobcoin terlihat di Settings → General |
+| 14 | **Login akun** | Bob IDE ≥ 2.1.0 (dibutuhkan untuk `office_edit`), login IBMid, instance **`ibm-coding-challenge-uat` (us-east)** di Settings → General. `bob` CLI opsional. | Bob IDE memakai akun hackathon, dan Bobcoin terlihat di Settings → General |
 | 15 | **Payload aktivitas** | Log `PostToolUse` untuk tool baca/tulis/perintah, `UserPromptSubmit` (ada teks prompt?), `Stop` di **Bob IDE** | Field yang tersedia cukup untuk `POST /v1/bob/activity` (R3 §2.24). Catat nama field, terutama: apakah `Stop` hanya membawa session ID (docs: ya), apakah `PostToolUse` membawa isi/diff untuk `linesChanged`, apakah `UserPromptSubmit` membawa teks prompt. Salin 1 payload per event (disensor) ke `docs/spike-payloads/` **paling lambat Sab 04:00**. |
 | 16 | **Screenshot otomatis** (opsional) | (a) `bob-evidence.sh` versi stub: tangkap jendela Bob IDE via window id. (b) Buka Bob IDE dengan `--remote-debugging-port=9223` (`open -a "<nama app Bob IDE>" --args --remote-debugging-port=9223`), lalu coba skill `electron-automation`: klik Tasks → task → header | (a) PNG jendela Bob terbentuk tanpa crop manual. (b) Kalau bisa diklik otomatis, catat selector-nya di DECISIONS (dipakai C4). |
 | 17 | **Workspace trust** | Buka clone baru `spike/` tanpa trust, ulangi uji 1; lalu trust dan ulangi | Untrusted: hook & MCP tidak jalan (catat apakah ada tanda di UI). Trusted: hook jalan. Hasil masuk checklist onboarding fase 07/10 |
@@ -97,7 +97,7 @@ Buka folder `radar/spike/` sebagai workspace di **Bob IDE** (komponen inti, waji
 | Hasil | Keputusan |
 |---|---|
 | Spike 1 lulus | `ENFORCEMENT = hook+server` (rencana utama) |
-| Spike 1 gagal (hook tidak terpicu / exit 2 tidak mencegah tulis) | `ENFORCEMENT = server-only`: penegakan penuh di sync agent + server (SY-04). Hook PreToolUse tetap dipasang sebagai "peringatan" kalau terpicu. Instruksi mode `coder` diperkuat: panggil `radar.check_file(path)` sebelum menulis (tambah tool MCP opsional di fase 07) |
+| Spike 1 gagal (hook tidak terpicu / exit 2 tidak mencegah tulis) | `ENFORCEMENT = server-only`: penegakan penuh di sync agent + server (SY-04). Hook PreToolUse tetap dipasang sebagai "peringatan" kalau terpicu. Instruksi mode `coder` diperkuat: panggil `radar.why_blocked` setelah blokir dan baca brief sebelum menulis. Tidak ada tool MCP baru; kalau tim ingin tool cek sebelum menulis, ajukan dulu sebagai proposal kontrak R3 di DECISIONS |
 | Spike 2: stderr tidak sampai ke model (perkiraan dari docs) | Pakai jalur R3 §2.2 (urutan tetap, tidak menunggu spike): instruksi mode `coder` + rules `.bob/rules-coder/` "kalau edit gagal, panggil `radar why_blocked`" (`alwaysAllow`) → brief `UserPromptSubmit` berikutnya (stdout masuk konteks) → lapis sync `file.rejected`. JSON (2b) hanya dipakai kalau spike membuktikan Bob menghormatinya. Catat hasil di DECISIONS (dipakai fase 07). |
 | Spike 3 gagal | Brief dikirim lewat tool MCP `my_tasks` di awal (instruksi mode) dan notifikasi terminal sync agent |
 | Spike 4 p95 ≥ 1 s atau event hilang | `SYNC = poll-1s` (sync agent memindai mtime setiap 1 s) |
@@ -105,7 +105,7 @@ Buka folder `radar/spike/` sebagai workspace di **Bob IDE** (komponen inti, waji
 | Spike 6 gagal di salah satu mode | Dokumentasikan; untuk PM gunakan REST lewat script `bob-kit/prompts` sebagai fallback |
 | Hook tidak jalan di Bob IDE (terlepas dari Bob Shell) | `ENFORCEMENT = server-only` (baris kedua tabel ini). Tidak ada fallback ke Bob Shell: blokir ditunjukkan lewat lapis 2 (sync agent menolak tulis, `file.rejected`, file `.radar-rejected`). |
 | Spike 11/12 gagal atau tidak dijalankan | Tidak berdampak ke P0. Fitur "Watch Bob" (fase 11) memakai `bob.activity` dari hook Bob IDE (R3 §2.24), bukan output terminal. Relay terminal tetap P1. |
-| Spike 13 gagal | Demo memakai `pnpm -C app dev` di 3 Mac. `.dmg` dikejar di fase 11 bagian C. |
+| Spike 13 gagal | Demo memakai `pnpm -C app dev` di 4 Mac. `.dmg` dikejar di fase 11 bagian C. |
 
 10. Perbarui konstanta yang terdampak di rencana: `EDIT_TOOLS_REGEX` (R5 §4), daftar field path untuk normalisasi (dipakai fase 02 `hook-payload.ts`), nama grup tool & lokasi file konfigurasi Bob (fase 07/08), nama tool shell (instruksi mode `coder`). Tulis semuanya sebagai entri DECISIONS dan edit `plan/ref/R5-konvensi.md` bila regex berubah.
 
@@ -134,6 +134,6 @@ Buka folder `radar/spike/` sebagai workspace di **Bob IDE** (komponen inti, waji
 
 ## Catatan handoff
 
-- Fase 02 (`hook-payload.ts`, skema `bob.activity`) memakai fixture di `docs/spike-payloads/` yang siap Sab 04:00. Kalau field berbeda dari R3 §2.24, Alief mengubah kontrak di jendela Sab 04:00–04:30, sebelum PR fase 02 (kontrak beku).
+- Fase 02 (`hook-payload.ts`, skema `bob.activity`) memakai fixture di `docs/spike-payloads/` yang siap Sab 04:00. Kalau field berbeda dari R3 §2.24, Alief mengubah kontrak di jendela Sab 04:00–04:30 lewat PR kecil `fase-02b: hook fields from spike` (fase 02 langkah 16). PR fase 02 sudah merge Sab 02:30 (kontrak beku), jadi perubahan ini hanya menyentuh `hook-payload.ts`, `BobActivityReq`, dan `EDIT_TOOLS_REGEX`.
 - Fase 07 memakai: regex tool edit, field path, kanal pesan blokir, lokasi `mcp.json` + `alwaysAllow`, nama grup mode (`execute`), nama tool shell (`execute_command`), perilaku timeout hook, langkah trust workspace.
 - Fase 04 memakai keputusan `SYNC` (watch vs poll).

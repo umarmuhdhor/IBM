@@ -28,19 +28,19 @@ Install and demo instructions are added in phase 14.
 
 | # | File | Isi | Untuk siapa |
 |---|---|---|---|
-| 1 | [`PLAN.md`](PLAN.md) | **Mulai di sini.** Feasibility, 3 lane, branch, cara jalan dengan ECC, jadwal, bukti Bob, Bobcoin | semua (kirim ke teman) |
+| 1 | [`PLAN.md`](PLAN.md) | **Mulai di sini.** Feasibility, 4 lane, branch, cara jalan dengan ECC, jadwal, bukti Bob, Bobcoin | semua (kirim ke teman) |
 | 2 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | **Arsitektur 1 halaman:** diagram, tech stack, hosting (Cloudflare Workers + Pages, gratis, tanpa VPS), 5 alur utama | semua |
 | 3 | [`PRD.md`](PRD.md) | Produk: masalah, requirement (P0/P1), arsitektur, API, naskah video ≤ 3 menit, risiko | semua |
 | 4 | [`DESIGN.md`](DESIGN.md) | Desain: token warna, font, komponen, wireframe tiap layar, peta integrasi Orca | Aarief & Imelda, juga Alief/Umar untuk UI |
 | 5 | [`prompt_ui.md`](prompt_ui.md) | Prompt generate gambar mockup (11 layar) | Aarief |
 | 6 | [`plan/`](plan/README.md) | Detail teknis per fase + satu prompt eksekusi (`plan/PROMPT.md`) + kontrak `plan/ref/` | AI masing-masing lane |
 | – | [`UI Inspo & Design/`](UI%20Inspo%20%26%20Design) | Inspirasi (Orca, Amoeba, Mosaic) + mockup Stitch. **Hanya pedoman**, gaya app mengikuti Orca (DESIGN.md §0). | Aarief |
-| – | `app/` | Kode app desktop = Orca (stablyai/orca@bf40d35, MIT). Node 24 + pnpm 12: `pnpm -C app install && pnpm -C app dev` | Lane Aarief/Imelda |
+| – | `app/` | Kode app desktop = Orca (stablyai/orca@bf40d35, MIT). Node 24 + pnpm 12: `pnpm -C app install && pnpm -C app dev` | Lane Aarief |
 | – | `CLAUDE.md` / `AGENTS.md` | Aturan otomatis untuk AI (lane, skill, gerbang UI, larangan nama file). Dibaca Claude Code/Bob setiap sesi. | semua |
 | – | `.claude/` | Skill & agent bersama: `live-collab-app`, `electron-automation`, `electron-pro`, skill UI (`apple-design`, `better-interface` + `better-*`, `emil-design-eng`, `review-animations`), `brag-slim` (PLAN.md §11) | semua |
 | – | [`plan/VERIFY_PROMPT.md`](plan/VERIFY_PROMPT.md) | Master prompt untuk AI lain: baca dan verifikasi seluruh plan (read-only) | siapa saja |
 | – | [`DATA_SOURCES.md`](DATA_SOURCES.md) | Daftar sumber data (wajib menurut guide). Semua data kita sintetis. | semua |
-| – | [`media-references/`](media-references/README.md) | Gambar referensi teknik multi-agent (dengan sumber) | semua |
+| – | [`media-references/`](media-references/README.md) | Tautan referensi teknik multi-agent (gambar pihak ketiga tidak disalin ke repo) | semua |
 | – | [`arsip/`](arsip/README.md) | Dokumen lama (v0.1, v0.2, riset ide, roast). Hanya referensi. | – |
 
 ## Prompt perkenalan untuk AI (jalankan sekali di awal)
@@ -75,15 +75,11 @@ Repo ini = `github.com/umarmuhdhor/IBM` (**publik**). Jangan commit secret.
 
 ## Teknik multi-agent yang kita pakai
 
-Referensi: artikel Akshay Pachaar, **"Subagents vs Agent Teams"** ([X article](https://x.com/akshay_pachaar/article/2033167408463069526)). Semua gambar di bawah milik penulisnya, dengan sumber per gambar di [`media-references/README.md`](media-references/README.md).
-
-![Subagents vs Agent Teams](media-references/01-subagents-vs-agent-teams.png)
-*Sumber: Akshay Pachaar, "Subagents vs Agent Teams", [x.com/akshay_pachaar](https://x.com/akshay_pachaar/article/2033167408463069526)*
+Referensi: artikel Akshay Pachaar, **"Subagents vs Agent Teams"** ([X article](https://x.com/akshay_pachaar/article/2033167408463069526)). Gambarnya milik penulis dan tidak kami salin ke repo. Tautan per diagram ada di [`media-references/README.md`](media-references/README.md).
 
 ### A. Produk: IBM Bob Live Collab = pola **Agent Teams** untuk Bob IDE
 
-![Team lead dan shared task list](media-references/04-team-lead-shared-task-list.png)
-*Sumber: [pbs.twimg.com/media/HDcolYDbQAAthSB](https://pbs.twimg.com/media/HDcolYDbQAAthSB?format=jpg&name=large), Akshay Pachaar*
+Diagram: [team lead + shared task list](https://pbs.twimg.com/media/HDcolYDbQAAthSB?format=jpg&name=large) (Akshay Pachaar).
 
 | Konsep di artikel | Di IBM Bob Live Collab |
 |---|---|
@@ -98,8 +94,7 @@ Di dalam tim itu, `pm-lead` juga memakai pola **Subagents** (review dampak per t
 
 ### B. Proses membangun: tim manusia + AI kita sendiri
 
-![Lima pola orkestrasi](media-references/06-five-orchestration-patterns.png)
-*Sumber: [pbs.twimg.com/media/HDcupB4bUAAQ7XB](https://pbs.twimg.com/media/HDcupB4bUAAQ7XB?format=jpg&name=large), Akshay Pachaar*
+Diagram: [lima pola orkestrasi](https://pbs.twimg.com/media/HDcupB4bUAAQ7XB?format=jpg&name=large) (Akshay Pachaar).
 
 | Pola | Cara kita memakainya |
 |---|---|
@@ -110,8 +105,7 @@ Di dalam tim itu, `pm-lead` juga memakai pola **Subagents** (review dampak per t
 | **Subagents** | Agent ECC (`planner`, `code-reviewer`, `security-reviewer`) jalan di konteks terisolasi dan hanya mengembalikan hasil ringkas |
 | **Evaluator-Optimizer** | Review + `better-interface` diulang sampai tidak ada temuan HIGH |
 
-![Split by context, not role](media-references/05-split-by-context-not-role.png)
-*Sumber: [pbs.twimg.com/media/HDcscLeawAAmtxF](https://pbs.twimg.com/media/HDcscLeawAAmtxF?format=jpg&name=large), Akshay Pachaar*
+Diagram: [split by context, not role](https://pbs.twimg.com/media/HDcscLeawAAmtxF?format=jpg&name=large) (Akshay Pachaar).
 
 Prinsip yang kita ikuti: **bagi kerja menurut konteks, bukan menurut peran.** Lane dibagi per folder/bagian produk (server, kit Bob, app, web), bukan "planner → coder → tester". Di produk juga sama: `pm-lead` membagi task menurut **file** yang disentuh, sehingga setiap Bob punya batas konteks yang bersih.
 

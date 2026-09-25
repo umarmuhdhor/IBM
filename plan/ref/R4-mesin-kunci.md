@@ -52,8 +52,9 @@ function checkWrite(member, path, via):
   if isIgnored(path):                         return ALLOW('ignored_path')
   if member.role == 'pm':                     return BLOCK('pm_readonly')          # tanpa request
   lock = lockRepo.get(path)
-  if lock != null and taskRepo.get(lock.task_id).commit_started_at != null:
+  if lock != null and commitClaimActive(taskRepo.get(lock.task_id)):
     return BLOCK('committing')                # §6.3, tanpa request; berlaku juga untuk pemilik
+  # commitClaimActive(t) = t.commit_started_at != null and now - t.commit_started_at < COMMIT_CLAIM_TTL_MS
 
   if lock == null:
     # file bebas — tetapi mungkin ada antrean yang tertinggal (tidak boleh terjadi, I4; defensif)
@@ -107,7 +108,7 @@ function blockFor(member, path, via):
 | 9 | `dipegang` oleh orang lain | hook/sync | block | `held_by_other` | request (dedup) + block |
 | 10 | `review` oleh orang lain | hook/sync | block | `in_review_by_other` | request (dedup) + block |
 | 11 | #9 diulang 5× | hook | block | `held_by_other` | tetap 1 request aktif, 5 baris block |
-| 12 | file milik task yang sedang di-commit (`commit_started_at` terisi) | hook/sync | block | `committing` | tanpa request, berlaku juga untuk pemilik |
+| 12 | file milik task yang sedang di-commit (klaim aktif: `commit_started_at` terisi dan umurnya < `COMMIT_CLAIM_TTL_MS`) | hook/sync | block | `committing` | tanpa request, berlaku juga untuk pemilik |
 
 ### Penerimaan `file.update` (lapis kedua, SY-04 / §6 "Dua lapis penegakan")
 
@@ -213,10 +214,11 @@ Kalau commit gagal (error GitHub API) → kunci **tidak** dilepas; task tetap `r
 
 **Urutan eksekusi review disetujui (`setujui*`) di Durable Object.** Tidak ada binary `git` dan tidak ada working copy. Commit dibuat lewat GitHub Git Data API, dan update ref = push. Karena `await fetch` membuka DO untuk pesan lain (R2 §1), urutannya dua transaksi dengan validasi ulang:
 
-1. **Transaksi 1 (klaim):** proposal harus `menunggu`, task harus `review`, dan tidak ada task lain dengan `commit_started_at` terisi (kalau ada → `409 CONFLICT` "commit lain sedang berjalan", MC boleh coba lagi). Set `task.commit_started_at = now`. Ambil snapshot isi file dari `task_touch.last_version`. Selama klaim aktif, `checkWrite` pada file task ini mengembalikan `block` dengan reason `committing` untuk **semua** member, termasuk pemilik (jendela ±1–3 s).
+1. **Transaksi 1 (klaim):** proposal harus `menunggu`, task harus `review`, dan tidak ada task lain dengan klaim aktif (`commitClaimActive`, lihat poin 5; kalau ada → `409 CONFLICT` "commit lain sedang berjalan", MC boleh coba lagi). Set `task.commit_started_at = now`. Ambil snapshot isi file dari `task_touch.last_version`. Selama klaim aktif, `checkWrite` pada file task ini mengembalikan `block` dengan reason `committing` untuk **semua** member, termasuk pemilik (jendela ±1–3 s).
 2. **I/O (tanpa transaksi):** `GET commits/<head>` → `POST trees` (base = tree `meta.head_commit`, isi file inline di field `content`, hapus = `sha: null`) → `POST commits` → `PATCH refs/heads/<branch>` (tanpa force). Tidak ada `POST blobs`, jadi subrequest tetap 4 berapa pun jumlah file (batas plan Free 50 per invocation). Task dengan > 100 file atau total isi > 5 MB ditolak lebih dulu dengan `commit.push_failed { error: "too_many_files" }`.
 3. **Transaksi 2 (final):** validasi ulang: proposal masih `menunggu` dan `task.commit_started_at` masih milik klaim ini. Lalu set `commit_sha`, task `selesai`, `releaseTaskLocks(task,'approved')`, `meta.head_commit = sha`, proposal `disetujui`, event `commit.created` + efek verdict. Kosongkan `commit_started_at`.
 4. **Gagal di langkah 2** (termasuk ref non-fast-forward `409`/`422` karena ada push langsung ke repo, dan secondary rate limit `403`/`429`): transaksi yang mengosongkan `commit_started_at`, emit `commit.push_failed`, task tetap `review`.
+5. **Klaim kedaluwarsa.** Kalau DO dievict atau restart di tengah langkah 2, Tx2/rollback tidak pernah jalan dan `commit_started_at` tertinggal. Klaim yang umurnya ≥ `COMMIT_CLAIM_TTL_MS` (60 s, jauh di atas jendela normal 1–3 s) dianggap bebas oleh Tx1 dan `checkWrite`. Constructor DO (di dalam `blockConcurrencyWhile`) mengosongkan klaim yang sudah kedaluwarsa dan emit `commit.push_failed { error: "claim_expired" }`, jadi MC menampilkan tombol "Coba lagi". Tx2 yang terlambat dan menemukan klaimnya sudah dikosongkan atau diganti klaim lain tidak menyelesaikan apa pun (validasi ulang langkah 3 gagal). Ref GitHub yang mungkin sudah ter-push disusul lewat alur non-fast-forward: `GET ref` memperbarui `meta.head_commit` sebelum Tx1 berikutnya.
 
 ## 7. Heartbeat & kedaluwarsa (SV-09, P1)
 

@@ -35,7 +35,7 @@ plan/                         (dipindah ke plan/ di fase 00)
 │   └── R7-bukti-bob.md       ← protokol bukti IBM Bob (screenshot + ekspor + trailer)
 ├── fase-00 … fase-14
 └── log/
-    ├── DECISIONS.md          ← keputusan (ID ber-prefix lane: D-alief-.., D-umar-.., D-app-..)
+    ├── DECISIONS.md          ← keputusan (ID ber-prefix lane: D-alief-.., D-umar-.., D-aarief-.., D-imelda-..)
     └── fase-XX.md            ← laporan per fase
 ```
 
@@ -56,12 +56,13 @@ plan/                         (dipindah ke plan/ di fase 00)
 | 08 | Main agent `pm-lead` | Umar | `lane/bob` | mode `pm-lead`, tool PM | MA-01..05 | Sab 16:00–21:00 | Sonnet 5 · high |
 | 09 | App desktop (Orca di `app/`) + `@radar/ui` | Aarief | `lane/app` | agent `bob`, panel Live Collab, `@radar/ui` | DA-01..04, UI-01..04, UI-07 | Sab 00:30–16:00 | Sonnet 5 · high |
 | 10 | Integrasi E2E | Semua | lane masing-masing → PR kecil | `sim-3pc`, uji 3 Mac, **milestone Sab 23:00** | semua P0 | Sab 21:00–Min 02:00 | Opus 5.5 |
-| 11 | Tonton Bob rekan + `.dmg` (Aarief) · landing + replay web (Imelda) | Aarief + Imelda | `lane/app`, `lane/web` | Watch Bob (JT-01..03), `.dmg`, `/demo` | JT-01..03 (JT-04/05 P1/P2), DA-01, UI-05 | Aarief Sab 16:00–Min 11:00 · Imelda mulai setelah fase 00 | Sonnet 5 · high |
+| 11a · 11b · 11c | Tonton Bob rekan + C4 (11a) · `.dmg` (11b) · uji pasang + P1 (11c) | Aarief | `lane/app` | Watch Bob (JT-01..03), `.dmg`, script bukti | JT-01..03 (JT-04/05 P1/P2), DA-01, EV-02 | 11a Sab 16:00–21:00 · 11b Sab 23:00–Min 01:00 · 11c Min 06:00–11:00 | Sonnet 5 · high |
+| 11D1 · 11D2 | Landing + replay fixture (11D1) · I3 + replay final (11D2) | Imelda | `lane/web` | `/`, `/demo`, draf Long Description | UI-05, UI-09 | 11D1 setelah fase 00 s/d Sab 21:00 · 11D2 Sab 23:00–Min 01:00 + setelah rekaman Min 14:00 | Sonnet 5 · high |
 | 12 | Hardening & P1 | Alief | `lane/core` | kedaluwarsa, reconnect, invite | SV-09/10, SY-06/07, IN-02 | Min 04:00–11:00 | Sonnet 5 |
 | 13 | Eksperimen A/B | Umar | `lane/bob` | `docs/EXPERIMENT.md` | §04, §17 | Min 04:30–11:00 | Sonnet 5 |
 | 14 | Submission | Semua | lane masing-masing → PR | statement, video ≤ 3 menit, deck, bukti Bob | §15, EV-01..03, NFR-11 | Min 11:00–23:00 | Sonnet 5 |
 
-**GATE 1** Sab 04:00 · **Kontrak beku** Sab 02:30 (PR fase 02 merge; jendela hasil spike 04:00–04:30) · **Sinkron 1** Sab 16:00 · **Milestone** Sab 23:00 · **GATE 2 / freeze** Min 11:00.
+**GATE 1** Sab 04:00 · **Kontrak beku** Sab 02:30 (PR fase 02 merge; jendela hasil spike 04:00–04:30) · **Sinkron 1** Sab 16:00 · **Fase 10 (interupsi wajib)** Sab 21:00 · **Milestone** Sab 23:00 · **GATE 2 / freeze** Min 11:00 · **Rekaman final** Min 11:00–14:00.
 
 ---
 
@@ -81,18 +82,22 @@ flowchart LR
   F07 --> F08[08 PM agent · Umar]
   F00 --> F09[09 App desktop · Aarief]
   F02 -. mock .-> F09
-  F09 --> F11A[11 Watch Bob + dmg · Aarief]
+  F09 --> F11A[11a Watch Bob + C4 · Aarief]
   F03 -. bob.activity .-> F11A
-  F00 --> F11D[11D Landing + replay · Imelda]
+  F00 --> F11D[11D1 Landing + replay fixture · Imelda]
   F02 -. fixture .-> F11D
   F04 --> F10[10 E2E · semua]
   F06 --> F10
   F08 --> F10
   F09 --> F10
+  F11A --> F10
+  F11D --> F10
+  F10 --> F11B[11b/11c dmg + uji pasang · Aarief]
+  F10 --> F11E[11D2 I3 + replay final · Imelda]
   F10 --> F12[12 Hardening · Alief]
   F10 --> F13[13 Eksperimen · Umar]
-  F11A --> F14[14 Submission]
-  F11D --> F14
+  F11B --> F14[14 Submission]
+  F11E --> F14
   F12 --> F14
   F13 --> F14
 ```

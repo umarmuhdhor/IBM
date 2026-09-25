@@ -11,7 +11,7 @@ Required by the judges: *"Your repository must include the code/files where IBM 
 1. Claude Code prints **BOB SLICE <id>** with the Bob mode, a ready prompt, and the expected files.
 2. Work in **Bob IDE** (hackathon account, instance `ibm-coding-challenge-uat`, us-east). Correct Bob through chat, not by hand.
 3. In Bob IDE open **Tasks → the task → click the task header** so the consumption summary is visible.
-4. Tell Claude Code "bob selesai". Claude Code runs `radar/scripts/bob-evidence.sh <name> <NN> <slug>`, which captures the Bob IDE window without clicks and adds a row to [`INDEX.md`](INDEX.md).
+4. Tell Claude Code "bob selesai". Claude Code runs `radar/scripts/bob-evidence.sh <name> <NN> <slug>`, which captures the Bob IDE window without clicks and adds a row to `index/<name>.md` (combined into [`INDEX.md`](INDEX.md) in fase 14).
 5. Bob's code is committed as-is with the trailer `Bob-Assisted: bob_sessions/<png>`. Claude's fixes go in a separate commit.
 
 macOS needs Screen Recording permission for the terminal once (System Settings → Privacy & Security → Screen Recording).

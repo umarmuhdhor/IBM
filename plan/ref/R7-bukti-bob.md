@@ -17,7 +17,8 @@ bob_sessions/
 ├── uaai_aarief_task01_orca_onboarding.md          ← ekspor riwayat task (opsional tapi disarankan)
 ├── uaai_umar_task01_spike_hooks_summary.png
 ├── …
-└── INDEX.md                                             ← tabel semua task
+├── index/<nama>.md                                      ← baris per anggota (ditulis bob-evidence.sh, tanpa konflik antar-lane)
+└── INDEX.md                                             ← tabel gabungan semua task (disusun fase 14)
 ```
 Pola: `<tim>_<nama>_task<NN>_<slug_pakai_underscore>_summary.png`. `<tim>` = `uaai` (nama tim resmi di lablab) (ganti di `plan/team.json` kalau nama tim resmi di lablab berbeda). `<nama>` ∈ `alief`, `umar`, `aarief`, `imelda`. `NN` dihitung per orang.
 
@@ -25,7 +26,7 @@ Pola: `<tim>_<nama>_task<NN>_<slug_pakai_underscore>_summary.png`. `<tim>` = `ua
 |---|---|---|
 | Screenshot ringkasan task (PNG) untuk **setiap task Bob IDE terkait submission**, dari **keempat** anggota | **wajib** | `evidence:check` |
 | Ekspor riwayat task (`.md`) dengan nama yang sama tanpa `_summary.png` | disarankan | `evidence:check` (peringatan saja) |
-| `bob_sessions/INDEX.md`: file · anggota · lane/fase · tanggal · ringkasan · file kode yang dibantu Bob · Bobcoin | wajib (dari kita) | manual |
+| `bob_sessions/index/<nama>.md` (per anggota) + `bob_sessions/INDEX.md` gabungan: file · anggota · lane/fase · tanggal · ringkasan · file kode yang dibantu Bob · Bobcoin | wajib (dari kita) | `evidence:check` (+ `--write-index` di fase 14) |
 | Commit kode hasil Bob dengan trailer `Bob-Assisted: bob_sessions/<nama file png>` | wajib (dari kita) | `evidence:check` |
 | Narasi di `BOB_DEVELOPMENT.md` + IBM Bob Usage Statement (≤ 500 kata) | wajib | `wc -w` |
 
@@ -43,7 +44,7 @@ Pola: `<tim>_<nama>_task<NN>_<slug_pakai_underscore>_summary.png`. `<tim>` = `ua
    - menyimpan sebagai `bob_sessions/<tim>_<nama>_task<NN>_<slug>_summary.png`,
    - kalau ada ekspor `.md` baru di `~/Downloads` (≤ 10 menit), memindahkannya dengan nama yang sama,
    - menolak (exit 4) kalau `.md` memuat pola secret (`rdr_`, `ghp_`, `sk-`, `apikey`, `Bearer `),
-   - menambah baris ke `bob_sessions/INDEX.md`,
+   - menambah baris ke `bob_sessions/index/<nama>.md` (satu file per anggota, supaya PR lane tidak bentrok),
    - macOS perlu izin **Screen Recording** untuk Terminal/Claude Code sekali saja (System Settings → Privacy & Security → Screen Recording).
 5. Claude Code me-review hasil Bob, menjalankan test, lalu commit hasil Bob **apa adanya** dengan trailer `Bob-Assisted: bob_sessions/<png>`. Perbaikan dari Claude masuk commit terpisah.
 
@@ -57,7 +58,7 @@ usage: bob-evidence.sh <nama> <NN> <slug> [--md <path>] [--interactive]
   --interactive: screencapture -i (pilih manual) bila jendela tidak ditemukan
 exit 0 sukses · 1 argumen · 2 jendela/screenshot gagal · 3 md tidak ditemukan (peringatan) · 4 sensor gagal
 ```
-Idempoten: kalau nama file sudah ada, tanya sebelum menimpa. Tidak pernah membaca `.env` atau `.radar/`.
+Idempoten: kalau nama file sudah ada, tanya sebelum menimpa (di TTY); tanpa TTY menolak dengan exit 1 kecuali `--force` (D-alief-00). Agent memakai nomor task berikutnya, bukan `--force`. Tidak pernah membaca `.env` atau `.radar/`.
 
 ## 4. `pnpm -C radar evidence:check` (fase 14)
 
@@ -65,7 +66,7 @@ Gagal kalau salah satu kondisi berikut terjadi:
 - anggota di `plan/team.json` punya < 3 PNG `…_summary.png`,
 - ada PNG yang namanya tidak sesuai pola §1,
 - ada trailer `Bob-Assisted:` yang menunjuk ke file yang tidak ada,
-- `INDEX.md` tidak mencantumkan salah satu PNG,
+- `bob_sessions/index/<nama>.md` tidak mencantumkan salah satu PNG milik anggota itu (opsi `--write-index` menyusun ulang `INDEX.md` gabungan dari file per anggota),
 - ada file di `bob_sessions/` yang ter-ignore git (tidak ikut ter-commit).
 
 ## 5. Daftar Bob slice & anggaran
@@ -78,7 +79,7 @@ Daftar lengkap dan anggaran Bobcoin (40 per akun) ada di [`../../PLAN.md`](../..
 
 ## 6. Yang ditulis di IBM Bob Usage Statement (≤ 500 kata)
 
-1. **Bob sebagai inti produk (runtime):** hook `PreToolUse` menegakkan kunci, hook `SessionStart`/`UserPromptSubmit` menyuntikkan brief tim, custom mode `coder` dan `pm-lead` membagi peran, MCP `radar-mcp` memberi Bob tool `why_blocked`/`propose_*`, dan `bob` jalan sebagai agent kelas satu di app.
+1. **Bob sebagai inti produk (runtime):** hook `PreToolUse` menegakkan kunci, hook `SessionStart`/`UserPromptSubmit` menyuntikkan brief tim, semua hook mengirim stream aktivitas Bob IDE ke app, custom mode `coder` dan `pm-lead` membagi peran, dan MCP `radar-mcp` memberi Bob tool `why_blocked`/`propose_*`. Sebut `bob` sebagai agent di app (Bob Shell) **hanya** kalau slice C2 benar-benar dirilis (P1, D-005). Klaim hanya fitur yang ada di build final.
 2. **Bob sebagai pembangun:** daftar slice per anggota, termasuk onboarding codebase Orca (23k file) dengan Bob, kit `.bob/` yang ditulis di Bob IDE, dan komponen UI. Link ke `bob_sessions/INDEX.md`.
 3. **Angka:** jumlah sesi, Bobcoin per anggota, file yang dibantu Bob (dari trailer).
 4. **watsonx:** tidak dipakai. Tulis jujur "not used", atau sebutkan kalau tim memutuskan menambah Granite (tidak direncanakan).

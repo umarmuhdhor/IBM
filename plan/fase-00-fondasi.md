@@ -33,7 +33,7 @@ Dokumen (PRD, PLAN, DESIGN, `plan/`) **tetap di root**, tidak dipindah.
 ## Output
 
 - `.gitignore` root (isi sekarang + blok template IBM), `.bobignore`, `SECURITY.MD`, `.env.example` di root
-- `radar/` lengkap: `package.json`, `pnpm-workspace.yaml`, `tsconfig.base.json`, `eslint.config.js`, `.prettierrc`, `.nvmrc` (`24`), `packages/{common,server,sync,hooks,mcp,ui,web}`, `bob-kit/`, `examples/toko-demo/`, `scripts/{check-ignored.sh,bob-evidence.sh (stub)}`, `docs/*` kerangka
+- `radar/` lengkap: `package.json`, `pnpm-workspace.yaml`, `tsconfig.base.json`, `eslint.config.js`, `.prettierrc`, `.nvmrc` (`24`), `packages/{common,server,sync,hooks,mcp,ui,web}`, `bob-kit/`, `examples/toko-demo/`, `scripts/{check-ignored.sh,bob-evidence.sh}` (bob-evidence final: tangkap jendela Bob IDE, indeks per anggota `bob_sessions/index/<nama>.md`, R7), `docs/*` kerangka
 - `bob_sessions/README.md`, `bob_sessions/INDEX.md` (header tabel), `BOB_DEVELOPMENT.md` (kerangka), `README.md` root (bagian juri di atas, indeks dokumen di bawah, atribusi Orca)
 - `.github/workflows/ci.yml`
 - `plan/team.json`
@@ -112,11 +112,12 @@ Dokumen (PRD, PLAN, DESIGN, `plan/`) **tetap di root**, tidak dipindah.
 
 12. **Checklist kickoff (LANGKAH MANUAL, tulis di log):**
     1. Baca hackathon guide 2.0. Catat di DECISIONS: langkah resmi screenshot ringkasan task, Bobcoin per akun, model watsonx yang dilarang, aturan persiapan sebelum kickoff, dan batas ukuran video/deck.
-    2. Setiap orang: login **Bob IDE** dengan akun hackathon dan catat versi (Help → About, minimal 2.0.2). Bob Shell opsional; kalau dipasang, cek `bob --version`, tapi tidak ada fitur P0 yang bergantung padanya.
+    2. Setiap orang: login **Bob IDE** dengan akun hackathon dan catat versi (Help → About, minimal 2.1.0). Bob Shell opsional; kalau dipasang, cek `bob --version`, tapi tidak ada fitur P0 yang bergantung padanya.
     3. Buat repo GitHub publik `toko-demo` dari `radar/examples/toko-demo/`.
     4. GitHub fine-grained PAT hanya untuk `toko-demo` (contents: read & write) → password manager, **bukan** repo. Nanti dipasang lewat `wrangler secret put GITHUB_TOKEN` (fase 03).
     5. Akun Cloudflare (Workers + Pages, plan Free) → `npx wrangler login`. Belum deploy.
-    6. Sepakati nama anggota dan warna: A `#78A9FF`, B `#BE95FF`, C `#FF832B` (R5 §4 `MEMBER_COLORS`, DESIGN.md §2.1).
+    6. Sepakati nama anggota dan warna: A `#78A9FF`, B `#BE95FF`, C `#FF832B`, D `#08BDBA` (R5 §4 `MEMBER_COLORS`, DESIGN.md §2.1).
+    7. **Uji bukti Bob di 4 Mac.** Setiap orang memberi izin Screen Recording ke terminal/Claude Code (System Settings → Privacy & Security → Screen & System Audio Recording), membuka Bob IDE, lalu menjalankan `radar/scripts/bob-evidence.sh <nama> 00 kickoff_test`. Cek PNG berisi jendela Bob IDE (bukan desktop kosong), lalu hapus file uji (PNG, dan `.md` kalau ikut dipindah dari `~/Downloads`) serta barisnya di `bob_sessions/index/<nama>.md` sebelum commit. Gagal → pakai `--interactive` dan catat di log.
 
 13. **Commit** di `main`: `fase-00: fork Orca + radar workspace, IBM template, toko-demo` (dengan trailer `Bob-Assisted` untuk commit toko-demo), lalu push.
 

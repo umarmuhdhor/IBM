@@ -118,7 +118,8 @@ Aturan: **hook dan radar-mcp harus bisa jalan di workspace toko-demo tanpa `npm 
 pnpm -C radar admin init --server <url> --workspace toko-demo --repo <owner>/toko-demo \
   --member "A:coder:Alice:alice@example.com" \
   --member "B:coder:Budi:budi@example.com" \
-  --member "C:pm:Citra:citra@example.com"
+  --member "C:pm:Citra:citra@example.com" \
+  --member "D:coder:Dani:dani@example.com"      # coder keempat untuk milestone & rekaman 4 Mac (fase 10/14)
   → Worker membaca tree repo lewat GitHub API, impor file teks ke tabel file (versi 1),
     buat anggota + token, cetak token SEKALI (A, B, C, dan token Mission Control).
 pnpm -C radar admin token --member A --rotate  → token baru

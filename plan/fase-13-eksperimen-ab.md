@@ -3,7 +3,7 @@
 | Field | Nilai |
 |---|---|
 | Jalur | **Lane Umar** (Umar) · branch `lane/bob` (+ anggota lain sebagai coder) |
-| Slot WITA | Min 27 Sep 04:30 – 11:00 (PRD §18: eksperimen dijadwalkan Minggu pagi karena Bobcoin) |
+| Slot WITA | Min 27 Sep 04:30 – 10:30 (PRD §18: eksperimen dijadwalkan Minggu pagi karena Bobcoin; selesai sebelum GATE 2 dan rekaman final 11:00) |
 | Estimasi | 4 jam |
 | Prasyarat | 10 |
 | Requirement PRD | §04 metrik keberhasilan, §17 "Eksperimen A/B untuk angka pitch", NFR-06, NFR-09 |
@@ -60,7 +60,7 @@ Menghasilkan angka jujur untuk pitch: berapa konflik merge, menit resolusi, dan 
 
 ## Tambahan v0.3 — batas Bobcoin
 
-- Setiap akun hanya punya 40 Bobcoin (cek angka guide 2.0). Sebelum mulai, catat sisa Bobcoin setiap akun. Eksperimen **tidak boleh** membuat sisa akun turun di bawah 12, karena itu cadangan rekaman demo (PLAN.md §7).
+- Setiap akun hanya punya 40 Bobcoin (guide 2.0). Sebelum mulai, catat sisa Bobcoin setiap akun. Eksperimen memakai akun **Alief, Aarief, dan Imelda** (bukan Umar, yang cadangannya dipakai sebagai PC D saat rekaman), sesuai tabel anggaran PLAN.md §7. Eksperimen **tidak boleh** membuat sisa akun turun di bawah cadangan rekaman (12; akun PC D 8).
 - Kalau sisa tidak cukup untuk 3 putaran per kondisi, jalankan 1 putaran per kondisi + `sim-3pc` tanpa Bob sebagai pelengkap, lalu laporkan keterbatasan ini dengan jujur.
 - Metrik utama mengikuti roast v0.1: total waktu sampai kedua task ter-merge dan test lulus, build rusak setelah merge, dan Bobcoin. Jangan menjadikan "0 konflik merge" sebagai klaim utama.
 - Sesi Bob eksperimen juga diekspor ke `bob_sessions/` (slice tambahan).

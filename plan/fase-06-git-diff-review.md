@@ -77,6 +77,7 @@ Saat PM menyetujui review, server meng-commit **hanya file milik task itu** ke r
    - `PATCH ref` 422 dan (terpisah) 409 → `commit.push_failed`, proposal tetap `menunggu`, kunci tetap; approve ulang setelah head diperbarui → sukses.
    - `POST /git/trees` 403 + `retry-after` → `commit.push_failed { error: "rate_limited" }`.
    - 5xx → `commit.push_failed`, `commit_started_at` kosong lagi, task tetap `review`.
+   - DO restart di tengah commit (R4 §6.3 poin 5): isi `commit_started_at` = `now - 61 s` lalu buat ulang DO → constructor mengosongkan klaim + `commit.push_failed { error: "claim_expired" }`; B bisa menulis file T-1 lagi (bukan `committing`), dan approve ulang T-1 sukses. Klaim berumur 30 s tetap memblokir (`409`, `committing`).
    - 101 file (atau total > 5 MB) → `too_many_files` tanpa satu pun panggilan `fetch`; 60 file → sukses dengan tepat 4 request.
    - Task tanpa perubahan nyata → `empty: true`.
    - Diff: `calculateTotal(items)` → `calculateTotal(items, shipping)` di `checkout.ts`, dan `Header.tsx` mengimpornya → `exportsChanged[calculateTotal]` + `importers[Header.tsx].lines` benar.

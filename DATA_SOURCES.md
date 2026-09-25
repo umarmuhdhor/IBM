@@ -6,6 +6,7 @@ Required by the IBM Bob 2.0 Hackathon guide ("keep a list of the websites you us
 |---|---|---|---|
 | `toko-demo` products, prices, cart data | Synthetic, written by the team (and IBM Bob) | Our own, MIT | No |
 | Demo users "Andi", "Budi", "Citra" | Fictional personas | – | No |
+| Multi-agent technique diagrams (`README.md`, `media-references/README.md`) | Akshay Pachaar, "Subagents vs Agent Teams" (X article) | Linked only, images not copied into the repo | No |
 | UI inspiration screenshots (`UI Inspo & Design/`) | Orca (MIT), public product pages of Amoeba and Mosaic, Refero style reference | Reference only, not shipped in the product | No |
 
 No client data, company-confidential data, personal information, or social-media data is used. Add a row here before using any new external dataset.

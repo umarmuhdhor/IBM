@@ -1,10 +1,10 @@
 # IBM Bob Live Collab — Product Requirements Document
 
-> Multiplayer untuk IBM Bob. Setiap anggota memakai akun Bob sendiri, tapi semua bekerja di satu workspace live seperti Google Docs. Perubahan yang dibuat Bob siapa pun langsung muncul di semua laptop, setiap file hanya boleh dipegang satu Bob, anggota tim bisa menonton terminal Bob rekan secara live, dan satu main agent milik PM membagi kerja, menengahi rebutan, serta me-review sebelum commit. Dikirim sebagai aplikasi desktop **IBM Bob Live Collab** (fork [Orca](https://github.com/stablyai/orca)).
+> Multiplayer untuk IBM Bob. Setiap anggota memakai akun Bob sendiri, tapi semua bekerja di satu workspace live seperti Google Docs. Perubahan yang dibuat Bob siapa pun langsung muncul di semua laptop, setiap file hanya boleh dipegang satu Bob, anggota tim bisa menonton aktivitas Bob IDE rekan secara live, dan satu main agent milik PM membagi kerja, menengahi rebutan, serta me-review sebelum commit. Dikirim sebagai aplikasi desktop **IBM Bob Live Collab** (fork [Orca](https://github.com/stablyai/orca)).
 
 | Versi | Tanggal | Event | Kickoff / submit | Pemilik |
 |---|---|---|---|---|
-| 0.3 · Bob IDE inti + app desktop (Orca) + tonton Bob rekan + ECC | 25 Sep 2026 | IBM Bob 2.0 Hackathon, 25–27 Sep 2026, 48 jam | Jum 23:00 / Min 23:00 WITA | Tim **UAAI** (4 orang): Alief, Umar, Aarief, Imelda (Lane Alief/Umar/Aarief-Imelda, lihat [`PLAN.md`](PLAN.md)) |
+| 0.3 · Bob IDE inti + app desktop (Orca) + tonton Bob rekan + ECC | 25 Sep 2026 | IBM Bob 2.0 Hackathon, 25–27 Sep 2026, 48 jam | Jum 23:00 / Min 23:00 WITA | Tim **UAAI** (4 orang): Alief, Umar, Aarief, Imelda (4 lane: Alief · Core, Umar · Bob, Aarief · App, Imelda · Web, lihat [`PLAN.md`](PLAN.md)) |
 
 Dokumen terkait: [`PLAN.md`](PLAN.md) (lane, jadwal, ECC, bukti Bob) · [`DESIGN.md`](DESIGN.md) (desain & layar) · [`prompt_ui.md`](prompt_ui.md) (prompt gambar UI) · [`plan/`](plan/README.md) (detail per fase).
 
@@ -46,11 +46,11 @@ Tiga aturan yang membuatnya aman:
 
 Satu hal yang membuatnya terasa multiplayer:
 
-4. **Lihat Bob rekan bekerja.** Klik nama rekan di panel Team, dan aktivitas Bob IDE-nya tampil live di laptopmu: prompt yang dikirim, file yang dibaca dan ditulis, blokir, dan ringkasan tiap giliran. Semuanya diambil dari hook Bob IDE (`UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `Stop`). Bonus (P1): kalau rekan memakai Bob Shell di terminal app, terminalnya bisa ditonton langsung, bahkan diketik bersama.
+4. **Lihat Bob rekan bekerja.** Klik nama rekan di panel Team, dan aktivitas Bob IDE-nya tampil live di laptopmu: prompt yang dikirim, file yang dibaca dan ditulis, blokir, dan penanda akhir tiap giliran (payload `Stop` hanya berisi session ID, jadi tanpa ringkasan). Semuanya diambil dari hook Bob IDE (`UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `Stop`). Bonus (P1): kalau rekan memakai Bob Shell di terminal app, terminalnya bisa ditonton langsung, bahkan diketik bersama.
 
 > **Posisi:** VS Code Live Share dan Replit sudah bisa edit live, tapi untuk manusia. Clash dan MCP Agent Mail sudah menangani koordinasi agent, tapi tidak live dan tidak lintas tim. Amoeba dan Mosaic membawa multiplayer ke Claude Code dan Codex, tapi kuncinya hanya saran dan tidak mendukung IBM Bob. IBM Bob Live Collab adalah multiplayer yang dibangun di atas primitif IBM Bob sendiri: hook `PreToolUse` menegakkan kunci, custom mode `coder`/`pm-lead` membagi peran, dan server MCP `radar-mcp` memberi Bob "suara" untuk menjelaskan dan mengusulkan.
 
-*Perubahan dari v0.2: produk dikirim sebagai **app desktop macOS** (fork Orca, `.dmg`) yang menggantikan Mission Control web. Web tinggal replay `/demo` untuk juri. Ditambah fitur **tonton Bob rekan** (JT, lewat stream aktivitas hook Bob IDE), **agent `bob` di Orca**, **onboarding lewat kode undangan** (IN), dan **protokol bukti Bob** (EV). Pembangunan memakai 3 lane paralel dengan Claude Code + ECC. Perubahan dari v0.1: model kerja pindah dari branch terpisah + prediksi merge-tree ke satu workspace live + kunci per file, ditambah peran PM dan main agent.*
+*Perubahan dari v0.2: produk dikirim sebagai **app desktop macOS** (fork Orca, `.dmg`) yang menggantikan Mission Control web. Web tinggal replay `/demo` untuk juri. Ditambah fitur **tonton Bob rekan** (JT, lewat stream aktivitas hook Bob IDE), **agent `bob` di Orca**, **onboarding lewat kode undangan** (IN), dan **protokol bukti Bob** (EV). Pembangunan memakai 4 lane paralel dengan Claude Code + ECC. Perubahan dari v0.1: model kerja pindah dari branch terpisah + prediksi merge-tree ke satu workspace live + kunci per file, ditambah peran PM dan main agent.*
 
 ---
 
@@ -214,7 +214,7 @@ flowchart TD
   AP -->|ubah| PL
   AP -->|setuju| PUB["Task masuk ke inbox A dan B, file dipesan"]
   PUB --> WA["A dan B memberi prompt ke Bob masing-masing"]
-  WA --> LIVE["Bob menulis file, perubahan tersinkron live ke 3 PC"]
+  WA --> LIVE["Bob menulis file, perubahan tersinkron live ke semua PC"]
   LIVE --> BLK{"Ada edit yang diblokir?"}
   BLK -->|ya| ARB["Alur rebutan file, lihat 7.3"]
   ARB --> LIVE
@@ -458,7 +458,7 @@ stateDiagram-v2
 | SV-07 | Commit per task | Saat review disetujui, server meng-commit file milik task dengan author coder, trailer `Co-authored-by: IBM Bob`, `Radar-Task`, dan `Reviewed-by`, lalu push ke GitHub. | P0 |
 | SV-08 | Event log | Setiap kejadian tercatat dan bisa diekspor sebagai JSON untuk replay. | P0 |
 | SV-09 | Kunci kedaluwarsa | Tanpa heartbeat 5 menit, PM diberi peringatan dan bisa mencabut kunci. | P1 |
-| SV-10 | Pemicu main agent otomatis | Setiap permintaan baru menjalankan `bob run --mode pm-lead --max-cost` di PC C untuk membuat usulan. | P1 |
+| SV-10 | Pemicu main agent otomatis | Setiap permintaan baru menjalankan `bob run --mode pm-lead` (Bob Shell, dengan batas biaya bila CLI mendukungnya) di PC C untuk membuat usulan. Hanya R1: di R0 PM memanggil main agent manual di Bob IDE. | P1 |
 
 ### 10.3 Integrasi Bob untuk coder
 
@@ -530,7 +530,7 @@ Mission Control kini menjadi view di app Live Collab (seksi sidebar **Live Colla
 | IN-03 | Checklist onboarding | App mengecek: `bob` CLI ada, kit `.bob/` terpasang, hook terdaftar, `radar-mcp` bisa dijalankan, file tersinkron. Item gagal diberi satu kalimat perbaikan. | P1 |
 | IN-04 | Installer satu baris | `curl -fsSL <domain>/install \| sh` memasang CLI dan membuka unduhan `.dmg`. | P2 |
 | EV-01 | Folder bukti per anggota | `bob_sessions/<tim>_<nama>_task<NN>_<slug>_summary.png` (+ `.md` ekspor) untuk setiap Bob slice. `bob_sessions/INDEX.md` terisi. | P0 |
-| EV-02 | Script bukti | `radar/scripts/bob-evidence.sh <nama> <NN> <slug>` mengambil screenshot interaktif (`screencapture -i`), memindahkan ekspor `.md` terbaru dari `~/Downloads`, dan menambah baris INDEX. | P0 |
+| EV-02 | Script bukti | `radar/scripts/bob-evidence.sh <nama> <NN> <slug>` mengambil screenshot jendela Bob IDE secara otomatis (fallback `--interactive` = `screencapture -i`), memindahkan ekspor `.md` terbaru dari `~/Downloads`, dan menambah baris ke `bob_sessions/index/<nama>.md` (R7). `INDEX.md` dirakit di fase 14. | P0 |
 | EV-03 | Trailer commit | Commit berisi kode hasil Bob memakai trailer `Bob-Assisted: bob_sessions/<png>`. `evidence:check` memverifikasi setiap trailer menunjuk ke folder yang ada, dan setiap anggota punya ≥ 3 slice. | P0 |
 
 ---
@@ -544,7 +544,7 @@ Desain lengkap, token warna, komponen, dan wireframe tiap layar ada di [`DESIGN.
 | Home · Workspaces | semua | kartu workspace dengan status "Needs you", Bob mode aktif, anggota online | §5.1 |
 | Workspace · coder | A, B | **Bob IDE** (chat Bob, jejak hook) di samping app Live Collab: explorer dengan chip kunci, panel Team + Notifications | §5.2 |
 | Mission Control | C (PM) | Tasks · Files & locks · Needs you (kartu keputusan & review) · Live feed | §5.3 |
-| Momen near-miss | semua | blokir di terminal Budi → kartu keputusan di layar Citra → Approve → brief di prompt berikutnya | §5.4 |
+| Momen near-miss | semua | blokir di Bob IDE Budi (chat + timeline aktivitas) → kartu keputusan di layar Citra → Approve → brief di prompt berikutnya | §5.4 |
 | Review & commit | C | diff ringkas, dampak antar-file, verdict main agent, Approve & commit | §5.5 |
 | Tonton Bob rekan | semua | timeline live aktivitas Bob IDE rekan (prompt, file, blokir), border warna pemilik | §5.6 |
 | Ketik sebagai tamu (P1) | semua | izin host, label nama tamu di baris input | §5.7 |
@@ -765,9 +765,11 @@ customModes:
       "hooks": [{ "type": "command", "command": "node .bob/hooks/lock_guard.js", "timeout": 3 }]
     }],
     "PostToolUse": [{
-      "matcher": "^(write_file|apply_diff|search_and_replace|insert_content|office_edit)$",
+      // tool edit + baca + perintah (JT-02); daftar final dari spike 7, tanpa tool MCP radar sendiri
+      "matcher": "^(write_file|apply_diff|search_and_replace|insert_content|office_edit|read_file|execute_command)$",
       "hooks": [{ "type": "command", "command": "node .bob/hooks/mark_ai_edit.js", "timeout": 3 }]
-    }]
+    }],
+    "Stop": [{ "hooks": [{ "type": "command", "command": "node .bob/hooks/stop.js", "timeout": 3 }] }]
   }
 }
 ```
@@ -796,9 +798,9 @@ customModes:
 | NFR-03 | Ketersediaan | Hook fail-open kalau server tidak menjawab, dengan lapis kedua di server. Replay mode tidak bergantung pada server. |
 | NFR-04 | Keamanan | Token per anggota. Endpoint persetujuan hanya menerima token Mission Control. Tidak ada secret di repo, log hook, atau `bob_sessions/`. Jalankan gitleaks di seluruh history. Hook berjalan dengan izin penuh user, dan ini diakui di deck. |
 | NFR-05 | Privasi | MVP menyimpan isi file di server tim. Roadmap: server self-hosted di jaringan perusahaan. |
-| NFR-06 | Biaya Bobcoin | Brief ≤ 6 baris. Main agent dipanggil hanya saat ada usulan yang dibutuhkan. `--max-cost` untuk pemicu otomatis. |
+| NFR-06 | Biaya Bobcoin | Brief ≤ 6 baris. Main agent dipanggil hanya saat ada usulan yang dibutuhkan. Diukur dari ringkasan task Bob IDE (bukti `bob_sessions/`), bukan dari flag CLI. Pemicu otomatis (SV-10, R1) memakai batas biaya Bob Shell bila tersedia. |
 | NFR-07 | Data | Repo contoh dengan data sintetis. Tidak ada data pribadi, klien, atau media sosial. |
-| NFR-08 | Kompatibilitas | **Bob IDE ≥ 2.0.2** (v1.0.3 dan v2.0.0 berhenti berfungsi 30 Sep 2026), login akun hackathon `ibm-coding-challenge-uat` (us-east), Bob Shell opsional (bukan syarat P0), Node 24 untuk membangun (bundle hook/radar-mcp jalan di Node ≥ 20), git ≥ 2.38. App desktop: **macOS arm64** (R0). Sync agent, hook, dan server: macOS, Windows, dan Linux. |
+| NFR-08 | Kompatibilitas | **Bob IDE ≥ 2.1.0** (dibutuhkan untuk `office_edit`; v1.0.3 dan v2.0.0 berhenti berfungsi 30 Sep 2026), login akun hackathon `ibm-coding-challenge-uat` (us-east), Bob Shell opsional (bukan syarat P0), Node 24 untuk membangun (bundle hook/radar-mcp jalan di Node ≥ 20), git ≥ 2.38. App desktop: **macOS arm64** (R0). Sync agent, hook, dan server: macOS, Windows, dan Linux. |
 | NFR-09 | Bisa diaudit | Setiap keputusan PM, usulan main agent, commit, aktivitas Bob, dan share terminal tercatat di event log. Setiap task Bob IDE yang terkait submission punya screenshot ringkasan task di `bob_sessions/` (penamaan R7). |
 | NFR-10 | Lisensi & atribusi | Fork Orca mempertahankan `LICENSE` MIT dan menyebut Orca di README dan About. Tidak memakai logo IBM. Tertulis "community hackathon project, not an official IBM product". |
 | NFR-11 | Kepatuhan template IBM | Repo memuat `.gitignore`, `.bobignore`, `SECURITY.MD`, dan `.env.example` dari [ibm-hackathon-template](https://github.com/watsonxhackathon/ibm-hackathon-template), digabung dengan `.gitignore` Orca. Tidak ada nama file yang tertangkap pola template (`*token*`, `*secret*`, `*password*`, `*credentials*`, `config.json`), dan hal ini dicek di CI. |
@@ -808,7 +810,7 @@ customModes:
 
 ## 15. Naskah video (≤ 3 menit, ≥ 90 detik solusi berjalan)
 
-Aturan: MP4, maksimal 3 menit (juri berhenti menonton di 3:00), minimal 90 detik menampilkan solusi berjalan di layar, ada narasi, dan jelas menunjukkan pemakaian IBM Bob. Layar dibagi tiga: Andi (Bob IDE) kiri, Mission Control Citra tengah, Budi (Bob IDE) kanan. Bob IDE harus terlihat jelas sebagai alat utama. Rekam versi terbaik Minggu pagi, dan rekam per layar sebagai cadangan.
+Aturan: MP4, maksimal 3 menit (juri berhenti menonton di 3:00), minimal 90 detik menampilkan solusi berjalan di layar, ada narasi, dan jelas menunjukkan pemakaian IBM Bob. Layar dibagi tiga: Andi (Bob IDE) kiri, Mission Control Citra tengah, Budi (Bob IDE) kanan. Bob IDE harus terlihat jelas sebagai alat utama. Rekam versi terbaik Minggu 11:00–14:00 WITA (setelah GATE 2), dan rekam per layar sebagai cadangan.
 
 | Waktu | Adegan | Detik solusi berjalan |
 |---|---|---|
@@ -823,6 +825,8 @@ Aturan: MP4, maksimal 3 menit (juri berhenti menonton di 3:00), minimal 90 detik
 
 Total solusi berjalan: ±120 detik (syarat ≥ 90). Subtitle Bahasa Inggris dibakar ke video.
 
+> **Varian P0-only** (dipakai kalau P1 tidak selesai sebelum GATE 2): adegan Live menampilkan kartu `BobTrace` di panel tonton, bukan pill UI-08 di editor. Adegan near-miss mengandalkan penolakan hook + jawaban `why_blocked`. Subagent di adegan Rencana opsional: kalau Bob tidak memakainya, narasi tidak menyebutnya. Naskah tidak boleh menjanjikan fitur yang tidak tampil di layar.
+
 > **Catatan waktu:** tabel di atas berjumlah tepat 3:00, tanpa slack. fase 14 menargetkan ekspor di 2:50 (margin 10 detik) — kalau editing Minggu siang melebihi itu, potong dari **2:25–2:50 "Di balik layar"** dulu (jadikan 15 detik, lihat `plan/fase-14-submission.md` tabel risiko), bukan dari adegan solusi berjalan (0:25–2:25), supaya syarat ≥ 90 detik solusi berjalan tetap aman.
 
 ---
@@ -831,7 +835,7 @@ Total solusi berjalan: ±120 detik (syarat ≥ 90). Subtitle Bahasa Inggris diba
 
 | Rilis | Isi |
 |---|---|
-| **R0 · submit hackathon** | Semua P0 · App `.dmg` (tidak di-sign) di 3 Mac · Server di cloud · Tonton aktivitas Bob rekan · Main agent dipanggil manual oleh PM · Replay web · `bob_sessions/` dari 3 anggota · 2 statement ≤ 500 kata · video ≤ 3 menit · deck · cover |
+| **R0 · submit hackathon** | Semua P0 · App `.dmg` (tidak di-sign) di 4 Mac · Server di cloud · Tonton aktivitas Bob rekan · Main agent dipanggil manual oleh PM · Replay web · `bob_sessions/` dari 4 anggota · 2 statement ≤ 500 kata · video ≤ 3 menit · deck · cover |
 | **R1 · 4–6 minggu (pilot tim)** | Ketik sebagai tamu · main agent otomatis via `bob run` · tag agent live di editor · hapus/ganti nama + reconnect · kode undangan + installer satu baris · app di-sign & notarize |
 | **R2 · enterprise** | `EnforcedHooks` untuk seluruh org · server self-hosted · integrasi PR dan CI · > 5 anggota, multi-repo · Windows/Linux build |
 
@@ -850,7 +854,7 @@ Edit bersama di baris yang sama (CRDT), chat tim, file biner, OAuth, Slack, apli
 7. Laporan sesi (MA-06)
 8. Terakhir sekali: review main agent disederhanakan menjadi ringkasan diff saja
 
-**Tidak boleh dipotong:** DA-01..04, JT-01..03, UI-01..05, EV-01..03, dan semua P0 server/sync/hook/MCP.
+**Tidak boleh dipotong:** semua requirement P0, termasuk DA-01, DA-03, DA-04, DA-06, JT-01..03, UI-01..05, UI-07, UI-09, EV-01..03, dan semua P0 server/sync/hook/MCP. DA-02 (P1) boleh dipotong.
 
 ---
 
@@ -862,9 +866,9 @@ Rencana lengkap per lane, branch, titik sinkron, anggaran Bobcoin, dan cara menj
 |---|---|---|
 | Alief · Core | Alief | 00 fondasi · 02 kontrak · 03 server · 04 sync · 05 kunci · 06 git + relay terminal · 12 hardening |
 | Umar · Bob | Umar | 01 spike · 07 kit coder · 08 main agent · 13 eksperimen · koordinator bukti Bob |
-| Aarief/Imelda · App | Aarief | 09 app desktop (Orca di `app/`) + `@radar/ui` · 11 tonton Bob rekan + `.dmg` |
-| | Imelda | `@radar/ui` · 11 landing + replay web · 14 video, deck, cover, statement |
-| Semua | – | 10 integrasi E2E (milestone Sab 23:00) · 14 submission |
+| Aarief · App | Aarief | 09 app desktop (Orca di `app/`) + `@radar/ui` · 11a/11b/11c tonton Bob rekan, `.dmg`, relay |
+| Imelda · Web | Imelda | 11D1/11D2 landing + replay web · 14 video, deck, cover, statement |
+| Semua | – | 10 integrasi E2E (mulai Sab 21:00, milestone Sab 23:00) · 14 submission |
 
 ### Spike (Sab 00:30–04:00 WITA)
 
@@ -893,18 +897,18 @@ Rencana lengkap per lane, branch, titik sinkron, anggaran Bobcoin, dan cara menj
 | Risiko | Dampak | Mitigasi |
 |---|---|---|
 | Codebase Orca besar (~23k file), tooling ketat (oxlint, ratchet) | Lane Aarief/Imelda lambat | Perubahan aditif di folder `components/radar/` baru. Bob slice C1 memetakan titik sambung. Jalankan `pnpm -C app tc` + oxlint file yang diubah saja. |
-| Build `.dmg` gagal (native helper, signing) | Teman tidak bisa pasang | Coba `build:unpack` sebelum kickoff. Fallback: `pnpm -C app dev` di 3 Mac. App tidak di-sign → System Settings → Privacy & Security → Open Anyway (macOS 15+), atau `xattr -dr com.apple.quarantine`. |
+| Build `.dmg` gagal (native helper, signing) | Teman tidak bisa pasang | Coba `build:unpack` sebelum kickoff. Fallback: `pnpm -C app dev` di 4 Mac. App tidak di-sign → System Settings → Privacy & Security → Open Anyway (macOS 15+), atau `xattr -dr com.apple.quarantine`. |
 | Hook di Bob IDE tidak jalan (docs menyatakan didukung) | Coder IDE tidak diblokir oleh Bob-nya sendiri | Lapis 2 di server + sync agent. Bob menjelaskan lewat brief/`why_blocked`. |
 | Juri menilai Bob IDE kurang "inti" | Tidak lolos penjurian (syarat wajib) | Semua coder dan PM bekerja di Bob IDE di video. Custom mode, hook, MCP, dan skill semuanya dikonfigurasi di Bob IDE. Pembangunan juga memakai Bob IDE (Bob slice + `bob_sessions/`). |
 | `.gitignore` template IBM mengabaikan nama file berisi `token`, `secret`, `password`, `credentials`, `config.json` | Kode hilang diam-diam dari repo | Larangan nama file di R5. CI menjalankan `radar/scripts/check-ignored.sh`. |
 | `.bobignore` template mengabaikan `*config.json` | Bob tidak bisa membaca `tsconfig.json` | Diterima. Bob slice tidak bergantung ke file itu. Dicatat di `BOB_DEVELOPMENT.md`. |
-| Bobcoin 40 per akun | Tidak bisa merekam / eksperimen | Anggaran per slice ([`PLAN.md`](PLAN.md) §7). Rekam demo sebelum eksperimen. `--max-cost`. |
+| Bobcoin 40 per akun | Tidak bisa merekam / eksperimen | Anggaran per akun ([`PLAN.md`](PLAN.md) §7): cadangan rekaman 12 Bobcoin (Umar 8) tidak boleh dipakai eksperimen. Eksperimen (Min 04:30–10:30) berhenti bila sisa akun turun ke cadangan. |
 | Tamu mengetik di terminal host | Bobcoin host terpakai, risiko perintah berbahaya | Izin eksplisit dan terbatas waktu. Hanya P1. Tercatat di event log. |
 | Konflik antar-file tidak tertangkap kunci | Kode rusak walaupun tidak ada bentrok file | Review main agent dengan cek file yang meng-import (MA-04) + `notify` |
 | Kode setengah jadi ikut tersinkron | Build B rusak sementara | Penanda "sedang ditulis" dan brief. Jawaban untuk juri: ini harga dari "live", seperti draf di Google Docs. |
 | Juri menganggapnya "cuma Live Share + kunci" atau "cuma Amoeba untuk Bob" | Nilai originality turun | Tonjolkan penegakan lewat hook Bob, main agent `pm-lead` yang hanya mengusulkan, dan panel "Bob inside" |
 | Nama memakai "IBM" | Terlihat seperti produk resmi IBM | Tulis "community hackathon project, not an official IBM product" di README, About, dan deck |
-| Demo 3 Mac gagal saat live | Presentasi turun | Rekaman cadangan per layar + replay web |
+| Demo 4 Mac gagal saat live | Presentasi turun | Rekaman cadangan per layar + replay web |
 | Aturan guide 2.0 berbeda dari guide Mei | Diskualifikasi / nilai turun | Baca guide di 1 jam pertama, dan checklist submission di [`plan/fase-14-submission.md`](plan/fase-14-submission.md) |
 
 ### Open question yang dijawab saat spike dan kickoff
@@ -914,7 +918,7 @@ Rencana lengkap per lane, branch, titik sinkron, anggaran Bobcoin, dan cara menj
 3. Apa nama tool eksekusi perintah di Bob 2.x?
 4. Apakah Bob IDE memuat ulang file yang diubah dari luar secara otomatis?
 5. Apakah hook berjalan sama di Bob Shell dan Bob IDE?
-6. Berapa Bobcoin per peserta di edisi 2.0, bagaimana langkah resmi screenshot ringkasan task, dan model watsonx mana yang dilarang?
+6. ~~Berapa Bobcoin per peserta~~ (terjawab: 40 per akun), bagaimana langkah resmi screenshot ringkasan task, dan model watsonx mana yang dilarang?
 7. Apakah boleh menyiapkan lingkungan (fork Orca, `pnpm install`) sebelum kickoff?
 8. Apakah `bob` CLI bisa login dengan akun hackathon yang sama dengan Bob IDE?
 
@@ -941,7 +945,7 @@ Rencana lengkap per lane, branch, titik sinkron, anggaran Bobcoin, dan cara menj
 ## Sumber
 
 - [IBM Bob — Lifecycle hooks](https://bob.ibm.com/docs/ide/configuration/lifecycle-hooks)
-- [The Main Thread — uji hooks Bob 2.0.2](https://www.the-main-thread.com/p/ibm-bob-lifecycle-hooks-agentic-development)
+- [The Main Thread — uji hooks Bob 2.0.2 (versi lama; tim memakai 2.1.0)](https://www.the-main-thread.com/p/ibm-bob-lifecycle-hooks-agentic-development)
 - [IBM Bob — Custom modes](https://bob.ibm.com/docs/ide/configuration/custom-modes)
 - [IBM Bob V2 release blog](https://bob.ibm.com/blog/bob-v2-release-announcement/)
 - [arXiv 2607.04697 — AI agent PRs & merge conflict rates](https://arxiv.org/html/2607.04697v2)

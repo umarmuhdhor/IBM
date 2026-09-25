@@ -16,7 +16,11 @@ Waktu dalam WITA. Setiap lane **hanya mengedit baris fasenya sendiri** (supaya m
 | 08 | Main agent `pm-lead` | Umar | lane/bob | [ ] | | | | log/fase-08.md |
 | 09 | App desktop (Orca di `app/`) + `@radar/ui` | Aarief | lane/app | [ ] | | | | log/fase-09.md |
 | 10 | Integrasi E2E | Semua | lane masing-masing | [ ] | | | | log/fase-10.md |
-| 11 | Tonton Bob rekan + `.dmg` (Aarief) · landing + replay (Imelda) | Aarief + Imelda | lane/app, lane/web | [ ] | | | | log/fase-11.md |
+| 11a | Tonton Bob rekan (A) + script bukti C4 (E) | Aarief | lane/app | [ ] | | | | log/fase-11a.md |
+| 11b | `.dmg` + Release (C) | Aarief | lane/app | [ ] | | | | log/fase-11b.md |
+| 11c | Uji pasang Mac teman, P1, poles | Aarief | lane/app | [ ] | | | | log/fase-11c.md |
+| 11D1 | Landing + replay dengan fixture (I1, I2) | Imelda | lane/web | [ ] | | | | log/fase-11D1.md |
+| 11D2 | I3 Long Description + replay final dari rekaman | Imelda | lane/web | [ ] | | | | log/fase-11D2.md |
 | 12 | Hardening & P1 | Alief | lane/core | [ ] | | | | log/fase-12.md |
 | 13 | Eksperimen A/B | Umar | lane/bob | [ ] | | | | log/fase-13.md |
 | 14 | Submission | Semua | lane masing-masing | [ ] | | | | log/fase-14.md |
@@ -29,8 +33,10 @@ Waktu dalam WITA. Setiap lane **hanya mengedit baris fasenya sendiri** (supaya m
 | Jendela kontrak hasil spike | Sab 26 Sep 04:00–04:30 | [ ] | Hanya field hook, `BobActivityReq`, `EDIT_TOOLS_REGEX` (PR `fase-02b`) |
 | GATE 1 — hasil spike | Sab 26 Sep 04:00 | [ ] | Penegakan hook Bob IDE, jalur pesan blokir, sinkron, build app, payload aktivitas |
 | Sinkron 1 — semua lane punya PR ter-merge | Sab 26 Sep 16:00 | [ ] | App konek ke server staging |
-| Milestone — alur penuh di 3 Mac | Sab 26 Sep 23:00 | [ ] | rencana → live → blokir → keputusan + tonton Bob rekan |
+| Fase 10 mulai (interupsi wajib) | Sab 26 Sep 21:00 | [ ] | PR keempat lane ter-merge ≤ 21:00 |
+| Milestone — alur penuh di 4 Mac | Sab 26 Sep 23:00 | [ ] | rencana → live → blokir → keputusan + tonton Bob rekan; PC D ikut |
 | GATE 2 — feature freeze | Min 27 Sep 11:00 | [ ] | Setelah ini hanya bugfix, dokumen, video |
+| Rekaman final (gladi + 2 take) | Min 27 Sep 11:00–14:00 | [ ] | Setelah freeze; server & toko-demo di-reset |
 | Submit | Min 27 Sep 19:00–21:00 | [ ] | Batas lablab 23:00 WITA |
 
 ## Status requirement P0
@@ -44,12 +50,12 @@ Waktu dalam WITA. Setiap lane **hanya mengedit baris fasenya sendiri** (supaya m
 | BC-01..04, BC-07 | 07 | [ ] | |
 | MA-01..05, MA-07 | 08 (+05, 06) | [ ] | |
 | UI-01..04, UI-07 | 09 | [ ] | |
-| UI-05 | 11 | [ ] | |
-| DA-01 | 11 | [ ] | |
+| UI-05 | 11D1 | [ ] | |
+| DA-01 | 11b/11c | [ ] | |
 | DA-03, DA-04, DA-06 | 09 | [ ] | |
 | JT-01 (hook + `bob/activity`) | 03 + 07 | [ ] | |
-| JT-02, JT-03 (Watch Bob, privasi prompt) | 11 (+07 `shareprompts`) | [ ] | |
-| UI-09 (landing web) | 11 (D) | [ ] | |
+| JT-02, JT-03 (Watch Bob, privasi prompt) | 11a (+07 `shareprompts`) | [ ] | |
+| UI-09 (landing web) | 11D1 | [ ] | |
 | IN-01 | 04 + 11 | [ ] | |
 | EV-01..03 | semua (dicek 14) | [ ] | |
 | NFR-11 (template IBM, check:ignored) | 00 | [ ] | |

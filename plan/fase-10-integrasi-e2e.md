@@ -2,19 +2,19 @@
 
 | Field | Nilai |
 |---|---|
-| Jalur | Semua, mulai Sab 21:00 setelah PR keempat lane ter-merge. Setiap lane memperbaiki di branch lane sendiri dan membuka PR kecil (PROMPT langkah 11). Lane Alief: simulator `sim-3pc` + server (folder `radar/scripts` miliknya). Lane Umar: memimpin uji Bob di 3 Mac. Lane Aarief: app di 3 Mac. Lane Imelda: replay dari export milestone. |
+| Jalur | Semua, mulai Sab 21:00 setelah PR keempat lane ter-merge. Setiap lane memperbaiki di branch lane sendiri dan membuka PR kecil (PROMPT langkah 11). Lane Alief: simulator `sim-3pc` + server (folder `radar/scripts` miliknya). Lane Umar: memimpin uji Bob di 4 Mac. Lane Aarief: app di 4 Mac. Lane Imelda: replay dari export milestone. |
 | Slot WITA | Sab 26 Sep 21:00 – Min 27 Sep 02:00 · **Milestone Sab 23:00** |
 | Estimasi | 3–4 jam |
-| Prasyarat | 04, 05, 07, 08, 09. Fase 06 hanya dibutuhkan untuk langkah review/commit (sim langkah 6–7, 3 PC langkah 7) |
+| Prasyarat | 04, 05, 07, 08, 09. Fase 06 hanya dibutuhkan untuk langkah review/commit (sim langkah 6–7, 4 PC langkah 7) |
 | Requirement PRD | Semua P0; metrik §04; alur §07.1 |
 | Model | **Opus 5.5** · effort high, `xhigh` saat mengejar bug race |
 | Fase berikutnya | 11 (Aarief), 12 (Alief), 13 (Umar) — solo: **11** |
 
-> **Catatan jadwal.** Milestone Sab 23:00 (PRD §17) hanya menuntut **rencana → live → blokir → keputusan**. Kalau fase 06 belum selesai, jalankan sim dengan `--until decision` dan 3 PC sampai langkah 6, lalu ulangi bagian review/commit setelah fase 06 selesai (≈ Min 01:00).
+> **Catatan jadwal.** Milestone Sab 23:00 (PRD §17) hanya menuntut **rencana → live → blokir → keputusan**. Kalau fase 06 belum selesai, jalankan sim dengan `--until decision` dan 4 PC sampai langkah 6, lalu ulangi bagian review/commit setelah fase 06 selesai (≈ Min 01:00).
 
 ## Tujuan
 
-Membuktikan alur penuh PRD berjalan: **rencana → live → blokir → keputusan → review → commit GitHub** — pertama secara otomatis tanpa Bob (simulator 3 PC, bisa diulang dan diukur), lalu secara nyata di 3 PC dengan Bob mengikuti naskah demo PRD §15. Hasilnya juga menjadi data awal replay.
+Membuktikan alur penuh PRD berjalan: **rencana → live → blokir → keputusan → review → commit GitHub** — pertama secara otomatis tanpa Bob (simulator 3 PC, bisa diulang dan diukur), lalu secara nyata di 4 PC dengan Bob mengikuti naskah demo PRD §15. Hasilnya juga menjadi data awal replay.
 
 ## Bacaan wajib
 
@@ -25,7 +25,7 @@ Membuktikan alur penuh PRD berjalan: **rencana → live → blokir → keputusan
 ## Output
 
 - `scripts/sim-3pc.ts` (+ `scripts/sim/scenario-demo.ts`)
-- `docs/E2E_REPORT.md` (hasil sim + hasil 3 PC + daftar bug & perbaikan)
+- `docs/E2E_REPORT.md` (hasil sim + hasil 4 PC + daftar bug & perbaikan)
 - `packages/web/public/demo/events.sim.json` (export dari run sim terbaik)
 - Perbaikan bug di paket mana pun (dengan test regresi)
 
@@ -54,20 +54,21 @@ Membuktikan alur penuh PRD berjalan: **rencana → live → blokir → keputusan
 
 3. **Jalankan sim ke server deploy** (`--server https://…`) — memastikan CORS, WSS, latensi internet, push GitHub asli ke repo cadangan `toko-demo-sim` (jangan mengotori `toko-demo` utama; atau reset setelahnya).
 
-4. **Milestone Sab 23:00 — 3 PC nyata (LANGKAH MANUAL, tulis checklist ini di log)**:
+4. **Milestone Sab 23:00 — 4 PC nyata (LANGKAH MANUAL, tulis checklist ini di log)**:
    Persiapan:
    1. Reset server: `pnpm -C radar admin reset --confirm && pnpm -C radar admin init …` (repo toko-demo bersih), bagikan token baru.
    2. PC A & B: clone kosong folder kerja → `radar join <server> --workspace toko-demo --as A|B --token … --kit coder`; buka folder di Bob IDE dan **trust workspace** (kalau tidak, hook & MCP dilewati tanpa error), cek tab Hooks dan panel MCP `radar` tanpa prompt approve, mode "Live Collab Coder".
    3. PC C: `radar join … --as C --kit pm`; Bob IDE (trust workspace) mode "Live Collab PM Lead"; browser Mission Control login token mc.
+   3b. PC D (konfigurasi rekaman final, fase 14 §A): `radar join … --as D --kit coder`, Bob IDE, satu task kecil independen (mis. `utils.ts`). Pastikan kartu D muncul di Team/Files & locks dan feed. Member D ikut dibuat di langkah 1 (`admin init … --member "D:coder:Dani:dani@example.com"`).
    Jalankan naskah PRD §15 (tanpa merekam dulu):
    4. C: prompt `pm-rencana.md` tujuan "Tambah fitur kupon dan dark mode" → kartu rencana → Setujui → kunci berwarna muncul.
    5. A: "Kerjakan task aktifmu: kupon diskon di checkout." · B: "Kerjakan task aktifmu: dark mode." → amati file berubah sendiri di PC lain & ✎ di MC.
    6. B: "Tampilkan total dengan diskon kupon di checkout.ts juga" → blokir → Bob B menjelaskan & pindah ke Header.tsx → kartu permintaan → C: `pm-rebutan.md` → usulan antre → (auto/klik) Setujui.
    7. A: "Ubah calculateTotal agar menerima ongkos kirim, lalu ajukan task." → C: `pm-review.md` → usulan setujui+beri tahu B → Setujui → commit muncul di GitHub (A + co-author IBM Bob), kunci checkout.ts pindah ke B.
    8. Catat waktu tiap adegan vs target naskah, Bobcoin per PC, dan semua keanehan.
-   9. Ekspor event (`pnpm -C radar admin export`) → `packages/web/public/demo/events.live-1.json`; ekspor sesi Bob ketiga PC ke `bob_sessions/`.
+   9. Ekspor event (`pnpm -C radar admin export`) → `packages/server/test/fixtures/events.live-1.json` (folder lane Alief; Imelda menyalinnya ke `packages/web` di 11D2); ekspor sesi Bob keempat PC ke `bob_sessions/`.
 
-5. **Triase** hasil 3 PC: bug P0 (merusak alur demo) diperbaiki malam ini; sisanya → fase 12. Tandai milestone di PROGRESS (tercapai / tercapai sebagian + apa yang kurang).
+5. **Triase** hasil 4 PC: bug P0 (merusak alur demo) diperbaiki malam ini; sisanya → fase 12. Tandai milestone di PROGRESS (tercapai / tercapai sebagian + apa yang kurang).
 
 6. **Latihan kedua** setelah perbaikan (sebelum tidur bergilir) untuk memastikan stabil; ukur ulang metrik.
 
@@ -95,7 +96,7 @@ pnpm sim -- --server https://live-collab.<akun>.workers.dev --repo-suffix -sim
 
 - [ ] Sim lokal hijau 3× berturut-turut; sim ke server deploy hijau.
 - [ ] Metrik sim: p95 cek kunci < 300 ms, dua penulis bersamaan = 0, `review.flagged` ≥ 1, blokir→keputusan tercatat.
-- [ ] Alur naskah §15 berjalan di 3 PC nyata minimal sekali (milestone), dengan catatan waktu.
+- [ ] Alur naskah §15 berjalan di 4 PC nyata minimal sekali (milestone), dengan catatan waktu.
 - [ ] Semua P0 di tabel PROGRESS punya bukti.
 - [ ] `events.sim.json` & `events.live-1.json` tersedia untuk replay.
 

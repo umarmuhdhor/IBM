@@ -1,6 +1,6 @@
 # IBM Bob Live Collab — Desain (v0.3)
 
-> Arah visual: **clean pro ala Amoeba**, yaitu gelap, tenang, mono, dengan tag agent berwarna. Ditambah **DNA IBM**: huruf IBM Plex dan palet Carbon, supaya "ini untuk IBM Bob" terasa tanpa memakai logo IBM.
+> Arah visual: **Orca dulu** (§0). App dan replay gelap, tenang, mono, dengan tag agent berwarna. Amoeba dan Mosaic hanya referensi suasana. **DNA IBM** (palet Carbon, IBM Plex di replay/cover/deck) membuat "ini untuk IBM Bob" terasa tanpa memakai logo IBM. Landing memakai gaya terang "warm paper" (§5.11).
 > Dasar: fork Orca (Electron + React + Tailwind/shadcn). Referensi: `UI Design/amoeba ui/*`, `UI Design/orca ui/*`, video Mosaic.
 > Produk: [`PRD.md`](PRD.md) · Plan: [`PLAN.md`](PLAN.md) · Prompt gambar: [`prompt_ui.md`](prompt_ui.md)
 
@@ -74,7 +74,7 @@ Mode terang (P2): tukar ke Carbon White theme. Tidak dikerjakan untuk demo.
 | Kode, path, terminal, meta | **IBM Plex Mono** 400/500 | 12/18 (terminal 13/18) | tag agent juga mono |
 | Angka metrik | IBM Plex Mono 500 tabular | 24/28 | counter di replay dan cover |
 
-Kedua font berlisensi OFL. **Hanya untuk web/replay** (landing, `/demo`, gallery), dibundel lewat `@fontsource/ibm-plex-sans` dan `@fontsource/ibm-plex-mono`. **App memakai font Orca** (sans & mono bawaan `main.css`), supaya panel Live Collab tidak terlihat asing di dalam Orca. `@radar/ui` memakai `var(--lc-font-sans)`/`var(--lc-font-mono)`.
+Kedua font berlisensi OFL. **Hanya untuk replay dan media** (`/demo`, gallery, cover, deck). **Landing (§5.11) memakai Inter + Source Serif 4** sesuai gaya warm paper. Plex di replay dibundel lewat `@fontsource/ibm-plex-sans` dan `@fontsource/ibm-plex-mono`. **App memakai font Orca** (sans & mono bawaan `main.css`), supaya panel Live Collab tidak terlihat asing di dalam Orca. `@radar/ui` memakai `var(--lc-font-sans)`/`var(--lc-font-mono)`.
 
 ### 2.3 Spasi, radius, bayangan
 
@@ -177,7 +177,7 @@ Semua ukuran dirancang untuk 1512×982 (MacBook 14") dan tetap rapi di 1920×108
 ### 5.3 Mission Control — tampilan PM (Citra)
 
 ```text
-┌ Mission Control · toko-demo    ● live · 3/3 online    (A)(B)(C)    Bobcoin A 31 · B 28 · C 22 ┐
+┌ Mission Control · toko-demo    ● live · <n>/<n> online    (A)(B)(C)    Bobcoin A <a> · B <b> · C <c> ┐
 ├─ TASKS ────────────────────┬─ FILES & LOCKS ──────────┬─ NEEDS YOU (2) ───────────────────────┤
 │ Working        Review      │ src/checkout/            │ ┃ [blocked] Budi needs checkout.ts     │
 │ ┌T-1 Kupon──┐ ┌T-0 Ongkir┐ │  checkout.ts ✎  (A)      │ ┃ held by Andi · T-1 Kupon             │
@@ -200,7 +200,7 @@ Tombol **Approve** memanggil endpoint khusus Mission Control. Main agent tidak p
 ### 5.4 Momen near-miss (adegan utama video)
 
 Urutan yang harus terasa dalam ±3 detik:
-1. Di terminal Budi: `⚓ hook · PreToolUse · lock_guard → blocked`. Barisnya merah redup.
+1. Di Bob IDE Budi, tool call ditolak (pesan penolakan di chat Bob). Di app, timeline aktivitas (§5.6) menampilkan `⚓ hook · PreToolUse · lock_guard → blocked` dengan baris merah redup.
 2. Bob Budi menjelaskan sendiri dalam 1–2 kalimat (dari `radar.why_blocked`).
 3. Di Mission Control Citra: `DecisionCard` masuk dari atas dengan garis magenta. Badge sidebar "Needs you 1".
 4. Citra klik **Approve**. Kartu keluar ke kanan, `LockChip` routes/checkout menampilkan `queue:B`, dan feed hijau "decision approved".
@@ -220,12 +220,12 @@ Urutan yang harus terasa dalam ±3 detik:
 │ 21:05  📖 read     src/checkout/checkout.ts                                           │
 │ 21:05  ✎ write    src/checkout/coupon.ts   +18   hook · PreToolUse → allowed · 61 ms  │
 │ 21:06  ✎ edit     src/checkout/checkout.ts  +8 −2                                     │
-│ 21:06  ✓ turn end "Kupon selesai, lanjut test"                                        │
+│ 21:06  ✓ turn end                                                                     │
 │ ─ prompts shared by Andi · 2 watching (B)(C) ────────────────────────────────────────  │
 └───────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-Dibuka dari tombol **Watch** di panel Team. Datanya dari hook Bob IDE (`bob.activity`), bukan dari layar, sehingga jalan untuk semua orang yang memakai Bob IDE. Kalau Andi mematikan "Share my prompts", baris 💬 hilang dan hanya aktivitas file yang tampil.
+Dibuka dari tombol **Watch** di panel Team. Datanya dari hook Bob IDE (`bob.activity`), bukan dari layar, sehingga jalan untuk semua orang yang memakai Bob IDE. Kalau Andi mematikan "Share my prompts", baris 💬 hilang dan hanya aktivitas file yang tampil. Baris `turn end` tidak membawa ringkasan, karena payload hook `Stop` hanya berisi session ID.
 
 ### 5.7 Tonton terminal Bob Shell (P1, opsional)
 
@@ -237,12 +237,12 @@ Hanya untuk anggota yang memakai Bob Shell di terminal app. Tombol **Share** di 
 - Tiga kolom: **Andi (Bob IDE)** | **Mission Control (Citra)** | **Budi (Bob IDE)**. Setiap kolom coder menampilkan timeline aktivitas Bob (§5.6) yang diputar ulang.
 - Timeline bawah: chapter `Plan · Live · Near-miss · Review · Commit`, kecepatan 1×/2×/4×, autoplay 2×.
 - Panel kanan **Bob inside** (pembeda juri): setiap event yang diklik menampilkan primitif Bob yang bekerja (hook mana, payload ringkas, tool MCP, mode), kutipan dari `bob_sessions/…` dan link ke file sesinya.
-- Counter di atas: `near-misses prevented 3 · merge conflicts 0 · decisions 4 · median decision 38 s`.
+- Counter di atas: `near-misses prevented <n> · merge conflicts <n> · decisions <n> · median decision <s> s`. Semua nilai dihitung dari event log yang diputar, bukan diketik.
 
 ### 5.9 Onboarding / join (ala Mosaic install)
 
 Langkah di app baru: **Paste invite** → **Choose folder** → checklist live:
-`✓ Bob CLI found (bob 2.x)` · `✓ .bob kit installed (modes: coder)` · `✓ hooks registered (4)` · `✓ radar-mcp reachable` · `✓ synced 42 files` · `✓ you are Budi · coder`.
+`• open this folder in Bob IDE ≥ 2.1.0 and trust the workspace` · `✓ .bob kit installed (modes: coder)` · `✓ hooks registered (5)` · `✓ radar-mcp reachable` · `✓ synced 42 files` · `✓ you are Budi · coder`.
 Kalau ada item merah, tampilkan satu kalimat perbaikan dan tombol **Retry**.
 
 ### 5.11 Landing web (Application URL): gaya "warm paper" ala Notion

@@ -8,7 +8,8 @@
 #   --interactive  pick the region by hand (screencapture -i) instead of the Bob IDE window
 #   --force        overwrite an existing PNG without asking
 #
-# Output: bob_sessions/<team>_<nama>_task<NN>_<slug>_summary.png + one row in bob_sessions/INDEX.md
+# Output: bob_sessions/<team>_<nama>_task<NN>_<slug>_summary.png + one row in bob_sessions/index/<nama>.md
+# (one index file per member so lane PRs never conflict; bob_sessions/INDEX.md is assembled in fase 14)
 # exit 0 ok · 1 arguments · 2 window/screenshot failed
 # (--md <path> and the secret filter, exit 3/4, are added by Bob slice C4 in fase 11.)
 #
@@ -106,10 +107,11 @@ else
 fi
 [[ -s "$out" ]] || die 2 "screenshot is empty: $out"
 
-index="$sessions/INDEX.md"
+mkdir -p "$sessions/index"
+index="$sessions/index/$name.md"
 if [[ ! -f "$index" ]]; then
-  cat >"$index" <<'MD'
-# IBM Bob session evidence
+  cat >"$index" <<MD
+# IBM Bob session evidence — $name
 
 | File | Member | Lane / phase | Date (WITA) | Summary | Files Bob helped with | Bobcoin |
 |---|---|---|---|---|---|---|
@@ -117,7 +119,7 @@ MD
 fi
 if ! grep -qF "[$file]" "$index"; then
   date_wita="$(TZ=Asia/Makassar date '+%Y-%m-%d %H:%M')"
-  echo "| [$file]($file) | $name | $lane / task $num | $date_wita | ${slug//_/ } | – | – |" >>"$index"
+  echo "| [$file](../$file) | $name | $lane / task $num | $date_wita | ${slug//_/ } | – | – |" >>"$index"
 fi
 
 echo "bob_sessions/$file"

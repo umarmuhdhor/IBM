@@ -83,7 +83,7 @@ Mesin kunci penuh menyusul di fase 05. Fase ini menyiapkan titik sambung `author
 ## Tambahan v0.3
 
 - Repo DB untuk token bernama `db/repo/access.ts` (bukan `token.ts`, R5 §8). Tabel SQL `token` boleh tetap.
-- Hub WS menerima `client: "app"` (token member, read-only `state` + `event`, termasuk `bob.activity`). Relay `term.*` adalah P1 (fase 12), juga di dalam DO yang sama.
+- Hub WS menerima `client: "app"` (token member, read-only `state` + `event`, termasuk `bob.activity`). Relay `term.*` adalah P1 (fase 06 bagian P1, JT-04), juga di dalam DO yang sama.
 - Deploy pertama sebelum tidur, supaya Aarief dan Imelda bisa konek ke staging saat Sinkron 1.
 
 ## Verifikasi

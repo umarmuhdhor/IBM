@@ -31,8 +31,8 @@
 | File live sync | Ya | chokidar + WebSocket, sudah dirancang di plan v0.2 | Gema/loop → anti-gema berbasis hash (fase 04) |
 | Orca (di `app/`) menjadi `.app` | **Ya, terbukti** | Di Mac Aarief (25 Sep): install 71 s, lalu build `.app` ad-hoc signed jadi (575 MB). Resepnya ada di fase 11 langkah 9: `app/mobile` wajib di-install, helper Computer Use dilewati, dan `CSC_NAME=-`. | App tidak di-sign Developer ID → Privacy & Security → Open Anyway (klik kanan → Open tidak berlaku lagi sejak macOS 15). **Jangan buka build sebelum appId diganti** (fase 09 langkah 0), karena bisa bentrok dengan data Orca asli. |
 | Menambah "IBM Bob" sebagai agent di Orca | Ya | Agent Orca didefinisikan di union `src/shared/tui-agent.ts` dan dirujuk ±12 file lain (`tui-agent-config.ts`, `tui-agent-display-names.ts`, `agent-kind.ts`, `telemetry-property-schemas.ts`, `renderer/src/lib/agent-catalog.tsx`, dll.; daftar di fase 09) | Codebase Orca besar (~23k file) → perubahan **aditif** saja. Bob slice: Bob IDE membaca Orca dan menemukan titik sambungnya. |
-| Tonton Bob rekan | Ya | Hook Bob IDE (`UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `Stop`) mengirim aktivitas ke server, yang menyiarkannya ke app anggota lain. Docs resmi: Bob IDE mendukung kelima hook ini. | Detail payload dicek di spike (poin 15). Kalau prompt tidak tersedia, cukup aktivitas file. |
-| Bobcoin | Ketat | **40 Bobcoin per akun** (guide Mei 2026) | Anggaran per orang (§7). Main agent dipanggil hanya saat perlu. `--max-cost`. |
+| Tonton Bob rekan | Ya | Kelima hook Bob IDE (`SessionStart`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `Stop`) mengirim aktivitas ke server, yang menyiarkannya ke app anggota lain. Docs resmi: Bob IDE mendukung kelima hook ini. | Detail payload dicek di spike (poin 15). Kalau prompt tidak tersedia, cukup aktivitas file. |
+| Bobcoin | Ketat | **40 Bobcoin per akun** (guide 2.0, dicek 25 Sep) | Anggaran per akun per kegiatan (§7). Main agent dipanggil hanya saat perlu. Sisa dicatat di PROGRESS setiap titik sinkron. |
 | Aturan "Bob IDE harus jadi komponen inti" (guide 2.0) | Ya | Semua anggota (A, B coder; C PM mode `pm-lead`) memakai **Bob IDE**. Bob Shell tidak dipakai di jalur P0. | – |
 
 **Kesimpulan:** feasible untuk 48 jam **kalau** perubahan di Orca dibatasi ke sidebar/panel baru dan registrasi agent. Jangan refactor internal Orca (pty daemon, relay, mobile).
@@ -46,9 +46,9 @@ Empat orang, empat lane, semua berjalan paralel. **Batas lane = batas folder**, 
 | Lane | Pemilik | Fokus | Fase | Folder yang BOLEH disentuh |
 |---|---|---|---|---|
 | **Alief · Core** | Alief | Collab Server di **Cloudflare Workers + Durable Objects**, sync agent, mesin kunci, commit via GitHub API, siaran aktivitas Bob | 00, 02, 03, 04, 05, 06, 12 | `radar/packages/{common,server,sync}`, `radar/scripts/{sim-3pc,bench-sync,mock-server}.ts`, `radar/examples/toko-demo`, root `radar/` config |
-| **Umar · Bob** | Umar | Kit `.bob/`: mode `coder` + `pm-lead`, hook, `radar-mcp`, spike Bob, eksperimen, **koordinator bukti Bob** | 01, 07, 08, 13 | `radar/packages/{hooks,mcp}`, `radar/bob-kit`, `radar/spike`, `radar/scripts/{ab,metrics}*`, `bob_sessions/INDEX.md`, `BOB_DEVELOPMENT.md` |
-| **Aarief · App** | **Aarief** | App desktop (Orca di `app/`): agent `bob`, **komponen UI `@radar/ui`**, panel Live Collab, tonton Bob rekan, `.dmg` | 09 (semua), 11 (A, B, C, E) | `app/**`, `radar/packages/ui`, `resources/` ikon, pengecualian: `radar/scripts/{bob-evidence.sh,evidence-check.ts}` (Bob slice C4) |
-| **Imelda · Web & media** | **Imelda** | Landing + replay web (Cloudflare Pages) yang **memakai** komponen `@radar/ui` dari Aarief, video, deck, cover, statement submission | 11 (D: landing + replay), 14 (media & statement) | `radar/packages/web`, `radar/scripts/export-replay.ts`, `radar/docs/{deck,video,SUBMISSION.md}` |
+| **Umar · Bob** | Umar | Kit `.bob/`: mode `coder` + `pm-lead`, hook, `radar-mcp`, spike Bob, eksperimen, **koordinator bukti Bob** | 01, 07, 08, 13 | `radar/packages/{hooks,mcp}`, `radar/bob-kit`, `radar/spike`, `radar/scripts/{ab,metrics}*`, `bob_sessions/INDEX.md` gabungan (fase 14; baris harian ditulis tiap anggota ke `bob_sessions/index/<nama>.md`), `BOB_DEVELOPMENT.md` |
+| **Aarief · App** | **Aarief** | App desktop (Orca di `app/`): agent `bob`, **komponen UI `@radar/ui`**, panel Live Collab, tonton Bob rekan, `.dmg` | 09 (semua), 11a, 11b, 11c | `app/**`, `radar/packages/ui`, `resources/` ikon, pengecualian: `radar/scripts/{bob-evidence.sh,evidence-check.ts}` (Bob slice C4) |
+| **Imelda · Web & media** | **Imelda** | Landing + replay web (Cloudflare Pages) yang **memakai** komponen `@radar/ui` dari Aarief, video, deck, cover, statement submission | 11D1 (landing + replay fixture), 11D2 (I3 + replay final), 14 (media & statement) | `radar/packages/web`, `radar/scripts/export-replay.ts`, `radar/docs/{deck,video,SUBMISSION.md}` |
 | Bersama | Semua | Integrasi E2E, submission | 10, 14 | Masing-masing di foldernya sendiri |
 
 Branch: `lane/core` (Alief), `lane/bob` (Umar), `lane/app` (Aarief), `lane/web` (Imelda). Setiap lane membuka PR per fase ke `main` (§6). Aarief membuat `@radar/ui`, dan Imelda memakainya di replay. Aarief mengumumkan props setiap komponen begitu selesai, sementara Imelda bisa mulai dengan data contoh (DESIGN.md §3).
@@ -64,7 +64,7 @@ github.com/umarmuhdhor/IBM            ← repo tim (milik Umar, SUDAH PUBLIK)
 ├── README.md PLAN.md PRD.md DESIGN.md prompt_ui.md   ← dokumen tetap di root
 ├── plan/  arsip/  "UI Inspo & Design"/
 ├── .claude/                          ← agent & skill bersama (§11), ikut ter-clone ke semua orang
-├── app/                              ← Orca (Electron) disalin dari stablyai/orca@bf40d35, MIT. Lane Aarief/Imelda bekerja di sini.
+├── app/                              ← Orca (Electron) disalin dari stablyai/orca@bf40d35, MIT. Lane Aarief bekerja di sini.
 ├── radar/                            ← workspace pnpm Live Collab (dibuat fase 00): packages, bob-kit, spike, scripts, docs
 ├── bob_sessions/<tim>_<nama>_task<NN>_<slug>_summary.png
 └── BOB_DEVELOPMENT.md
@@ -76,7 +76,7 @@ Toolchain: **Node 24 + pnpm 12** (syarat `app/`). `nvm install 24 && nvm use 24`
 
 | Branch | Isi | Siapa merge |
 |---|---|---|
-| `main` | Integrasi. Selalu bisa `pnpm -C radar test` dan `pnpm -C app tc` hijau | PR, di-review 1 orang lain (atau `/ecc:code-review` kalau semua sibuk) |
+| `main` | Integrasi. Selalu bisa `pnpm -C radar test` dan `pnpm -C app tc` hijau | PR dari snapshot, CI hijau + `/ecc:code-review`, squash oleh pemilik lane (§6). Kontrak butuh approve Alief |
 | `lane/core` | Lane Alief | Alief |
 | `lane/bob` | Lane Umar | Umar |
 | `lane/app` | Lane Aarief: app desktop + `@radar/ui` | Aarief |
@@ -133,7 +133,7 @@ Kode proyek baru mulai ditulis setelah kickoff. Setup lingkungan boleh dilakukan
 
 | Siapa | Tugas |
 |---|---|
-| Semua | **IBMid** (email yang sama dengan registrasi lablab) · **Bob IDE ≥ 2.0.2** (v1.0.3/v2.0.0 mati 30 Sep) · saat kickoff terima email "added to ibm-hackathon-xxxx" (cek spam), lalu di Bob IDE **Settings → General pilih instance `ibm-coding-challenge-uat` (us-east)** supaya tidak memakai Bobcoin pribadi · Node 24, pnpm 12, Xcode CLT, `gh auth login`, Claude Code + plugin §11 · izinkan **Screen Recording** untuk Terminal (dipakai `bob-evidence.sh`). |
+| Semua | **IBMid** (email yang sama dengan registrasi lablab) · **Bob IDE ≥ 2.1.0** (untuk `office_edit` + tab Hooks; v1.0.3/v2.0.0 mati 30 Sep) · saat kickoff terima email "added to ibm-hackathon-xxxx" (cek spam), lalu di Bob IDE **Settings → General pilih instance `ibm-coding-challenge-uat` (us-east)** supaya tidak memakai Bobcoin pribadi · Node 24, pnpm 12, Xcode CLT, `gh auth login`, Claude Code + plugin §11 · izinkan **Screen Recording** untuk Terminal (dipakai `bob-evidence.sh`). |
 | Aarief | ✅ Orca di `app/` (commit `7c86819`) · ✅ install · ✅ build `.app`. Sisa: pasang plugin §11 (ECC, typescript-lsp, frontend-design), Bob IDE (Bob Shell opsional), dan generate gambar yang belum ada (#12 landing). |
 | Alief | Buat **akun Cloudflare** (plan Free), `npx wrangler login`, dan coba deploy contoh Durable Object WebSocket. Pasang plugin `cloudflare@cloudflare`. Buat repo kosong `toko-demo` + fine-grained token GitHub. |
 | Umar | Baca docs Bob: hooks (Shell & IDE), custom modes, MCP, `bob run`. Siapkan checklist spike. |
@@ -144,16 +144,17 @@ Kode proyek baru mulai ditulis setelah kickoff. Setup lingkungan boleh dilakukan
 |---|---|---|---|---|
 | Jum 23:00–Sab 00:30 | **00 Fondasi** di `main` · **Bob slice A1**: toko-demo | Kickoff: baca guide 2.0, catat aturan bukti & Bobcoin | **Bob slice C1**: Bob memetakan titik sambung Orca | Kickoff. Kerangka Next.js `radar/packages/web` + deploy kosong ke Cloudflare Pages |
 | Sab 00:30–02:30 | **02 Common + mock** → PR `lane/core-f02` = **kontrak beku** | **01 Spike** · **Bob slice B1**: hook payload logger | **09a** agent `bob` + ganti appId | **Bob slice I2**: landing page `/` |
-| Sab 02:30–04:00 | 03 Server (Worker + DO) mulai; 04:00–04:30 jendela kontrak (hasil spike) | 01 → **GATE 1 (04:00)** | 09b koneksi Live Collab melawan mock | polish landing, draf naskah video |
+| Sab 02:30–04:00 | 03 Server (Worker + DO) mulai; **04:00 memutuskan GATE 1** dari `docs/SPIKE_RESULTS.md`; 04:00–04:30 jendela kontrak (hasil spike) | 01 → fixture payload hook + `SPIKE_RESULTS.md` di-push **≤ 03:30**, lalu siaga chat sampai 04:00 → **GATE 1 (04:00)** | 09b koneksi Live Collab melawan mock | polish landing, draf naskah video |
 | Sab 04:00–09:00 | 03 (s.d. 06:30) → 04 Sync agent (06:30–09:00), PR sebelum tidur | Tidur | Tidur | Tidur |
-| Sab 09:00–16:00 | Tidur 09–14 → 05 Kunci/task/proposal (14:00–17:30) · **Bob slice A2**: `checkWrite()` | **07** Kit coder (**di Bob IDE**, **Bob slice B2+B3**) | **09c** **Bob slice C3** komponen `@radar/ui` + views, lalu pasang di app | **Bob slice I1**: pemutar replay + `/demo` dengan data fixture (memakai komponen Aarief) |
+| Sab 09:00–16:00 | Tidur 09–14 → 05 Kunci/task/proposal (14:00–17:30) · **Bob slice A2**: `checkWrite()` | **07** Kit coder (**di Bob IDE**, **Bob slice B2+B3+B4a**) | **09c** **Bob slice C3** komponen `@radar/ui` + views, lalu pasang di app | **Bob slice I1**: pemutar replay + `/demo` dengan data fixture (memakai komponen Aarief) |
 | **Sab 16:00** | **Sinkron 1:** semua lane merge ke `main`, uji melawan Worker staging | | | |
-| Sab 16:00–21:00 | 05 → 06 Git Data API + diff (17:30–21:00) · **Bob slice A3+A4**: commit format + `/review` locks.ts | **08** `pm-lead` (**di Bob IDE**, **Bob slice B4**: radar-mcp) | **11a** Watching Bob (timeline aktivitas) | `/demo`: panel Bob inside, `export-replay.ts`, halaman `/gallery` |
+| Sab 16:00–21:00 | 05 → 06 Git Data API + diff (17:30–21:00) · **Bob slice A3+A4**: commit format + `/review` locks.ts | **08** `pm-lead` (**di Bob IDE**, **Bob slice B4b**: tool MCP PM) | **11a** Watching Bob (timeline aktivitas) + C4 | **11D1** `/demo`: panel Bob inside, `export-replay.ts`, halaman `/gallery` |
 | **Sab 21:00–23:00** | **10 Integrasi E2E** di `main` → **Milestone 23:00** di 4 laptop | | | |
-| Sab 23:00–Min 04:00 | Perbaikan E2E, tidur bergilir | Tidur 23:30–04:30 | **11b** `.dmg`, tidur 01:00–06:00 | naskah video + storyboard · **Bob slice I3**: draf Long Description dari PRD (dipindah lebih awal, lihat §7 — jangan tunggu Min 11:00), tidur 00:00–05:00 |
-| Min 04:00–11:00 | **12** Hardening | **13** Eksperimen, cek `bob_sessions/` | 11c polish + ketik tamu (bonus) | rekam footage 09:00, replay dari rekaman nyata |
+| Sab 23:00–Min 04:00 | Perbaikan E2E, tidur bergilir | Tidur 23:30–04:30 | **11b** `.dmg`, tidur 01:00–06:00 | **11D2**: naskah video + storyboard · **Bob slice I3** (Sab 23:00–Min 01:00): draf Long Description dari PRD (slice terjadwal, dikecualikan dari aturan §7), tidur 01:00–06:00 |
+| Min 04:00–11:00 | **12** Hardening | **13** Eksperimen (selesai ≤ 10:30), cek `bob_sessions/` | **11c** uji pasang Mac teman + polish | draf edit video dari footage milestone Sab 23:00, deck |
 | **Min 11:00** | **GATE 2: feature freeze** | | | |
-| Min 11:00–19:00 | 14: README juri, gitleaks | 14: `BOB_DEVELOPMENT.md`, Bob Usage Statement | 14: rilis `.dmg`, uji pasang | 14: **video, deck, cover**, poles draf Long Description (I3) jadi final |
+| **Min 11:00–14:00** | **Rekaman final** (fase 14 §A): reset server + toko-demo, gladi, 2 take di 4 Mac | | | |
+| Min 14:00–19:00 | 14: README juri, gitleaks | 14: `BOB_DEVELOPMENT.md`, Bob Usage Statement | 14: rilis `.dmg`, uji pasang | 14: **video, deck, cover** · **11D2** replay final dari rekaman · poles draf Long Description (I3) jadi final |
 | Min 19:00–21:00 | **Submit** (Imelda isi form) | | | |
 | Min 21:00–23:00 | Buffer: cek incognito, link, video, tidak ada secret | | | |
 
@@ -194,12 +195,14 @@ main ──●──────────●(fase 02: kontrak beku)───�
 
 Masalah yang dihindari: squash merge membuat commit baru di `main`, sehingga PR dari branch lane yang terus maju akan ikut membawa commit fase berikutnya, dan rebase biasa akan bentrok dengan isi yang sudah di-squash. Karena itu PR selalu dibuka dari **branch snapshot** per fase, dan sinkron memakai `rebase --onto`.
 
-1. Kerja fase NN di `lane/<x>`. Selesai: commit `fase-NN: …`, `git push origin lane/<x>`, tandai ujungnya `git tag -f lane-<x>-fNN`.
-2. Buka PR dari snapshot: `git push origin HEAD:refs/heads/lane/<x>-fNN` lalu `gh pr create --base main --head lane/<x>-fNN --title "fase-NN: …" --body "<ringkasan log fase>"`. Bisa juga lewat fitur **Pull request** di Bob IDE (sekalian jadi bukti pemakaian Bob).
+`<x>` = `LANE_ID` dari `plan/team.json` (`core`, `bob`, `app`, `web`), bukan nama orang.
+
+1. Kerja fase NN di `lane/<x>`. Selesai: commit `fase-NN: …`, `git push origin lane/<x>`, tandai ujungnya dengan branch lokal `git branch -f snap/<x>-fNN HEAD` (bukan tag: tag tidak ikut pindah saat rebase).
+2. Buka PR dari snapshot: `git push origin snap/<x>-fNN:refs/heads/lane/<x>-fNN` lalu `gh pr create --base main --head lane/<x>-fNN --title "fase-NN: …" --body "<ringkasan log fase>"`. Bisa juga lewat fitur **Pull request** di Bob IDE (sekalian jadi bukti pemakaian Bob).
 3. Lanjut fase berikutnya di `lane/<x>` tanpa menunggu review.
-4. Review: satu orang lain dari lane berbeda menyetujui, atau kalau semua sibuk, `/ecc:code-review` + fitur **Review** Bob IDE, hasilnya ditempel di PR. PR yang menyentuh `radar/packages/common/**` atau `plan/ref/**` wajib disetujui Alief.
+4. Review: **tidak wajib** review manusia dari lane lain. Agent menjalankan `/ecc:code-review` (PROMPT langkah 8) dan menempel hasilnya di PR; review lintas lane boleh kalau ada yang senggang. Fitur **Review** Bob IDE hanya kalau Bobcoin masih di atas cadangan (§7). PR yang menyentuh `radar/packages/common/**` atau `plan/ref/**` wajib disetujui Alief.
 5. Merge: **squash merge** oleh pemilik PR setelah CI hijau (`ci.yml`: job `radar` typecheck + lint + test + check:ignored, job `gitleaks`, job `app` bila `app/**` berubah). `gh pr merge <no> --squash --delete-branch`.
-6. Setelah PR fase NN milik sendiri di-merge: `git fetch origin && git rebase --onto origin/main lane-<x>-fNN lane/<x>` lalu `git push --force-with-lease origin lane/<x>`. Ini hanya memindahkan commit **setelah** fase NN ke atas `main`. Force hanya di branch lane sendiri.
+6. Setelah PR fase NN milik sendiri di-merge: `git fetch origin && git rebase --update-refs --onto origin/main snap/<x>-fNN lane/<x>`, `git branch -D snap/<x>-fNN`, lalu `git push --force-with-lease origin lane/<x>` dan force-with-lease setiap snapshot `lane/<x>-fMM` yang PR-nya masih terbuka (`--update-refs` sudah memindahkan `snap/<x>-fMM`). Ini hanya memindahkan commit **setelah** fase NN ke atas `main`. Force hanya di branch lane dan snapshot sendiri. Butuh git ≥ 2.38.
 7. PR lane lain di-merge ke `main`: tidak perlu rebase. Ambil perubahannya saat langkah 6 berikutnya. Kalau butuh lebih cepat (mis. kontrak beku), boleh `git rebase origin/main` asalkan belum ada PR milik sendiri yang menunggu merge.
 8. Jangan pernah `git merge main` ke branch lane. Jangan pernah force-push `main` atau branch orang lain.
 
@@ -207,7 +210,7 @@ Masalah yang dihindari: squash merge membuat commit baru di `main`, sehingga PR 
 - Folder = lane (§2), jadi konflik harusnya hampir tidak ada.
 - Kontrak (`radar/packages/common`, `plan/ref`) hanya lewat PR Alief. Lane lain yang butuh perubahan menulis `DECISIONS.md` (prefix `D-<nama>-..`) dan menandai Alief.
 - `plan/PROGRESS.md`: setiap orang hanya mengubah barisnya sendiri. `DECISIONS.md`: append-only. Kalau tetap konflik, ambil kedua sisi.
-- `bob_sessions/`: nama file mengandung nama orang, jadi tidak pernah bentrok.
+- `bob_sessions/`: nama file mengandung nama orang, dan baris indeks ditulis ke `bob_sessions/index/<nama>.md` (satu file per anggota), jadi tidak pernah bentrok. `bob_sessions/INDEX.md` gabungan disusun di fase 14.
 
 **Titik sinkron wajib:** Sab 02:30 (kontrak beku, PR fase 02) · Sab 04:30 (jendela kontrak hasil spike ditutup) · **Sab 16:00** (semua lane punya PR ter-merge, uji melawan Worker staging) · **Sab 21:00** (fase 10, PR kecil per perbaikan) · **Min 11:00** (freeze: setelah ini hanya PR bugfix/dokumen) · Min 19:00 (tag `v0.3.0-submit`).
 
@@ -218,10 +221,11 @@ Masalah yang dihindari: squash merge membuat commit baru di `main`, sehingga PR 
 | Tingkat | Kapan | Isi | Anggaran/akun |
 |---|---|---|---|
 | **1. Bob slice (build)** | Jum 23:00 → Sab 23:00 (±24 jam pertama, lihat §5.2) | 4 slice/orang (3 buat Imelda), prompt pendek & spesifik file, mode Ask/Plan buat eksplorasi | ±20, dipakai 10–18 |
-| **2. Eksperimen A/B (fase 13)** | Min 04:00–11:00 | 6 task real di `toko-demo`, dipakai **akun dengan sisa Bobcoin paling banyak** (bukan sembarang akun), dikurangi ke 4 task kalau mepet | tidak boleh menyisakan < 12 di akun manapun |
-| **3. Gladi + rekam demo (fase 14)** | Min 09:00–12:00 | 2 take penuh, ±3–4 Bobcoin/take/akun | ±12 (cadangan) |
+| **1b. Uji Bob** | Sab 00:30 → Sab 23:00 | Spike fase 01 (20 uji, mode Ask + prompt minimal), uji perilaku fase 07 langkah 14 & fase 08, milestone 4 Mac Sab 23:00 | lihat tabel per akun di bawah |
+| **2. Eksperimen A/B (fase 13)** | Min 04:30–10:30 | 6 task real di `toko-demo`, dipakai **akun dengan sisa Bobcoin paling banyak** (bukan sembarang akun), dikurangi ke 4 task kalau mepet | tidak boleh menyisakan < cadangan rekaman di akun manapun |
+| **3. Gladi + rekam demo (fase 14)** | Min 11:00–14:00 (setelah GATE 2) | 2 take penuh, ±3–4 Bobcoin/take/akun | ±12 (cadangan; akun PC D ±8) |
 
-Kenapa: sisa Bobcoin (habis dipakai) di jam-jam terakhir sebelum submit paling berbahaya — kalau kehabisan pas rekam demo atau pas eksperimen, itu dua hal yang **tidak bisa diulang tanpa akun tambahan**. Bob slice (tingkat 1) fleksibel — kalau meleset jadwal, masih ada waktu — makanya semuanya dipadatkan di paruh pertama (termasuk I3 yang dipindah ke Sab 23:00, lihat catatan di bawah). Setelah Sab 23:00, **jangan buka Bob IDE lagi kecuali buat tingkat 2 dan 3** — sisa waktu dipakai murni Claude Code + ECC di luar Bob IDE.
+Kenapa: sisa Bobcoin (habis dipakai) di jam-jam terakhir sebelum submit paling berbahaya — kalau kehabisan pas rekam demo atau pas eksperimen, itu dua hal yang **tidak bisa diulang tanpa akun tambahan**. Bob slice (tingkat 1) fleksibel — kalau meleset jadwal, masih ada waktu — makanya semuanya dipadatkan di paruh pertama (termasuk I3 yang dipindah ke Sab 23:00, lihat catatan di bawah). Setelah Sab 23:00, **jangan buka Bob IDE lagi kecuali buat tingkat 2 dan 3, atau slice yang memang dijadwalkan setelah jam itu** (I3 Sab 23:00–Min 01:00; C4 kalau belum selesai di 11a) — sisa waktu dipakai murni Claude Code + ECC di luar Bob IDE.
 
 Aturan (guide resmi 2.0): **setiap anggota** mengunggah **screenshot ringkasan task session Bob IDE** untuk **semua task terkait submission** ke folder `bob_sessions`, format PNG, nama berisi nama tim + nomor task + deskripsi (contoh resmi `teamalpha_task01_login_flow_summary.png`). Detail ada di [`plan/ref/R7-bukti-bob.md`](plan/ref/R7-bukti-bob.md).
 
@@ -232,7 +236,7 @@ Aturan (guide resmi 2.0): **setiap anggota** mengunggah **screenshot ringkasan t
 2. Kamu menjalankan prompt itu di **Bob IDE**. Setelah selesai: **Tasks → task itu → klik header task** sampai ringkasan konsumsi muncul. Hanya klik ini yang dilakukan manusia.
 3. Balas "bob selesai". **Claude Code** menjalankan `radar/scripts/bob-evidence.sh <nama> <NN> <slug>`:
    - menangkap **jendela Bob IDE secara otomatis** (tanpa crop, lewat window id),
-   - menyimpannya dengan nama yang benar dan menambah baris ke `bob_sessions/INDEX.md`.
+   - menyimpannya dengan nama yang benar dan menambah baris ke `bob_sessions/index/<nama>.md` (file per anggota; `INDEX.md` gabungan disusun fase 14).
    - Syaratnya satu kali: izinkan Screen Recording untuk Terminal.
 4. Claude commit hasil Bob dengan trailer `Bob-Assisted: bob_sessions/<png>`.
 5. `pnpm -C radar evidence:check` (fase 14) memastikan keempat anggota punya ≥ 3 screenshot dengan nama yang benar.
@@ -252,20 +256,30 @@ Opsi otomatis penuh (dicoba Umar di spike, poin 16): Bob IDE dibuka dengan `--re
 | B1 | Umar | Spike: hook payload logger + mode read-only | Code | 4 |
 | B2 | Umar | `custom_modes.yaml` coder + pm-lead | Code | 3 |
 | B3 | Umar | Hook `lock_guard` + `brief` | Code | 5 |
-| B4 | Umar | `radar-mcp` tool coder + PM | Code | 6 |
+| B4a | Umar | `radar-mcp` tool coder (fase 07) | Code | 3 |
+| B4b | Umar | `radar-mcp` tool PM (fase 08) | Code | 3 |
 | C1 | Aarief | **Onboarding Orca dengan Bob:** "di mana agent didefinisikan dan cara menambah agent baru" → laporan HTML Bob | Ask/Plan | 3 |
-| C2 | Aarief | Registrasi agent `bob` di Orca (3 file) | Code | 3 |
+| C2 | Aarief | Registrasi agent `bob` di Orca (±12 file, D-007; P1) | Code | 3 |
 | C4 | Aarief | Opsi `--md` di `bob-evidence.sh` + `evidence:check` (script dasar sudah ada dari fase 00) | Code | 2 |
 | C3 | Aarief | Komponen `@radar/ui`: `LockChip`, `AgentTag`, `DecisionCard` + test | Code | 4 |
 | I1 | Imelda | Pemutar replay (`replay-player.ts`) + halaman `/demo` | Code | 4 |
 | I2 | Imelda | Landing page `/` (Application URL) | Code | 3 |
 | I3 | Imelda | Draf Long Description + outline deck dari PRD (**document understanding** Bob: baca `PRD.md`, hasilkan `.docx`/HTML) | Ask/Code | 3 |
 
-Setiap orang minimal 3 slice (syarat `evidence:check`). **Total per orang (jadwal §5.2):** Alief 4 slice / ±12 Bobcoin (A1 Jum 23:00, A2 Sab 09:00, A3+A4 Sab 16:00) · Umar 4 slice / ±18 Bobcoin (B1 Sab 00:30, B2+B3 Sab 09:00, B4 Sab 16:00 — lane terberat, wajar karena Umar pemakai Bob paling banyak) · Aarief 4 slice / ±12 Bobcoin (C1 Jum 23:00, C2+C4 fase 09/11, C3 Sab 09:00) · Imelda 3 slice / ±10 Bobcoin (I2 Sab 00:30, I1 Sab 09:00, I3 **dipindah ke Sab 23:00–Min 04:00**, bukan Min 11:00–19:00).
+Setiap orang minimal 3 slice (syarat `evidence:check`). **Total per orang (jadwal §5.2):** Alief 4 slice / ±12 Bobcoin (A1 Jum 23:00, A2 Sab 09:00, A3+A4 Sab 16:00) · Umar 5 slice / ±18 Bobcoin (B1 Sab 00:30, B2+B3+B4a Sab 09:00, B4b Sab 16:00 — lane terberat, wajar karena Umar pemakai Bob paling banyak) · Aarief 4 slice / ±12 Bobcoin (C1 Jum 23:00, C2 fase 09, C4 fase 11a, C3 Sab 09:00) · Imelda 3 slice / ±10 Bobcoin (I2 Sab 00:30, I1 Sab 09:00, I3 **dipindah ke Sab 23:00–Min 01:00**, bukan Min 11:00–19:00).
 
 **Kenapa I3 dipindah lebih awal:** jadwal semula menaruh I3 (satu-satunya slice ke-3 Imelda, syarat minimum `evidence:check`) di Min 11:00–19:00 — jam terakhir sebelum submit (19:00–21:00), tanpa slack sama sekali. PRD sudah beku sejak awal, jadi I3 tidak punya dependensi ke pekerjaan lane lain dan aman dikerjakan Sab malam bareng nulis naskah video. Kalau Bob IDE bermasalah / Imelda kehabisan waktu Minggu sore, ini satu-satunya lane yang bisa gagal `evidence:check` di menit terakhir — memindahkannya menghilangkan risiko itu. Fase 14 tinggal memoles draf jadi versi final, bukan membuat dari nol.
 
-**Anggaran per akun (40):** build slices ±20 (dipakai: 10–18) · gladi + rekam demo ±12 (fase 14, 2 take × 3–4 Bobcoin) · cadangan 8. Eksperimen A/B (fase 13) dijalankan dengan akun yang masih paling banyak sisa. Kalau kurang, jumlah putaran dikurangi dan hal itu **dilaporkan jujur**.
+**Anggaran per akun (40), semua kegiatan:**
+
+| Akun | Slice | Uji Bob (spike, perilaku, skenario PM) | Milestone Sab 23:00 | Eksperimen A/B | Rekaman (cadangan) | Sisa |
+|---|---|---|---|---|---|---|
+| Alief | 12 | 0 | 4 | 6 | 12 | 6 |
+| Umar | 18 | 6 | 4 | 0 | 8 (PC D, task kecil) | 4 |
+| Aarief | 12 | 0 | 4 | 6 | 12 | 6 |
+| Imelda | 10 | 0 | 4 | 10 | 12 | 4 |
+
+Eksperimen A/B (fase 13) memakai akun Alief, Aarief, dan Imelda (bukan Umar). Umar menjadi PC D saat rekaman (task kecil independen) supaya cadangannya cukup. Catat sisa Bobcoin setiap akun di PROGRESS setiap titik sinkron. Kalau kurang, jumlah putaran eksperimen dikurangi dan hal itu **dilaporkan jujur**.
 
 ---
 
@@ -285,7 +299,7 @@ Di dalam app: **Settings → Live Collab → tempel kode undangan**. App lalu me
 ## 9. Definisi selesai (R0 · submit)
 
 - [ ] Semua P0 PRD v0.3 punya test hijau atau bukti manual di `plan/log/`.
-- [ ] Alur demo penuh jalan di 3 laptop: rencana → live → blokir → keputusan → review → commit GitHub, **ditambah tonton Bob rekan (aktivitas Bob IDE)**.
+- [ ] Alur demo penuh jalan di 4 laptop: rencana → live → blokir → keputusan → review → commit GitHub, **ditambah tonton Bob rekan (aktivitas Bob IDE)**.
 - [ ] `IBM Bob Live Collab.dmg` terunggah di Releases dan terpasang di 4 Mac.
 - [ ] Replay `/demo` jalan tanpa login dan tanpa API key.
 - [ ] `bob_sessions/` berisi screenshot ringkasan + ekspor md dari **keempat** anggota. `evidence:check` hijau.
@@ -298,7 +312,7 @@ Di dalam app: **Settings → Live Collab → tempel kode undangan**. App lalu me
 
 | Kriteria juri | Jawaban kita | Di mana terlihat |
 |---|---|---|
-| **Application of Technology** (lengkap + jelas memakai Bob 2.0) | Bob adalah runtime produk (hook menegakkan kunci, custom mode `coder`/`pm-lead`, MCP `radar-mcp`, `bob` di app) **dan** alat bangun (Bob slice semua anggota) | video 2:25–2:50, `BOB_DEVELOPMENT.md`, panel "Bob inside" di replay |
+| **Application of Technology** (lengkap + jelas memakai Bob 2.0) | Bob adalah runtime produk (hook menegakkan kunci, custom mode `coder`/`pm-lead`, MCP `radar-mcp`, stream aktivitas Bob IDE di app; agent `bob` di app hanya kalau C2 dirilis) **dan** alat bangun (Bob slice semua anggota) | video 2:25–2:50, `BOB_DEVELOPMENT.md`, panel "Bob inside" di replay |
 | **Presentation** | Video 3 menit dengan satu momen near-miss yang jelas, 3 layar berlabel warna, replay yang bisa diklik juri | PRD §15, DESIGN §5.4 |
 | **Business Value** | 41,7% pasangan PR agent berkonflik, review +91%. Tim yang sudah membeli Bob butuh cara bekerja bersama. | Long Description, deck slide 2 |
 | **Originality** | Multiplayer pertama yang native di primitif Bob (penegakan lewat hook, bukan saran), PM agent yang hanya mengusulkan, tonton Bob rekan secara live | tabel PRD §03 |
@@ -322,7 +336,7 @@ Supaya AI keempat orang bekerja dengan standar yang sama. **Semua aturan di bagi
 | **Context7** (MCP, sudah tersambung di akun Aarief) | connector claude.ai | dokumentasi terbaru Electron, Cloudflare Workers/Durable Objects, Hono, Next.js, MCP SDK, xterm |
 | Skill pribadi yang sudah ada di Mac Aarief: `investigate-first`, `surgical-patch`, `safe-refactor`, `verify-and-stop` | sudah terpasang (Aarief). Teman boleh menyalin dari `~/.claude/skills/` Aarief. | perubahan kecil & aman di kode Orca |
 
-### 11.2 Lane Aarief/Imelda · App
+### 11.2 Lane Aarief · App & Lane Imelda · Web
 
 Aarief memakai semua baris di bawah. Imelda minimal: ECC React/frontend, `frontend-design`, `e2e-testing`, `nextjs-turbopack`, `remotion-video-creation`, `video-editing`, dan `frontend-slides`.
 
@@ -352,7 +366,7 @@ Aarief memakai semua baris di bawah. Imelda minimal: ECC React/frontend, `fronte
 | **mcp-server-dev** (resmi): `/plugin install mcp-server-dev@claude-plugins-official` + ECC `mcp-server-patterns` | `radar-mcp` (stdio, tool coder & PM) |
 | ECC `documentation-lookup` / agent `docs-lookup` + Context7 | docs Bob (hooks, custom modes, MCP, `bob run`) |
 | ECC `tdd-workflow` (hook diuji dengan stdin fixture) | hook `lock_guard`, `brief` |
-| **IBM Bob sendiri** (Bob IDE; Bob Shell opsional) | Bob slice B1–B4. Lane Umar adalah pemakai Bob paling berat. |
+| **IBM Bob sendiri** (Bob IDE; Bob Shell opsional) | Bob slice B1–B3, B4a, B4b. Lane Umar adalah pemakai Bob paling berat. |
 
 ### 11.5 Skill UI, motion & video (sudah di `.claude/skills/` repo, otomatis terbawa)
 
@@ -394,13 +408,13 @@ Guide meminta solusi yang memperbaiki **alur kerja developer** (kita: kolaborasi
 | **Bob IDE** (wajib) | Semua coder & PM bekerja di Bob IDE. Kit `.bob/` dipasang di workspace. | Semua Bob slice dikerjakan di Bob IDE |
 | **Custom modes** | `coder` (tanpa hak ke file milik orang lain) dan `pm-lead` (hanya baca + MCP, tidak bisa menulis kode) | B2 |
 | **Hooks** | `PreToolUse` menegakkan kunci (exit 2), `SessionStart`/`UserPromptSubmit` menyuntikkan brief tim, `PostToolUse`/`Stop` mengirim aktivitas | B3 |
-| **MCP servers** | `radar-mcp`: `why_blocked`, `submit_task`, `propose_plan`, `propose_decision`, `propose_review` | B4 |
+| **MCP servers** | `radar-mcp`: `why_blocked`, `submit_task`, `propose_plan`, `propose_decision`, `propose_review` | B4a, B4b |
 | **Agent mode + Plan mode** | `pm-lead` memakai Plan mode untuk menyusun rencana tim | C1 (Plan/Ask untuk memetakan Orca) |
 | **Subagents** | `pm-lead` memanggil subagent per task untuk review dampak antar-file secara terisolasi | – |
 | **Parallel tasks** | 2+ Bob coder bekerja paralel di satu workspace tanpa bentrok. Itulah inti produk. | 4 anggota × Bob paralel selama hackathon |
 | **Document understanding** | `pm-lead` membaca PRD/spec (`.md`/`.docx`/`.pdf`) untuk menyusun task | I3: Bob membaca `PRD.md` → draf Long Description + outline deck |
 | **Skills** | Skill `negotiate`/`review` di kit (opsional) | – |
-| **Code review / commit message / pull request** bawaan Bob IDE | Direkomendasikan di alur tim | PR lane dibuat lewat fitur PR Bob IDE (§6 langkah 4) |
+| **Code review / commit message / pull request** bawaan Bob IDE | Direkomendasikan di alur tim | Opsional: PR lane lewat fitur PR Bob IDE (§6 langkah 2), hanya kalau sisa Bobcoin di atas cadangan rekaman |
 | **`/init` → AGENTS.md** | – | `AGENTS.md` root dibaca Bob |
 | **`.bobignore`** | Kit menambahkan `.radar/` ke `.bobignore` | Template IBM di root |
 | **Rollback** | Coder memakai rollback Bob kalau Bob menulis sesuatu yang salah sebelum submit | – |

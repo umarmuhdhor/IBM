@@ -30,7 +30,7 @@
 
 | Endpoint | coder | pm (main agent) | mc |
 |---|:-:|:-:|:-:|
-| `POST /v1/locks/check`, `GET /v1/brief`, `GET /v1/tasks`, `GET /v1/blocks/last`, `POST /v1/tasks/:id/submit`, `POST /v1/requests`, `GET /v1/activity`, `POST /v1/tasks/:id/activate`, `POST /v1/ai-edits` | ✅ | brief & activity saja | ❌ |
+| `POST /v1/locks/check`, `GET /v1/brief`, `GET /v1/tasks`, `GET /v1/blocks/last`, `POST /v1/tasks/:id/submit`, `POST /v1/requests`, `GET /v1/activity`, `POST /v1/tasks/:id/activate`, `POST /v1/ai-edits` | ✅ | `brief`, `activity`, dan `locks/check` saja (`locks/check` untuk pm selalu `block` · `pm_readonly`, R4 §2) | ❌ |
 | `GET /v1/team`, `GET /v1/requests`, `POST /v1/proposals`, `GET /v1/proposals`, `GET /v1/tasks/:id/diff`, `POST /v1/notify`, `GET /v1/report/session` | ❌ | ✅ | ✅ (baca) |
 | `POST /v1/proposals/:id/decision`, `POST /v1/locks/revoke`, `POST /v1/tasks/:id/cancel` | ❌ | ❌ **(MA-07)** | ✅ |
 | `POST /v1/bob/activity` (§2.24, P0) | ✅ | ✅ | ❌ |
@@ -365,7 +365,7 @@ Semua event punya `{ id, ts, actor, type, payload }`. Payload minimal:
 | type | payload | Dipakai |
 |---|---|---|
 | `workspace.created` | `{ workspaceId, headCommit, fileCount }` | replay |
-| `member.created` / `member.online` / `member.offline` / `member.reconnected` | `{ memberId }` | MC header "3 PC terhubung" |
+| `member.created` / `member.online` / `member.offline` / `member.reconnected` | `{ memberId }` | MC header "<n> PC terhubung" |
 | `member.stale` | `{ memberId, lastHeartbeat }` | SV-09 peringatan |
 | `file.changed` | `{ path, version, hash, by, taskId, size, patch? }` | feed, penanda ✎ 3 s, diff |
 | `file.deleted` | `{ path, version, by, taskId }` | P1 |

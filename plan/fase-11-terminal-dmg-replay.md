@@ -3,18 +3,28 @@
 | Field | Nilai |
 |---|---|
 | Jalur | **Aarief**: bagian A, B, C, E (`lane/app`) · **Imelda**: bagian D, landing + replay (`lane/web`) |
-| Slot WITA | Aarief: 11a Sab 16:00–21:00 · 11b Sab 23:00–Min 01:00 · tidur 01:00–06:00 · 11c Min 06:00–11:00 · Imelda (D): mulai setelah fase 00, pakai fixture; replay dari rekaman nyata Min pagi |
+| Slot WITA | Aarief: 11a Sab 16:00–21:00 · 11b Sab 23:00–Min 01:00 · tidur 01:00–06:00 · 11c Min 06:00–11:00 · Imelda: 11D1 mulai setelah fase 00 s/d Sab 21:00 (fixture) · 11D2 Sab 23:00–Min 01:00 (I3) + setelah rekaman final Min 14:00 (replay final) |
 | Estimasi | 9 jam |
 | Prasyarat | A/B/C/E: 09, dan `POST /v1/bob/activity` + event `bob.activity` dari fase 03 (sebelum masuk `main`, pakai mock fase 02 `--scenario demo`) · D: fase 00, fixture `packages/server/test/fixtures/flow-export.json` (fase 05) dan `bob-kit/prompts/bob-quotes.json` (fase 07), disalin ke `packages/web`; sebelum ada, fixture sintetis bertanda `TODO(sync:…)`. Rekaman nyata dari fase 10 untuk replay final. Relay `term.*` hanya untuk P1. |
 | Requirement PRD | JT-01, JT-02, JT-03 (sisi klien), DA-01, UI-05, UI-09, EV-02 (P0) · JT-04, UI-06, UI-08, DA-05 (P1) · JT-05 (P2) |
 | Model | Sonnet 5 · effort high (Opus 5.5 kalau tap xterm atau flow control bermasalah) |
 | Bob slice | **C4** opsi `--md` di `bob-evidence.sh` + `evidence-check.ts` |
-| Fase berikutnya | 10 (bergabung ke integrasi), lalu 14 |
+| Fase berikutnya | Aarief: 11a → **10** → 11b → 11c → 14 · Imelda: 11D1 → **10** → 11D2 → 14 (PROMPT "Urutan fase") |
+
+**Sub-fase untuk mode auto** (masing-masing punya baris PROGRESS, snapshot `lane/<LANE_ID>-f<sub>`, dan PR sendiri):
+
+| Sub-fase | Isi | Selesai sebelum |
+|---|---|---|
+| 11a (Aarief) | Bagian A (Watch Bob, P0) + bagian E (Bob slice C4) | Sab 21:00 (lalu fase 10) |
+| 11b (Aarief) | Bagian C langkah 9–12 (`.dmg`, ikon, `radar-cli.tgz`, Release) | Min 01:00 |
+| 11c (Aarief) | Langkah 13 (uji pasang Mac teman), A.5 JT-04 (P1) bila P0 hijau, poles | Min 11:00 (GATE 2) |
+| 11D1 (Imelda) | Bagian D langkah 14–19 dengan fixture (Bob slice I1, I2) | Sab 21:00 (lalu fase 10) |
+| 11D2 (Imelda) | Langkah 19b (Bob slice I3), lalu replay final dari rekaman (Min setelah 14:00) | Min 17:00 |
 
 ## Tujuan
 
 1. **Momen multiplayer:** Budi klik "Watch Andi's Bob", dan prompt serta file yang sedang ditulis Bob IDE Andi tampil live di laptop Budi.
-2. **Bisa dipasang:** file `IBM Bob Live Collab.dmg` yang dipasang di 3 Mac.
+2. **Bisa dipasang:** file `IBM Bob Live Collab.dmg` yang dipasang di 4 Mac.
 3. **Juri bisa menonton sendiri:** `/demo` memutar ulang sesi nyata, termasuk timeline aktivitas Bob dan panel "Bob inside".
 
 ## Bacaan wajib
@@ -74,7 +84,7 @@ Imelda memakai komponen `@radar/ui` buatan Aarief (fase 09 langkah 6). Sebelum k
 18. **Landing `/`** (UI-09, gaya warm paper: DESIGN §5.11 + `UI Inspo & Design/landing-style/README.md`, ±45 menit): hero (judul, tagline, GIF near-miss), tombol utama **Watch the live replay** → `/demo`, tombol **Download for macOS** → `.dmg` di Release terbaru (URL dari `meta.json`), 3 langkah pasang (termasuk Privacy & Security → Open Anyway), dan link Repo · bob_sessions · Video · Deck. Sebagian besar juri kemungkinan memakai Windows, jadi urutan tombol (replay = utama biru, download = ghost sekunder) sudah benar — pastikan caption kecil di bawah **Download for macOS** juga menyebut eksplisit "macOS arm64 only", supaya juri non-Mac tidak membuang klik dan langsung tahu replay adalah cara menonton produk untuk mereka. Tambahkan kalimat "Community hackathon project, not an official IBM product · built on Orca (MIT)". Statis, tanpa login. Setelah jadi: screenshot Playwright (desktop 1440 + mobile 390) lalu jalankan skill `better-interface`. Perbaiki temuan HIGH.
 19. Deploy Cloudflare Pages (`pnpm -C radar deploy:web`). Buka `/` dan `/demo` dari incognito dan ponsel (tab A/MC/B).
 
-19b. **Bob slice I3** (Sab 23:00–Min 04:00, bareng naskah video — **kerjakan malam ini, jangan tunda ke fase 14**, ±3 Bobcoin). PRD sudah beku, jadi tidak perlu menunggu lane lain. Prompt: "Baca `PRD.md` (khususnya §1–§3, §18) dan `plan/ref/R7-bukti-bob.md` §6, lalu tulis draf **Long Description (Problem & Solution Statement)** ≤ 500 kata: masalah + angka/sumber, solusi, target user, cara interaksi, kenapa kreatif/unik (tabel pembanding singkat), cara mengatasi masalah secara baru. Simpan sebagai `radar/docs/deck/long-description.draft.md`." Bukti: `03-long-description-draft`. Draf ini dipoles manual jadi final di fase 14 langkah 8 (`SUBMISSION.md`), bukan ditulis ulang dari nol.
+19b. **Bob slice I3** (11D2, Sab 23:00–Min 01:00, bareng naskah video; slice terjadwal, dikecualikan dari aturan "Bob IDE setelah Sab 23:00" PLAN §7 — **kerjakan malam ini, jangan tunda ke fase 14**, ±3 Bobcoin). PRD sudah beku, jadi tidak perlu menunggu lane lain. Prompt: "Baca `PRD.md` (khususnya §1–§3, §18) dan `plan/ref/R7-bukti-bob.md` §6, lalu tulis draf **Long Description (Problem & Solution Statement)** ≤ 500 kata: masalah + angka/sumber, solusi, target user, cara interaksi, kenapa kreatif/unik (tabel pembanding singkat), cara mengatasi masalah secara baru. Simpan sebagai `radar/docs/deck/long-description.draft.md`." Bukti: `03-long-description-draft`. Draf ini dipoles manual jadi final di fase 14 langkah 8 (`SUBMISSION.md`), bukan ditulis ulang dari nol.
 
 ### E. Bob slice C4 — script bukti (kapan saja di fase ini, ±2 Bobcoin)
 
@@ -102,13 +112,13 @@ ls -lh dist/*.dmg                  # atau lokasi output electron-builder
 
 | Risiko | Fallback |
 |---|---|
-| Titik tap xterm sulit dijangkau (output lewat worker/webgl) | Tap di level IPC data pty yang masuk ke renderer (sebelum ke xterm). Pilihan terakhir: tap di main process pada listener pty, tanpa mengubah alurnya. Catat D-app-.. |
+| Titik tap xterm sulit dijangkau (output lewat worker/webgl) | Tap di level IPC data pty yang masuk ke renderer (sebelum ke xterm). Pilihan terakhir: tap di main process pada listener pty, tanpa mengubah alurnya. Catat D-aarief-.. |
 | Frame terlalu besar (TUI Bob me-redraw penuh) | Batasi 20 fps, gabungkan frame, kirim snapshot setiap 5 s dan buang frame lama |
 | `.dmg` gagal dibuat | Kirim `.app` di dalam `.zip` (`--dir` + `ditto -c -k`). Demo tetap memakai `pnpm -C app dev`. |
 | Gatekeeper memblokir app / "app is damaged" | Instruksi Open Anyway + `xattr` di README + Release notes. Pastikan build memakai `CSC_NAME=-` (ad-hoc): app arm64 tanpa signature sama sekali tidak bisa jalan |
-| Rekaman nyata belum ada | Replay memakai `sim-3pc` + frame rekaman lokal. Ganti setelah rekaman Minggu 09:00. |
+| Rekaman nyata belum ada | Replay memakai `sim-3pc` + export milestone Sab 23:00. Ganti setelah rekaman final Min 11:00–14:00 (11D2). |
 
 ## Catatan handoff
 
 - Fase 14: URL `/demo`, Release, dan GIF near-miss dipakai di README juri, form submission (Application URL, Demo Application Platform = macOS desktop app + web replay), dan video.
-- Setelah rekaman final Minggu pagi: jalankan ulang `export-replay.ts` lalu deploy ulang.
+- Setelah rekaman final (Min 11:00–14:00): jalankan ulang `export-replay.ts` lalu deploy ulang (11D2).

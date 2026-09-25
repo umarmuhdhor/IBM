@@ -38,8 +38,12 @@ Syarat: plugin ECC terpasang (`/plugin install ecc@ecc`, lihat [`../PLAN.md`](..
 |---|---|
 | Alief · Core | `00 → 02 → 03 → 04 → 05 → 06 → 10 → 12 → 14` |
 | Umar · Bob | `01 → 07 → 08 → 10 → 13 → 14` |
-| Aarief · App desktop + `@radar/ui` | `09 → 11 (A, B, C, E) → 10 → 14` (09a/b boleh mulai sebelum 02, memakai mock) |
-| Imelda · web & media | `11 (D) → 10 → 14` (boleh mulai setelah fase 00, memakai data fixture) |
+| Aarief · App desktop + `@radar/ui` | `09 → 11a → 10 → 11b → 11c → 14` (09a/b boleh mulai sebelum 02, memakai mock) |
+| Imelda · web & media | `11D1 → 10 → 11D2 → 14` (11D1 boleh mulai setelah fase 00, memakai data fixture) |
+
+Sub-fase 11 (file `fase-11-terminal-dmg-replay.md`, pembagian di header file itu): **11a** = bagian A + E (Sab 16:00–21:00) · **11b** = bagian C, `.dmg` + Release (Sab 23:00–Min 01:00, setelah sesi 4 Mac fase 10) · **11c** = uji pasang Mac teman, P1 (JT-04), poles (Min 06:00–11:00) · **11D1** = landing + replay dengan fixture, langkah 14–19, slice I1/I2 (selesai sebelum Sab 21:00) · **11D2** = slice I3 (Sab 23:00–Min 01:00) + replay final dari rekaman (Min setelah rekaman). Setiap sub-fase punya baris PROGRESS, tag/branch snapshot, dan PR sendiri.
+
+**Fase 10 = interupsi wajib.** Pukul Sab 21:00 WITA, lane yang fase 10-nya belum [x] menyelesaikan fase/sub-fase yang sedang berjalan sampai titik commit terdekat (paling lama 30 menit), membuka PR-nya, lalu masuk fase 10. Jangan mulai fase lain sebelum fase 10 lane itu [x] atau ditandai "lanjut di 12/13/11b/11D2" di PROGRESS.
 | Solo | `00 → 01 → … → 14` |
 
 Alternatif tanpa salin-tempel: ubah dua baris di file ini, lalu ketik ke Claude Code: `Jalankan instruksi di plan/PROMPT.md`.
@@ -75,12 +79,16 @@ Laporan dalam Bahasa Indonesia. Kode, nama file, komentar: Bahasa Inggris.
   · Imelda: `apple-design`, `emil-design-eng`, `better-interface`, `frontend-design`; `brag-slim` untuk teaser.
   Semua lane: ECC (planner, tdd-workflow, code-reviewer, verification-loop).
 - LANE menentukan folder yang BOLEH kamu ubah (PLAN.md §2). Jangan menyentuh folder lane lain.
-  Kalau perlu, tulis "Catatan handoff" + entri DECISIONS ber-prefix lane (D-alief-.., D-umar-.., D-app-..).
+  Kalau perlu, tulis "Catatan handoff" + entri DECISIONS ber-prefix lane (D-alief-.., D-umar-.., D-aarief-.., D-imelda-..).
+- LANE_ID (dipakai di SEMUA nama branch/tag/perintah git) diambil dari `plan/team.json` `members[].lane`:
+  Alief → `core`, Umar → `bob`, Aarief → `app`, Imelda → `web`. Nama orang (LANE) hanya untuk memilih fase
+  dan folder; jangan pernah dipakai di nama branch atau tag.
 </konteks>
 
 <langkah>
 1. TEMUKAN FASE.
-   - Kalau user menulis "Saya <nama>", maka LANE = <nama> dan FASE = auto.
+   - Kalau user menulis "Saya <nama>", maka LANE = <nama>, LANE_ID = lane <nama> di plan/team.json, FASE = auto.
+   - Sub-fase 11a/11b/11c/11D1/11D2 memakai file plan/fase-11-*.md (bagian sesuai tabel "Urutan fase").
    - FASE = auto: ambil fase pertama milik LANE (tabel "Urutan fase" di atas) yang di plan/PROGRESS.md belum [x]
      dan tidak sedang dikerjakan orang lain.
    - FASE = nomor: cari plan/fase-<FASE>-*.md. Kalau tidak ada, berhenti dan tampilkan daftar fase.
@@ -95,8 +103,8 @@ Laporan dalam Bahasa Indonesia. Kode, nama file, komentar: Bahasa Inggris.
        lalu `gh pr list --state all --limit 30` untuk melihat apa yang sudah di-merge atau sedang di-PR
        oleh lane lain. Tentukan untuk setiap prasyarat lintas-lane: SUDAH ADA di main → pakai yang asli;
        BELUM ADA → pakai PLACEHOLDER (langkah b).
-   a. `git fetch origin`. Kalau branch lane belum ada, buat dari origin/main:
-      Alief → lane/core, Umar → lane/bob, Aarief → lane/app, Imelda → lane/web.
+   a. `git fetch origin`. Kalau branch lane belum ada, buat dari origin/main: `lane/<LANE_ID>`
+      (Alief → lane/core, Umar → lane/bob, Aarief → lane/app, Imelda → lane/web).
       Pindah ke branch itu (`git switch`). Sinkron dengan main HANYA lewat aturan langkah 13 (rebase --onto),
       jangan pernah `git merge origin/main` ke branch lane.
       Pengecualian: fase 00 (Lane Alief) dikerjakan langsung di main karena belum ada apa-apa untuk di-review.
@@ -133,11 +141,12 @@ Laporan dalam Bahasa Indonesia. Kode, nama file, komentar: Bahasa Inggris.
       password, credentials, apikey/api-key/api_key, dan tidak boleh bernama config.json/config.yaml
       (akan diabaikan .gitignore template IBM, lihat R5 §8).
    f. Tidak ada perintah destruktif (rm -rf di luar folder build, reset history, push --force) tanpa izin
-      eksplisit user. SATU pengecualian: `git push --force-with-lease origin lane/<lane-sendiri>` setelah
-      rebase di langkah 13. Tidak pernah force ke main, ke branch PR orang lain, atau ke lane orang lain.
+      eksplisit user. Pengecualian: `git push --force-with-lease` ke `lane/<LANE_ID>` dan ke snapshot sendiri
+      `lane/<LANE_ID>-f<FASE>` setelah rebase di langkah 13. Tidak pernah force ke main, ke branch PR orang lain,
+      atau ke lane orang lain.
    g. Keputusan produk yang tidak dijawab PRD/plan: pilih opsi paling sederhana yang tetap memenuhi
       naskah video PRD §15, catat di DECISIONS, lanjutkan.
-   h. Langkah yang butuh manusia (Bob IDE, 3 Mac, akun cloud, rekaman): siapkan semuanya, lalu
+   h. Langkah yang butuh manusia (Bob IDE, 4 Mac, akun cloud, rekaman): siapkan semuanya, lalu
       tulis checklist bernomor "LANGKAH MANUAL" di log fase.
 
 7. BOB SLICE (wajib kalau file fase punya bagian "Bob slice"). Lihat plan/ref/R7-bukti-bob.md.
@@ -173,11 +182,15 @@ Laporan dalam Bahasa Indonesia. Kode, nama file, komentar: Bahasa Inggris.
 
 11. COMMIT & PR (setiap fase, kecuali fase 00 yang langsung di main).
     a. Commit "fase-<FASE>: <judul>" (konvensi R5 §3). Push branch lane.
-    b. Tandai ujung fase secara lokal: `git tag -f lane-<lane>-f<FASE>` (dipakai rebase --onto di langkah 13).
+    b. Tandai ujung fase dengan BRANCH lokal (bukan tag, karena tag tidak ikut pindah saat rebase):
+       `git branch -f snap/<LANE_ID>-f<FASE> HEAD`.
     c. PR dari branch SNAPSHOT fase, bukan dari branch lane:
-       `git push origin HEAD:refs/heads/lane/<lane>-f<FASE>` lalu
-       `gh pr create --base main --head lane/<lane>-f<FASE>` (judul = pesan commit, isi = ringkasan log).
+       `git push origin snap/<LANE_ID>-f<FASE>:refs/heads/lane/<LANE_ID>-f<FASE>` lalu
+       `gh pr create --base main --head lane/<LANE_ID>-f<FASE>` (judul = pesan commit, isi = ringkasan log).
        Branch lane tetap dipakai untuk fase berikutnya, jadi commit fase berikutnya tidak ikut masuk PR ini.
+       Kalau PR fase sebelumnya belum di-merge, PR ini ikut memuat commit fase itu. Tulis di isi PR
+       "bertumpuk di atas #<no>"; setelah fase itu merge, langkah 13.2 me-rebase snapshot ini sehingga PR
+       hanya berisi fasenya sendiri.
     d. MERGE: pemilik lane squash-merge PR-nya sendiri setelah CI hijau
        (`gh pr merge <no> --squash --delete-branch`). Pengecualian: PR yang menyentuh `radar/packages/common/**`
        atau `plan/ref/**` butuh approve Alief dulu. Di mode auto, cek status PR fase sebelumnya di awal
@@ -191,13 +204,19 @@ Laporan dalam Bahasa Indonesia. Kode, nama file, komentar: Bahasa Inggris.
       (c) semua fase lane selesai, atau (d) konteks hampir habis (simpan log + /ecc:save-session dulu).
       Sebelum mulai fase baru, SINKRON:
       1) `git fetch origin`. Untuk PR fase milik lane yang CI-nya hijau dan belum di-merge → merge (langkah 11d).
-      2) Untuk setiap fase NN milik lane yang PR-nya sudah di-merge sejak sinkron terakhir:
-         `git rebase --onto origin/main lane-<lane>-fNN lane/<lane>` (hanya commit SETELAH fase NN yang
-         dipindah ke atas main, karena isi fase NN sudah ada di main lewat squash), lalu
-         `git push --force-with-lease origin lane/<lane>`.
+      2) Untuk setiap fase NN milik lane yang PR-nya sudah di-merge sejak sinkron terakhir (urut dari NN terkecil):
+         `git rebase --update-refs --onto origin/main snap/<LANE_ID>-fNN lane/<LANE_ID>`
+         (hanya commit SETELAH fase NN yang dipindah ke atas main, karena isi fase NN sudah ada di main lewat
+         squash; `--update-refs` ikut memindahkan `snap/<LANE_ID>-fMM` fase berikutnya yang PR-nya masih
+         terbuka). Lalu `git branch -D snap/<LANE_ID>-fNN`, `git push --force-with-lease origin lane/<LANE_ID>`,
+         dan untuk setiap snapshot fMM yang masih terbuka:
+         `git push --force-with-lease origin snap/<LANE_ID>-fMM:refs/heads/lane/<LANE_ID>-fMM`.
+         Butuh git ≥ 2.38 (`--update-refs`).
       3) Kalau belum ada PR yang di-merge tapi main maju: tidak perlu rebase. Rebase hanya bila PR fase
-         konflik; saat itu rebase branch snapshot `lane/<lane>-fNN` ke origin/main dan force-with-lease
-         branch snapshot itu (milikmu sendiri).
+         konflik; saat itu rebase snapshot `snap/<LANE_ID>-fNN` ke origin/main (sama seperti poin 2, dengan
+         `--update-refs`) dan force-with-lease branch snapshot itu (milikmu sendiri).
+      4) Sebelum lanjut, cek jam: kalau sudah ≥ Sab 21:00 WITA dan fase 10 lane belum [x], fase berikutnya = 10
+         (lihat "Fase 10 = interupsi wajib").
       LALU RESOLVE PLACEHOLDER: `grep -rn "TODO(sync" app radar` → untuk setiap penanda yang prasyaratnya
       sekarang sudah ada di main, ganti placeholder dengan yang asli, jalankan test, commit
       "sync: replace <x> placeholder". Kalau bentuk aslinya beda dari placeholder, sesuaikan kodemu (bukan
@@ -231,11 +250,12 @@ Laporan dalam Bahasa Indonesia. Kode, nama file, komentar: Bahasa Inggris.
 | `FASE: 04` | Sync agent | Alief | Opus 5.5 | – |
 | `FASE: 05` | Kunci, task, proposal | Alief | Opus 5.5 | A2 `checkWrite` |
 | `FASE: 06` | Commit GitHub, diff, review (relay terminal P1) | Alief | Opus 5.5 | A3 formatter commit, A4 review |
-| `FASE: 07` | Kit `.bob/` coder | Umar | Sonnet 5 · high | B2, B3, B4 |
-| `FASE: 08` | Main agent `pm-lead` | Umar | Sonnet 5 · high | B4 (tool PM) |
+| `FASE: 07` | Kit `.bob/` coder | Umar | Sonnet 5 · high | B2, B3, B4a |
+| `FASE: 08` | Main agent `pm-lead` | Umar | Sonnet 5 · high | B4b (tool PM) |
 | `FASE: 09` | App desktop (fork Orca) + `@radar/ui` | Aarief | Sonnet 5 · high (Opus untuk titik sambung Orca) | C1, C2, C3 |
 | `FASE: 10` | Integrasi E2E | Semua | Opus 5.5 | – |
-| `FASE: 11` | Watch Bob (aktivitas Bob IDE), `.dmg` (Aarief) · landing + replay (Imelda) | Aarief · Imelda | Sonnet 5 · high | C4 `evidence-check.ts`, I1, I2 |
+| `FASE: 11a/11b/11c` | Watch Bob (aktivitas Bob IDE) + C4 (11a), `.dmg` (11b), uji pasang + P1 (11c) | Aarief | Sonnet 5 · high | C4 `evidence-check.ts` |
+| `FASE: 11D1/11D2` | Landing + replay fixture (11D1) · I3 + replay final (11D2) | Imelda | Sonnet 5 · high | I1, I2 (11D1), I3 (11D2) |
 | `FASE: 12` | Hardening P1 | Alief | Sonnet 5 | – |
 | `FASE: 13` | Eksperimen A/B | Umar | Sonnet 5 | (sesi eksperimen) |
 | `FASE: 14` | Submission | Semua | Sonnet 5 | – |
