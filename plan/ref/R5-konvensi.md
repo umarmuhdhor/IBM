@@ -89,7 +89,7 @@ Co-authored-by: IBM Bob <bob@ibm.com>
 | Var | Contoh | Wajib | Keterangan |
 |---|---|---|---|
 | `PORT` | `8787` | ya | |
-| `DATA_DIR` | `/data` | ya | DB + clone repo; di Fly = volume |
+| `DATA_DIR` | `/data` | ya | DB + clone repo; di Railway/Fly = volume |
 | `WORKSPACE_ID` | `toko-demo` | ya | |
 | `REPO_URL` | `https://github.com/<org>/toko-demo.git` | ya | dipakai `init` dan push |
 | `GITHUB_TOKEN` | `ghp_…` | untuk push | fine-grained, hanya repo toko-demo, `contents:write` |
