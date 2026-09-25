@@ -17,6 +17,8 @@ Saya Aarief. Kerjakan semua tugas lane saya secara otomatis sesuai CLAUDE.md dan
 Saya Imelda. Kerjakan semua tugas lane saya secara otomatis sesuai CLAUDE.md dan plan/PROMPT.md (mode auto).
 ```
 
+Pertama kali? Jalankan dulu **prompt perkenalan** di `README.md` (AI membaca repo dan menjelaskan tugasmu tanpa mengubah apa pun). Setelah itu kalimat di atas.
+
 AI akan:
 - menyiapkan branch lane-nya sendiri,
 - memilih fase berikutnya yang belum selesai,

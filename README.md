@@ -21,6 +21,26 @@
 | – | [`media-references/`](media-references/README.md) | Gambar referensi teknik multi-agent (dengan sumber) | semua |
 | – | [`arsip/`](arsip/README.md) | Dokumen lama (v0.1, v0.2, riset ide, roast). Hanya referensi. | – |
 
+## Prompt perkenalan untuk AI (jalankan sekali di awal)
+
+Tempel ke Claude Code di root repo, ganti `<nama>`:
+
+```text
+Saya <nama> (Alief | Umar | Aarief | Imelda). Sebelum mulai kerja, pelajari repo ini tanpa mengubah file apa pun.
+Baca berurutan: README.md → CLAUDE.md → PLAN.md → ARCHITECTURE.md → plan/README.md → plan/PROMPT.md →
+file fase milik lane saya di plan/ (lihat tabel lane di PLAN.md §2) → plan/ref yang disebut di "Bacaan wajib" fase itu.
+Skim saja: PRD.md (bagian yang disebut fase saya), DESIGN.md (kalau lane saya menyentuh UI), app/AGENTS.md (kalau saya Aarief).
+Lalu jelaskan ke saya dengan singkat:
+1. struktur folder repo dan mana yang boleh saya ubah,
+2. tugas lane saya dan urutan fasenya,
+3. ketergantungan ke lane lain dan placeholder apa yang akan dipakai,
+4. Bob slice saya dan anggaran Bobcoin,
+5. hal yang harus saya lakukan manual (akun, Bob IDE, Screen Recording).
+Jangan mulai mengerjakan fase. Tunggu saya bilang "mulai".
+```
+
+Setelah itu, ketik perintah kerja (mode auto) di bawah.
+
 ## Mulai kerja dalam 3 langkah (per orang)
 
 1. Baca `PLAN.md` §2 (lane kamu) dan §5 (jadwal).
