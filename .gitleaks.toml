@@ -1,0 +1,11 @@
+# gitleaks config for IBM Bob Live Collab (CI job `gitleaks`, `pnpm -C radar secrets:scan`).
+# Default rules stay on. The only exception is commit 7c86819, which vendored upstream Orca
+# (stablyai/orca@bf40d35, MIT) into app/: its public test goldens, audit logs and sample keys
+# trigger 178 generic-api-key/jwt/private-key hits that are not ours. Later commits, including
+# changes under app/, are still scanned.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Upstream Orca vendoring commit (public MIT code, not team secrets)"
+commits = ["7c86819ec824e89a7e0a9b80097709e8c6edd7bf"]

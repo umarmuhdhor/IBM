@@ -5,7 +5,7 @@ Waktu dalam WITA. Setiap lane **hanya mengedit baris fasenya sendiri** (supaya m
 
 | Fase | Judul | Lane | Branch | Status | Mulai | Selesai | Ringkasan satu kalimat | Log |
 |---|---|---|---|---|---|---|---|---|
-| 00 | Fondasi: fork Orca + `radar/` | Alief | main | [ ] | | | | log/fase-00.md |
+| 00 | Fondasi: fork Orca + `radar/` | Alief | main | [~] | Jum 25 17:20 | | Workspace `radar/` 7 paket hijau, template IBM, CI; menunggu Bob slice A1 (toko-demo) + langkah manual | log/fase-00.md |
 | 01 | Spike & GATE 1 | Umar | lane/bob | [ ] | | | | log/fase-01.md |
 | 02 | Common + mock (kontrak beku) | Alief | lane/core | [ ] | | | | log/fase-02.md |
 | 03 | Server inti | Alief | lane/core | [ ] | | | | log/fase-03.md |

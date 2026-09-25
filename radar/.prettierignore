@@ -1,0 +1,9 @@
+node_modules
+dist
+out
+.next
+.wrangler
+coverage
+pnpm-lock.yaml
+examples
+bob-kit

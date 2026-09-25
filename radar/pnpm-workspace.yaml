@@ -1,0 +1,29 @@
+packages:
+  - 'packages/*'
+
+# One version of the shared toolchain for every package (`"vitest": "catalog:"`).
+catalog:
+  '@types/node': ^24.12.0
+  typescript: ~6.0.3
+  # @cloudflare/vitest-plugin has peer vitest ^4.1; vitest 5.x is not supported yet (D-007).
+  vitest: ^4.1.11
+  react: ^19.2.0
+  react-dom: ^19.2.0
+  '@types/react': ^19.2.0
+  '@types/react-dom': ^19.2.0
+  zod: ^4.4.3
+  esbuild: ^0.28.1
+
+allowBuilds:
+  esbuild: true
+  workerd: true
+  sharp: false
+  msw: false
+  '@tailwindcss/oxide': false
+  unrs-resolver: false
+
+minimumReleaseAgeExclude:
+  - '@cloudflare/vitest-plugin@1.2.7'
+  - '@cloudflare/workers-types@5.20260925.1'
+  - miniflare@5.20260923.0-alpha
+  - wrangler@4.140.0

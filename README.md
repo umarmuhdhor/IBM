@@ -1,4 +1,25 @@
-# IBM Bob Live Collab — ruang kerja perencanaan
+# IBM Bob Live Collab
+
+Multiplayer for IBM Bob: every teammate keeps their own Bob account, and the whole team works in one live workspace, like Google Docs.
+
+**Status: in development.** IBM Bob 2.0 Hackathon (lablab.ai), 25–27 Sep 2026.
+Community hackathon project, not an official IBM product.
+
+## For judges
+
+| What | Where |
+|---|---|
+| IBM Bob evidence (task summaries of all four members) | [`bob_sessions/INDEX.md`](bob_sessions/INDEX.md) |
+| How Bob built and powers the product | [`BOB_DEVELOPMENT.md`](BOB_DEVELOPMENT.md) |
+| Live Collab code (server, sync agent, Bob hooks, MCP, UI, web replay) | [`radar/`](radar/) |
+| Desktop app (Orca fork) | [`app/`](app/) |
+| Security rules | [`SECURITY.MD`](SECURITY.MD) |
+
+Install and demo instructions are added in phase 14.
+
+---
+
+## Dokumen tim (Bahasa Indonesia)
 
 > Multiplayer untuk IBM Bob: setiap anggota memakai akun Bob sendiri, tapi semua bekerja di satu workspace live seperti Google Docs. Dikirim sebagai app desktop macOS (fork [Orca](https://github.com/stablyai/orca)).
 > IBM Bob 2.0 Hackathon (lablab.ai) · Jum 25 Sep 23:00 → Min 27 Sep 23:00 WITA · community project, bukan produk resmi IBM.
@@ -104,3 +125,9 @@ Prinsip yang kita ikuti: **bagi kerja menurut konteks, bukan menurut peran.** La
 | **Aktivitas Bob** (ringkasan prompt, file yang dibaca/ditulis, blokir), dan prompt bisa dimatikan | Isi file di dalam aktivitas |
 
 Alasannya: setiap Bob tetap punya konteks sendiri yang bersih (seperti teammate di Agent Teams). Yang dibagikan cukup ringkasan yang dibutuhkan untuk koordinasi, supaya Bobcoin hemat dan tidak ada "telephone game".
+
+---
+
+## Credits
+
+Desktop app built on top of [Orca](https://github.com/stablyai/orca) (MIT) by Stably AI — vendored in `app/`. Orca's own README is [`app/README.md`](app/README.md); its license is [`app/LICENSE`](app/LICENSE).

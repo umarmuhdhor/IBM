@@ -24,6 +24,7 @@ plan/                         (dipindah ke plan/ di fase 00)
 ├── README.md                 ← file ini
 ├── PROMPT.md                 ← satu prompt (ubah LANE + FASE)
 ├── PROGRESS.md               ← status fase + requirement P0
+├── TODO.md                   ← keputusan, akses, dan langkah manual yang dibutuhkan dari Alief
 ├── ref/                      ← kontrak bersama
 │   ├── R1-struktur-repo.md   ← layout fork Orca + workspace radar/
 │   ├── R2-skema-db.md        ← SQL SQLite + invariant

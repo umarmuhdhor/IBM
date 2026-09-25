@@ -1,0 +1,13 @@
+/*
+ * Live Collab theme variables (DESIGN.md §2.1). Named theme-vars.css, not tokens.css:
+ * the IBM template .gitignore drops any file matching *token* (R5 §8).
+ * Inside the Orca app these map onto Orca's own variables in main.css (D-006 point 6).
+ */
+:root {
+  --lc-member-a: #78a9ff;
+  --lc-member-b: #be95ff;
+  --lc-member-c: #ff832b;
+  --lc-status-ok: #42be65;
+  --lc-status-warn: #f1c21b;
+  --lc-status-error: #fa4d56;
+}

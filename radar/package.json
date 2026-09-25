@@ -1,0 +1,41 @@
+{
+  "name": "radar",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.0.0+sha512.9e2e3dc3911995868dc94b8175c217c27e95408fa03b4a22749778f2b34f773b77cdd3b39ede8171b22fcd53be6a35342e9fac9948a68ef58df6488ce89a7e67",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "lint": "eslint .",
+    "format": "prettier -w .",
+    "dev:server": "pnpm --filter \"@radar/server^...\" build && pnpm --filter @radar/server exec wrangler dev",
+    "deploy:server": "pnpm --filter \"@radar/server^...\" build && pnpm --filter @radar/server exec wrangler deploy",
+    "admin": "echo \"fase-03: scripts/admin.ts\"",
+    "deploy:web": "pnpm --filter \"@radar/web...\" build && wrangler pages deploy packages/web/out --project-name ibm-bob-live-collab",
+    "dev:web": "pnpm --filter \"@radar/web^...\" build && pnpm --filter @radar/web dev",
+    "dev:mock": "echo \"fase-02: scripts/mock-server.ts\"",
+    "bundle:kit": "echo \"fase-07: build hooks + mcp into bob-kit/\"",
+    "sim": "echo \"fase-10: scripts/sim-3pc.ts\"",
+    "bench:sync": "echo \"fase-04: scripts/bench-sync.ts\"",
+    "metrics": "echo \"fase-13: scripts/metrics.ts\"",
+    "secrets:scan": "gitleaks detect --source .. --log-opts=\"--all\"",
+    "evidence:check": "echo \"fase-11: scripts/evidence-check.ts\"",
+    "check:ignored": "bash scripts/check-ignored.sh",
+    "dev:app": "pnpm -C ../app dev"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "catalog:",
+    "eslint": "^10.11.0",
+    "globals": "^17.12.0",
+    "prettier": "^3.9.9",
+    "tsx": "^4.23.15",
+    "typescript": "catalog:",
+    "typescript-eslint": "^8.70.1",
+    "vitest": "catalog:"
+  }
+}
