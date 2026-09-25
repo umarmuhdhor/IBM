@@ -68,6 +68,7 @@ Aturan yang tetap berlaku: `CLAUDE.md`, `plan/PROMPT.md` (LANE Aarief, FASE auto
 1. Pasang/aktifkan Bob Shell CLI `bob` di PATH Mac ini secara mandiri; jangan kirim kredensial ke repo atau chat. Bob IDE tetap jalur P0, sehingga ini hanya verifikasi P1 DA-02.
 2. Jalankan `pnpm -C app dev` dengan `ORCA_BACKGROUND_LAUNCH=1`, buka UI secara manual, buat worktree, pilih **IBM Bob**, lalu cek terminal menjalankan `bob` dan jawab "halo". Jika CLI meminta login, selesaikan sendiri di aplikasi Bob.
 3. Balas **"manual selesai"** beserta hasil singkat (jalan/gagal dan pesan error tanpa kredensial). Setelah itu lanjutkan 09a (screenshot gerbang UI dan tombol Open in Bob IDE), lalu 09b.
+4. Jika ingin GitHub menampilkan akun/avatar IBM Bob sebagai co-author, konfirmasi alamat email GitHub IBM Bob untuk mengganti default `bob@ibm.com` (plan/TODO.md B6) sebelum snapshot 09a didorong. Trailer co-author sudah ada di commit C2; identitas pendorong branch tidak menentukan co-author commit.
 
 ## Catatan handoff lintas lane
 
