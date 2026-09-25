@@ -23,6 +23,15 @@ export type { TaskCardProps } from './TaskCard';
 export { FeedItem } from './FeedItem';
 export type { FeedItemProps, FeedItemTrace } from './FeedItem';
 
+export { ReviewCard } from './ReviewCard';
+export type { ReviewCardProps } from './ReviewCard';
+
+export { BriefMeter } from './BriefMeter';
+export type { BriefMeterProps } from './BriefMeter';
+
+export { PresenceStack } from './PresenceStack';
+export type { PresenceStackProps, PresenceMember } from './PresenceStack';
+
 // Shared view types (temporary local copy until @radar/common is published)
 export type {
   RadarEvent,
