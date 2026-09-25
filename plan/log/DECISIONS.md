@@ -211,3 +211,29 @@ Format:
 - Alternatif yang ditolak: tool `approve` untuk PM (melanggar MA-07); membiarkan `kembalikan` untuk breaking change lintas task (bertentangan dengan adegan demo PRD §15 dan MA-04).
 - Dampak: fase 09 (kartu keputusan menampilkan `reason` panjang), fase 10 (uji di PC C), fase 14 (naskah demo adegan review).
 - File ref/ yang diperbarui: – (tidak ada perubahan kontrak).
+
+## D-alief-02 · 26 Sep 2026 04:10 · fase 02 · Kontrak `@radar/common`, celah spesifikasi, dan usulan D-umar-01
+
+- Keputusan:
+  1. **Usulan D-umar-01 P1–P5 diterima.** Normalizer `normalizeHookPayload` menerima bentuk nyata Bob IDE 2.2.0 (`session_id`, `hook_event_name`, `tool_name`, `tool_input.path`, `tool_response`, `prompt`, `source`, `last_assistant_message`) dan bentuk docs; fixture nyata `radar/docs/spike-payloads/` jadi test. R3 §2.2: stderr hook exit 2 jadi jalur pertama, tiga jalur lain cadangan (P3). R3 §2.24: `turn.end` membawa session ID saja; `last_assistant_message` tidak dikirim (P4). Isi `tool_response` tidak pernah dikirim (P5).
+  2. Celah spesifikasi yang ditutup di kode (G1–G12):
+     - G1. `NormalizedHook.input` menyimpan `tool_input` mentah untuk hook yang butuh field selain `path`.
+     - G2. Konstanta baru `ACTIVITY_TIMEOUT_MS = 800` (R5 §4) dan `shareprompts` di `.radar/local.json` + env `RADAR_SHAREPROMPTS` (R1 §6, R5 §5). Default mati.
+     - G3. `clientTs` di `BobActivityReq` opsional dan tidak disimpan di event.
+     - G4. `toWorkspaceRelative` melempar `PathOutsideWorkspaceError`; `tryWorkspaceRelative` mengembalikan `null` (untuk hook yang harus fail-open).
+     - G5. Subpath `@radar/common/node` untuk helper file system. Entry utama bebas `node:*` dan `process.` (dicek `bundle.test.ts`, bundel esbuild platform neutral).
+     - G6. Matcher abaikan murni dari teks (`createIgnoreMatcherFromText`); pembaca `.gitignore` ada di `/node`.
+     - G7. `memberStatus(state, memberId, now)` menerima `now` (bukan `Date.now()` di dalam).
+     - G8. Event dengan tipe tak dikenal hanya memajukan cursor di reducer.
+     - G9. `GET /v1/tasks?owner=me` diterima selain ID anggota.
+     - G10. = poin 1 (R3 §2.2 dan §2.24).
+     - G11. `LockHolder.sinceMs` opsional (kunci dari snapshot lama tidak punya waktu mulai).
+     - G12. `pnpm bundle:kit` (fase 07) butuh `@radar/common` di-build dulu; urutan ada di README paket.
+  3. `StateRes` di wire memakai array (`members`, `tasks`, `locks`, `files`, `requests`, `proposals`, `recentEvents`). Klien memakai `stateFromSnapshot(res)` untuk `RadarState` berkunci.
+  4. Bentuk respons admin yang dipakai mock dan harus diikuti server fase 03: `POST /admin/init` → `201 { workspace, tokens: { <memberId>: <token>, mc: <token> } }`; `POST /admin/files` → `{ inserted, headCommit }`, path yang diabaikan (R5 §6) dilewati.
+  5. Mock server `radar/scripts/mock-server.ts` (Hono + ws, in-memory, reducer dan skema dari paket ini) jadi pengganti server untuk lane lain sampai fase 03 ter-deploy. Token dev `tok-a`/`tok-b`/`tok-c`/`mc-dev` hanya ada di mock.
+- Pertanyaan terbuka untuk fase 05: di mock, hasil `block` mengisi `queuePos` bila task peminta sudah antre. Menurut R4 `findOpen`, permintaan baru tetap dibuat setelah permintaan lama `diputuskan` (B yang dicek lagi setelah R-1 diputuskan membuat R-2). Fase 05 memutuskan apakah task yang sudah antre dikecualikan dari permintaan baru.
+- Alasan: jendela ubah kontrak fase 02; semua celah ditemukan `ecc:planner` saat memetakan R1–R5 ke kode, dan fixture spike Umar.
+- Alternatif yang ditolak: `StateRes` berbentuk map (JSON lebih besar dan urutan tidak stabil); satu entry dengan `node:*` di belakang cek runtime (Worker gagal bundel); menormalkan CRLF sebelum hash (versi berbeda dari isi file sebenarnya).
+- Dampak ke paket/fase lain: fase 03 (bentuk admin + `StateRes` array + `owner=me`), fase 04 (`/node`, ignore), fase 05 (pertanyaan terbuka antre), fase 07/08 (kit memakai normalizer + `ACTIVITY_TIMEOUT_MS` + `shareprompts`), fase 09 (app memakai `stateFromSnapshot`, selector, mock).
+- File ref/ yang diperbarui: R1 §6 (`shareprompts`), R3 §2.2 (jalur pesan blokir), R3 §2.24 (`clientTs` opsional, `turn.end`), R5 §4 (`ACTIVITY_TIMEOUT_MS`), R5 §5 (`RADAR_SHAREPROMPTS`).
