@@ -40,7 +40,9 @@ Aturan yang tetap berlaku: `CLAUDE.md`, `plan/PROMPT.md` (LANE Aarief, FASE auto
 - [x] 5. 09b: WebSocket di main (`hello` mc/app, keepalive string persis, backoff 0,5→8 s, stop pada 4401), store renderer dari snapshot/event, dan aksi MC via IPC (`decide`, `revoke`, `cancelTask`). Test merah untuk WS, endpoint, store task/kunci/proposal sebelum implementasi; 19/19 test terkait lulus.
 - [x] 6. BOB SLICE C3 lewat CDP Bob IDE, commit asli `c9e33b6c` dengan `Bob-Assisted` dan `Co-authored-by: IBM Bob <bob@ibm.com>`. Bukti `bob_sessions/uaai_aarief_task03_radar_ui_components_summary.png` (2.27 Bobcoin). Dua suite test ditulis merah sebelum Bob; hasil Bob 6/6 test dan typecheck hijau. Review terpisah: ganti satu warna hex pada komponen, jangan menandai pemilik task online bila status belum diketahui, rapikan EOF.
 - [x] 6a. Komponen pelengkap `ReviewCard`, `BriefMeter`, `PresenceStack` disiapkan dengan dua suite test merah dahulu, lalu 8/8 test UI dan typecheck hijau. Komponen ini mengikuti props murni dan token `--lc-*`.
-- [~] 7–14. 09c: token tema app sudah dipetakan aditif dari warna/font Orca; panel, gerbang UI, security review, snapshot PR masih berjalan.
+- [x] 7. Seksi LIVE COLLAB disisipkan setelah header sidebar dengan Mission Control, Team, Files & locks, Settings; badge Needs you dihitung dari proposal pending. Drawer mengikuti pola Sheet Orca.
+- [~] 8–9. Mission Control menampilkan task, keputusan, feed, ringkasan lock; Team dan Files & locks membaca state WS; Settings menyimpan koneksi melalui IPC dan status bar menampilkan ringkasan. Test role coder read-only dan keputusan MC menunggu event server lulus. Notifications, checklist Settings, tombol Open in Bob IDE, dan verifikasi mock masih berjalan.
+- [ ] 10–14. Branding, error/empty state lanjutan, gerbang UI, security review, snapshot PR.
 
 ## File dibuat/diubah
 
@@ -54,6 +56,7 @@ Aturan yang tetap berlaku: `CLAUDE.md`, `plan/PROMPT.md` (LANE Aarief, FASE auto
 - 09c langkah 6: komponen Bob `radar/packages/ui/src/{LockChip,MemberChip,WritingPulse,BobTrace,DecisionCard,TaskCard,FeedItem}.tsx`, `theme-vars.css`, `index.ts`, dua test merah, bukti PNG dan indeks Aarief. Review kecil pada `DecisionCard`, `TaskCard`, `BobTrace`.
 - 09c langkah 6a: `radar/packages/ui/src/{ReviewCard,BriefMeter,PresenceStack}.tsx`, dua test dan ekspor dari `index.ts`.
 - 09c tema app: blok `--lc-*` aditif di `app/src/renderer/src/assets/main.css`; nilai netral/status/font merujuk variabel Orca, nilai mentah hanya warna anggota dan kebutuhan PM.
+- 09c panel: `app/src/renderer/src/components/radar/*`, sisipan `sidebar/index.tsx` dan `status-bar/StatusBarSurface.tsx`; `radar/packages/ui/src/AgentTag.tsx` dilengkapi status idle/writing/blocked dan `DecisionCard.tsx` dibersihkan dari variabel tidak terpakai.
 - `plan/PROGRESS.md` (baris 09 `[~]`)
 
 ## Placeholder aktif
@@ -72,6 +75,7 @@ Aturan yang tetap berlaku: `CLAUDE.md`, `plan/PROMPT.md` (LANE Aarief, FASE auto
 - 09b langkah 4: 7/7 test penyimpanan/IPC lulus; `pnpm -C app tc:node` dan `tc:web` exit 0; oxlint pada 9 file TS terkait exit 0. File hanya memuat ciphertext; tidak ada token dalam respons `get`/`set`.
 - 09b langkah 5: `pnpm -C app test src/main/radar src/renderer/src/store/radar-store.test.ts` 19/19 lulus; `pnpm -C app tc` exit 0; oxlint file terkait exit 0. `tc:web` sempat TS6307 pada source paket UI, lalu hijau setelah include source workspace ditambah.
 - 09c langkah 6: `pnpm -C radar --filter @radar/ui test` 6/6 lulus; `pnpm -C radar --filter @radar/ui typecheck` exit 0; Bob menyelesaikan 9 file sumber dalam batas folder yang diminta.
+- 09c panel awal: `pnpm -C app tc`, test radar renderer 3/3, `pnpm -C radar --filter @radar/ui test` 9/9, typecheck UI, dan `check:code-quality:changed` tanpa temuan. `radar-view-model.test.ts` dibuat merah sebelum helper; test keputusan UI membuktikan coder read-only dan MC tidak optimistis.
 
 ## Deviasi
 

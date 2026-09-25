@@ -31,6 +31,7 @@ import { ProviderLetterBadge, ProviderSegment } from './StatusBarProviderSegment
 import { useStatusBarController } from './use-status-bar-controller'
 import { StatusBarVisibilityMenu } from './StatusBarVisibilityMenu'
 import { isPairedWebClientWindow } from '@/lib/desktop-window-chrome'
+import { RadarStatusItem } from '@/components/radar/RadarStatusItem'
 
 const PetStatusSegment = lazyWithRetry(() =>
   import('./PetStatusSegment').then((module) => ({ default: module.PetStatusSegment }))
@@ -241,6 +242,7 @@ export function StatusBarSurface({
         )}
       </div>
 
+      <RadarStatusItem />
       <div className="flex-1" />
 
       <div className="flex items-center gap-3">

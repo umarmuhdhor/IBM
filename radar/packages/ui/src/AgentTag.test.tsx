@@ -11,4 +11,8 @@ describe('AgentTag', () => {
     expect(tag.getAttribute('data-member')).toBe('A');
     expect(tag.getAttribute('aria-label')).toBe('Agent IBM Bob, member A');
   });
+  it('shows blocked status without changing the label', () => {
+    render(<AgentTag label="Andi · Bob coder" member="A" status="blocked" />);
+    expect(screen.getByText('Andi · Bob coder').getAttribute('data-status')).toBe('blocked');
+  });
 });

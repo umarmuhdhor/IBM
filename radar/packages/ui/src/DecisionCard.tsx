@@ -31,7 +31,6 @@ export function DecisionCard({
   onDeny,
   className,
 }: DecisionCardProps) {
-  const isPending = status === 'pending';
   const isDeciding = status === 'deciding';
   const isApproved = status === 'approved';
   const isDenied = status === 'denied';
