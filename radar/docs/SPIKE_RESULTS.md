@@ -114,3 +114,21 @@ Settings show team `ibm-coding-challenge-2 (region: us-east)` as the only team, 
 "Your plan renews on Sep 24" (a date already in the past). New-task button on the workbench: `[aria-label="New Task"]`.
 
 > Umar's Mac (same team `ibm-coding-challenge-2`, same Bob 2.2.0) does **not** get the 403: every test above ran. So the 403 is specific to Alief's IBMid/account, not the team or the instance.
+
+### Follow-up 26 Sep 2026 00:45–00:53 WITA (Lane Core): access restored, Bob slice A1 sent over CDP
+
+- Bob inference works again (same team `ibm-coding-challenge-2`, us-east). "Reply with the single word: ok" answered `ok`.
+- **Global skills cost:** Bob 2.2.0 loads every `SKILL.md` under `~/.bob/skills`, `~/.agents/skills`, `~/.claude/skills`
+  (plus `*/plugins/*/skills`) as scope *Global*. With ~930 skills a one-word prompt used 153.2k context tokens (0.306 Bobcoin).
+  The "Active" toggle in Settings → Skills writes `metadata.disable-model-invocation: true` into the skill's frontmatter;
+  such skills are left out of the `available_skills` prompt section. After setting it on all Global skills the same
+  prompt used 16.1k tokens (0.032 Bobcoin). Built-in skills stay "Always on". Workspace skills (repo `.claude/skills`) stay active.
+- New task: `[aria-label="New Task"]` on the **workbench page** target works (the "New task" text button inside the webview
+  did not reset the conversation).
+- Running state: the webview shows `button[aria-label="Stop processing"]` while a task runs; its absence = idle.
+- Mode selector in 2.2.0 shows **Agent** (the plan's "Code" mode maps to Agent).
+- `.bobignore` hides `*config.json` from Bob, including `tsconfig.json`. The A1 prompt asks Bob for `tsconfig.app.json` instead.
+- The Bob window was not on screen (other Space), so `bob-evidence.sh` window capture found no window; `Page.captureScreenshot`
+  over CDP on the workbench page works as a check screenshot.
+
+Result 26 Sep 00:57 WITA: Bob finished A1 in Agent mode without any approval prompt (auto-approve for write + execute already on). Completion signal: `button[aria-label="Stop processing"]` gone and `[data-testid=all-tasks-completed]` present. Evidence: activate the window with `osascript -e 'tell application "IBM Bob" to activate'`, scroll the chat to the top, then `radar/scripts/bob-evidence.sh alief 01 toko_demo --force` captured the window (task header shows context 35.3k and cost 1.80).

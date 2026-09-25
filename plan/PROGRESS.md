@@ -5,7 +5,7 @@ Waktu dalam WITA. Setiap lane **hanya mengedit baris fasenya sendiri** (supaya m
 
 | Fase | Judul | Lane | Branch | Status | Mulai | Selesai | Ringkasan satu kalimat | Log |
 |---|---|---|---|---|---|---|---|---|
-| 00 | Fondasi: fork Orca + `radar/` | Alief | main | [~] | Jum 25 17:20 | | Workspace `radar/` 7 paket hijau, template IBM, CI; menunggu Bob slice A1 (toko-demo) + langkah manual | log/fase-00.md |
+| 00 | Fondasi: fork Orca + `radar/` | Alief | main | [x] | Jum 25 17:20 | Sab 26 01:05 | Workspace `radar/` 7 paket hijau, template IBM, CI, toko-demo oleh Bob (A1), 4 branch lane; sisa langkah manual di log | log/fase-00.md |
 | 01 | Spike & GATE 1 | Umar | lane/bob | [x] | Sab 26 00:10 | Sab 26 00:40 | GATE 1: hook+server, sync watch (p95 212 ms satu Mac), stderr exit 2 sampai ke model; uji 4 dua Mac menunggu Alief (D4) | log/fase-01.md |
 | 02 | Common + mock (kontrak beku) | Alief | lane/core | [ ] | | | | log/fase-02.md |
 | 03 | Server inti | Alief | lane/core | [ ] | | | | log/fase-03.md |
@@ -58,13 +58,13 @@ Waktu dalam WITA. Setiap lane **hanya mengedit baris fasenya sendiri** (supaya m
 | UI-09 (landing web) | 11D1 | [ ] | |
 | IN-01 | 04 + 11 | [ ] | |
 | EV-01..03 | semua (dicek 14) | [ ] | |
-| NFR-11 (template IBM, check:ignored) | 00 | [ ] | |
+| NFR-11 (template IBM, check:ignored) | 00 | [x] | `check:ignored` di CI |
 
 ## Bob slice (R7)
 
 | ID | Lane | Pemilik | Folder `bob_sessions/…` | Status | Bobcoin |
 |---|---|---|---|---|---|
-| A1 toko-demo | Core | Alief | | [ ] | |
+| A1 toko-demo | Core | Alief | `uaai_alief_task01_toko_demo_summary.png` | [x] | 1.80 |
 | A2 checkWrite | Core | Alief | | [ ] | |
 | A3 commit GitHub API | Core | Alief | | [ ] | |
 | A4 review locks | Core | Alief | | [ ] | |

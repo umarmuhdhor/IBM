@@ -21,14 +21,14 @@
 - [x] 3. Workspace `radar/` (pnpm 12, lockfile sendiri, `catalog:` untuk versi bersama).
 - [x] 4. Paket `common, server, sync, hooks, mcp, ui, web` masing-masing punya `src/index.ts` + minimal 1 test.
 - [x] 5. `radar/eslint.config.js` (type-aware untuk `packages/*/src`), `.github/workflows/ci.yml` (job `radar`, `gitleaks`, `changes`, `app`), `.gitleaks.toml`.
-- [ ] 6. toko-demo: **Bob slice A1**, menunggu Bob IDE.
+- [x] 6. toko-demo: **Bob slice A1** dikerjakan Bob IDE (mode Agent, lewat CDP), commit `fc5ff588` dengan trailer `Bob-Assisted`.
 - [x] 7. `check-ignored.sh`, `bob-evidence.sh`, `plan/team.json`.
 - [x] 8. `UI Inspo & Design/README.md`. Tidak ada video > 10 MB.
 - [x] 9. Dokumen kerangka: `radar/docs/*.md`, `bob_sessions/{README,INDEX}.md`, `BOB_DEVELOPMENT.md`, README root (judul, status, indeks, kredit Orca).
 - [x] 10. Nama ECC tercatat di D-alief-00 (ECC 2.2.2, semua nama R6 §0 ada).
-- [ ] 11. Branch lane: dibuat setelah commit toko-demo (semua branch lane dari commit fase 00 final).
+- [x] 11. Branch lane `lane/core`, `lane/app`, `lane/web` dibuat dari commit fase 00 final dan di-push. `lane/bob` sudah ada.
 - [x] 12. Checklist kickoff: lihat LANGKAH MANUAL.
-- [ ] 13. Commit scaffold di `main` sudah. Commit toko-demo (trailer `Bob-Assisted`) + push menunggu Bob slice.
+- [x] 13. Commit scaffold + commit toko-demo (trailer `Bob-Assisted`) di `main`, sudah di-push.
 
 ## File dibuat/diubah
 
@@ -50,7 +50,8 @@
 | `pnpm -C radar check:ignored` | `check:ignored OK` |
 | `pnpm -C app install && pnpm -C app tc` | hijau (install 40 s, tc 72 s) |
 | `pnpm -C app dev` | belum, cek visual manual (LANGKAH MANUAL 10) |
-| toko-demo `npm install && npm run build` | belum, Bob slice A1 |
+| toko-demo `npm install && npm run build && npm run typecheck` | hijau (68 paket, 146.49 kB JS), `node_modules`/`dist` dihapus lagi. Diulang oleh Claude Code 26 Sep 00:58 |
+| Ulang 26 Sep 01:00: `pnpm -C radar -r build && typecheck && lint && test`, `pnpm -C app tc`, `check:ignored` | semua rc 0 |
 | `git check-ignore -v .env` | ter-ignore (pola template) |
 | `gitleaks git` (seluruh riwayat) | bersih dengan `.gitleaks.toml` (178 temuan lama semua di commit vendoring Orca `7c86819`, di-allowlist) |
 | `bob-evidence.sh` | validasi argumen OK. Tangkapan gagal: "could not create image from window" karena izin Screen Recording belum ada (exit 2, tidak ada PNG tersisa). LANGKAH MANUAL 1 |
@@ -62,8 +63,8 @@ Catatan pnpm: `pnpm` global di Mac Alief rusak (placeholder binary pnpm 12). Ver
 - [x] `app/LICENSE` Orca utuh (tidak ada di diff). Atribusi di README root bagian "Credits".
 - [x] File template IBM di root. Blok template di `.gitignore` utuh di bawah komentar `# ==== IBM hackathon template (do not remove) ====`. `check:ignored` hijau.
 - [x] `radar/` build/typecheck/lint/test hijau (7 paket). `pnpm -C app tc` hijau.
-- [ ] toko-demo build hijau oleh Bob + `bob_sessions/uaai_alief_task01_toko_demo_summary.png`. Menunggu Bob slice A1.
-- [ ] Empat branch lane di remote. Setelah commit toko-demo.
+- [x] toko-demo build hijau oleh Bob + `bob_sessions/uaai_alief_task01_toko_demo_summary.png` (header task: 35.3k konteks, 1.80 Bobcoin, "All tasks completed 4/4").
+- [x] Empat branch lane di remote (`lane/core`, `lane/bob`, `lane/app`, `lane/web`).
 - [x] `bob-evidence.sh` menghasilkan PNG tanpa klik (uji 26 Sep 00:14, PNG uji dihapus).
 - [x] Nama ECC tercatat (D-alief-00). Checklist kickoff tertulis (bawah).
 
@@ -108,7 +109,7 @@ Cakupan: `radar/packages/web/app/{layout,page,demo/page}.tsx` hasil `next build`
 
 ## Bob slice
 
-- A1 toko-demo: **menunggu** Bob IDE (mode Code). Bukti: `bob_sessions/uaai_alief_task01_toko_demo_summary.png` via `radar/scripts/bob-evidence.sh alief 01 toko_demo`.
+- A1 toko-demo: **selesai** 26 Sep 00:53–00:57 WITA. Prompt dikirim otomatis lewat CDP (New Task di workbench, mode Agent), Bob menulis 16 file, menjalankan `npm install && npm run build`, memperbaiki sendiri import `React` yang tak terpakai (`noUnusedLocals`), lalu menghapus `node_modules`/`dist`. Review Claude Code: tidak ada temuan CRITICAL/HIGH; file sesuai tabel fase-00 langkah 6, hanya dependensi yang diizinkan, data sintetis. Bukti `bob_sessions/uaai_alief_task01_toko_demo_summary.png` (jendela Bob diaktifkan dengan `osascript`, tanpa klik). Riwayat: Bukti: `bob_sessions/uaai_alief_task01_toko_demo_summary.png` via `radar/scripts/bob-evidence.sh alief 01 toko_demo`.
 - Sab 26 Sep 00:11 WITA: percobaan otomatis lewat CDP (Bob IDE 2.2.0, port 9223). Buka app, ketik prompt, dan kirim **berhasil**. Bob menjawab "Request Failed": log ekstensi `ProviderError … Caused by: Forbidden` + `Model information unavailable`, Retry gagal sama. Status bar: instance `ibm-coding-challenge-2`, bukan `ibm-coding-challenge-uat`. Masalah akun/instance (TODO D2), bukan otomasi. Detail + selector: `radar/docs/SPIKE_RESULTS.md` bagian "Bob IDE UI automation over CDP".
 - Uji `bob-evidence.sh alief 99 uji --force`: PNG jendela Bob IDE tertangkap tanpa klik (izin Screen Recording sudah ada). PNG uji + baris indeks sudah dihapus. LANGKAH MANUAL 1 selesai untuk Mac Alief.
 
@@ -126,8 +127,8 @@ Cakupan: `radar/packages/web/app/{layout,page,demo/page}.tsx` hasil `next build`
 10. Cek visual `pnpm -C app dev` (app Orca masih jalan), lalu tutup.
 11. Sepakati warna anggota: A `#78A9FF`, B `#BE95FF`, C `#FF832B` (R5 §4, DESIGN.md §2.1).
 12. ~~Perbaiki pnpm global Mac Alief~~ **Selesai 26 Sep 00:40**: `npm uninstall -g pnpm` (11.9.0), `corepack enable pnpm`, `corepack install -g pnpm@12.0.0`. `pnpm -v` = 12.0.0 dari root, `radar/`, `app/`; `pnpm -C radar install --frozen-lockfile && test` hijau.
-13. **Skill global membebani Bob IDE.** Bob 2.2.0 memuat ~930 skill Global dari `~/.claude/skills` + `~/.agents/skills` (Settings → Skills, 47 halaman). Prompt "ok" saja = body `POST /inference/v1/chat/completions` 598 KB. Setelah akses Bob pulih, ini akan menghabiskan Bobcoin. Keputusan user: batasi skill yang dimuat Bob.
-14. **Bob inference 403.** Debug log: `GET https://api.us-east.bob.ibm.com/inference/v1/model/info` → 403 dan `POST …/chat/completions` → 403, sedangkan info akun (budget 40.00) terbaca. Akun Bob: team `ibm-coding-challenge-2`. Perlu cek: IBMid = email registrasi lablab, undangan team sudah diterima, atau kendala dari penyelenggara.
+13. **Skill global membebani Bob IDE.** Bob 2.2.0 memuat ~930 skill Global dari `~/.claude/skills` + `~/.agents/skills` (Settings → Skills, 47 halaman). Prompt "ok" saja = body `POST /inference/v1/chat/completions` 598 KB. Setelah akses Bob pulih, ini akan menghabiskan Bobcoin. Keputusan user: batasi skill yang dimuat Bob. **Selesai 26 Sep 00:50** (atas permintaan user): 924 skill Global diberi `metadata.disable-model-invocation: true` (= toggle "Active" off di Bob Settings → Skills; Bob tidak memasukkannya ke prompt). Claude Code tidak membaca key di dalam `metadata`, jadi skill tetap jalan di Claude Code. Skill workspace (`.claude/skills` repo) tetap aktif. Backup: `~/.agents/skills-backup-before-bob-disable-20260926.tgz`. Hasil: prompt "ok" 153.2k → 16.1k token konteks, 0.306 → 0.032 Bobcoin. Catatan: skill baru yang dipasang nanti aktif lagi secara default.
+14. ~~**Bob inference 403.**~~ **Pulih 26 Sep ±00:45** (prompt uji "ok" dijawab, team masih `ibm-coding-challenge-2`). Catatan lama: Debug log: `GET https://api.us-east.bob.ibm.com/inference/v1/model/info` → 403 dan `POST …/chat/completions` → 403, sedangkan info akun (budget 40.00) terbaca. Akun Bob: team `ibm-coding-challenge-2`. Perlu cek: IBMid = email registrasi lablab, undangan team sudah diterima, atau kendala dari penyelenggara.
 
 ## Catatan handoff
 
