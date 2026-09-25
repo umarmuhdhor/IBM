@@ -42,6 +42,7 @@ Aturan yang tetap berlaku: `CLAUDE.md`, `plan/PROMPT.md` (LANE Aarief, FASE auto
 - [x] 6a. Komponen pelengkap `ReviewCard`, `BriefMeter`, `PresenceStack` disiapkan dengan dua suite test merah dahulu, lalu 8/8 test UI dan typecheck hijau. Komponen ini mengikuti props murni dan token `--lc-*`.
 - [x] 7. Seksi LIVE COLLAB disisipkan setelah header sidebar dengan Mission Control, Team, Files & locks, Settings; badge Needs you dihitung dari proposal pending. Drawer mengikuti pola Sheet Orca.
 - [~] 8–9. Mission Control menampilkan task, keputusan, feed, ringkasan lock; Team dan Files & locks membaca state WS; Settings menyimpan koneksi melalui IPC dan status bar menampilkan ringkasan. Test role coder read-only dan keputusan MC menunggu event server lulus. Notifications, checklist Settings, tombol Open in Bob IDE, dan verifikasi mock masih berjalan.
+- [x] 8a. Renderer yang baru mount meminta `radar:refresh` setelah berlangganan update, agar frame `state` tidak hilang bila WS main tersambung sebelum UI siap. Handler membaca koneksi aman di main dan memulai ulang WS; token tidak dikirim ke renderer. Test IPC merah dahulu, lalu 5/5 lulus dan `app tc` hijau.
 - [ ] 10–14. Branding, error/empty state lanjutan, gerbang UI, security review, snapshot PR.
 
 ## File dibuat/diubah
@@ -57,6 +58,7 @@ Aturan yang tetap berlaku: `CLAUDE.md`, `plan/PROMPT.md` (LANE Aarief, FASE auto
 - 09c langkah 6a: `radar/packages/ui/src/{ReviewCard,BriefMeter,PresenceStack}.tsx`, dua test dan ekspor dari `index.ts`.
 - 09c tema app: blok `--lc-*` aditif di `app/src/renderer/src/assets/main.css`; nilai netral/status/font merujuk variabel Orca, nilai mentah hanya warna anggota dan kebutuhan PM.
 - 09c panel: `app/src/renderer/src/components/radar/*`, sisipan `sidebar/index.tsx` dan `status-bar/StatusBarSurface.tsx`; `radar/packages/ui/src/AgentTag.tsx` dilengkapi status idle/writing/blocked dan `DecisionCard.tsx` dibersihkan dari variabel tidak terpakai.
+- 09c refresh state: `app/src/main/radar/connection-ipc{,.test}.ts`, `app/src/preload/api/radar-bridge.ts`, `app/src/renderer/src/components/radar/use-radar-session.ts`.
 - `plan/PROGRESS.md` (baris 09 `[~]`)
 
 ## Placeholder aktif

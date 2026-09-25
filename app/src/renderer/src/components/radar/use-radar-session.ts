@@ -11,6 +11,13 @@ export function useRadarSession() {
       if (active) {
         setConnection(value)
       }
+      if (active && value) {
+        void window.api.radar.refresh().catch(() => {
+          useRadarStore.getState().actions.clear()
+        })
+      }
+    }).catch(() => {
+      useRadarStore.getState().actions.clear()
     })
     const unsubscribe = window.api.radar.onUpdate(useRadarStore.getState().actions.receive)
     const stopTicker = useRadarStore.getState().actions.startTicker()

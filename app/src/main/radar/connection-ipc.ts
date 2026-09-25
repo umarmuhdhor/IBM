@@ -47,6 +47,12 @@ export function registerRadarConnectionIpc(): void {
     publishUpdate({ kind: 'status', connected: false })
   }
   ipcMain.handle('radar:get-connection', () => getRadarConnectionSummary())
+  ipcMain.handle('radar:refresh', () => {
+    const saved = readRadarConnection()
+    if (saved) {
+      startClient(saved)
+    }
+  })
   ipcMain.handle('radar:set-connection', (_event, value: unknown) => {
     if (!isRadarConnection(value)) {
       throw new Error('Invalid Live Collab connection')

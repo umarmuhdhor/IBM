@@ -4,7 +4,7 @@ const handlers = vi.hoisted(() => new Map<string, (_event: unknown, value?: unkn
 const store = vi.hoisted(() => ({
   clearRadarConnection: vi.fn(),
   getRadarConnectionSummary: vi.fn(),
-  readRadarConnection: vi.fn(() => null),
+  readRadarConnection: vi.fn<() => unknown>(() => null),
   saveRadarConnection: vi.fn()
 }))
 const validation = vi.hoisted(() => ({ isRadarConnection: vi.fn() }))
@@ -74,5 +74,11 @@ describe('Radar connection IPC', () => {
   it('clears the saved connection', () => {
     handlers.get('radar:clear-connection')?.(null)
     expect(store.clearRadarConnection).toHaveBeenCalledOnce()
+  })
+
+  it('restarts a saved connection so a newly mounted renderer receives state', () => {
+    store.readRadarConnection.mockReturnValueOnce({ server: 'http://127.0.0.1:8787', workspace: 'demo', member: 'A', role: 'coder', token: 'synthetic-value' })
+    handlers.get('radar:refresh')?.(null)
+    expect(client.connect).toHaveBeenCalledOnce()
   })
 })
