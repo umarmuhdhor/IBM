@@ -18,7 +18,7 @@
     "deploy:web": "pnpm --filter \"@radar/web...\" build && wrangler pages deploy packages/web/out --project-name ibm-bob-live-collab",
     "dev:web": "pnpm --filter \"@radar/web^...\" build && pnpm --filter @radar/web dev",
     "dev:mock": "echo \"fase-02: scripts/mock-server.ts\"",
-    "bundle:kit": "echo \"fase-07: build hooks + mcp into bob-kit/\"",
+    "bundle:kit": "pnpm --filter @radar/hooks --filter @radar/mcp run bundle",
     "sim": "echo \"fase-10: scripts/sim-3pc.ts\"",
     "bench:sync": "echo \"fase-04: scripts/bench-sync.ts\"",
     "metrics": "echo \"fase-13: scripts/metrics.ts\"",

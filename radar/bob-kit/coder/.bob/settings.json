@@ -1,0 +1,25 @@
+{
+  "hooks": {
+    "SessionStart": [
+      { "hooks": [{ "type": "command", "command": "node .bob/hooks/brief.js start", "timeout": 5 }] }
+    ],
+    "UserPromptSubmit": [
+      { "hooks": [{ "type": "command", "command": "node .bob/hooks/brief.js prompt", "timeout": 5 }] }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "^(write_file|apply_diff|search_and_replace|insert_content|office_edit)$",
+        "hooks": [{ "type": "command", "command": "node .bob/hooks/lock_guard.js", "timeout": 3 }]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "^(write_file|apply_diff|search_and_replace|insert_content|office_edit|read_file|execute_command)$",
+        "hooks": [{ "type": "command", "command": "node .bob/hooks/mark_ai_edit.js", "timeout": 3 }]
+      }
+    ],
+    "Stop": [
+      { "hooks": [{ "type": "command", "command": "node .bob/hooks/stop.js", "timeout": 3 }] }
+    ]
+  }
+}
