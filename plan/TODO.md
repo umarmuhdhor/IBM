@@ -21,7 +21,7 @@ Jangan tempel nilai secret di chat atau di file repo. Agent hanya perlu tahu bah
 
 | # | Yang dibutuhkan | Cara | Status |
 |---|---|---|---|
-| B1 | Akun Cloudflare tim (plan Free) + `npx wrangler login` di Mac Alief | Login di browser saat diminta wrangler | [ ] |
+| B1 | Akun Cloudflare tim (plan Free) + `npx wrangler login` di Mac Alief | Login di browser saat diminta wrangler | [x] 26 Sep 00:40: `wrangler whoami` OK (OAuth, izin workers/pages write) |
 | B2 | Nama akun/subdomain `*.workers.dev` | Untuk `NEXT_PUBLIC_RADAR_SERVER` dan `CORS_ORIGIN` (R5 §5) | [ ] |
 | B3 | Repo `toko-demo`: owner, nama, branch default | Dipakai `GITHUB_REPO` dan `admin init --repo` (PROGRESS A1 masih kosong) | [ ] |
 | B4 | GitHub fine-grained PAT untuk `toko-demo` | Hanya repo `toko-demo`, izin **Contents: read & write**, **tanpa** Workflows. Simpan dengan `npx wrangler secret put GITHUB_TOKEN` (diketik di prompt wrangler) | [ ] |

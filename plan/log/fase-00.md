@@ -125,7 +125,9 @@ Cakupan: `radar/packages/web/app/{layout,page,demo/page}.tsx` hasil `next build`
 9. Umar menambah collaborator (Alief, Aarief, Imelda) ke `umarmuhdhor/IBM`.
 10. Cek visual `pnpm -C app dev` (app Orca masih jalan), lalu tutup.
 11. Sepakati warna anggota: A `#78A9FF`, B `#BE95FF`, C `#FF832B` (R5 §4, DESIGN.md §2.1).
-12. Perbaiki pnpm global Mac Alief (mis. `corepack enable pnpm`, atau pasang ulang pnpm 12).
+12. ~~Perbaiki pnpm global Mac Alief~~ **Selesai 26 Sep 00:40**: `npm uninstall -g pnpm` (11.9.0), `corepack enable pnpm`, `corepack install -g pnpm@12.0.0`. `pnpm -v` = 12.0.0 dari root, `radar/`, `app/`; `pnpm -C radar install --frozen-lockfile && test` hijau.
+13. **Skill global membebani Bob IDE.** Bob 2.2.0 memuat ~930 skill Global dari `~/.claude/skills` + `~/.agents/skills` (Settings → Skills, 47 halaman). Prompt "ok" saja = body `POST /inference/v1/chat/completions` 598 KB. Setelah akses Bob pulih, ini akan menghabiskan Bobcoin. Keputusan user: batasi skill yang dimuat Bob.
+14. **Bob inference 403.** Debug log: `GET https://api.us-east.bob.ibm.com/inference/v1/model/info` → 403 dan `POST …/chat/completions` → 403, sedangkan info akun (budget 40.00) terbaca. Akun Bob: team `ibm-coding-challenge-2`. Perlu cek: IBMid = email registrasi lablab, undangan team sudah diterima, atau kendala dari penyelenggara.
 
 ## Catatan handoff
 
