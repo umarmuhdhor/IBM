@@ -19,7 +19,7 @@ Start with `README.md` → `PLAN.md` → `ARCHITECTURE.md`. Phase work is driven
 - Contracts (`plan/ref/R1–R7`, `radar/packages/common`) change only via Alief; others log a proposal in `plan/log/DECISIONS.md`.
 - No secrets in git (repo is PUBLIC). File names must not contain `token`, `secret`, `password`, `credentials`, `apikey`, nor be `config.json` (IBM template .gitignore silently drops them).
 - Code written by IBM Bob is committed separately with trailer `Bob-Assisted: bob_sessions/<png>` (plan/ref/R7).
-- Bob evidence is YOUR job, automatically: after the human says "bob selesai", run `radar/scripts/bob-evidence.sh <name> <NN> <slug>` (captures the Bob IDE window, names it `bob_sessions/livecollab_<name>_task<NN>_<slug>_summary.png`, updates INDEX.md). The human only opens Tasks → task → header in Bob IDE.
+- Bob evidence is YOUR job, automatically: after the human says "bob selesai", run `radar/scripts/bob-evidence.sh <name> <NN> <slug>` (captures the Bob IDE window, names it `bob_sessions/uaai_<name>_task<NN>_<slug>_summary.png`, updates INDEX.md). The human only opens Tasks → task → header in Bob IDE.
 - Git flow (PLAN.md §6): work on your lane branch; after each phase push and open a PR to `main` with `gh pr create`; squash-merge when CI is green; then everyone rebases on `origin/main`. Never merge `main` into a lane branch; never force-push shared branches (only `--force-with-lease` on your own lane after the one-time rebase).
 - Data: synthetic only; log any new external data source in `DATA_SOURCES.md`.
 

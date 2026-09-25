@@ -211,7 +211,7 @@ main ──●──────────●(fase 02: kontrak beku)───�
 
 Aturan (guide resmi 2.0): **setiap anggota** mengunggah **screenshot ringkasan task session Bob IDE** untuk **semua task terkait submission** ke folder `bob_sessions`, format PNG, nama berisi nama tim + nomor task + deskripsi (contoh resmi `teamalpha_task01_login_flow_summary.png`). Detail ada di [`plan/ref/R7-bukti-bob.md`](plan/ref/R7-bukti-bob.md).
 
-**Nama file kita:** `bob_sessions/livecollab_<nama>_task<NN>_<slug>_summary.png`, misalnya `livecollab_aarief_task01_orca_onboarding_summary.png`.
+**Nama file kita:** `bob_sessions/uaai_<nama>_task<NN>_<slug>_summary.png`, misalnya `uaai_aarief_task01_orca_onboarding_summary.png`.
 
 **Alurnya: AI yang mengambil screenshot dan memberi nama**
 1. Prompt fase berhenti di **BOB SLICE** dan mencetak prompt Bob yang siap tempel.

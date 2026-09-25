@@ -4,7 +4,7 @@
 
 | Versi | Tanggal | Event | Kickoff / submit | Pemilik |
 |---|---|---|---|---|
-| 0.3 · Bob IDE inti + app desktop (Orca) + tonton Bob rekan + ECC | 25 Sep 2026 | IBM Bob 2.0 Hackathon, 25–27 Sep 2026, 48 jam | Jum 23:00 / Min 23:00 WITA | Tim 4 orang: Alief, Umar, Aarief, Imelda (Lane Alief/Umar/Aarief-Imelda, lihat [`PLAN.md`](PLAN.md)) |
+| 0.3 · Bob IDE inti + app desktop (Orca) + tonton Bob rekan + ECC | 25 Sep 2026 | IBM Bob 2.0 Hackathon, 25–27 Sep 2026, 48 jam | Jum 23:00 / Min 23:00 WITA | Tim **UAAI** (4 orang): Alief, Umar, Aarief, Imelda (Lane Alief/Umar/Aarief-Imelda, lihat [`PLAN.md`](PLAN.md)) |
 
 Dokumen terkait: [`PLAN.md`](PLAN.md) (lane, jadwal, ECC, bukti Bob) · [`DESIGN.md`](DESIGN.md) (desain & layar) · [`prompt_ui.md`](prompt_ui.md) (prompt gambar UI) · [`plan/`](plan/README.md) (detail per fase).
 

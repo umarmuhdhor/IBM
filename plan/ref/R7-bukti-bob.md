@@ -13,13 +13,13 @@ Cara membuka ringkasan di Bob IDE: chat → **Tasks** → pilih task (pilih **Al
 
 ```text
 bob_sessions/
-├── livecollab_aarief_task01_orca_onboarding_summary.png
-├── livecollab_aarief_task01_orca_onboarding.md          ← ekspor riwayat task (opsional tapi disarankan)
-├── livecollab_umar_task01_spike_hooks_summary.png
+├── uaai_aarief_task01_orca_onboarding_summary.png
+├── uaai_aarief_task01_orca_onboarding.md          ← ekspor riwayat task (opsional tapi disarankan)
+├── uaai_umar_task01_spike_hooks_summary.png
 ├── …
 └── INDEX.md                                             ← tabel semua task
 ```
-Pola: `<tim>_<nama>_task<NN>_<slug_pakai_underscore>_summary.png`. `<tim>` = `livecollab` (ganti di `plan/team.json` kalau nama tim resmi di lablab berbeda). `<nama>` ∈ `alief`, `umar`, `aarief`, `imelda`. `NN` dihitung per orang.
+Pola: `<tim>_<nama>_task<NN>_<slug_pakai_underscore>_summary.png`. `<tim>` = `uaai` (nama tim resmi di lablab) (ganti di `plan/team.json` kalau nama tim resmi di lablab berbeda). `<nama>` ∈ `alief`, `umar`, `aarief`, `imelda`. `NN` dihitung per orang.
 
 | Artefak | Wajib? | Cek |
 |---|---|---|
