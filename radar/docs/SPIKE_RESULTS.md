@@ -29,3 +29,9 @@ Goal: drive the Bob IDE chat without a human (type prompt, submit, poll, capture
 `ModelInfoError: Model information unavailable`. Retry failed the same way. The status bar shows instance
 `ibm-coding-challenge-2 (Region: us-east)`, not `ibm-coding-challenge-uat` from TODO D2. This is an account/instance
 problem, not an automation problem. Fix: TODO D2 (log in with the hackathon IBMid, pick the right instance, check Bobcoin).
+
+Follow-up 00:20 WITA: account refresh (Settings → General → Refresh) did not help. A new task with the prompt
+"Reply with the single word: ok" fails with `{"cause":"Forbidden"}` in both Agent and Ask mode. The model-info call
+(`fetchModelInfo`) also fails before any prompt is sent, so the block is account-level, not prompt content.
+Settings show team `ibm-coding-challenge-2 (region: us-east)` as the only team, enterprise plan, budget 40.00 (0 used),
+"Your plan renews on Sep 24" (a date already in the past). New-task button on the workbench: `[aria-label="New Task"]`.
