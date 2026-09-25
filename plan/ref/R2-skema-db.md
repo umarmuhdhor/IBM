@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS member (
   id             TEXT PRIMARY KEY,                       -- 'A' | 'B' | 'C'
   name           TEXT NOT NULL,
   role           TEXT NOT NULL CHECK (role IN ('coder','pm')),
-  color          TEXT NOT NULL,                          -- '#78A9FF' dsb. (R5 §4)
+  color          TEXT NOT NULL,                          -- '#78A9FF' dsb. (Carbon 40, lihat R5 §4)
   git_name       TEXT NOT NULL,
   git_email      TEXT NOT NULL,
   active_task_id TEXT,                                   -- FK lunak ke task.id
@@ -221,11 +221,11 @@ CREATE INDEX IF NOT EXISTS metric_name ON metric(name, ts);
 |---|---|
 | `meta` | `schema_version=1`, `workspace_id`, `workspace_name`, `repo_url`, `head_commit` = HEAD hasil clone |
 | `counter` | `task=0`, `request=0`, `proposal=0`, `review=0` |
-| `member` | A (coder, `#78A9FF` biru), B (coder, `#BE95FF` ungu), C (pm, `#FF832B` oranye), sesuai `MEMBER_COLORS` R5 §4 |
-| `token` | 3 token `member` + 1 token `mc` (hanya hash yang disimpan) |
+| `member` | A (coder, `#78A9FF` biru), B (coder, `#BE95FF` ungu), C (pm, `#FF832B` oranye), D (coder, `#08BDBA` teal) — warna dari R5 §4 `MEMBER_COLORS` (Carbon 40) |
+| `token` | 4 token `member` + 1 token `mc` (hanya hash yang disimpan) |
 | `file` | Semua file teks di HEAD yang lolos aturan abaikan (R5 §6), `version=1` |
 | `file_version` | Salinan versi 1 setiap file |
-| `event` | `workspace.created`, `member.created` ×3 |
+| `event` | `workspace.created`, `member.created` ×4 |
 
 ## 4. Invariant (diuji dengan property test di fase 05)
 

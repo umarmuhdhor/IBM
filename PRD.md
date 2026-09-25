@@ -137,7 +137,7 @@ Sumber pembanding: [MCP Agent Mail](https://github.com/Dicklesworthstone/mcp_age
 | Waktu sampai kedua task ter-merge dan test lulus, dan build rusak setelah merge (eksperimen 6 task) | Build rusak: 0 dengan Live Collab. Waktu: dilaporkan apa adanya, termasuk kalau lebih lambat. | Eksperimen A/B, lihat §17 |
 | Waktu dari blokir sampai keputusan PM | < 60 detik di demo | Event `request.created` → `request.decided` |
 | Masalah antar-file yang ditangkap review main agent | minimal 1 di demo | Event `review.flagged` |
-| Kelengkapan bukti Bob | 100% Bob slice punya ekspor `.md` + screenshot ringkasan task, dari **ketiga** anggota | `pnpm -C radar evidence:check` |
+| Kelengkapan bukti Bob | 100% Bob slice punya ekspor `.md` + screenshot ringkasan task, dari **keempat** anggota | `pnpm -C radar evidence:check` |
 | Latensi stream aktivitas Bob: hook terpicu di laptop A sampai tampil di laptop B (p95) | < 1 detik | Timestamp `bob.activity` |
 | Waktu pasang dari `.dmg` sampai workspace tersinkron | < 3 menit | Stopwatch saat gladi |
 

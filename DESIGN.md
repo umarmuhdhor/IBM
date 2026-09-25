@@ -60,6 +60,7 @@
 | A · Andi | coder (Bob IDE) | `#78A9FF` | Blue 40 |
 | B · Budi | coder (Bob IDE) | `#BE95FF` | Purple 40 |
 | C · Citra | PM + main agent `pm-lead` | `#FF832B` | Orange 40 |
+| D · Dewi | coder (Bob IDE) | `#08BDBA` | Teal 40 |
 
 Aturan: warna orang **hanya** dipakai untuk chip inisial, tag agent, garis kiri kartu, dan border terminal yang ditonton. Status tidak pernah memakai warna orang.
 

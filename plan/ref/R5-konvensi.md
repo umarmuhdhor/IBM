@@ -76,7 +76,7 @@ Co-authored-by: IBM Bob <bob@ibm.com>
 | `WS_HELLO_TIMEOUT_MS` | 5_000 | – |
 | `WS_PING_MS` | 20_000 | – |
 | `WS_PING_FRAME` / `WS_PONG_FRAME` | `'{"t":"ping"}'` / `'{"t":"pong"}'` | R3 §3: string persis untuk `setWebSocketAutoResponse`; jangan dibentuk ulang lewat `JSON.stringify` objek lain |
-| `MEMBER_COLORS` | A `#78A9FF`, B `#BE95FF`, C `#FF832B` (Carbon 40) | DESIGN.md §2.1 |
+| `MEMBER_COLORS` | A `#78A9FF`, B `#BE95FF`, C `#FF832B`, D `#08BDBA` (Carbon 40) | DESIGN.md §2.1 |
 | `STATUS_COLORS` | hijau `#42BE65`, kuning `#F1C21B`, merah `#FA4D56` | DESIGN.md §2.1 |
 | `TERM_FRAME_MAX_BYTES` | 32_768 | R3 §3.9 |
 | `TERM_RING_BYTES` | 262_144 | JT-03 |

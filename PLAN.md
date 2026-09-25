@@ -142,18 +142,18 @@ Kode proyek baru mulai ditulis setelah kickoff. Setup lingkungan boleh dilakukan
 
 | Waktu | Alief · Core | Umar · Bob | Aarief · App desktop | Imelda · UI & web |
 |---|---|---|---|---|
-| Jum 23:00–Sab 00:30 | **00 Fondasi** di `main` | Kickoff: baca guide 2.0, catat aturan bukti & Bobcoin | **Bob slice C1**: Bob memetakan titik sambung Orca | Kickoff. Kerangka Next.js `radar/packages/web` + deploy kosong ke Cloudflare Pages |
-| Sab 00:30–02:30 | **02 Common + mock** → PR `lane/core-f02` = **kontrak beku** | **01 Spike** | **09a** agent `bob` + ganti appId | **Bob slice I2**: landing page `/` |
+| Jum 23:00–Sab 00:30 | **00 Fondasi** di `main` · **Bob slice A1**: toko-demo | Kickoff: baca guide 2.0, catat aturan bukti & Bobcoin | **Bob slice C1**: Bob memetakan titik sambung Orca | Kickoff. Kerangka Next.js `radar/packages/web` + deploy kosong ke Cloudflare Pages |
+| Sab 00:30–02:30 | **02 Common + mock** → PR `lane/core-f02` = **kontrak beku** | **01 Spike** · **Bob slice B1**: hook payload logger | **09a** agent `bob` + ganti appId | **Bob slice I2**: landing page `/` |
 | Sab 02:30–04:00 | 03 Server (Worker + DO) mulai; 04:00–04:30 jendela kontrak (hasil spike) | 01 → **GATE 1 (04:00)** | 09b koneksi Live Collab melawan mock | polish landing, draf naskah video |
 | Sab 04:00–09:00 | 03 (s.d. 06:30) → 04 Sync agent (06:30–09:00), PR sebelum tidur | Tidur | Tidur | Tidur |
-| Sab 09:00–16:00 | Tidur 09–14 → 05 Kunci/task/proposal (14:00–17:30) | **07** Kit coder (**di Bob IDE**) | **09c** **Bob slice C3** komponen `@radar/ui` + views, lalu pasang di app | **Bob slice I1**: pemutar replay + `/demo` dengan data fixture (memakai komponen Aarief) |
+| Sab 09:00–16:00 | Tidur 09–14 → 05 Kunci/task/proposal (14:00–17:30) · **Bob slice A2**: `checkWrite()` | **07** Kit coder (**di Bob IDE**, **Bob slice B2+B3**) | **09c** **Bob slice C3** komponen `@radar/ui` + views, lalu pasang di app | **Bob slice I1**: pemutar replay + `/demo` dengan data fixture (memakai komponen Aarief) |
 | **Sab 16:00** | **Sinkron 1:** semua lane merge ke `main`, uji melawan Worker staging | | | |
-| Sab 16:00–21:00 | 05 → 06 Git Data API + diff (17:30–21:00) | **08** `pm-lead` (**di Bob IDE**) | **11a** Watching Bob (timeline aktivitas) | `/demo`: panel Bob inside, `export-replay.ts`, halaman `/gallery` |
+| Sab 16:00–21:00 | 05 → 06 Git Data API + diff (17:30–21:00) · **Bob slice A3+A4**: commit format + `/review` locks.ts | **08** `pm-lead` (**di Bob IDE**, **Bob slice B4**: radar-mcp) | **11a** Watching Bob (timeline aktivitas) | `/demo`: panel Bob inside, `export-replay.ts`, halaman `/gallery` |
 | **Sab 21:00–23:00** | **10 Integrasi E2E** di `main` → **Milestone 23:00** di 4 laptop | | | |
-| Sab 23:00–Min 04:00 | Perbaikan E2E, tidur bergilir | Tidur 23:30–04:30 | **11b** `.dmg`, tidur 01:00–06:00 | naskah video + storyboard, tidur 00:00–05:00 |
+| Sab 23:00–Min 04:00 | Perbaikan E2E, tidur bergilir | Tidur 23:30–04:30 | **11b** `.dmg`, tidur 01:00–06:00 | naskah video + storyboard · **Bob slice I3**: draf Long Description dari PRD (dipindah lebih awal, lihat §7 — jangan tunggu Min 11:00), tidur 00:00–05:00 |
 | Min 04:00–11:00 | **12** Hardening | **13** Eksperimen, cek `bob_sessions/` | 11c polish + ketik tamu (bonus) | rekam footage 09:00, replay dari rekaman nyata |
 | **Min 11:00** | **GATE 2: feature freeze** | | | |
-| Min 11:00–19:00 | 14: README juri, gitleaks | 14: `BOB_DEVELOPMENT.md`, Bob Usage Statement | 14: rilis `.dmg`, uji pasang | 14: **video, deck, cover, Long Description** |
+| Min 11:00–19:00 | 14: README juri, gitleaks | 14: `BOB_DEVELOPMENT.md`, Bob Usage Statement | 14: rilis `.dmg`, uji pasang | 14: **video, deck, cover**, poles draf Long Description (I3) jadi final |
 | Min 19:00–21:00 | **Submit** (Imelda isi form) | | | |
 | Min 21:00–23:00 | Buffer: cek incognito, link, video, tidak ada secret | | | |
 
@@ -213,6 +213,16 @@ Masalah yang dihindari: squash merge membuat commit baru di `main`, sehingga PR 
 
 ## 7. Bukti IBM Bob (wajib juri) & anggaran Bobcoin
 
+**Strategi 3 tingkat — Bob IDE dipakai berat di awal-tengah, bukan tersebar sampai Minggu malam:**
+
+| Tingkat | Kapan | Isi | Anggaran/akun |
+|---|---|---|---|
+| **1. Bob slice (build)** | Jum 23:00 → Sab 23:00 (±24 jam pertama, lihat §5.2) | 4 slice/orang (3 buat Imelda), prompt pendek & spesifik file, mode Ask/Plan buat eksplorasi | ±20, dipakai 10–18 |
+| **2. Eksperimen A/B (fase 13)** | Min 04:00–11:00 | 6 task real di `toko-demo`, dipakai **akun dengan sisa Bobcoin paling banyak** (bukan sembarang akun), dikurangi ke 4 task kalau mepet | tidak boleh menyisakan < 12 di akun manapun |
+| **3. Gladi + rekam demo (fase 14)** | Min 09:00–12:00 | 2 take penuh, ±3–4 Bobcoin/take/akun | ±12 (cadangan) |
+
+Kenapa: sisa Bobcoin (habis dipakai) di jam-jam terakhir sebelum submit paling berbahaya — kalau kehabisan pas rekam demo atau pas eksperimen, itu dua hal yang **tidak bisa diulang tanpa akun tambahan**. Bob slice (tingkat 1) fleksibel — kalau meleset jadwal, masih ada waktu — makanya semuanya dipadatkan di paruh pertama (termasuk I3 yang dipindah ke Sab 23:00, lihat catatan di bawah). Setelah Sab 23:00, **jangan buka Bob IDE lagi kecuali buat tingkat 2 dan 3** — sisa waktu dipakai murni Claude Code + ECC di luar Bob IDE.
+
 Aturan (guide resmi 2.0): **setiap anggota** mengunggah **screenshot ringkasan task session Bob IDE** untuk **semua task terkait submission** ke folder `bob_sessions`, format PNG, nama berisi nama tim + nomor task + deskripsi (contoh resmi `teamalpha_task01_login_flow_summary.png`). Detail ada di [`plan/ref/R7-bukti-bob.md`](plan/ref/R7-bukti-bob.md).
 
 **Nama file kita:** `bob_sessions/uaai_<nama>_task<NN>_<slug>_summary.png`, misalnya `uaai_aarief_task01_orca_onboarding_summary.png`.
@@ -251,9 +261,11 @@ Opsi otomatis penuh (dicoba Umar di spike, poin 16): Bob IDE dibuka dengan `--re
 | I2 | Imelda | Landing page `/` (Application URL) | Code | 3 |
 | I3 | Imelda | Draf Long Description + outline deck dari PRD (**document understanding** Bob: baca `PRD.md`, hasilkan `.docx`/HTML) | Ask/Code | 3 |
 
-Setiap orang minimal 3 slice (syarat `evidence:check`).
+Setiap orang minimal 3 slice (syarat `evidence:check`). **Total per orang (jadwal §5.2):** Alief 4 slice / ±12 Bobcoin (A1 Jum 23:00, A2 Sab 09:00, A3+A4 Sab 16:00) · Umar 4 slice / ±18 Bobcoin (B1 Sab 00:30, B2+B3 Sab 09:00, B4 Sab 16:00 — lane terberat, wajar karena Umar pemakai Bob paling banyak) · Aarief 4 slice / ±12 Bobcoin (C1 Jum 23:00, C2+C4 fase 09/11, C3 Sab 09:00) · Imelda 3 slice / ±10 Bobcoin (I2 Sab 00:30, I1 Sab 09:00, I3 **dipindah ke Sab 23:00–Min 04:00**, bukan Min 11:00–19:00).
 
-**Anggaran per akun (40):** build slices ±20 · gladi + rekam demo ±12 · cadangan 8. Eksperimen A/B (fase 13) dijalankan dengan akun yang masih paling banyak sisa. Kalau kurang, jumlah putaran dikurangi dan hal itu **dilaporkan jujur**.
+**Kenapa I3 dipindah lebih awal:** jadwal semula menaruh I3 (satu-satunya slice ke-3 Imelda, syarat minimum `evidence:check`) di Min 11:00–19:00 — jam terakhir sebelum submit (19:00–21:00), tanpa slack sama sekali. PRD sudah beku sejak awal, jadi I3 tidak punya dependensi ke pekerjaan lane lain dan aman dikerjakan Sab malam bareng nulis naskah video. Kalau Bob IDE bermasalah / Imelda kehabisan waktu Minggu sore, ini satu-satunya lane yang bisa gagal `evidence:check` di menit terakhir — memindahkannya menghilangkan risiko itu. Fase 14 tinggal memoles draf jadi versi final, bukan membuat dari nol.
+
+**Anggaran per akun (40):** build slices ±20 (dipakai: 10–18) · gladi + rekam demo ±12 (fase 14, 2 take × 3–4 Bobcoin) · cadangan 8. Eksperimen A/B (fase 13) dijalankan dengan akun yang masih paling banyak sisa. Kalau kurang, jumlah putaran dikurangi dan hal itu **dilaporkan jujur**.
 
 ---
 
@@ -274,9 +286,9 @@ Di dalam app: **Settings → Live Collab → tempel kode undangan**. App lalu me
 
 - [ ] Semua P0 PRD v0.3 punya test hijau atau bukti manual di `plan/log/`.
 - [ ] Alur demo penuh jalan di 3 laptop: rencana → live → blokir → keputusan → review → commit GitHub, **ditambah tonton Bob rekan (aktivitas Bob IDE)**.
-- [ ] `IBM Bob Live Collab.dmg` terunggah di Releases dan terpasang di 3 Mac.
+- [ ] `IBM Bob Live Collab.dmg` terunggah di Releases dan terpasang di 4 Mac.
 - [ ] Replay `/demo` jalan tanpa login dan tanpa API key.
-- [ ] `bob_sessions/` berisi screenshot ringkasan + ekspor md dari **ketiga** anggota. `evidence:check` hijau.
+- [ ] `bob_sessions/` berisi screenshot ringkasan + ekspor md dari **keempat** anggota. `evidence:check` hijau.
 - [ ] Video MP4 **≤ 3 menit** (≥ 90 detik solusi berjalan, narasi, pemakaian Bob jelas), deck PDF, cover 16:9, gitleaks bersih, repo publik.
 - [ ] **Long Description (Problem & Solution) ≤ 500 kata** dan **IBM Bob Usage Statement ≤ 500 kata** di `radar/docs/SUBMISSION.md`.
 

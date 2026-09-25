@@ -63,7 +63,7 @@
 12. GitHub Release `v0.3.0` (`gh release create`): `.dmg`, `radar-cli.tgz`, catatan pasang (System Settings → Privacy & Security → **Open Anyway**; sejak macOS 15 Sequoia klik kanan → Open tidak lagi melewati Gatekeeper; alternatif `xattr -dr com.apple.quarantine "/Applications/IBM Bob Live Collab.app"`). Uji di Mac kedua: unduh `.dmg` lewat browser (supaya dapat atribut quarantine), pasang, buka, catat pesan Gatekeeper yang muncul.
 13. Uji pasang di **Mac teman** dari nol: unduh → pasang → Settings → Connect → tersinkron. Catat waktunya (metrik "< 3 menit").
 
-### D. [Imelda] Landing + replay web (P0) · Bob slice **I1** pemutar replay + `/demo`, **I2** landing
+### D. [Imelda] Landing + replay web (P0) · Bob slice **I1** pemutar replay + `/demo`, **I2** landing, **I3** draf Long Description
 
 Imelda memakai komponen `@radar/ui` buatan Aarief (fase 09 langkah 6). Sebelum komponennya siap, pakai data fixture dan placeholder sederhana. Tambahkan juga halaman `/gallery` yang menampilkan semua komponen untuk pengecekan visual.
 
@@ -73,6 +73,8 @@ Imelda memakai komponen `@radar/ui` buatan Aarief (fase 09 langkah 6). Sebelum k
 17. Statis penuh: `next.config` `output: 'export'` (hasil di `packages/web/out/`, dideploy ke Cloudflare Pages), tanpa panggilan jaringan selain origin. Playwright `e2e/demo.spec.ts` (skill `e2e-testing`): autoplay jalan, near-miss muncul ≤ 30 s di 8×, klik event → Bob inside, dan tidak ada request ke domain lain.
 18. **Landing `/`** (UI-09, gaya warm paper: DESIGN §5.11 + `UI Inspo & Design/landing-style/README.md`, ±45 menit): hero (judul, tagline, GIF near-miss), tombol utama **Watch the live replay** → `/demo`, tombol **Download for macOS** → `.dmg` di Release terbaru (URL dari `meta.json`), 3 langkah pasang (termasuk Privacy & Security → Open Anyway), dan link Repo · bob_sessions · Video · Deck. Tambahkan kalimat "Community hackathon project, not an official IBM product · built on Orca (MIT)". Statis, tanpa login. Setelah jadi: screenshot Playwright (desktop 1440 + mobile 390) lalu jalankan skill `better-interface`. Perbaiki temuan HIGH.
 19. Deploy Cloudflare Pages (`pnpm -C radar deploy:web`). Buka `/` dan `/demo` dari incognito dan ponsel (tab A/MC/B).
+
+19b. **Bob slice I3** (Sab 23:00–Min 04:00, bareng naskah video — **kerjakan malam ini, jangan tunda ke fase 14**, ±3 Bobcoin). PRD sudah beku, jadi tidak perlu menunggu lane lain. Prompt: "Baca `PRD.md` (khususnya §1–§3, §18) dan `plan/ref/R7-bukti-bob.md` §6, lalu tulis draf **Long Description (Problem & Solution Statement)** ≤ 500 kata: masalah + angka/sumber, solusi, target user, cara interaksi, kenapa kreatif/unik (tabel pembanding singkat), cara mengatasi masalah secara baru. Simpan sebagai `radar/docs/deck/long-description.draft.md`." Bukti: `03-long-description-draft`. Draf ini dipoles manual jadi final di fase 14 langkah 8 (`SUBMISSION.md`), bukan ditulis ulang dari nol.
 
 ### E. Bob slice C4 — script bukti (kapan saja di fase ini, ±2 Bobcoin)
 

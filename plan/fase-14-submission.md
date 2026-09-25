@@ -2,7 +2,7 @@
 
 | Field | Nilai |
 |---|---|
-| Jalur | Semua. **Lane Alief:** README juri, keamanan, repo publik · **Lane Umar:** `BOB_DEVELOPMENT.md`, `bob_sessions/`, IBM Bob Usage Statement · **Aarief:** rilis `.dmg` & uji pasang · **Imelda:** video, deck, cover, Long Description (Bob slice I3), form |
+| Jalur | Semua. **Lane Alief:** README juri, keamanan, repo publik · **Lane Umar:** `BOB_DEVELOPMENT.md`, `bob_sessions/`, IBM Bob Usage Statement · **Aarief:** rilis `.dmg` & uji pasang · **Imelda:** video, deck, cover, poles draf Long Description (Bob slice I3 sudah dibuat Sab malam, fase 11) jadi final, form |
 | Slot WITA | Min 27 Sep 11:00 – 23:00 (submit 19:00–21:00, buffer 21:00–23:00). Batas lablab: **Min 27 Sep 15:00 UTC = 23:00 WITA**. |
 | Estimasi | 8 jam |
 | Prasyarat | 11, 12, 13 (GATE 2 lewat) |
@@ -37,8 +37,8 @@ Cek kata: `wc -w` pada kedua statement harus ≤ 500. Simpan hasilnya di log.
 
 ### A. Rekaman final (Min 09:00–12:00, pagi saat tim masih segar)
 
-1. **Gladi & rekam** (LANGKAH MANUAL): reset server (`RECORD_TERMINALS=true`) dan toko-demo, 3 Mac dengan app `.dmg`. A memakai Bob IDE, B memakai Bob Shell di app, C memakai Mission Control + `pm-lead`. Rekam layar per Mac (QuickTime/OBS, 1080p) + audio narasi terpisah. 2 take penuh mengikuti PRD §15. Pantau Bobcoin: satu take ≈ 3–4 Bobcoin per akun.
-2. Setelah take terbaik: `pnpm -C radar admin export --with-terminals > events.live-final.json`. Ekspor sesi Bob dari ketiga Mac (R7). Jalankan ulang `export-replay.ts` lalu deploy replay.
+1. **Gladi & rekam** (LANGKAH MANUAL): reset server (`RECORD_TERMINALS=true`) dan toko-demo, 4 Mac dengan app `.dmg`. A memakai Bob IDE, B memakai Bob Shell di app, C memakai Mission Control + `pm-lead` (D peran demo TODO — tim tentukan sebelum gladi). Rekam layar per Mac (QuickTime/OBS, 1080p) + audio narasi terpisah. 2 take penuh mengikuti PRD §15. Pantau Bobcoin: satu take ≈ 3–4 Bobcoin per akun.
+2. Setelah take terbaik: `pnpm -C radar admin export --with-terminals > events.live-final.json`. Ekspor sesi Bob dari keempat Mac (R7). Jalankan ulang `export-replay.ts` lalu deploy replay.
 3. **Rotasi token** yang pernah tampil di layar (`pnpm -C radar admin token --rotate`).
 
 ### B. Video ≤ 3 menit (Imelda, dibantu Aarief untuk footage app)
