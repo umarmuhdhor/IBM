@@ -328,8 +328,7 @@ const TUI_AGENT_CONFIG_SOURCE: Record<TuiAgent, TuiAgentConfigSource> = {
   },
   bob: {
     detectCmd: 'bob',
-    // BELUM DIVERIFIKASI: perilaku Bob Shell terhadap injeksi prompt belum diketahui;
-    // gunakan mode konservatif (stdin-after-start) untuk menghindari injeksi otomatis.
+    // UNVERIFIED: Bob Shell prompt handling needs a live check. Avoid passing prompts as CLI arguments.
     promptInjectionMode: 'stdin-after-start'
   }
 }
