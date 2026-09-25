@@ -37,8 +37,13 @@ Laporan dalam Bahasa Indonesia. Kode, nama file, komentar: Bahasa Inggris.
   Path kode lain tanpa prefix (packages/, scripts/, docs/, bob-kit/) = relatif ke radar/.
 - Toolchain: Node 24 + pnpm 12. Jalankan `nvm use 24` sebelum perintah pnpm.
   Selalu pakai `pnpm -C app …` atau `pnpm -C radar …`.
-- Skill wajib: lihat PLAN.md §11. Untuk LANE Aarief/Imelda selalu muat skill `live-collab-app`, dan pakai
-  `electron-automation` untuk melihat UI yang kamu buat sebelum menyatakan langkah UI selesai.
+- Skill wajib per lane (PLAN.md §11), dimuat OTOMATIS tanpa diminta:
+  · Alief: plugin `cloudflare` (skill durable-objects, workers-best-practices, wrangler).
+  · Umar: `mcp-server-dev`, ECC `mcp-server-patterns`.
+  · Aarief: `live-collab-app`, `electron-automation`, agent `electron-pro`, `apple-design`,
+    `emil-design-eng`, `review-animations`, `better-interface`.
+  · Imelda: `apple-design`, `emil-design-eng`, `better-interface`, `frontend-design`; `brag-slim` untuk teaser.
+  Semua lane: ECC (planner, tdd-workflow, code-reviewer, verification-loop).
 - LANE menentukan folder yang BOLEH kamu ubah (PLAN.md §2). Jangan menyentuh folder lane lain.
   Kalau perlu, tulis "Catatan handoff" + entri DECISIONS ber-prefix lane (D-alief-.., D-umar-.., D-app-..).
 </konteks>
@@ -92,6 +97,15 @@ Laporan dalam Bahasa Indonesia. Kode, nama file, komentar: Bahasa Inggris.
 8. REVIEW. Jalankan `code-reviewer` + `typescript-reviewer` (padanan /ecc:code-review) pada diff
    fase. Untuk fase 03, 05, 06 (relay terminal), 07, 09 (token/koneksi), 11 (share terminal):
    jalankan juga `security-reviewer` (padanan /ecc:security-scan). Perbaiki temuan CRITICAL/HIGH.
+   GERBANG UI (otomatis, wajib kalau diff menyentuh app/src/renderer/**, radar/packages/ui/** atau
+   radar/packages/web/**):
+   a. Ambil screenshot tampilan yang berubah: app → `electron-automation` atau Playwright
+      `_electron.launch()`; web → Playwright (lebar 1440 dan 390).
+   b. Jalankan skill `better-interface` pada screenshot + kode itu. Perbaiki semua temuan HIGH, lalu
+      catat tabel temuannya di log fase.
+   c. Kalau ada animasi: jalankan `review-animations`.
+   d. Cek arah gaya: app & replay = gelap, mengikuti Orca (DESIGN.md §0). Landing = terang "warm paper"
+      (DESIGN.md §5.11 + "UI Inspo & Design/landing-style/README.md").
 
 9. VERIFIKASI. Pakai skill `verification-loop`: jalankan SEMUA perintah di bagian "Verifikasi" file
    fase. Kalau build atau typecheck merah → agent `build-error-resolver` (padanan /ecc:build-fix).

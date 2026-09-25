@@ -259,7 +259,7 @@ Repo memakai file keamanan dari [ibm-hackathon-template](https://github.com/wats
 
 ## 11. Skill & agent wajib untuk setiap orang
 
-Supaya AI keempat orang bekerja dengan standar yang sama. **Yang ada di `.claude/` repo otomatis terbawa saat clone**, jadi tidak perlu dipasang. Sisanya dipasang sekali per orang sebelum kickoff.
+Supaya AI keempat orang bekerja dengan standar yang sama. **Semua aturan di bagian ini juga ada di `CLAUDE.md` root (dimuat otomatis oleh Claude Code) dan di langkah REVIEW `plan/PROMPT.md`, jadi AI menjalankannya tanpa perlu diingatkan.** **Yang ada di `.claude/` repo otomatis terbawa saat clone**, jadi tidak perlu dipasang. Sisanya dipasang sekali per orang sebelum kickoff.
 
 ### 11.1 Semua orang
 
