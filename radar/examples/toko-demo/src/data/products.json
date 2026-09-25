@@ -1,0 +1,10 @@
+[
+  { "id": 1, "name": "Wireless Mouse", "price": 125000, "category": "Electronics" },
+  { "id": 2, "name": "Mechanical Keyboard", "price": 450000, "category": "Electronics" },
+  { "id": 3, "name": "USB-C Hub", "price": 175000, "category": "Electronics" },
+  { "id": 4, "name": "Desk Lamp", "price": 89000, "category": "Home Office" },
+  { "id": 5, "name": "Notebook A5", "price": 35000, "category": "Stationery" },
+  { "id": 6, "name": "Ballpoint Pen Set", "price": 28000, "category": "Stationery" },
+  { "id": 7, "name": "Phone Stand", "price": 62000, "category": "Accessories" },
+  { "id": 8, "name": "Cable Organiser", "price": 45000, "category": "Accessories" }
+]

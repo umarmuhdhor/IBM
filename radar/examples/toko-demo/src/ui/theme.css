@@ -1,0 +1,24 @@
+/* Light theme CSS variables.
+   Experiment task 2 (dark mode) will add a [data-theme="dark"] block here.
+   ------------------------------------------------------------------ */
+:root {
+  --bg: #ffffff;
+  --fg: #1a1a1a;
+  --accent: #3b82f6;
+  --surface: #f3f4f6;
+  --border: #e5e7eb;
+  --muted: #6b7280;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
+  background-color: var(--bg);
+  color: var(--fg);
+  font-size: 15px;
+  line-height: 1.6;
+}
