@@ -50,7 +50,9 @@
   "compilerOptions": {
     "paths": {
       "@renderer/*": ["../src/renderer/src/*"],
-      "@/*": ["../src/renderer/src/*"]
+      "@/*": ["../src/renderer/src/*"],
+      "@radar/common": ["../../radar/packages/common/src/index.ts"],
+      "@radar/ui": ["../../radar/packages/ui/src/index.ts"]
     }
   }
 }

@@ -305,8 +305,11 @@ export const electronViteConfig: UserConfig = {
     resolve: {
       alias: {
         '@renderer': resolve('src/renderer/src'),
-        '@': resolve('src/renderer/src')
-      }
+        '@': resolve('src/renderer/src'),
+        '@radar/common': resolve('../radar/packages/common/src'),
+        '@radar/ui': resolve('../radar/packages/ui/src')
+      },
+      dedupe: ['react', 'react-dom', 'lucide-react']
     },
     plugins: [react(), tailwindcss(), createPdfjsViewerAssetsPlugin()],
     worker: {
