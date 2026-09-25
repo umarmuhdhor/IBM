@@ -15,7 +15,7 @@
 | 6 | [`plan/`](plan/README.md) | Detail teknis per fase + satu prompt eksekusi (`plan/PROMPT.md`) + kontrak `plan/ref/` | AI masing-masing lane |
 | – | [`UI Inspo & Design/`](UI%20Inspo%20%26%20Design) | Inspirasi (Orca, Amoeba, Mosaic) + mockup Stitch. **Hanya pedoman**, gaya app mengikuti Orca (DESIGN.md §0). | Aarief |
 | – | `app/` | Kode app desktop = Orca (stablyai/orca@bf40d35, MIT). Node 24 + pnpm 12: `pnpm -C app install && pnpm -C app dev` | Lane Aarief/Imelda |
-| – | `.claude/` | Skill & agent bersama: `live-collab-app`, `electron-automation`, `electron-pro` (PLAN.md §11) | semua |
+| – | `.claude/` | Skill & agent bersama: `live-collab-app`, `electron-automation`, `electron-pro`, skill UI (`apple-design`, `better-interface` + `better-*`, `emil-design-eng`, `review-animations`), `brag-slim` (PLAN.md §11) | semua |
 | – | [`arsip/`](arsip/README.md) | Dokumen lama (v0.1, v0.2, riset ide, roast). Hanya referensi. | – |
 
 ## Mulai kerja dalam 3 langkah (per orang)

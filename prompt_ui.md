@@ -180,16 +180,27 @@ Right: the Mission Control screenshot slightly angled (5 degrees), with the mage
 "Built on IBM Bob · hooks · custom modes · MCP".
 ```
 
-## 12 · Landing web (Application URL)
+## 12 · Landing web (Application URL), gaya warm paper
+
+> Prompt ini **tidak** memakai blok gaya global (yang gelap). Landing sengaja terang (DESIGN.md §5.11).
 
 ```text
-Web landing page, 16:9, dark background #0E0E10 with a subtle dotted halftone pattern. Left column: large title
-"IBM Bob Live Collab" in IBM Plex Sans semibold, subtitle "Multiplayer IBM Bob. Every teammate's own Bob, one live workspace.",
-primary IBM-blue button "Watch the live replay", secondary outline button "Download for macOS" with tiny caption
-"unsigned · right-click → Open", a row of small text links "Repo · bob_sessions · Video · Deck".
-Right column: a framed screenshot-like preview of the near-miss moment: a terminal line in red
-"hook · PreToolUse · lock_guard → blocked" and a magenta-bordered card "[blocked] Budi needs checkout.ts — Approve".
-Footer small muted text: "Community hackathon project, not an official IBM product · built on Orca (MIT)". Minimal, premium.
+Web landing page, 16:10, LIGHT theme in a "warm paper notebook" style. Page canvas warm off-white #f6f5f4,
+white cards with 1px hairline border rgba(0,0,0,0.08), 12px radius, no shadows on cards, flat colors, no gradients.
+Sticky top bar: text wordmark "IBM Bob Live Collab" left, muted links "Repo  bob_sessions  Video  Deck",
+small blue button "Watch replay" right.
+Centered hero: huge Inter headline 72px, tight negative letter-spacing, black:
+"Your team's Bobs, working together." with the word "working" wrapped in a soft peach pill (#f6d5b8, fully rounded).
+Serif subhead (Source Serif) in warm gray #615d59: "Multiplayer for IBM Bob. Every teammate's own Bob, one live workspace."
+Button row: filled blue #0075de "Watch the live replay" and ghost button (bg #e6f3fe, blue text) "Download for macOS"
+with tiny caption "unsigned · right-click → Open".
+Below: a large DARK product screenshot of a developer app (Mission Control with a magenta "Needs you" card)
+sitting on the light canvas with a soft shadow 0 4px 12px rgba(0,0,0,.1).
+Next row: three white feature cards: "Live sync", "One file, one Bob", "PM agent proposes, human approves".
+Then a marigold #ffb110 full-width card with a terminal snippet "hook · PreToolUse · lock_guard → blocked".
+Then a deep navy #02093a card with white text "Built on IBM Bob primitives: custom modes · hooks · MCP".
+Footer small text: "Community hackathon project, not an official IBM product · built on Orca (MIT)".
+Calm, editorial, generous whitespace, crisp legible text, exact spelling. No logos of real companies, no illustrated mascots.
 ```
 
 ## 11 · Ikon app

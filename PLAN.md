@@ -302,12 +302,30 @@ Aarief memakai semua baris di bawah. Imelda minimal: ECC React/frontend, `fronte
 | ECC `tdd-workflow` (hook diuji dengan stdin fixture) | hook `lock_guard`, `brief` |
 | **IBM Bob sendiri** (Bob IDE + Bob Shell) | Bob slice B1–B4. Lane Umar adalah pemakai Bob paling berat. |
 
-### 11.5 Cek sebelum kickoff (setiap orang)
+### 11.5 Skill UI, motion & video (sudah di `.claude/skills/` repo, otomatis terbawa)
+
+Dipasang dengan `npx skills add … -a claude-code --copy` (daftar di `skills-lock.json`). Semua berlisensi MIT.
+
+| Skill | Sumber | Dipakai untuk | Siapa |
+|---|---|---|---|
+| `apple-design` | emilkowalski/skills | prinsip interaksi & motion ala Apple: spring, interruptible, respons cepat | Aarief, Imelda |
+| `emil-design-eng` | emilkowalski/skills | detail design engineering (polish komponen, micro-interaction) | Aarief, Imelda |
+| `review-animations` | emilkowalski/skills | review animasi sebelum PR UI | Aarief, Imelda |
+| `better-interface` | jakubkrehel/skills | **review UI menyeluruh** (a11y, layout, tulisan, tipografi, warna, polish) → satu tabel temuan. **Wajib dijalankan sebelum PR UI.** | Aarief, Imelda |
+| `better-accessibility`, `better-colors`, `better-layout`, `better-typography`, `better-ui`, `better-writing` | jakubkrehel/skills | skill domain yang dipanggil `better-interface`, bisa juga dipakai sendiri | Aarief, Imelda |
+| `brag-slim` | latent-spaces/brag | video launch pendek otomatis dari repo. Dipakai sebagai **teaser 10–15 detik** di awal video submission atau untuk share di X/LinkedIn, **bukan** pengganti demo 3 menit | Imelda |
+
+**Playwright** ([playwright.dev](https://playwright.dev/)) dipakai sebagai alat test dan screenshot:
+- **Aarief:** smoke test app Electron dengan `_electron.launch()` (Orca sudah memakai Playwright e2e), plus screenshot panel Live Collab untuk dicek `better-interface`.
+- **Imelda:** e2e landing + `/demo` (fase 11), plus screenshot untuk cover dan deck.
+- ECC `e2e-testing` / agent `e2e-runner` memakai Playwright juga.
+
+### 11.6 Cek sebelum kickoff (setiap orang)
 
 Di Claude Code: `/plugin list`, lalu pastikan ada `ecc`, `typescript-lsp`, serta `frontend-design` (Lane Aarief/Imelda) atau `mcp-server-dev` (Lane Umar). Di terminal:
 
 ```bash
-ls .claude/skills .claude/agents          # dari repo: electron-automation, live-collab-app, electron-pro
+ls .claude/skills .claude/agents          # dari repo: live-collab-app, electron-automation, electron-pro, apple-design, better-*, brag-slim, …
 node -v    # v24.x
 pnpm -v    # 12.x
 bob --version

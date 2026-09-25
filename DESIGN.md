@@ -9,7 +9,7 @@
 ## 0. Urutan prioritas (baca dulu)
 
 1. **Orca dulu.** Di dalam app (`app/`), pakai komponen, token, spasi, ikon, dan pola layout Orca apa adanya: shadcn/Radix, Tailwind theme Orca, lucide, sidebar, dan panel Agent Dashboard. Panel Live Collab harus terasa seperti fitur bawaan Orca, bukan aplikasi tempelan.
-2. **Aksen Live Collab di atasnya.** Hanya ini yang kita tambahkan: warna orang (A/B/C), aksen "Needs you", warna status, `AgentTag`, `LockChip`, dan `BobTrace` (§2–§3). Font IBM Plex dipakai di **web** (landing, replay, cover, deck). Di dalam app, ikuti font Orca.
+2. **Aksen Live Collab di atasnya.** Hanya ini yang kita tambahkan: warna orang (A/B/C), aksen "Needs you", warna status, `AgentTag`, `LockChip`, dan `BobTrace` (§2–§3). Font IBM Plex dipakai di replay, cover, dan deck. Landing memakai gaya warm paper (§5.11). Di dalam app, ikuti font Orca.
 3. **Mockup Stitch** (`UI Inspo & Design/UI Design/stitch_ibm_bob_live_collab_ui/*`) dan gambar Amoeba/Mosaic **hanya pedoman** susunan dan suasana, bukan spesifikasi piksel. Jangan menyalin:
    - angka karangan (mis. "99.4% Safe Handoff", "V2.4", "HD 60FPS", "vs 4.2 min baseline"). Semua angka di UI harus berasal dari data nyata,
    - font serif di render Stitch (itu fallback),
@@ -242,9 +242,18 @@ Langkah di app baru: **Paste invite** → **Choose folder** → checklist live:
 `✓ Bob CLI found (bob 2.x)` · `✓ .bob kit installed (modes: coder)` · `✓ hooks registered (4)` · `✓ radar-mcp reachable` · `✓ synced 42 files` · `✓ you are Budi · coder`.
 Kalau ada item merah, tampilkan satu kalimat perbaikan dan tombol **Retry**.
 
-### 5.11 Landing web (Application URL)
+### 5.11 Landing web (Application URL): gaya "warm paper" ala Notion
 
-Satu layar penuh di atas latar titik halftone. Isinya: judul **IBM Bob Live Collab** dan tagline, GIF near-miss (DESIGN §5.4) di kanan, tombol utama **Watch the live replay** (IBM blue), tombol kedua **Download for macOS** (outline, dengan teks kecil "unsigned · right-click → Open"), baris link Repo · bob_sessions · Video · Deck, dan footer "Community hackathon project, not an official IBM product · built on Orca (MIT)". Alasan: juri menilai tanpa install. Replay adalah cara mereka "memakai" produk.
+Landing sengaja **terang dan hangat**, berbeda dari app yang gelap. Tujuannya supaya juri yang membuka URL langsung merasa ini produk jadi. Screenshot app yang gelap tampil di dalamnya sebagai mockup produk. Spesifikasi lengkap ada di [`UI Inspo & Design/landing-style/README.md`](UI%20Inspo%20%26%20Design/landing-style/README.md) (turunan style reference Refero untuk notion.com).
+
+- Kanvas `#f6f5f4`, kartu putih dengan border 1px `rgba(0,0,0,.08)`, tanpa shadow, radius 12.
+- Satu tombol biru `#0075de` (**Watch the live replay**) dan satu tombol ghost (**Download for macOS**, dengan catatan kecil "unsigned · right-click → Open").
+- Headline 72px dengan tracking negatif dan **pill highlight** di satu kata kerja. Subhead serif (Source Serif 4). Font Inter.
+- Blok aksen marigold untuk GIF near-miss, dan satu "dark island" `#02093a` untuk "Built on IBM Bob primitives".
+- **Jangan** meniru merek Notion: tanpa logo, nama, ilustrasi karakter, atau font proprietary mereka.
+- Footer "Community hackathon project, not an official IBM product · built on Orca (MIT)".
+
+Replay `/demo` tetap gelap seperti app (§5.8), karena menampilkan produk yang sedang berjalan.
 
 ### 5.10 Cover 16:9 / slide 1
 

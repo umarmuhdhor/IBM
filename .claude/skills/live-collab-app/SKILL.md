@@ -33,6 +33,8 @@ npx agent-browser connect 9222 && npx agent-browser screenshot /tmp/lc.png
 Compare screenshots with `DESIGN.md` §5 and the Orca look before calling a UI step done.
 
 ## Useful helpers
+- UI quality gate before every UI PR: screenshot the view, then run the `better-interface` skill; fix HIGH findings. Motion/polish: `apple-design`, `emil-design-eng`, `review-animations`.
+- Playwright can drive the Electron app for smoke tests/screenshots: `_electron.launch({ args: ['.'], cwd: 'app' })` (Orca already has Playwright e2e config under `app/tests`).
 - Agent `electron-pro` (`.claude/agents/`) for main/preload/IPC/security/packaging questions.
 - ECC: `react-patterns`, `react-testing`, `frontend-patterns`, `frontend-a11y`, agents `react-reviewer`, `react-build-resolver`, `typescript-reviewer`.
 - Map of Orca integration points: `radar/docs/ORCA_MAP.md` (produced by Bob slice C1).
