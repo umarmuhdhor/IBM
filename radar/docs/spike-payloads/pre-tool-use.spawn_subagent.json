@@ -1,0 +1,11 @@
+{
+  "session_id": "0123456789abcdef0123456789abcdef",
+  "cwd": "/Users/demo/toko-demo",
+  "hook_event_name": "PreToolUse",
+  "tool_name": "spawn_subagent",
+  "tool_input": {
+    "name": "general",
+    "description": "Add the comment `// hi` as the first line of the file `sandbox/locked.ts`. Insert it at line 1 (before any existing content). Use the insert_content tool to do this."
+  },
+  "tool_use_id": "tooluse_EXAMPLE000000000000000"
+}

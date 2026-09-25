@@ -1,0 +1,10 @@
+{
+  "session_id": "0123456789abcdef0123456789abcdef",
+  "cwd": "/Users/demo/toko-demo",
+  "hook_event_name": "PreToolUse",
+  "tool_name": "mcp__radar-spike__ping",
+  "tool_input": {
+    "note": "halo"
+  },
+  "tool_use_id": "tooluse_EXAMPLE000000000000000"
+}

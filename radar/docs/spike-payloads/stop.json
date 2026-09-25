@@ -1,0 +1,6 @@
+{
+  "session_id": "0123456789abcdef0123456789abcdef",
+  "cwd": "/Users/demo/toko-demo",
+  "hook_event_name": "Stop",
+  "last_assistant_message": "Both files are created and the smoke test passes.\n\n**Output from the test run:**\n```\nSPIKE-MARKER stop 1790353101329-50161\n```\n\n---\n\n**[`hooks/log_payload.js`](hooks/log_payload.js)** — key behaviour:\n- Reads stdin with a 1-second timeout using a `Promise` + `setTimeout` that destroys the stream if it doesn't close in time.\n- Filters `process.env` to only include keys starting with `BOB_`, `HOOK_`, or `CLAUDE_` for the `env` field; all key names (sorted, no values) go into `envKeys`.\n- Output path is `SPIKE_OUT_DIR` env var or `<__dirname>/../out/`; directory is created with `mkdirSync({ recursive: true })`.\n- File name is `<event>-<Date.now()>-<pid>.json`.\n- Always prints `SPIKE-MARKER <event> <timestamp>` and exits 0; write errors go to stderr only.\n\n**[`.bob/custom_modes.yaml`](.bob/custom_modes.yaml)** — three modes:\n| slug | groups | note |\n|---|---|---|\n| `spike-coder` | read, edit, execute, mcp | MCP ping-on-block instruction |\n| `spike-cmd-typo` | read, **command** | intentional invalid group (negative control) |\n| `spike-readonly` | read, mcp | Indonesian customInstructions |"
+}

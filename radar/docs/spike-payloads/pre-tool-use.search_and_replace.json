@@ -1,0 +1,12 @@
+{
+  "session_id": "0123456789abcdef0123456789abcdef",
+  "cwd": "/Users/demo/toko-demo",
+  "hook_event_name": "PreToolUse",
+  "tool_name": "search_and_replace",
+  "tool_input": {
+    "path": "sandbox/a.ts",
+    "search": "add",
+    "replace": "sum"
+  },
+  "tool_use_id": "tooluse_EXAMPLE000000000000000"
+}

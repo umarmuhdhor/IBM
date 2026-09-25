@@ -76,7 +76,14 @@ class Side {
     if (this.appliedByPeer.has(rel)) stats.echoesSent++; // would be an echo if the hash check were missing
     this.lastHash.set(rel, hash);
     this.appliedByPeer.delete(rel);
-    const t0 = rel.startsWith(BENCH_PREFIX) ? JSON.parse(buf.toString()).t0 : Date.now();
+    let t0 = Date.now();
+    if (rel.startsWith(BENCH_PREFIX)) {
+      try {
+        t0 = (JSON.parse(buf.toString()) as { t0: number }).t0;
+      } catch {
+        console.warn(`[${this.name}] bench file ${rel} is not valid JSON; using send time`);
+      }
+    }
     const msg: Msg = { from: this.name, path: rel, content: buf.toString('base64'), hash, t0 };
     this.ws.send(JSON.stringify(msg));
     console.log(`[${this.name}] → ${rel} (${buf.length} B)`);

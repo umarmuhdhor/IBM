@@ -1,0 +1,13 @@
+{
+  "session_id": "0123456789abcdef0123456789abcdef",
+  "cwd": "/Users/demo/toko-demo",
+  "hook_event_name": "PostToolUse",
+  "tool_name": "write_file",
+  "tool_input": {
+    "path": "hooks/log_payload.js",
+    "content": "'use strict';\n\nconst fs = require('fs');\nconst path = require('path');\n\nconst event = process.argv[2] || 'unknown';\ncons…",
+    "line_count": 64
+  },
+  "tool_response": "Created file: hooks/log_payload.js\n\n<result>\n'use strict';\n\nconst fs = require('fs');\nconst path = require('path');\n\n\n...71 lines truncated. You do not need to re-read the file. The complete file was …",
+  "tool_use_id": "tooluse_EXAMPLE000000000000000"
+}

@@ -1,0 +1,11 @@
+{
+  "session_id": "0123456789abcdef0123456789abcdef",
+  "cwd": "/Users/demo/toko-demo",
+  "hook_event_name": "PostToolUse",
+  "tool_name": "execute_command",
+  "tool_input": {
+    "command": "echo '{\"event\":\"Stop\",\"session_id\":\"t\"}' | node hooks/log_payload.js stop"
+  },
+  "tool_response": "SPIKE-MARKER stop 1790353101329-50161",
+  "tool_use_id": "tooluse_EXAMPLE000000000000000"
+}

@@ -1,0 +1,12 @@
+{
+  "session_id": "0123456789abcdef0123456789abcdef",
+  "cwd": "/Users/demo/toko-demo",
+  "hook_event_name": "PreToolUse",
+  "tool_name": "write_file",
+  "tool_input": {
+    "path": ".bob/custom_modes.yaml",
+    "content": "customModes:\n  - slug: spike-coder\n    name: Spike Coder\n    groups:\n      - read\n      - edit\n      - execute\n      - m…",
+    "line_count": 25
+  },
+  "tool_use_id": "tooluse_EXAMPLE000000000000000"
+}

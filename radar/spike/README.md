@@ -14,7 +14,7 @@ pnpm test                         # node:test for block_edit.js and the MCP echo
 |---|---|
 | `.bob/settings.json` | All five hook events → `hooks/log_payload.js <event>`; `PreToolUse` without matcher → `pre-all`; edit tools → `block_edit.js`; `PostToolUse` → `timing.js` too. Every hook has an explicit `timeout`. |
 | `.bob/custom_modes.yaml` | `spike-coder` `[read, edit, execute, mcp]`, `spike-cmd-typo` `[read, command]`, `spike-readonly` `[read, mcp]` (Bob slice B1) |
-| `.bob/mcp.json` | `radar-spike` stdio server, `alwaysAllow: ["ping"]` |
+| `.bob/mcp.json` | `radar-spike` stdio server via `${workspaceFolder}/mcp/echo-server.mjs` (Bob starts stdio servers with cwd `/`), `alwaysAllow: ["ping"]` |
 | `hooks/log_payload.js` | Dumps each payload to `out/<event>-<ts>.json` and prints `SPIKE-MARKER <event> <ts>` on stdout (Bob slice B1) |
 | `hooks/block_edit.js` | Exit 2 + stderr for `*locked.ts`; `--json` and `--sleep N` variants; logs `out/pre-block-*.json` with the path field it found |
 | `hooks/timing.js` | Hook mode: node process lifetime → `out/timing-*.json`. `--bench N`: spawn cost of `block_edit.js` |
@@ -53,3 +53,13 @@ pnpm test                         # node:test for block_edit.js and the MCP echo
 | 20 | (a) "Pakai subagent general untuk menambah `// hi` di sandbox/locked.ts" (b) mode `spike-cmd-typo`: "jalankan `ls`" | (a) `pre-block` record + file unchanged (b) no `execute_command` |
 
 Reset sandbox after each edit test: `git checkout -- sandbox/`.
+
+## Automation (no clicks in Bob IDE)
+
+```bash
+env -i HOME="$HOME" USER="$USER" SHELL=/bin/zsh PATH="/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin" TMPDIR="$TMPDIR" \
+  open -a "IBM Bob" --args --remote-debugging-port=9223 "$PWD"      # clean env: Bob hooks inherit the launcher's env
+node automation/bobrun.mjs --mode "Spike Coder" --prompt "…" [--approve all|none] [--timeout 300]
+node automation/cdp.mjs webview 'return doc.body.innerText.slice(-500)'
+```
+Selectors are listed in `radar/docs/SPIKE_RESULTS.md` (section "Bob IDE automation").

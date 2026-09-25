@@ -1,0 +1,12 @@
+{
+  "session_id": "0123456789abcdef0123456789abcdef",
+  "cwd": "/Users/demo/toko-demo",
+  "hook_event_name": "PreToolUse",
+  "tool_name": "insert_content",
+  "tool_input": {
+    "path": "sandbox/a.ts",
+    "line": 1,
+    "content": "// i\n"
+  },
+  "tool_use_id": "tooluse_EXAMPLE000000000000000"
+}
