@@ -1,0 +1,1 @@
+Tujuan sesi: <tujuan>. Tim: A dan B (coder). Mulai dengan team_status, baca file yang relevan, lalu susun rencana dengan propose_plan. Tidak boleh ada file yang sama di dua task; file bersama masuk queued_files.

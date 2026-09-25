@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "radar": {
+      "command": "node",
+      "args": ["${workspaceFolder}/.bob/radar-mcp.js", "--root", "${workspaceFolder}"],
+      "alwaysAllow": [
+        "team_status",
+        "propose_plan",
+        "list_requests",
+        "propose_decision",
+        "get_task_diff",
+        "propose_review",
+        "notify",
+        "session_report"
+      ]
+    }
+  }
+}

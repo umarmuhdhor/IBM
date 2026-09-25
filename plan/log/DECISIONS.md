@@ -199,3 +199,15 @@ Format:
 - Alternatif yang ditolak: nama `.cjs` (mengubah nama file di spec dan `settings.json`); path MCP relatif (gagal, cwd `/`); membiarkan Bob menolak sendiri (menghilangkan momen blokir dan permintaan otomatis).
 - Dampak: fase 04 (`radar kit install` menyalin `.bob/package.json`), fase 08 (kit PM memakai pola yang sama), fase 10 (uji ulang di `toko-demo`), fase 14 (naskah demo: file rebutan tidak diumumkan di brief B sebelum B mencoba).
 - File ref/ yang diperbarui: – (tidak ada perubahan kontrak).
+
+## D-umar-03 · 26 Sep 2026 01:30 · fase 08 · Kit PM dan tuning main agent
+
+- Keputusan:
+  1. Kit PM `bob-kit/pm/.bob/`: mode `pm-lead` `[read, mcp]`, `mcp.json` sama pola kit coder (`${workspaceFolder}` + `--root`) dengan `alwaysAllow` 8 tool PM, `settings.json` hanya brief (SessionStart + UserPromptSubmit) dan stop. Tidak ada `lock_guard`/`mark_ai_edit` (PM tidak menulis; server menolak update role pm).
+  2. Instruksi `pm-lead` = spec fase 08 + tuning: `setujui_beri_tahu` bila perubahan benar tetapi file milik task lain harus menyesuaikan; `kembalikan` hanya bila task itu sendiri salah; `notify.member`/`owner` selalu ID anggota. Tanpa tuning: 1 dari 4 review memakai nama ("Budi") dan 1 memilih `kembalikan`; sesudah: 3/3 benar.
+  3. `team_status` menampilkan `id` di depan nama anggota (sumber ID untuk `notify`/`ownerId`).
+  4. Respons server di tool PM dijaga dengan default (`?? []`) sampai skema zod `@radar/common` (fase 02) bisa dipakai untuk validasi penuh.
+- Alasan: uji perilaku di Bob IDE 2.2.0 (workspace sintetis `pm-sim`, fake server) dan review `ecc:code-reviewer` + `ecc:typescript-reviewer`.
+- Alternatif yang ditolak: tool `approve` untuk PM (melanggar MA-07); membiarkan `kembalikan` untuk breaking change lintas task (bertentangan dengan adegan demo PRD §15 dan MA-04).
+- Dampak: fase 09 (kartu keputusan menampilkan `reason` panjang), fase 10 (uji di PC C), fase 14 (naskah demo adegan review).
+- File ref/ yang diperbarui: – (tidak ada perubahan kontrak).
