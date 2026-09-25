@@ -321,6 +321,12 @@ export const getAgentCatalog = createLocalizedCatalog((): AgentCatalogEntry[] =>
     cmd: 'openclaw',
     faviconDomain: 'openclaw.ai',
     homepageUrl: 'https://github.com/openclaw/openclaw'
+  },
+  {
+    id: 'bob',
+    label: translate('auto.lib.agent.catalog.bob_label', 'IBM Bob'),
+    cmd: 'bob',
+    homepageUrl: 'https://bob.ibm.com'
   }
 ])
 
@@ -374,6 +380,9 @@ export function AgentIcon({
   }
   if (agent === 'opencode2') {
     return <OpenCodeIcon size={size} />
+  }
+  if (agent === 'bob') {
+    return <AgentLetterIcon letter="B" size={size} />
   }
   const catalogEntry = getAgentCatalog().find((a) => a.id === agent)
   // Why: prefer the favicon bundled at build time so the icon renders without a

@@ -10,6 +10,10 @@ describe('pickTuiAgent', () => {
     expect(pickTuiAgent('codex', ['claude', 'codex'])).toBe('codex')
   })
 
+  it('accepts IBM Bob when it is installed', () => {
+    expect(pickTuiAgent('bob', ['bob'])).toBe('bob')
+  })
+
   it('falls back in desktop catalog order when the preference is absent or stale', () => {
     expect(pickTuiAgent(null, ['cursor', 'codex'])).toBe('codex')
     expect(pickTuiAgent('gemini', ['cursor', 'codex'])).toBe('codex')

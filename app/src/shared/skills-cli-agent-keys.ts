@@ -51,7 +51,9 @@ export const SKILLS_CLI_AGENT_KEY_BY_TUI_AGENT = {
   ante: null,
   // Why: Orca detects trae by `traecli`, an alias only TRAE CN ships.
   trae: 'trae-cn',
-  muse: null
+  muse: null,
+  // Why: IBM Bob is not yet registered in the community skills CLI namespace; map null until confirmed.
+  bob: null
 } satisfies Record<TuiAgent, string | null>
 
 /**
