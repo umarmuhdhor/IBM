@@ -1,5 +1,25 @@
 # R6 — Rekomendasi model AI untuk menjalankan plan
 
+
+## 0. Harness: Claude Code + ECC (v0.3)
+
+Semua fase dijalankan di **Claude Code dengan plugin ECC** (`/plugin install ecc@ecc`). `PROMPT.md` memanggil agent dan skill ECC berikut. Nama bisa berubah antar versi, jadi cocokkan dengan `/plugin list ecc@ecc` di fase 00 dan catat di DECISIONS (D-A00).
+
+| Kebutuhan | ECC (command / agent / skill) | Dipakai di langkah PROMPT |
+|---|---|---|
+| Rencana implementasi | `/ecc:plan` · agent `planner` (fase 03, 05, 09: juga `architect`) | 4 |
+| Test dulu | skill `tdd-workflow` · agent `tdd-guide` | 5 |
+| Review kode | `/ecc:code-review` · agent `code-reviewer`, `typescript-reviewer` | 7b, 8 |
+| Keamanan | `/ecc:security-scan` · agent `security-reviewer` | 8 (fase 03, 05, 06, 07, 09, 11) |
+| Build merah | `/ecc:build-fix` · agent `build-error-resolver` | 9 |
+| Verifikasi | skill `verification-loop` | 9 |
+| E2E UI | skill `e2e-testing` · agent `e2e-runner` | fase 11 (Playwright replay) |
+| Dokumen | agent `doc-updater` | fase 14 |
+| Simpan / lanjut sesi | `/ecc:save-session`, `/ecc:resume-session` | 12 |
+| Eksplorasi codebase besar (Orca) | agent `code-explorer` | fase 09 (sebelum Bob slice C1, hanya untuk verifikasi) |
+
+**Kerja paralel dalam satu lane:** buka worktree kedua (`git worktree add ../lc-<lane>-<topik> -b lane/<x>-<topik>`) dan jalankan sesi Claude Code kedua dengan `FASE` yang sama tetapi dibatasi ke sub-bagian (mis. "fase 11 bagian C: replay web saja"). Jangan menjalankan dua sesi pada file yang sama.
+
 ## 1. Pilihan model
 
 | Tier | Model | ID API | Kekuatan | Kelemahan untuk proyek ini |
@@ -18,12 +38,12 @@
 | 03 Server inti | **Opus 5.5** | high | Sonnet 5 (high) | WebSocket hub, versi file, transaksi SQLite, auth — kesalahan di sini merambat ke semua fase | "Code" (+ "Plan"/"Architect" bila tersedia untuk review desain) |
 | 04 Sync agent | **Opus 5.5** | high | Sonnet 5 (high) | Race watcher ↔ penulisan server, anti-gema, penulisan atomik, lintas OS | "Code" |
 | 05 Kunci/task/proposal | **Opus 5.5** | high | – (jangan diturunkan) | Jantung produk. Tabel keputusan R4 + property test invariant | "Code" |
-| 06 Git + diff | **Opus 5.5** | high | Sonnet 5 (high) | Git worker serial, kegagalan push, analisis importer | "Code" |
+| 06 Git + diff + relay terminal | **Opus 5.5** | high | Sonnet 5 (high) | Git worker serial, kegagalan push, analisis importer, relay `term.*` + ring buffer | Bob slice A3/A4 |
 | 07 Bob coder kit | Sonnet 5 | high | – | Integrasi Bob sesuai hasil spike; banyak detail kecil tapi tidak rumit secara algoritmik. **Jalankan di Bob** untuk bukti | "Code" di Bob (wajib ekspor sesi) |
 | 08 Main agent PM | Sonnet 5 | high | Opus 5.5 untuk menulis deskripsi tool & instruksi mode | Kualitas deskripsi tool menentukan perilaku main agent | "Code" di Bob (wajib ekspor sesi) |
-| 09 Mission Control | Sonnet 5 | medium | – | UI React/Next dari layout PRD §11 | "Code" |
+| 09 App desktop (fork Orca) | Sonnet 5 | high | Opus 5.5 untuk titik sambung Orca (renderer ↔ xterm, alias Vite) | Codebase besar & tooling ketat; perubahan aditif | Bob slice C1–C3 di Bob IDE (Ask/Plan untuk onboarding, Code untuk registrasi agent & komponen) |
 | 10 Integrasi E2E | **Opus 5.5** | xhigh saat debugging | – | Menelusuri bug lintas server/sync/hook/UI dari log & event | "Code" + "Debug" bila tersedia |
-| 11 Replay/diff/coder | Sonnet 5 | medium | – | UI + pemutar event memakai reducer yang sudah ada | "Code" |
+| 11 Tonton terminal, `.dmg`, replay | Sonnet 5 | high | Opus 5.5 bila tap xterm/flow control bermasalah | Streaming terminal + packaging Electron + replay | Bob slice C4 (script bukti) |
 | 12 Hardening P1 | Sonnet 5 | medium | Opus 5.5 untuk SY-07 reconnect | Fitur kecil terpisah; reconnect punya kasus tepi | "Code" |
 | 13 Eksperimen A/B | Sonnet 5 | medium | Haiku 4.5 untuk tabulasi | Script metrik + laporan jujur | "Code"/"Ask" |
 | 14 Submission | Sonnet 5 | medium | Haiku 4.5 untuk checklist, gitleaks, cek link | Menulis README juri, BOB_DEVELOPMENT.md, naskah video, deck | "Ask"/"Code" |
@@ -39,7 +59,7 @@
 
 ## 4. Model di dalam produk (runtime, bukan untuk membangun)
 
-Bob Radar sendiri tidak memanggil LLM langsung. Kecerdasan saat runtime berasal dari **IBM Bob** di setiap PC:
+IBM Bob Live Collab sendiri tidak memanggil LLM langsung. Kecerdasan saat runtime berasal dari **IBM Bob** di setiap PC:
 - Bob coder (mode `coder`) dan main agent (mode `pm-lead`) memakai model yang dikelola Bob.
 - Server Radar, sync agent, hook, dan radar-mcp adalah kode deterministik tanpa API key LLM.
 - Replay mode tidak memanggil model apa pun (PRD UI-05: tanpa API key).

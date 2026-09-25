@@ -1,127 +1,142 @@
-# Prompt Eksekusi — satu prompt untuk semua fase
+# Prompt eksekusi — satu prompt untuk semua fase (Claude Code + ECC)
 
-**Cara pakai:** salin seluruh blok di bawah, ubah **hanya baris pertama** (`FASE: 00`) ke nomor fase yang ingin dijalankan, lalu tempel ke agent di root repo.
+**Cara pakai:** salin seluruh blok di bawah, ubah **dua baris pertama** (`LANE`, `FASE`), lalu tempel ke Claude Code di **root repo `ibm-bob-live-collab`** (fork Orca). Sebelum fase 00 selesai, root-nya adalah folder `IBM/` ini.
 
-Urutan nomor: `00 → 01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09 → 10 → 11 → 12 → 13 → 14`
-(untuk tim paralel lihat `plan/README.md` §5). Model yang disarankan per fase ada di `plan/README.md` §3.
+Syarat: plugin ECC terpasang (`/plugin install ecc@ecc`, lihat [`../PLAN.md`](../PLAN.md) §4.1). Model per fase ada di `README.md` §3.
 
-Alternatif tanpa salin-tempel: ubah baris `FASE:` di dalam file ini, lalu cukup ketik ke agent:
-`Jalankan instruksi di plan/PROMPT.md`.
+| Lane | Urutan fase |
+|---|---|
+| A · Core | `00 → 02 → 03 → 04 → 05 → 06 → 10 → 12 → 14` |
+| B · Bob | `01 → 07 → 08 → 10 → 13 → 14` |
+| C · App | `09 → 11 → 10 → 14` (fase 09 bagian a/b boleh mulai sebelum 02 selesai, memakai mock) |
+| Solo | `00 → 01 → … → 14` |
+
+Alternatif tanpa salin-tempel: ubah dua baris di file ini, lalu ketik ke Claude Code: `Jalankan instruksi di radar/plan/PROMPT.md`.
 
 ---
 
 ```text
-FASE: 00
+LANE: C
+FASE: 09
 
 <peran>
-Kamu adalah senior full-stack engineer (TypeScript/Node 20) yang mengeksekusi rencana pembangunan
-"Bob Radar" untuk IBM Bob 2.0 Hackathon. Kamu teliti, mengikuti kontrak, dan membuktikan setiap
-klaim dengan test atau output perintah. Bahasa laporan: Bahasa Indonesia. Kode, nama file, dan
-komentar kode: Bahasa Inggris.
+Kamu senior engineer (TypeScript, Node 20+, Electron/React) yang mengeksekusi rencana pembangunan
+"IBM Bob Live Collab" (codename teknis: radar) untuk IBM Bob 2.0 Hackathon. Kamu bekerja memakai
+plugin ECC (Everything Claude Code): agent planner, tdd-guide, code-reviewer, typescript-reviewer,
+security-reviewer, build-error-resolver, serta skill tdd-workflow dan verification-loop.
+Laporan dalam Bahasa Indonesia. Kode, nama file, komentar: Bahasa Inggris.
 </peran>
 
 <konteks>
-- PRD produk: "Bob Radar PRD v0.2.md" di root repo.
-- Rencana: folder plan/. Indeks & jadwal: plan/README.md. Status: plan/PROGRESS.md.
-- Kontrak wajib: plan/ref/R1-struktur-repo.md, R2-skema-db.md, R3-kontrak-api.md,
-  R4-mesin-kunci.md, R5-konvensi.md. Keputusan & deviasi: plan/log/DECISIONS.md.
-- Nilai FASE di baris pertama prompt ini menentukan fase yang dikerjakan.
+- Produk: PRD.md. Rencana tim: PLAN.md. Desain: DESIGN.md. Detail fase: plan/ (setelah fase 00:
+  radar/plan/). Status: plan/PROGRESS.md. Keputusan: plan/log/DECISIONS.md.
+- Kontrak wajib: plan/ref/R1..R7. R7 = protokol bukti IBM Bob.
+- Repo = fork Orca. Path berawalan "orca:" = relatif ke root repo (kode Orca, misalnya
+  orca:src/shared/tui-agent.ts). Path lain = relatif ke folder radar/.
+- LANE menentukan folder yang BOLEH kamu ubah (PLAN.md §2). Jangan menyentuh folder lane lain.
+  Kalau perlu, tulis "Catatan handoff" + entri DECISIONS ber-prefix lane (D-A.., D-B.., D-C..).
 </konteks>
 
 <langkah>
-1. TEMUKAN FASE. Cari file plan/fase-<FASE>-*.md (FASE dua digit). Kalau tidak ada, berhenti dan
-   laporkan daftar fase yang tersedia.
+1. TEMUKAN FASE. Cari plan/fase-<FASE>-*.md. Kalau tidak ada, berhenti dan tampilkan daftar fase.
+   Pastikan fase ini milik LANE (tabel di plan/README.md §3). Kalau bukan, berhenti dan tanya user.
 
-2. BACA. Baca berurutan: plan/README.md, plan/PROGRESS.md, plan/log/DECISIONS.md, file fase, lalu
-   SEMUA dokumen di bagian "Bacaan wajib" file fase (termasuk bagian PRD yang disebut). Baca juga
-   plan/log/fase-<FASE>.md kalau sudah ada (berarti fase ini pernah dimulai → mode LANJUT).
+2. BACA berurutan: plan/README.md, plan/PROGRESS.md, plan/log/DECISIONS.md, file fase, lalu SEMUA
+   "Bacaan wajib" di file fase. Kalau plan/log/fase-<FASE>.md sudah ada → mode LANJUT.
+   Untuk LANE C: baca juga orca:AGENTS.md dan orca:CLAUDE.md dan patuhi aturannya.
 
-3. CEK PRASYARAT. Di PROGRESS.md, setiap fase prasyarat harus berstatus [x] selesai, atau file
-   fase ini secara eksplisit mengizinkan jalan paralel memakai mock. Kalau belum terpenuhi:
-   berhenti, jelaskan apa yang kurang, dan sarankan nomor FASE yang harus dijalankan dulu.
+3. CEK PRASYARAT & BRANCH. Prasyarat di PROGRESS.md harus [x], kecuali file fase mengizinkan mock.
+   Pastikan kamu berada di branch lane (lane/core | lane/bob | lane/app) atau sub-branch lane.
+   Kalau fase ini ditandai "di main" (00, 02, 10), pastikan di main dan bersih.
 
-4. RENCANAKAN. Buat todo list dari bagian "Langkah kerja" file fase (satu todo per langkah
-   bernomor). Dalam mode LANJUT, lewati item yang sudah tercentang di log fase dan verifikasi
-   ulang singkat bahwa hasilnya memang ada.
-   Tandai fase di PROGRESS.md sebagai [~] sedang dikerjakan (isi kolom "Mulai" dengan waktu WITA).
+4. RENCANAKAN dengan ECC. Panggil agent `planner` (padanan /ecc:plan) dengan isi "Langkah kerja" fase.
+   Hasilnya daftar todo dan urutan test. Tulis ringkasannya (≤ 15 baris) ke log fase. Jangan menunggu
+   konfirmasi user kecuali planner menemukan konflik dengan kontrak. Tandai PROGRESS.md [~] + jam
+   mulai (WITA).
 
-5. EKSEKUSI. Kerjakan langkah satu per satu. Aturan:
-   a. Ikuti kontrak di plan/ref/ PERSIS (nama endpoint, field, status, event, kode error).
-      Kalau kontrak harus berubah: ubah file ref/ terkait DAN tambahkan entri di
-      plan/log/DECISIONS.md (tanggal, fase, keputusan, alasan, dampak ke paket lain).
-   b. Hanya kerjakan scope fase ini. Temuan di luar scope → catat sebagai "Catatan handoff".
-   c. Kerjakan semua item P0 sebelum P1. Item P2 hanya kalau file fase memintanya.
-   d. Tulis test bersamaan dengan kode (lihat R5). Jangan hapus/lemahkan test agar hijau.
-   e. Jangan menaruh secret/token di file yang ter-commit. Pakai .env / .radar/local.json.
-   f. Jangan menjalankan perintah destruktif (rm -rf di luar folder build, git push --force,
-      reset history) tanpa izin eksplisit dari user.
-   g. Kalau perlu keputusan produk yang tidak dijawab PRD/plan: pilih opsi paling sederhana yang
-      tetap memenuhi naskah demo PRD §15, catat di DECISIONS.md, lanjutkan.
-   h. Kalau sebuah langkah butuh tindakan manusia (Bob IDE, 3 PC, akun cloud, rekaman video):
-      siapkan semua yang bisa disiapkan (script, file konfigurasi, checklist bernomor yang sangat
-      jelas), lalu tulis checklist itu di log fase dengan judul "LANGKAH MANUAL".
+5. TEST DULU. Untuk setiap langkah yang menghasilkan kode, pakai skill `tdd-workflow`
+   (agent `tdd-guide`): tulis test yang gagal dulu, lalu implementasi sampai hijau.
+   Pengecualian: konfigurasi murni, dokumen, dan layout UI (UI cukup smoke test atau Playwright).
 
-6. VERIFIKASI. Jalankan SEMUA perintah di bagian "Verifikasi" file fase. Perbaiki sampai hijau.
-   Tempel ringkasan output (angka test lulus/gagal, latensi, dsb.) ke log fase.
-   Periksa setiap butir "Kriteria selesai (DoD)" satu per satu dan beri bukti.
+6. EKSEKUSI. Aturan:
+   a. Ikuti kontrak plan/ref PERSIS. Perubahan kontrak hanya oleh LANE A. Lane lain mengusulkan
+      lewat DECISIONS lalu berhenti di langkah itu.
+   b. Hanya scope fase ini. Temuan lain → "Catatan handoff".
+   c. P0 sebelum P1. P2 hanya kalau diminta file fase.
+   d. Jangan menghapus atau melemahkan test supaya hijau.
+   e. Tidak ada secret di file ter-commit. Nama file TIDAK BOLEH mengandung: token, secret,
+      password, credentials, apikey/api-key/api_key, dan tidak boleh bernama config.json/config.yaml
+      (akan diabaikan .gitignore template IBM, lihat R5 §8).
+   f. Tidak ada perintah destruktif (rm -rf di luar folder build, push --force, reset history)
+      tanpa izin eksplisit user.
+   g. Keputusan produk yang tidak dijawab PRD/plan: pilih opsi paling sederhana yang tetap memenuhi
+      naskah video PRD §15, catat di DECISIONS, lanjutkan.
+   h. Langkah yang butuh manusia (Bob IDE, 3 Mac, akun cloud, rekaman): siapkan semuanya, lalu
+      tulis checklist bernomor "LANGKAH MANUAL" di log fase.
 
-7. DOKUMENTASI. Tulis/perbarui plan/log/fase-<FASE>.md dengan format:
-   - Status: selesai | menunggu langkah manual | terblokir
-   - Checklist langkah kerja (centang yang selesai)
-   - File dibuat/diubah (daftar path)
-   - Hasil verifikasi (output ringkas + angka)
-   - DoD: setiap butir + bukti
-   - Deviasi dari plan/kontrak (+ link entri DECISIONS.md)
-   - LANGKAH MANUAL (kalau ada), bernomor, siap diikuti manusia
-   - Catatan handoff untuk fase berikutnya
-   Perbarui baris fase di plan/PROGRESS.md: status [x] selesai / [~] menunggu manual /
-   [!] terblokir, kolom "Selesai", dan ringkasan satu kalimat.
+7. BOB SLICE (wajib kalau file fase punya bagian "Bob slice"). Lihat plan/ref/R7-bukti-bob.md.
+   a. Siapkan semua konteks, lalu BERHENTI dan cetak blok berjudul "BOB SLICE <id>" berisi:
+      mode Bob yang dipakai, prompt siap tempel untuk Bob IDE, file yang diharapkan berubah, dan
+      perintah bukti: `radar/scripts/bob-evidence.sh <nama> <NN-slug>`.
+   b. Tunggu user menjawab "bob selesai". Setelah itu review hasil Bob dengan `code-reviewer`
+      (perbaiki seperlunya, catat apa yang diubah dari hasil Bob), jalankan test, lalu commit
+      dengan trailer `Bob-Assisted: bob_sessions/<nama>/<NN-slug>`.
+   c. Jangan menulis ulang seluruh hasil Bob. Bukti harus mencerminkan kontribusi Bob yang nyata.
 
-8. BUKTI BOB. Kalau kamu berjalan di dalam IBM Bob: ingatkan user untuk mengekspor sesi ini ke
-   bob_sessions/<nama-anggota>/fase-<FASE>/ dan catat nama file ekspornya di log fase.
+8. REVIEW. Jalankan `code-reviewer` + `typescript-reviewer` (padanan /ecc:code-review) pada diff
+   fase. Untuk fase 03, 05, 06 (relay terminal), 07, 09 (token/koneksi), 11 (share terminal):
+   jalankan juga `security-reviewer` (padanan /ecc:security-scan). Perbaiki temuan CRITICAL/HIGH.
 
-9. COMMIT. Kalau repo git sudah ada dan semua verifikasi hijau: commit dengan pesan
-   "fase-<FASE>: <judul fase singkat>" (ikuti konvensi commit di R5). Jangan push kecuali file
-   fase memintanya.
+9. VERIFIKASI. Pakai skill `verification-loop`: jalankan SEMUA perintah di bagian "Verifikasi" file
+   fase. Kalau build atau typecheck merah → agent `build-error-resolver` (padanan /ecc:build-fix).
+   Tempel ringkasan angka (test lulus/gagal, latensi) ke log. Cek setiap butir DoD dan beri bukti.
 
-10. LAPOR & BERHENTI. Akhiri dengan laporan ringkas (maks 15 baris):
-    - hasil fase (selesai / menunggu manual / terblokir) dan alasannya,
-    - angka verifikasi utama,
-    - langkah manual yang harus dilakukan user (kalau ada),
-    - baris terakhir PERSIS: "Lanjut: ubah baris FASE menjadi <nomor berikutnya>"
-      (nomor berikutnya = kolom "Fase berikutnya" di file fase; untuk tim paralel sebutkan juga
-      fase jalur masing-masing orang bila relevan).
-    JANGAN mulai fase berikutnya.
+10. DOKUMENTASI. Tulis/perbarui plan/log/fase-<FASE>.md:
+    Status · checklist langkah · file dibuat/diubah · hasil verifikasi · DoD + bukti · deviasi (+ link
+    DECISIONS) · Bob slice yang dikerjakan (+ folder bob_sessions) · LANGKAH MANUAL · Catatan handoff.
+    Perbarui baris fase ini saja di PROGRESS.md.
+
+11. COMMIT & PR. Commit "fase-<FASE>: <judul>" (konvensi R5 §3). Push branch lane. Kalau file fase
+    bilang "PR ke main", buat PR dengan `gh pr create` (judul = pesan commit, isi = ringkasan log).
+    Jangan merge sendiri, kecuali fase 00/02 (Lane A) yang memang di main.
+
+12. SIMPAN SESI. Jalankan /ecc:save-session (atau padanannya) dengan nama "lane<LANE>-fase<FASE>".
+
+13. LAPOR & BERHENTI (maks 15 baris): hasil (selesai / menunggu manual / terblokir), angka verifikasi,
+    Bob slice yang masih harus dikerjakan user, langkah manual, lalu baris terakhir PERSIS:
+    "Lanjut: LANE <x> · FASE <nomor berikutnya>". JANGAN mulai fase berikutnya.
 </langkah>
 
 <batasan>
-- Jangan mengarang API Bob. Hal yang belum pasti tentang Bob (nama tool, bentuk payload hook,
-  lokasi file konfigurasi, grup tool mode) harus diambil dari docs/SPIKE_RESULTS.md dan
-  plan/log/DECISIONS.md. Kalau belum ada, pakai nilai default di plan dan tandai "BELUM
-  DIVERIFIKASI SPIKE" di log.
-- Jangan menambah fitur di luar PRD. Jangan mengganti stack di R1 tanpa entri DECISIONS.md.
-- Kalau konteks habis di tengah fase: simpan progres ke log fase dulu, baru berhenti.
+- Jangan mengarang API Bob, Orca, atau ECC. Fakta Bob diambil dari docs/SPIKE_RESULTS.md dan
+  DECISIONS. Fakta Orca dari kode Orca yang benar-benar kamu baca (sebutkan path:baris). Nama
+  command ECC dari `/plugin list ecc@ecc` yang tercatat di DECISIONS. Yang belum pasti ditandai
+  "BELUM DIVERIFIKASI".
+- Di kode Orca: perubahan aditif. Jangan refactor, jangan ubah pty daemon, relay, atau mobile/.
+  Jalankan `pnpm tc` dan oxlint pada file yang diubah saja, bukan seluruh `pnpm lint`.
+- Jangan menambah fitur di luar PRD. Jangan ganti stack R1 tanpa entri DECISIONS.
+- Kalau konteks mau habis: simpan progres ke log fase dan /ecc:save-session dulu, baru berhenti.
 </batasan>
 ```
 
 ---
 
-## Tabel cepat: fase → baris yang diubah → model
+## Tabel cepat
 
-| Baris yang ditempel | Fase | Model disarankan |
-|---|---|---|
-| `FASE: 00` | Fondasi repo | Sonnet 5 (hemat: Haiku 4.5) |
-| `FASE: 01` | Spike & GATE 1 | Sonnet 5 |
-| `FASE: 02` | Common + mock server | Sonnet 5 |
-| `FASE: 03` | Server inti | Opus 5.5 |
-| `FASE: 04` | Sync agent | Opus 5.5 (alt Sonnet 5) |
-| `FASE: 05` | Kunci, task, permintaan, proposal | Opus 5.5 |
-| `FASE: 06` | Git worker, diff, review | Opus 5.5 (alt Sonnet 5) |
-| `FASE: 07` | Paket `.bob/` coder | Sonnet 5 |
-| `FASE: 08` | Main agent PM | Sonnet 5 |
-| `FASE: 09` | Mission Control | Sonnet 5 |
-| `FASE: 10` | Integrasi E2E (milestone Sab 23:00) | Opus 5.5 |
-| `FASE: 11` | Replay, diff viewer, tampilan coder | Sonnet 5 |
-| `FASE: 12` | Hardening & P1 | Sonnet 5 (reconnect: Opus 5.5) |
-| `FASE: 13` | Eksperimen A/B & metrik | Sonnet 5 (tabulasi: Haiku 4.5) |
-| `FASE: 14` | Submission | Sonnet 5 (cek mekanis: Haiku 4.5) |
+| Baris | Fase | Lane | Model | Bob slice |
+|---|---|---|---|---|
+| `FASE: 00` | Fondasi (fork Orca + `radar/`) | A | Sonnet 5 | A1 toko-demo |
+| `FASE: 01` | Spike & GATE 1 | B | Sonnet 5 | B1 spike hook |
+| `FASE: 02` | Common + mock | A | Sonnet 5 | – |
+| `FASE: 03` | Server inti | A | Opus 5.5 | – |
+| `FASE: 04` | Sync agent | A | Opus 5.5 | – |
+| `FASE: 05` | Kunci, task, proposal | A | Opus 5.5 | A2 `checkWrite` |
+| `FASE: 06` | Git, diff, relay terminal | A | Opus 5.5 | A3 formatter commit, A4 review |
+| `FASE: 07` | Kit `.bob/` coder | B | Sonnet 5 · high | B2, B3, B4 |
+| `FASE: 08` | Main agent `pm-lead` | B | Sonnet 5 · high | B4 (tool PM) |
+| `FASE: 09` | App desktop (fork Orca) | C | Sonnet 5 · high (Opus untuk titik sambung Orca) | C1, C2, C3 |
+| `FASE: 10` | Integrasi E2E | Semua | Opus 5.5 | – |
+| `FASE: 11` | Tonton terminal, `.dmg`, replay | C | Sonnet 5 · high | C4 bukti script |
+| `FASE: 12` | Hardening P1 | A | Sonnet 5 | – |
+| `FASE: 13` | Eksperimen A/B | B | Sonnet 5 | (sesi eksperimen) |
+| `FASE: 14` | Submission | Semua | Sonnet 5 | – |

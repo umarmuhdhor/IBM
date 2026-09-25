@@ -1,114 +1,116 @@
-# Fase 14 — Submission: bukti Bob, dokumen juri, keamanan, video, deck
+# Fase 14 — Submission lablab: statement, bukti Bob, video ≤ 3 menit, deck, cover
 
 | Field | Nilai |
 |---|---|
-| Jalur | Semua — Orang 1: README juri + gitleaks · Orang 2: `BOB_DEVELOPMENT.md` + `bob_sessions/` · Orang 3 (atau orang ke-4): video, deck, cover, deskripsi |
-| Slot WITA | Min 27 Sep 11:00 – 23:00 (submit 19:00–21:00, buffer 21:00–23:00) |
+| Jalur | Semua. **Lane A:** README juri, keamanan, repo publik · **Lane B:** `BOB_DEVELOPMENT.md`, `bob_sessions/`, IBM Bob Usage Statement · **Lane C (Aarief):** video, deck, cover, Long Description, form |
+| Slot WITA | Min 27 Sep 11:00 – 23:00 (submit 19:00–21:00, buffer 21:00–23:00). Batas lablab: **Min 27 Sep 15:00 UTC = 23:00 WITA**. |
 | Estimasi | 8 jam |
-| Prasyarat | 11, 12, 13 (GATE 2 sudah lewat) |
-| Requirement PRD | §15 naskah demo, §16 R0, NFR-04, NFR-05, NFR-07, NFR-09, metrik "Kelengkapan bukti Bob 100%" |
-| Model | Sonnet 5 · effort medium (cek mekanis — link, checklist, gitleaks: Haiku 4.5) |
-| Fase berikutnya | – (selesai). Setelah submit: retrospektif singkat di `plan/log/fase-14.md` |
+| Prasyarat | 11, 12, 13 (GATE 2 lewat) |
+| Requirement PRD | §15 naskah video, §16 R0, EV-01..03, NFR-04, NFR-10, NFR-11 |
+| Model | Sonnet 5 · effort medium (agent `doc-updater` untuk dokumen; Haiku 4.5 untuk cek link) |
+| Fase berikutnya | – (selesai). Retrospektif di log. |
 
 ## Tujuan
 
-Mengubah produk yang jalan menjadi submission yang bisa dinilai juri sendirian: repo publik bersih dari secret, README juri yang bisa diikuti 5 menit, bukti penggunaan Bob lengkap, video ±4 menit sesuai naskah, deck PDF, cover 16:9, deskripsi, dan replay yang hidup.
+Semua field form lablab terisi, dan setiap field didukung artefak di repo yang bisa dinilai juri sendirian.
 
-## Bacaan wajib
+## Checklist field form lablab → sumber
 
-- PRD §01 (ringkasan), §03 (posisi & tabel pembanding), §15 (naskah), §16, §18 risiko "Juri menganggap cuma Live Share + kunci"
-- Aturan submission resmi (dicatat di `plan/log/DECISIONS.md` fase 00)
-- `docs/EXPERIMENT.md`, `docs/E2E_REPORT.md`, semua `plan/log/fase-*.md`
+| Field form | Isi | Sumber di repo | Pemilik |
+|---|---|---|---|
+| Project Title | **IBM Bob Live Collab** | – | C |
+| Short Description | ≤ 1 kalimat, misalnya: "Google Docs for teams on IBM Bob: every teammate's own Bob, one live workspace, file locks enforced by Bob hooks, and a PM agent that plans, arbitrates and reviews." | `radar/docs/SUBMISSION.md` | C |
+| Long Description = **Problem & Solution Statement** | **≤ 500 kata**: masalah (angka + sumber), solusi, target user, cara user berinteraksi, kenapa kreatif dan unik (tabel pembanding singkat), cara mengatasi masalah secara baru | `radar/docs/SUBMISSION.md` §Long | C |
+| **IBM Bob Usage Statement** | **≤ 500 kata** (R7 §6): Bob sebagai runtime (hook, custom mode, MCP, agent di app) + Bob sebagai pembangun (slice per anggota, onboarding Orca, angka) + watsonx: not used | `radar/docs/SUBMISSION.md` §Bob, `BOB_DEVELOPMENT.md` | B |
+| Technology & Category Tags | IBM Bob, Bob Shell, MCP, Electron, TypeScript, Node.js, WebSocket, SQLite, Next.js, Developer Tools, Collaboration, Multi-agent | SUBMISSION.md | C |
+| Public Code Repository | `https://github.com/<akun>/ibm-bob-live-collab` (publik) | – | A |
+| IBM Bob Task Session Summary Screenshots | Unggah screenshot dari **setiap anggota** (pilih 1–3 terbaik per orang) + semuanya ada di `bob_sessions/` | `bob_sessions/INDEX.md` | B |
+| Demo Application Platform | "macOS desktop app (Electron, fork of Orca) + web replay" | – | C |
+| Application URL | `https://ibm-bob-live-collab.vercel.app` = landing (tombol **Watch the live replay** → `/demo`, tombol **Download for macOS** → Release `.dmg`). Juri tidak perlu install apa pun. | `packages/web/app/page.tsx` (fase 11 langkah 17) | C |
+| Cover Image | 16:9, `radar/docs/deck/cover-16x9.png` | DESIGN §5.10, prompt_ui #10 | C |
+| Video Demonstration | **MP4 ≤ 3:00**, ≥ 90 detik solusi berjalan, narasi, pemakaian Bob jelas | `radar/docs/video/script.md` (PRD §15) | C |
+| Slide Presentation | PDF 10–12 slide | `radar/docs/deck/deck.pdf` | C |
 
-## Output
-
-- `README.md` (juri), `BOB_DEVELOPMENT.md`, `bob_sessions/**` lengkap + `bob_sessions/INDEX.md`
-- `docs/ARCHITECTURE.md` final, `docs/DEMO_SCRIPT.md` final, `docs/SECURITY.md`
-- `docs/deck/deck.pdf` (+ sumber), `docs/deck/cover-16x9.png`, `docs/SUBMISSION.md` (teks deskripsi pendek & panjang, link)
-- Video final (unggah YouTube/Vimeo unlisted atau sesuai aturan) + `docs/video/script.md`
-- Replay `/demo` dengan rekaman final
+Cek kata: `wc -w` pada kedua statement harus ≤ 500. Simpan hasilnya di log.
 
 ## Langkah kerja
 
-### A. Rekaman final (pagi, sebelum 13:00)
+### A. Rekaman final (Min 09:00–12:00, pagi saat tim masih segar)
 
-1. **Gladi & rekam** (LANGKAH MANUAL): reset server & toko-demo, 3 PC, layar dibagi A | MC | B (PRD §15). Rekam 2–3 take penuh mengikuti `docs/DEMO_SCRIPT.md`; simpan take terbaik + footage per layar. Setelah take terbaik: `radar-server export` → `events.live-final.json`; ekspor sesi Bob ketiga PC.
-2. Jalankan ulang `scripts/export-replay.ts` dengan rekaman final + kutipan Bob final → deploy web.
+1. **Gladi & rekam** (LANGKAH MANUAL): reset server (`RECORD_TERMINALS=true`) dan toko-demo, 3 Mac dengan app `.dmg`. A memakai Bob IDE, B memakai Bob Shell di app, C memakai Mission Control + `pm-lead`. Rekam layar per Mac (QuickTime/OBS, 1080p) + audio narasi terpisah. 2 take penuh mengikuti PRD §15. Pantau Bobcoin: satu take ≈ 3–4 Bobcoin per akun.
+2. Setelah take terbaik: `radar-server export --with-terminals > events.live-final.json`. Ekspor sesi Bob dari ketiga Mac (R7). Jalankan ulang `export-replay.ts` lalu deploy replay.
+3. **Rotasi token** yang pernah tampil di layar (`radar-server token --rotate`).
 
-### B. Bukti Bob (Orang 2)
+### B. Video ≤ 3 menit (Lane C)
 
-3. **`bob_sessions/`**: pastikan setiap fase yang dijalankan di Bob punya ekspor (`bob_sessions/<nama>/fase-XX/…`), plus sesi demo final & eksperimen. Buat `bob_sessions/INDEX.md`: tabel `folder · anggota · fase/tujuan · tanggal · ringkasan 1 kalimat · apa yang dibangun Bob`. Sensor secret (jalankan gitleaks khusus folder ini) — **jangan** mengedit isi percakapan selain sensor.
-4. **`BOB_DEVELOPMENT.md`**:
-   - Bagaimana Bob dipakai untuk **membangun** Radar (fase mana, mode apa, contoh prompt, berapa sesi) — link ke `bob_sessions/INDEX.md`.
-   - Bagaimana Radar **memperluas** Bob: custom modes `coder` & `pm-lead` (kutip YAML), 5 hook (SessionStart, UserPromptSubmit, PreToolUse, PostToolUse, Stop) dengan tabel perilaku, `radar-mcp` 13 tool, alur governance (main agent mengusulkan, manusia menyetujui).
-   - Temuan spike tentang Bob 2.x (payload hook, exit 2, grup mode) — berguna bagi komunitas.
-   - Tabel metrik final (fase 13) target vs hasil.
-   - Konsumsi Bobcoin per peran & cara menghematnya (brief ≤ 6 baris, `--max-cost`).
-   - Keterbatasan & roadmap (`EnforcedHooks`, self-hosted, pemicu otomatis).
+4. Edit mengikuti tabel PRD §15. Sebelum ekspor, pastikan:
+   - total ≤ 3:00 (targetkan 2:50 sebagai margin),
+   - ≥ 90 detik solusi berjalan di layar (target ±120 s),
+   - narasi Bahasa Inggris dan subtitle dibakar,
+   - pemakaian Bob terlihat jelas: jejak `hook · PreToolUse`, mode `coder`/`pm-lead`, `radar-mcp`, cuplikan `bob_sessions/`,
+   - agar menonjol di antara video screen-share lain: split 3 layar dengan label warna orang, zoom-in halus di momen near-miss, lower-third `BobTrace`, satu kalimat hook di 0:00, dan tanpa jeda mati.
+5. Ekspor MP4 H.264 1080p. Cek durasi dengan `ffprobe`. Unggah take cadangan jam 17:00.
 
-### C. Dokumen juri & keamanan (Orang 1)
+### C. Deck & cover (Lane C)
 
-5. **`README.md` juri** (bisa diikuti tanpa tim):
-   1. Satu kalimat + GIF/cover.
-   2. **Tonton dalam 1 menit:** link replay `/demo` (tanpa login) & video.
-   3. Masalah (angka PRD §03 dengan sumber) & solusi (3 aturan PRD §01).
-   4. Tabel pembanding PRD §03 (menonjolkan main agent untuk originality).
-   5. Arsitektur (diagram PRD §12 mermaid) + link `docs/ARCHITECTURE.md` & `plan/ref/`.
-   6. Quickstart lokal ≤ 10 perintah: `pnpm i`, `radar-server init` (repo contoh), `pnpm dev:server`, `pnpm dev:web`, 2× `radar join`, `pnpm sim` untuk melihat alur tanpa Bob.
-   7. Cara memasang di Bob (kit, mode, MCP) untuk tim nyata.
-   8. Hasil eksperimen & metrik (ringkas + link `docs/EXPERIMENT.md`).
-   9. Keamanan & privasi (link `docs/SECURITY.md`), batasan yang diakui, roadmap R1/R2.
-   10. Tim & lisensi (MIT/Apache-2.0 — putuskan & tambahkan `LICENSE`).
-6. **`docs/SECURITY.md`** (NFR-04/05): model token (hash, per anggota, token mc terpisah), endpoint persetujuan hanya mc, hook berjalan dengan izin penuh user (diakui), isi file disimpan di server tim (MVP) → roadmap self-hosted, cara rotasi token, tidak ada data pribadi (NFR-07).
-7. **Pemindaian secret seluruh history**: `gitleaks detect --source . --log-opts="--all" --redact` untuk repo `bob-radar` **dan** `toko-demo`. Temuan → rotasi token terkait + bersihkan history (`git filter-repo`) **hanya dengan persetujuan tim** (operasi destruktif). Simpan laporan bersih ke `docs/security/gitleaks-report.txt` (tanpa isi secret).
-8. **Rotasi token setelah rekaman final**: token A/B/C/mc yang pernah muncul di layar video harus dirotasi (`radar-server token --rotate`) — cek footage untuk token yang terlihat.
-9. **Repo publik**: `bob-radar` & `toko-demo` publik, deskripsi repo, topik, link demo di "About". Hapus `spike/out`, `.data`, file besar.
+6. **Deck PDF (10–12 slide):** judul + cover · masalah (angka + sumber) · kenapa alat sekarang tidak cukup (tabel PRD §03) · solusi (3 aturan + tonton terminal) · main agent & governance (usul vs setujui) · arsitektur · demo (screenshot) · **IBM Bob di dalam produk** (hook, mode, MCP, agent di app) · **IBM Bob sebagai pembangun** (slice per anggota, onboarding Orca) · hasil eksperimen (jujur) · target user & model bisnis · roadmap + tim + link.
+7. **Cover 16:9** dari screenshot Mission Control + prompt_ui #10.
 
-### D. Video, deck, cover, deskripsi (Orang 3/4)
+### D. Statement & dokumen (Lane B + C, agent `doc-updater`)
 
-10. **Video ±4 menit** (`docs/video/script.md` dari PRD §15, dengan narasi final per adegan & timecode): intro masalah (angka 41,7%) → ide → rencana → live → blokir → review+commit GitHub → di balik layar (YAML, hook, MCP, `bob_sessions/`, angka A/B) → penutup (target user, model bisnis, roadmap, link replay). Subtitle Bahasa Inggris bila juri internasional (cek aturan). Ekspor 1080p, cek audio, durasi sesuai batas aturan.
-11. **Deck PDF (10–12 slide)**: 1 judul + cover · 2 masalah (angka + sumber) · 3 kenapa alat sekarang tidak cukup (tabel pembanding) · 4 solusi 3 aturan · 5 main agent & governance (usul vs setujui) · 6 arsitektur · 7 demo (screenshot MC) · 8 bagaimana dibangun dengan Bob (mode, hook, MCP, sesi) · 9 hasil eksperimen & metrik (jujur) · 10 target user & model bisnis · 11 roadmap R1/R2 (`EnforcedHooks`, self-hosted, CI) · 12 tim + link. Bingkai track sesuai aturan resmi (team workflow / governance / SDLC orchestration — PRD §18).
-12. **Cover 16:9** dari screenshot Mission Control 1920×1080 (fase 09) + judul "Bob Radar" + tagline satu baris.
-13. **`docs/SUBMISSION.md`**: judul, tagline (≤ 1 kalimat), deskripsi pendek (≤ 280 char), deskripsi panjang (±300 kata), track, teknologi, link (repo, replay, video, deck, toko-demo, bob_sessions), daftar anggota. Salin ke form submission.
+8. `radar/docs/SUBMISSION.md`: title, short, Long Description (≤ 500 kata), IBM Bob Usage Statement (≤ 500 kata), tags, platform, URL, link repo/replay/Release/video/deck, anggota.
+9. `BOB_DEVELOPMENT.md`:
+   - bagaimana Bob membangun app ini (tabel slice dari `bob_sessions/INDEX.md`, dengan kutipan prompt),
+   - bagaimana app memperluas Bob (YAML mode, tabel hook, 13 tool MCP, governance),
+   - temuan spike Bob 2.x,
+   - Bobcoin per anggota,
+   - catatan `.bobignore` template (Bob tidak membaca `tsconfig.json`).
+10. `bob_sessions/INDEX.md` final. Jalankan `pnpm -C radar evidence:check` sampai **hijau**: 3 anggota, masing-masing ≥ 3 slice lengkap, dan semua trailer valid.
 
-### E. Submit & buffer
+### E. README juri, keamanan, repo (Lane A)
 
-14. **Submit (19:00–21:00)** (LANGKAH MANUAL): isi form resmi dengan `docs/SUBMISSION.md`. Screenshot konfirmasi → `docs/submission-confirmation.png`.
-15. **Checklist buffer (21:00–23:00)** — dari jendela incognito, perangkat lain:
-    - [ ] Repo publik terbuka tanpa login; README tampil benar (mermaid render).
-    - [ ] `/demo` autoplay, klik event → diff & kutipan Bob; link repo/sessions/video berfungsi.
-    - [ ] Video bisa diputar tanpa login, durasi sesuai aturan.
-    - [ ] Deck PDF terbuka, link di dalamnya berfungsi.
-    - [ ] Gitleaks bersih; tidak ada token di video/deck/replay JSON.
-    - [ ] `bob_sessions/INDEX.md` lengkap, 100% sesi terdaftar (metrik PRD §04).
-    - [ ] Server live masih jalan (bonus) — replay tetap jalan walau tidak.
-16. Commit `fase-14: submission docs and assets`, tag `v0.2.0-submit`, push.
-17. **Retrospektif** 10 baris di log: apa yang berhasil, apa yang dipotong, pelajaran untuk R1.
+11. **README root (bagian juri)**: satu kalimat + GIF near-miss → **Tonton dalam 1 menit** (link replay + video) → masalah & solusi → pembanding → arsitektur (mermaid) → **Install** (`.dmg` + `radar-cli.tgz` + langkah Gatekeeper) → quickstart lokal tanpa Bob (`pnpm -C radar sim`) → cara pakai dengan Bob (kit, mode, MCP) → hasil eksperimen → keamanan → IBM Bob evidence (link INDEX) → tim, lisensi, **atribusi Orca**, "not an official IBM product".
+12. `radar/docs/SECURITY.md` (model token, share terminal, hook berjalan dengan izin user, penyimpanan isi file di server) + rujukan `SECURITY.MD` template IBM.
+13. **Pemindaian:** `gitleaks detect --source . --log-opts="--all" --redact` untuk repo produk dan `toko-demo`. `pnpm -C radar check:ignored` hijau. `git ls-files bob_sessions | wc -l` sama dengan jumlah file di disk, jadi tidak ada yang ter-ignore.
+14. **Repo publik:** deskripsi, topik, website = URL replay. Hapus `radar/spike/out`, `.data`, dan video besar dari history kerja (jangan rewrite history tanpa persetujuan tim).
+
+### F. Submit & buffer
+
+15. **Submit (19:00–21:00)** (LANGKAH MANUAL, Lane C): isi form lablab dari `SUBMISSION.md`, unggah MP4, PDF, cover, dan screenshot ringkasan task setiap anggota. Screenshot konfirmasi → `radar/docs/submission-confirmation.png`.
+16. **Buffer 21:00–23:00**, dari jendela incognito dan perangkat lain:
+    - [ ] Repo publik tanpa login. README tampil (mermaid render). Atribusi Orca ada.
+    - [ ] Landing `/` terbuka, dan tombol replay + download berfungsi.
+    - [ ] `/demo` autoplay, Bob inside, link berfungsi.
+    - [ ] Release `.dmg` bisa diunduh.
+    - [ ] Video ≤ 3:00 bisa diputar. Solusi berjalan ≥ 90 s.
+    - [ ] Kedua statement ≤ 500 kata (angka `wc -w` di log).
+    - [ ] `evidence:check` hijau. Screenshot dari **ketiga** anggota ada di repo dan di form.
+    - [ ] Gitleaks bersih. Tidak ada token di video/deck/replay JSON.
+17. Commit `fase-14: submission`, tag `v0.3.0-submit`, push. Retrospektif 10 baris di log.
 
 ## Verifikasi
 
 ```bash
 gitleaks detect --source . --log-opts="--all" --redact
-(cd ../toko-demo && gitleaks detect --source . --log-opts="--all" --redact)
-pnpm test && pnpm --filter @radar/web build
-npx markdown-link-check README.md BOB_DEVELOPMENT.md docs/*.md   # cek link
+pnpm -C radar check:ignored && pnpm -C radar evidence:check && pnpm -C radar test
+ffprobe -v error -show_entries format=duration -of csv=p=0 radar/docs/video/final.mp4   # ≤ 180
+awk '/^## Long/{f=1;next}/^## /{f=0}f' radar/docs/SUBMISSION.md | wc -w                  # ≤ 500
+awk '/^## IBM Bob Usage/{f=1;next}/^## /{f=0}f' radar/docs/SUBMISSION.md | wc -w         # ≤ 500
+npx markdown-link-check README.md BOB_DEVELOPMENT.md radar/docs/*.md
 ```
 
 ## Kriteria selesai (DoD)
 
-- [ ] Semua butir checklist buffer tercentang.
-- [ ] Form submission terkirim sebelum batas (bukti screenshot).
-- [ ] 100% sesi Bob terdaftar di `bob_sessions/INDEX.md`.
+- [ ] Semua field form terisi dan terkirim sebelum 23:00 WITA (bukti screenshot).
+- [ ] Video ≤ 180 s, statement ≤ 500 kata masing-masing.
+- [ ] `evidence:check` hijau untuk 3 anggota.
 - [ ] Token yang pernah tampil di footage sudah dirotasi.
 
 ## Risiko & fallback
 
 | Risiko | Fallback |
 |---|---|
-| Demo live gagal saat presentasi | Video + replay (PRD §18) |
-| Upload video lambat | Unggah take awal jam 17:00 sebagai cadangan, ganti bila take final siap |
-| Menemukan secret di history pukul 20:00 | Rotasi token segera (efektif menetralkan), laporkan di SECURITY.md; bersihkan history hanya bila waktu & tim setuju |
-
-## Catatan handoff
-
-- Setelah hackathon: `plan/` tetap di repo sebagai bukti proses; buat `plan-r1/` untuk rilis pilot (PRD §16 R1).
+| Demo live gagal saat rekaman | Pakai footage per layar dari gladi + replay web |
+| Video > 3 menit | Potong adegan "di balik layar" menjadi 15 s. Jangan memotong 90 s solusi. |
+| Anggota kehabisan Bobcoin sebelum slice ketiga | Slice ketiga memakai mode Ask (murah), misalnya review kode. Catat jujur di INDEX. |
+| Secret ditemukan pukul 20:00 | Rotasi segera, laporkan di SECURITY.md. Bersihkan history hanya bila tim setuju. |

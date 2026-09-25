@@ -1,4 +1,4 @@
-# R1 — Struktur repo, paket, script & CLI
+# R1 — Struktur repo, paket, script & CLI (v0.3: fork Orca + workspace `radar/`)
 
 > Kontrak layout. Semua fase menaruh file sesuai peta ini. Perubahan → `log/DECISIONS.md`.
 
@@ -6,120 +6,74 @@
 
 | Repo | Isi | Lokasi |
 |---|---|---|
-| **bob-radar** (repo produk) | Semua kode Radar, plan, dokumen, `bob_sessions/` | root folder ini (`git init` di fase 00) → GitHub publik `bob-radar` |
-| **toko-demo** (workspace yang disinkronkan) | Toko online kecil, data sintetis. Diedit oleh Bob A & B lewat Radar. Server Radar meng-commit + push ke sini. | Template di `examples/toko-demo/`, disalin menjadi repo GitHub terpisah `toko-demo` di fase 00 |
+| **ibm-bob-live-collab** (repo produk, publik, dinilai juri) | **Fork GitHub dari `stablyai/orca`** (MIT). Kode Orca di root (`src/`, `config/`, …) + workspace pnpm terpisah `radar/` (server, sync, hook, MCP, UI, replay, kit Bob, plan) + `bob_sessions/` | `gh repo fork stablyai/orca --fork-name ibm-bob-live-collab` di fase 00 |
+| **toko-demo** (workspace yang disinkronkan) | Toko online kecil, data sintetis. Diedit Bob A & B lewat Live Collab. Server meng-commit + push ke sini. | Template `radar/examples/toko-demo/`, disalin ke repo GitHub terpisah di fase 00 |
 
-## 2. Layout monorepo `bob-radar`
+Konvensi path di semua file plan: **`orca:`** = relatif ke root repo (kode Orca), path tanpa prefix = relatif ke `radar/`.
+
+## 2. Layout repo `ibm-bob-live-collab`
 
 ```text
-bob-radar/
-├── Bob Radar PRD v0.2.md
-├── plan/                         # rencana (folder ini)
-├── package.json                  # root: scripts, devDeps bersama, "packageManager": "pnpm@9"
-├── pnpm-workspace.yaml           # packages/*, examples/* TIDAK termasuk
-├── tsconfig.base.json
-├── eslint.config.js              # flat config
-├── .prettierrc
-├── .gitignore
-├── .gitleaks.toml
-├── .env.example
-├── .github/workflows/ci.yml
-├── packages/
-│   ├── common/                   # @radar/common
-│   │   └── src/
-│   │       ├── index.ts
-│   │       ├── constants.ts      # timeout, debounce, heartbeat, batas brief, warna
-│   │       ├── types.ts          # tipe domain (Member, Task, Lock, ...)
-│   │       ├── schemas.ts        # zod: body REST, pesan WS, event
-│   │       ├── events.ts         # katalog event + tipe payload
-│   │       ├── reducer.ts        # applyEvent(state, event) → state (live + replay)
-│   │       ├── hook-payload.ts   # normalizeHookPayload()
-│   │       ├── paths.ts          # toPosix, toWorkspaceRelative, isInside
-│   │       ├── ignore.ts         # aturan abaikan + isProbablyBinary
-│   │       ├── hash.ts           # sha256Hex
-│   │       ├── http.ts           # radarFetch() dengan timeout + bearer
-│   │       ├── config.ts         # loadLocalConfig() cari .radar/local.json ke atas
-│   │       └── brief.ts          # clampBrief(lines, max=6, maxLen=160)
-│   ├── server/                   # @radar/server  (Fastify + ws + better-sqlite3 + simple-git)
-│   │   └── src/
-│   │       ├── main.ts           # entry: start server
-│   │       ├── cli.ts            # radar-server init|start|token|export
-│   │       ├── app.ts            # buildApp({ db, config }) — dipakai test
-│   │       ├── config.ts         # baca env (R5 §5)
-│   │       ├── db/
-│   │       │   ├── schema.sql    # salinan persis R2
-│   │       │   ├── migrate.ts
-│   │       │   └── repo/*.ts     # member, token, task, file, lock, allocation, request, proposal, review, event, notification
-│   │       ├── services/
-│   │       │   ├── events.ts     # append + bus (EventEmitter)
-│   │       │   ├── files.ts      # applyUpdate, applyDelete, history
-│   │       │   ├── locks.ts      # mesin kunci (R4)
-│   │       │   ├── tasks.ts
-│   │       │   ├── requests.ts
-│   │       │   ├── proposals.ts  # validate + apply (plan/decision/review)
-│   │       │   ├── brief.ts
-│   │       │   ├── git.ts        # git worker (antrian serial)
-│   │       │   ├── diff.ts       # diff task + analisis importer
-│   │       │   ├── heartbeat.ts  # deteksi kedaluwarsa (P1)
-│   │       │   └── report.ts     # session_report (P1)
-│   │       ├── http/
-│   │       │   ├── auth.ts       # plugin bearer → req.principal
-│   │       │   ├── errors.ts
-│   │       │   └── routes/*.ts   # satu file per kelompok endpoint R3
-│   │       └── ws/hub.ts         # koneksi, hello, snapshot, broadcast
-│   ├── sync/                     # @radar/sync  → bin: radar
-│   │   └── src/
-│   │       ├── cli.ts            # radar join|status|task|kit|agent
-│   │       ├── agent.ts          # SyncAgent class
-│   │       ├── watcher.ts        # chokidar + debounce 150 ms
-│   │       ├── known.ts          # peta path → {version, hash} (anti-gema)
-│   │       ├── writer.ts         # tulis atomik (tmp + rename)
-│   │       ├── sidecar.ts        # .radar-rejected / .radar-conflict
-│   │       ├── notify.ts         # notifikasi terminal
-│   │       └── kit.ts            # pasang bob-kit ke .bob/
-│   ├── hooks/                    # @radar/hooks — sumber hook, dibundel ke bob-kit/.bob/hooks/*.js
-│   │   └── src/
-│   │       ├── brief.ts          # SessionStart & UserPromptSubmit
-│   │       ├── lock_guard.ts     # PreToolUse
-│   │       ├── mark_ai_edit.ts   # PostToolUse (P1)
-│   │       └── stop.ts           # Stop (P2, opsional)
-│   ├── mcp/                      # @radar/mcp — radar-mcp (stdio), dibundel ke bob-kit/.bob/radar-mcp.js
-│   │   └── src/
-│   │       ├── main.ts
-│   │       ├── client.ts         # REST client ke server
-│   │       ├── tools/coder/*.ts  # my_tasks, why_blocked, request_file, team_activity, submit_task
-│   │       └── tools/pm/*.ts     # team_status, propose_plan, list_requests, propose_decision, get_task_diff, propose_review, notify, session_report
-│   └── web/                      # @radar/web — Next.js (Mission Control + /demo)
-│       ├── app/
-│       │   ├── page.tsx          # login → dashboard
-│       │   ├── mc/page.tsx       # Mission Control
-│       │   ├── demo/page.tsx     # replay (UI-05)
-│       │   └── coder/[member]/page.tsx  # tampilan coder (UI-07, P1)
-│       ├── components/           # TopBar, TaskBoard, FileTree, LockChip, DecisionQueue, ProposalCard, LiveFeed, DiffViewer, ReplayControls, CoderPanel
-│       ├── lib/                  # ws-client.ts, api.ts, store.ts (zustand), colors.ts
-│       └── public/demo/          # events.json, meta.json, bob-quotes.json
-├── bob-kit/                      # paket yang disalin ke <workspace>/.bob/ oleh `radar join`
-│   ├── coder/.bob/               # custom_modes.yaml, settings.json, mcp.json, hooks/*.js, radar-mcp.js
-│   ├── pm/.bob/                  # custom_modes.yaml (pm-lead), mcp.json, radar-mcp.js
-│   └── prompts/                  # prompt siap tempel untuk PM & coder
-├── spike/                        # artefak fase 01 (boleh dihapus setelah submit)
-├── examples/toko-demo/           # template repo workspace
-├── scripts/
-│   ├── mock-server.ts            # fase 02
-│   ├── sim-3pc.ts                # fase 10
-│   ├── bench-sync.ts             # fase 04
-│   ├── metrics.ts                # fase 13
-│   ├── export-replay.ts          # fase 11
-│   └── ab/                       # fase 13
-├── docs/
-│   ├── SPIKE_RESULTS.md
-│   ├── ARCHITECTURE.md
-│   ├── EXPERIMENT.md
-│   ├── DEMO_SCRIPT.md
-│   └── deck/
-├── bob_sessions/                 # ekspor sesi Bob per anggota per fase
+ibm-bob-live-collab/                  ← root = fork Orca
+├── src/                              ← Orca (Electron main/preload/renderer/shared). Lane C menambah:
+│   ├── shared/tui-agent.ts           ← + 'bob' di union TuiAgent
+│   ├── shared/tui-agent-config.ts    ← + konfigurasi launch/detect bob
+│   ├── main/radar/                   ← BARU: sync-supervisor.ts (P1), secure-store.ts (safeStorage)
+│   └── renderer/src/
+│       ├── lib/agent-catalog.tsx     ← + entri "IBM Bob"
+│       ├── lib/agent-icon-glyphs.tsx ← + glyph "B"
+│       ├── store/radar-store.ts      ← BARU: zustand + applyEvent
+│       ├── lib/radar/ws-client.ts    ← BARU
+│       ├── lib/radar/terminal-share.ts ← BARU (fase 11): tap xterm → term.frame
+│       └── components/radar/         ← BARU: RadarSidebarSection, MissionControlView, TeamPanel,
+│                                        FilesLocksView, WatchTerminalView, RadarSettingsPane, …
+├── electron.vite.config.ts           ← + alias @radar/common, @radar/ui → radar/packages/*/src
+├── config/electron-builder.config.cjs← productName "IBM Bob Live Collab", appId, ikon (fase 11)
+├── resources/                        ← ikon app baru (fase 11)
+├── .gitignore                        ← .gitignore Orca + blok template IBM (fase 00)
+├── .bobignore  SECURITY.MD  .env.example   ← dari ibm-hackathon-template (fase 00)
+├── LICENSE                           ← MIT Orca, TIDAK diubah
+├── README.md                         ← README juri (atas) + atribusi Orca (bawah)
 ├── BOB_DEVELOPMENT.md
-└── README.md                     # README juri
+├── bob_sessions/<nama>/<NN-slug>/{summary.png,task.md} + INDEX.md
+└── radar/                            ← workspace pnpm TERPISAH (pnpm-workspace.yaml sendiri)
+    ├── package.json  pnpm-workspace.yaml  tsconfig.base.json  eslint.config.js  .prettierrc
+    ├── PRD.md  PLAN.md  DESIGN.md  prompt_ui.md      ← dipindah dari folder IBM/ di fase 00
+    ├── plan/                          ← folder ini
+    ├── packages/
+    │   ├── common/   @radar/common    (tipe, zod, events, reducer, hook-payload, term.ts)
+    │   ├── server/   @radar/server    (Fastify + ws + SQLite + git + relay terminal)
+    │   ├── sync/     @radar/sync      → bin: radar
+    │   ├── hooks/    @radar/hooks     → bundel ke bob-kit/*/.bob/hooks/*.js
+    │   ├── mcp/      @radar/mcp       → bundel ke bob-kit/*/.bob/radar-mcp.js
+    │   ├── ui/       @radar/ui        BARU: komponen React presentasional (DESIGN.md §3)
+    │   └── web/      @radar/web       Next.js: /demo replay, /install (P2), /gallery (dev)
+    ├── bob-kit/{coder,pm}/.bob/  bob-kit/prompts/
+    ├── spike/  examples/toko-demo/
+    ├── scripts/  (mock-server, sim-3pc, bench-sync, metrics, export-replay, ab/,
+    │             bob-evidence.sh, evidence-check.ts, check-ignored.sh)
+    └── docs/  (SPIKE_RESULTS, ARCHITECTURE, EXPERIMENT, DEMO_SCRIPT, SUBMISSION, deck/, video/)
+```
+
+Isi folder `packages/server/src` dan lainnya sama dengan v0.2 (di bawah), dengan satu perubahan: `db/repo/token.ts` → **`db/repo/access.ts`**, karena pola `*token*` di `.gitignore` template IBM akan membuat file itu tidak ter-commit (R5 §8).
+
+### 2.1 Isi paket (tidak berubah dari v0.2 kecuali ditandai)
+
+```text
+packages/common/src/  index, constants, types, schemas, events, reducer, hook-payload, paths, ignore,
+                      hash, http, config, brief, term (BARU: tipe & zod pesan term.*)
+packages/server/src/  main, cli, app, config, db/{schema.sql, migrate.ts, repo/*.ts: member, access,
+                      task, file, lock, allocation, request, proposal, review, event, notification},
+                      services/{events, files, locks, tasks, requests, proposals, brief, git, diff,
+                      heartbeat, report, terminals (BARU: relay + ring buffer)}, http/{auth, errors,
+                      routes/*.ts}, ws/hub.ts
+packages/sync/src/    cli, agent, watcher, known, writer, sidecar, notify, kit
+packages/hooks/src/   brief, lock_guard, mark_ai_edit, stop
+packages/mcp/src/     main, client, tools/coder/*, tools/pm/*
+packages/ui/src/      AgentTag, MemberChip, LockChip, WritingPulse, BobTrace, BriefMeter, DecisionCard,
+                      ReviewCard, TaskCard, FeedItem, TerminalFrame, GuestCursor, PresenceStack,
+                      views/{MissionControl, FilesLocks, TeamPanel}, tokens.css
+packages/web/app/     demo/page.tsx, gallery/page.tsx, install/route.ts (P2)
 ```
 
 ## 3. Paket & dependensi
@@ -131,7 +85,8 @@ bob-radar/
 | `@radar/sync` | `chokidar@4`, `ws`, `commander`, `ignore`, `picocolors`, `@radar/common` | `vitest` | `tsc`; `bin.radar = dist/cli.js` |
 | `@radar/hooks` | (tidak ada saat runtime — dibundel) `@radar/common` | `esbuild`, `vitest` | `esbuild` → `bob-kit/coder/.bob/hooks/*.js` (CJS, node20, tanpa dependensi eksternal) |
 | `@radar/mcp` | `@modelcontextprotocol/sdk`, `zod`, `@radar/common` | `esbuild`, `vitest` | `esbuild` bundle → `bob-kit/*/.bob/radar-mcp.js` (satu file) |
-| `@radar/web` | `next@15`, `react@19`, `zustand`, `diff2html` atau `react-diff-viewer-continued`, `@radar/common` | `tailwindcss@4`, `@playwright/test` | `next build`, deploy Vercel |
+| `@radar/ui` | `react@19` (peer), `@radar/common`, `lucide-react`, `@fontsource/ibm-plex-sans`, `@fontsource/ibm-plex-mono` | `vitest`, `@testing-library/react` | tanpa build: dikonsumsi sebagai source (alias Vite di Orca, `transpilePackages` di Next) |
+| `@radar/web` | `next@15`, `react@19`, `zustand`, `@xterm/xterm` (replay frame), `diff2html` atau `react-diff-viewer-continued`, `@radar/common`, `@radar/ui` | `tailwindcss@4`, `@playwright/test` | `next build` statis, deploy Vercel |
 
 Aturan: **hook dan radar-mcp harus bisa jalan di workspace toko-demo tanpa `npm install`**. Karena itu keduanya dibundel menjadi satu file JS mandiri memakai `fetch` bawaan Node 20.
 
@@ -151,7 +106,10 @@ Aturan: **hook dan radar-mcp harus bisa jalan di workspace toko-demo tanpa `npm 
 | `sim` | `tsx scripts/sim-3pc.ts` |
 | `bench:sync` | `tsx scripts/bench-sync.ts` |
 | `metrics` | `tsx scripts/metrics.ts` |
-| `secrets:scan` | `gitleaks detect --source . --log-opts="--all"` |
+| `secrets:scan` | `gitleaks detect --source .. --log-opts="--all"` |
+| `evidence:check` | `tsx scripts/evidence-check.ts` (R7 §4) |
+| `check:ignored` | `bash scripts/check-ignored.sh` — gagal kalau ada file sumber yang cocok pola `.gitignore` template IBM |
+| `dev:app` | `pnpm -C .. dev` (menjalankan Orca/Live Collab dari root) |
 
 ## 5. CLI
 
@@ -166,6 +124,7 @@ radar-server init --workspace toko-demo --repo <git-url|path> \
     buat anggota + token, cetak token SEKALI (A, B, C, dan token Mission Control).
 radar-server start                      → jalankan HTTP + WS di $PORT
 radar-server token --member A --rotate  → token baru
+radar-server invite --member B          → kode undangan rdr_inv_<base64url {server, workspace, member, token}> (P1, IN-02)
 radar-server export --out events.json   → sama dengan GET /v1/events/export
 radar-server reset --confirm            → hapus DATA_DIR (hanya untuk dev)
 ```

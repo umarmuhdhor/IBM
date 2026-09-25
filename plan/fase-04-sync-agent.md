@@ -2,7 +2,7 @@
 
 | Field | Nilai |
 |---|---|
-| Jalur | Orang 1 |
+| Jalur | **Lane A** (Orang 1) · branch `lane/core` |
 | Slot WITA | Sab 26 Sep 07:00 – 10:00 |
 | Estimasi | 3 jam |
 | Prasyarat | 03 (dan keputusan `SYNC` dari GATE 1 di fase 01) |
@@ -97,6 +97,11 @@ server ──ws──────▶  │ file.changed → writer.atomicWrite  �
 12. **Bench** `scripts/bench-sync.ts`: server lokal + 2 agent di satu mesin, 100 penulisan acak berjeda 200 ms, cetak p50/p95/max `appliedTs(B) - writeTs(A)`; mode `--server <url>` untuk server deploy (2 agent lokal ke server Fly, mengukur round trip nyata). Simpan hasil ke `docs/EXPERIMENT.md` bagian "Latensi sinkron (bench)".
 
 13. Commit `fase-04: sync agent`.
+
+## Tambahan v0.3
+
+- `radar start --json-status` mencetak status baris JSON (koneksi, jumlah file, kunci saya) supaya app bisa menjalankan sync agent sebagai child process (DA-05, P1).
+- Paket `@radar/sync` bisa di-`pnpm pack` menjadi `radar-cli.tgz` yang sudah berisi `bob-kit` terbundel (dipakai fase 11).
 
 ## Verifikasi
 

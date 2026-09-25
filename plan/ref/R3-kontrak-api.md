@@ -241,7 +241,7 @@ Amplop setiap pesan: `{ "t": "<tipe>", "id"?: "<id pesan klien>", "d": { ... } }
 
 | Pesan | Arah | `d` |
 |---|---|---|
-| `hello` | klien → server | `{ token, client: "sync" \| "mc", clientVersion, knownVersions?: { [path]: version } }` |
+| `hello` | klien → server | `{ token, client: "sync" \| "mc" \| "app", clientVersion, knownVersions?: { [path]: version } }` |
 | `welcome` | server → klien | `{ principal, serverTime, workspace }` |
 | `snapshot` | server → sync | `{ files: [ { path, version, hash, content, deleted } ], locks: [...], cursor }` (kalau `knownVersions` dikirim: hanya file yang beda) |
 | `state` | server → mc | isi `GET /v1/state` |
@@ -260,6 +260,28 @@ Amplop setiap pesan: `{ "t": "<tipe>", "id"?: "<id pesan klien>", "d": { ... } }
 | `error` | server → klien | `{ code, message }` lalu tutup untuk `UNAUTHORIZED` |
 
 Aturan koneksi: `hello` harus dikirim ≤ 5 s setelah terhubung; kalau tidak, server menutup koneksi (4401). Satu member boleh punya satu koneksi `sync` aktif (koneksi baru menggantikan lama, event `member.reconnected`).
+
+### 3.9 Klien `app` dan relay terminal `term.*` (v0.3, JT-01..05)
+
+**Klien `app`.** App desktop coder terhubung dengan `hello { token: <token member>, client: "app" }`. Server membalas `state` (sama seperti `mc`, read-only) dan meneruskan `event`. App PM memakai `client: "mc"` dengan token mc (satu-satunya yang boleh memanggil endpoint persetujuan). Satu member boleh punya satu koneksi `sync` **dan** satu koneksi `app` sekaligus.
+
+| Pesan | Arah | `d` | Aturan |
+|---|---|---|---|
+| `term.share` | app host → server | `{ termId, title, agent: "bob" \| string, cols, rows }` | `termId` = `<member>-<nanoid6>`. Event `term.shared` di log. |
+| `term.unshare` | app host → server | `{ termId }` | Server mengirim `term.ended` ke semua penonton dan menghapus buffer. |
+| `term.list` | server → app/mc | `{ terms: [ { termId, member, title, agent, viewers: [member…], guest?: member } ] }` | Dikirim saat berubah. |
+| `term.subscribe` / `term.unsubscribe` | penonton → server | `{ termId }` | Hanya anggota workspace yang sama. Server mengirim `term.snapshot` lalu `term.frame` berikutnya. |
+| `term.snapshot` | host → server; server → penonton | `{ termId, seq, data }` (hasil `@xterm/addon-serialize`, ≤ 256 KB) | Host mengirim snapshot setiap kali ada penonton baru (server meminta lewat `term.need_snapshot { termId }`). |
+| `term.frame` | host → server → penonton | `{ termId, seq, data: base64, ts }` | Maks 32 KB per frame. Host menggabungkan output 16 ms. Server menyimpan ring buffer 256 KB per terminal untuk penonton terlambat. |
+| `term.resize` | host → server → penonton | `{ termId, cols, rows }` | – |
+| `term.ended` | server → penonton | `{ termId, reason: "unshared" \| "host_offline" }` | – |
+| `term.input.request` | penonton → server → host | `{ termId, guest }` | P1 |
+| `term.input.grant` / `term.input.revoke` | host → server → penonton | `{ termId, guest, until }` | P1. Maks 10 menit. Event di log. |
+| `term.input` | penonton → server → host | `{ termId, guest, data }` | P1. Server menolak (`error TERM_NO_GRANT`) kalau grant tidak aktif. Host memvalidasi ulang. |
+
+- Frame **tidak** disimpan ke DB, kecuali env `RECORD_TERMINALS=true` (hanya saat merekam demo). Frame yang direkam masuk tabel `term_frame(term_id, seq, ts, data)` untuk diekspor ke replay (`GET /v1/events/export?withTerminals=true`).
+- Metrik: `term.latency` = `serverTs(forward) - ts` dan `viewerTs - ts` (dilaporkan penonton lewat `term.ack { termId, seq, viewerTs }` setiap 50 frame).
+- Kode error baru: `TERM_NOT_FOUND`, `TERM_NOT_OWNER`, `TERM_NO_GRANT`, `TERM_FRAME_TOO_LARGE`.
 
 ## 4. Payload proposal
 

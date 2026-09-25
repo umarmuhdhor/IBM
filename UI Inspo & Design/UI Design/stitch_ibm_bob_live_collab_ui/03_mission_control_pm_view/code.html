@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base { html, body { margin: 0; padding: 0; } body { overscroll-behavior: none; } main > :first-child { margin-top: 0 !important; } main > :last-child { margin-bottom: 0 !important; } } ::-webkit-scrollbar { display: none; }</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "surface-container-highest": "#353534", "on-primary": "#002979", "inverse-surface": "#e5e2e1", "secondary-fixed-dim": "#ffb0cd", "surface-container-high": "#2a2a2a", "surface-tint": "#b4c5ff", "surface": "#131313", "outline-variant": "#424656", "on-error": "#690005", "tertiary-container": "#008139", "on-tertiary": "#003915", "on-secondary-fixed-variant": "#841a51", "secondary-container": "#871c54", "surface-container-lowest": "#0e0e0e", "tertiary": "#64de81", "on-surface": "#e5e2e1", "on-primary-fixed-variant": "#003da9", "surface-variant": "#353534", "surface-dim": "#131313", "on-secondary-container": "#ff99c2", "on-primary-fixed": "#00174c", "background": "#131313", "inverse-on-surface": "#313030", "primary": "#b4c5ff", "on-tertiary-fixed": "#002109", "error-container": "#93000a", "on-background": "#e5e2e1", "tertiary-fixed-dim": "#64de81", "on-tertiary-fixed-variant": "#005322", "secondary": "#ffb0cd", "error": "#ffb4ab", "primary-container": "#0f62fe", "surface-container": "#201f1f", "on-secondary-fixed": "#3e0022", "on-error-container": "#ffdad6", "outline": "#8c90a2", "tertiary-fixed": "#81fb9a", "surface-container-low": "#1c1b1b", "inverse-primary": "#0052dd", "on-primary-container": "#f3f3ff", "on-secondary": "#64003a", "on-surface-variant": "#c3c6d8", "secondary-fixed": "#ffd9e5", "surface-bright": "#393939", "primary-fixed-dim": "#b4c5ff", "on-tertiary-container": "#d5ffd5", "primary-fixed": "#dbe1ff" }, "borderRadius": { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }, "spacing": { "gutter": "1rem", "space-md": "0.75rem", "space-xl": "1.5rem", "space-xs": "0.25rem", "space-sm": "0.5rem", "space-lg": "1rem", "margin": "1rem" }, "fontFamily": { "headline-md": [ "IBM Plex Sans" ], "headline-lg": [ "IBM Plex Sans" ], "body-md": [ "IBM Plex Sans" ], "label-code": [ "Space Mono" ], "body-sm": [ "IBM Plex Sans" ], "headline-sm": [ "IBM Plex Sans" ], "body-lg": [ "IBM Plex Sans" ], "label-meta": [ "IBM Plex Sans" ], "label-agent": [ "Space Mono" ] }, "fontSize": { "headline-md": [ "1.25rem", { "lineHeight": "1.75rem", "letterSpacing": "-0.01em", "fontWeight": "600" } ], "headline-lg": [ "1.5rem", { "lineHeight": "2rem", "letterSpacing": "-0.015em", "fontWeight": "600" } ], "body-md": [ "0.875rem", { "lineHeight": "1.35rem", "fontWeight": "400" } ], "label-code": [ "0.8125rem", { "lineHeight": "1.125rem", "fontWeight": "400" } ], "body-sm": [ "0.8125rem", { "lineHeight": "1.2rem", "fontWeight": "400" } ], "headline-sm": [ "1rem", { "lineHeight": "1.5rem", "fontWeight": "600" } ], "body-lg": [ "0.9375rem", { "lineHeight": "1.45rem", "fontWeight": "400" } ], "label-meta": [ "0.75rem", { "lineHeight": "1rem", "letterSpacing": "0.02em", "fontWeight": "500" } ], "label-agent": [ "0.6875rem", { "lineHeight": "0.875rem", "letterSpacing": "0.04em", "fontWeight": "700" } ] } } } };</script></head><body class="bg-surface-container-lowest text-on-surface font-body-md text-body-md select-none"><header class="fixed top-0 left-0 right-0 h-10 bg-surface-container-low border-b border-surface-container-highest z-50 flex items-center justify-between px-space-md"><div class="flex items-center gap-space-md"><div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded-full bg-[#FF5F56] border border-[#E0443E]"></div><div class="w-3 h-3 rounded-full bg-[#FFBD2E] border border-[#DEA123]"></div><div class="w-3 h-3 rounded-full bg-[#27C93F] border border-[#1AAB29]"></div></div><div class="h-4 w-[1px] bg-surface-container-highest ml-space-xs"></div><div class="flex items-center gap-space-sm"><img alt="IBM Bob Live Collab - macOS App Icon" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1VA0SVNo5rXtlPttikEe6hfv0WXvf75esd_W1x4cUxBtG9S76HXlqJYHoEKVR3A_5GXjXj9Gdp7PcZFaX8pHjldQVZcZJwqGHg9F1gf2Bk7oy4clCso5uDVyhxQdESHcv4Sv27p8GqJtWYuszmlcXS4FfqjTdVjhQQS8_AtMctXiZRd4Bk0WJ7btMHxL2sD1tKltzdsKQOcvCuYs2Wv8XfBhCgnQ8HqCaOLz-TEW7z7suMXmM3tMSUzPJvz"/><span class="font-headline-sm text-headline-sm text-on-surface font-semibold">IBM Bob Live Collab</span><span class="font-label-agent text-label-agent uppercase tracking-wider px-space-xs py-0.5 rounded bg-surface-container-highest border border-outline-variant text-on-surface-variant">v2.4 · connected</span></div></div><div class="flex items-center gap-space-md"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></header><aside class="fixed left-0 top-10 bottom-7 w-60 bg-surface-container-low border-r border-surface-container-highest z-40 flex flex-col justify-between overflow-y-auto"><div class="py-space-md flex flex-col gap-space-md"><nav class="flex flex-col px-space-sm gap-0.5" data-active-classes="bg-surface-container text-on-surface border-l-2 border-primary pl-[10px]"><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="workspaces" href="#"><span class="material-symbols-outlined text-[16px]">folder</span><span class="font-body-sm text-body-sm">Workspaces</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="people" href="#"><span class="material-symbols-outlined text-[16px]">group</span><span class="font-body-sm text-body-sm">People</span></a></nav><div class="flex flex-col gap-1"><div class="px-space-md py-1 font-label-agent text-label-agent uppercase tracking-widest text-outline">Live Collab</div><nav class="flex flex-col px-space-sm gap-0.5" data-active-classes="bg-surface-container text-on-surface border-l-2 border-secondary pl-[10px]"><a aria-current="page" class="flex items-center justify-between px-space-sm py-1.5 rounded transition-colors bg-surface-container text-on-surface border-l-2 border-secondary pl-[10px]" data-path="mission-control" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[16px]">dashboard</span><span class="font-body-sm text-body-sm">Mission Control</span></div><span class="px-1.5 py-0.2 rounded font-label-agent text-label-agent bg-secondary-container text-on-secondary-container border border-secondary">1</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="team" href="#"><span class="material-symbols-outlined text-[16px]">hub</span><span class="font-body-sm text-body-sm">Team</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="files-locks" href="#"><span class="material-symbols-outlined text-[16px]">lock</span><span class="font-body-sm text-body-sm">Files &amp; locks</span></a></nav></div><div class="flex flex-col gap-1"><div class="px-space-md py-1 font-label-agent text-label-agent uppercase tracking-widest text-outline">Projects</div><nav class="flex flex-col px-space-sm gap-0.5" data-active-classes="bg-surface-container text-on-surface border-l-2 border-primary pl-[10px]"><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="toko-demo" href="#"><span class="material-symbols-outlined text-[16px]">folder_open</span><span class="font-body-sm text-body-sm">toko-demo</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="live-collab" href="#"><span class="material-symbols-outlined text-[16px]">source</span><span class="font-body-sm text-body-sm">live-collab</span></a></nav></div></div><div class="p-space-sm border-t border-surface-container-highest flex items-center justify-between bg-surface-container-low"><div class="flex items-center gap-space-sm"><div class="relative flex items-center justify-center w-7 h-7 rounded-full bg-surface-container-high text-on-surface font-headline-sm text-headline-sm border border-surface-container-highest">A<span class="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-tertiary border border-surface-container-low"></span></div><div class="flex flex-col"><span class="font-body-sm text-body-sm text-on-surface leading-tight">Aarief</span><span class="font-label-agent text-label-agent text-outline leading-tight">signed in</span></div></div><button class="text-outline hover:text-on-surface p-1 transition-colors"><span class="material-symbols-outlined text-[16px]">settings</span></button></div></aside><div class="pl-60"><main class="relative pt-10 pb-7 min-h-screen bg-surface-container-lowest w-full px-space-lg py-space-md"><div class="flex flex-col w-full gap-space-md">
+<!-- Top Control Bar inside workspace content -->
+<div class="flex items-center justify-between px-space-md py-2.5 bg-surface-container border border-surface-container-highest rounded">
+<!-- Title Left -->
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-[18px] text-primary">terminal</span>
+<h1 class="font-headline-md text-headline-md text-on-surface">Mission Control · toko-demo</h1>
+<span class="font-label-agent text-label-agent px-1.5 py-0.5 rounded bg-surface-container-high text-on-surface-variant uppercase tracking-wider">PM View</span>
+</div>
+<!-- Center Status & Member Avatars -->
+<div class="flex items-center gap-space-md">
+<div class="flex items-center gap-1.5 font-label-agent text-label-agent text-tertiary">
+<span class="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span>
+<span class="tracking-wider uppercase">live · 3/3 online</span>
+</div>
+<div class="flex items-center -space-x-1.5 pl-space-xs">
+<div class="w-6 h-6 rounded-full bg-[rgba(120,169,255,0.2)] border border-[#78A9FF] text-[#78A9FF] flex items-center justify-center font-label-agent text-[10px] z-30" title="Andi (Agent A)">A</div>
+<div class="w-6 h-6 rounded-full bg-[rgba(190,149,255,0.2)] border border-[#BE95FF] text-[#BE95FF] flex items-center justify-center font-label-agent text-[10px] z-20" title="Budi (Agent B)">B</div>
+<div class="w-6 h-6 rounded-full bg-[rgba(255,131,43,0.2)] border border-[#FF832B] text-[#FF832B] flex items-center justify-center font-label-agent text-[10px] z-10" title="Citra (Agent C)">C</div>
+</div>
+</div>
+<!-- Monospace Bobcoin Metadata Right -->
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-[16px] text-outline">toll</span>
+<span class="font-label-code text-label-code text-outline tracking-tight">
+        Bobcoin <span class="text-[#78A9FF] font-medium">A 31</span> · <span class="text-[#BE95FF] font-medium">B 28</span> · <span class="text-[#FF832B] font-medium">C 22</span>
+</span>
+</div>
+</div>
+<!-- Main 3-Column Cockpit Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-space-md items-start">
+<!-- COLUMN 1: TASKS (Mini Kanban) -->
+<div class="flex flex-col bg-surface-container-low border border-surface-container-highest rounded p-space-md gap-space-md">
+<div class="flex items-center justify-between pb-space-xs border-b border-surface-container-highest">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[16px] text-primary">view_kanban</span>
+<span class="font-label-agent text-label-agent uppercase tracking-widest text-on-surface">Tasks</span>
+</div>
+<span class="font-label-code text-[11px] text-outline">4 ACTIVE</span>
+</div>
+<!-- Stage Sub-columns Headers -->
+<div class="grid grid-cols-3 gap-space-xs font-label-code text-[10px] tracking-wider uppercase text-outline px-1">
+<div class="flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span>Working (2)</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-[#F1C21B]"></span>
+<span>Review (1)</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+<span>Done (1)</span>
+</div>
+</div>
+<!-- Task Cards Stack -->
+<div class="flex flex-col gap-space-sm">
+<!-- Task 1: Working T-1 -->
+<div class="bg-surface-container border border-surface-container-highest rounded p-space-sm flex flex-col gap-space-xs hover:border-outline-variant transition-colors">
+<div class="flex items-center justify-between">
+<span class="font-headline-sm text-body-md text-on-surface font-semibold">T-1 Coupon</span>
+<span class="font-label-agent text-[10px] px-1.5 py-0.5 rounded bg-[rgba(120,169,255,0.18)] border border-[#78A9FF] text-[#78A9FF]">ANDI · A</span>
+</div>
+<div class="flex items-center justify-between text-outline font-label-code text-[11px]">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">description</span>
+              3 files · 14 edits
+            </span>
+<span class="text-tertiary">active sync</span>
+</div>
+</div>
+<!-- Task 2: Working T-2 -->
+<div class="bg-surface-container border border-surface-container-highest rounded p-space-sm flex flex-col gap-space-xs hover:border-outline-variant transition-colors">
+<div class="flex items-center justify-between">
+<span class="font-headline-sm text-body-md text-on-surface font-semibold">T-2 Dark mode</span>
+<span class="font-label-agent text-[10px] px-1.5 py-0.5 rounded bg-[rgba(190,149,255,0.18)] border border-[#BE95FF] text-[#BE95FF]">BUDI · B</span>
+</div>
+<div class="flex items-center justify-between text-outline font-label-code text-[11px]">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">description</span>
+              2 files
+            </span>
+<span class="text-secondary font-medium">needs lock</span>
+</div>
+</div>
+<!-- Task 3: Review T-0 -->
+<div class="bg-surface-container border border-surface-container-highest rounded p-space-sm flex flex-col gap-space-xs hover:border-outline-variant transition-colors">
+<div class="flex items-center justify-between">
+<span class="font-headline-sm text-body-md text-on-surface font-semibold">T-0 Shipping</span>
+<span class="font-label-agent text-[10px] px-1.5 py-0.5 rounded bg-[rgba(120,169,255,0.18)] border border-[#78A9FF] text-[#78A9FF]">ANDI · A</span>
+</div>
+<div class="flex items-center justify-between font-label-code text-[11px]">
+<span class="text-outline">signature diff</span>
+<span class="px-1.5 py-0.2 rounded bg-[#F1C21B]/15 text-[#F1C21B] border border-[#F1C21B]/40 font-medium">waiting PM</span>
+</div>
+</div>
+<!-- Task 4: Done T-00 -->
+<div class="bg-surface-container border border-surface-container-highest rounded p-space-sm flex flex-col gap-space-xs opacity-75 hover:opacity-100 transition-opacity">
+<div class="flex items-center justify-between">
+<span class="font-headline-sm text-body-md text-on-surface font-semibold line-through text-outline">T-00 Schema</span>
+<span class="font-label-agent text-[10px] px-1.5 py-0.5 rounded bg-[rgba(190,149,255,0.18)] border border-[#BE95FF] text-[#BE95FF]">BUDI · B</span>
+</div>
+<div class="flex items-center justify-between font-label-code text-[11px] text-outline">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px] text-tertiary">check</span>
+              Merged
+            </span>
+<span class="font-label-code text-on-surface-variant">commit 3f9a2c1</span>
+</div>
+</div>
+</div>
+<!-- Action Button at Bottom -->
+<button class="w-full mt-space-xs py-2 px-space-sm border border-dashed border-surface-container-highest rounded font-body-sm text-body-sm text-outline hover:text-on-surface hover:border-outline transition-colors flex items-center justify-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">add</span>
+<span>Ask pm-lead to plan…</span>
+</button>
+</div>
+<!-- COLUMN 2: FILES & LOCKS -->
+<div class="flex flex-col bg-surface-container-low border border-surface-container-highest rounded p-space-md gap-space-md">
+<div class="flex items-center justify-between pb-space-xs border-b border-surface-container-highest">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[16px] text-primary">lock_clock</span>
+<span class="font-label-agent text-label-agent uppercase tracking-widest text-on-surface">Files &amp; Locks</span>
+</div>
+<span class="font-label-code text-[11px] text-tertiary">SYNC ACTIVE</span>
+</div>
+<!-- Tree File Container -->
+<div class="flex flex-col font-label-code text-[12px] bg-surface-container-lowest border border-surface-container-highest rounded p-space-sm divide-y divide-surface-container-highest/60">
+<!-- File 1: checkout.ts -->
+<div class="py-2.5 px-2 flex items-center justify-between hover:bg-surface-container transition-colors rounded">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[15px] text-outline">data_object</span>
+<span class="text-on-surface font-medium">checkout.ts</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="font-label-agent text-[10px] px-1.5 py-0.5 rounded bg-[rgba(120,169,255,0.18)] border border-[#78A9FF] text-[#78A9FF]">
+              A ● held
+            </span>
+</div>
+</div>
+<!-- File 2: coupon.ts -->
+<div class="py-2.5 px-2 flex items-center justify-between hover:bg-surface-container transition-colors rounded">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[15px] text-outline">data_object</span>
+<span class="text-on-surface font-medium">coupon.ts</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="font-label-agent text-[10px] px-1.5 py-0.5 rounded bg-[rgba(120,169,255,0.18)] border border-[#78A9FF] text-[#78A9FF] flex items-center gap-1">
+<span>A</span>
+<span>writing ✎</span>
+</span>
+</div>
+</div>
+<!-- File 3: Header.tsx -->
+<div class="py-2.5 px-2 flex items-center justify-between hover:bg-surface-container transition-colors rounded">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[15px] text-outline">code</span>
+<span class="text-on-surface font-medium">Header.tsx</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="font-label-agent text-[10px] px-1.5 py-0.5 rounded bg-[rgba(190,149,255,0.18)] border border-[#BE95FF] text-[#BE95FF] flex items-center gap-1">
+<span>B</span>
+<span>writing ✎</span>
+</span>
+</div>
+</div>
+<!-- File 4: theme.css -->
+<div class="py-2.5 px-2 flex items-center justify-between hover:bg-surface-container transition-colors rounded">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[15px] text-outline">css</span>
+<span class="text-on-surface font-medium">theme.css</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="font-label-agent text-[10px] px-1.5 py-0.5 rounded bg-[rgba(190,149,255,0.18)] border border-[#BE95FF] text-[#BE95FF]">
+              B ● held
+            </span>
+</div>
+</div>
+<!-- File 5: routes.ts (Contended) -->
+<div class="py-2.5 px-2 flex items-center justify-between hover:bg-surface-container transition-colors rounded">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[15px] text-outline">alt_route</span>
+<span class="text-on-surface font-medium">routes.ts</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="font-label-agent text-[10px] px-1.5 py-0.5 rounded bg-[rgba(120,169,255,0.18)] border border-[#78A9FF] text-[#78A9FF]">
+              A ○ reserved
+            </span>
+<span class="font-label-agent text-[9px] px-1.5 py-0.5 rounded bg-surface-container-high border border-outline-variant text-outline">
+              queue: B
+            </span>
+</div>
+</div>
+</div>
+<!-- File Lock Mini Map / Lock Distribution Meter -->
+<div class="bg-surface-container border border-surface-container-highest rounded p-space-sm flex flex-col gap-1.5">
+<div class="flex items-center justify-between font-label-code text-[11px] text-outline">
+<span>Lock contention risk</span>
+<span class="text-secondary font-medium">1 blocked request</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden flex">
+<div class="h-full bg-[#78A9FF] w-[50%]" title="Andi: 3 locks"></div>
+<div class="h-full bg-[#BE95FF] w-[35%]" title="Budi: 2 locks"></div>
+<div class="h-full bg-secondary w-[15%]" title="Contention"></div>
+</div>
+</div>
+<!-- Legend Line -->
+<div class="pt-space-xs font-label-code text-[11px] text-outline tracking-tight flex items-center justify-between">
+<span>✎ writing</span>
+<span>·</span>
+<span>○ reserved</span>
+<span>·</span>
+<span>● held</span>
+<span>·</span>
+<span>⏱ review</span>
+</div>
+</div>
+<!-- COLUMN 3: NEEDS YOU (2) + LIVE FEED -->
+<div class="flex flex-col gap-space-md">
+<!-- Column Header -->
+<div class="flex items-center justify-between pb-space-xs border-b border-surface-container-highest">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[16px] text-secondary">priority_high</span>
+<span class="font-label-agent text-label-agent uppercase tracking-widest text-on-surface">Needs You (2)</span>
+</div>
+<span class="px-2 py-0.5 rounded font-label-agent text-[10px] bg-secondary-container text-on-secondary-container border border-secondary font-bold">ATTENTION</span>
+</div>
+<!-- Attention Card 1: Blocked Hand-off -->
+<div class="bg-surface-container border border-surface-container-highest border-l-[3px] border-l-[#FF7EB6] rounded p-space-md flex flex-col gap-space-sm" id="decision-card-1">
+<div class="flex flex-col gap-0.5">
+<div class="flex items-center gap-1.5">
+<span class="font-label-agent text-[10px] px-1 py-0.2 rounded bg-error-container text-error uppercase tracking-wider font-bold">blocked</span>
+<h2 class="font-headline-sm text-body-md text-on-surface font-semibold">Budi needs checkout.ts</h2>
+</div>
+<p class="font-label-code text-body-sm text-outline">held by Andi · T-1 Coupon</p>
+</div>
+<!-- Recommendation Box -->
+<div class="bg-surface-container-low border border-surface-container-highest rounded p-2.5 flex items-start gap-2">
+<span class="material-symbols-outlined text-[16px] text-primary shrink-0 mt-0.5">smart_toy</span>
+<p class="font-body-sm text-body-sm text-on-surface leading-snug">
+<strong class="text-primary font-medium">pm-lead suggests:</strong> QUEUE Budi after T-1; continue Header.tsx meanwhile.
+          </p>
+</div>
+<!-- Action Buttons -->
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-2">
+<button class="bg-[#0F62FE] hover:bg-[#0353E9] text-white font-body-sm text-body-sm px-3 py-1.5 rounded transition-colors flex items-center gap-1 font-medium" onclick="document.getElementById('decision-card-1').classList.add('opacity-40'); this.innerText='Approved';">
+<span class="material-symbols-outlined text-[15px]">check</span>
+              Approve
+            </button>
+<button class="border border-surface-container-highest hover:bg-surface-container-high text-on-surface font-body-sm text-body-sm px-3 py-1.5 rounded transition-colors" onclick="document.getElementById('decision-card-1').classList.add('opacity-40'); this.innerText='Denied';">
+              Deny
+            </button>
+</div>
+<span class="font-label-code text-[10px] text-outline text-right">suggested by pm-lead · needs a human</span>
+</div>
+</div>
+<!-- Attention Card 2: Review Code Diff -->
+<div class="bg-surface-container border border-surface-container-highest border-l-[3px] border-l-[#FF7EB6] rounded p-space-md flex flex-col gap-space-sm" id="decision-card-2">
+<div class="flex flex-col gap-0.5">
+<div class="flex items-center gap-1.5">
+<span class="font-label-agent text-[10px] px-1 py-0.2 rounded bg-tertiary-container text-tertiary-fixed uppercase tracking-wider font-bold">review</span>
+<h2 class="font-headline-sm text-body-md text-on-surface font-semibold">T-0 Shipping · +12 −3 · 2 files</h2>
+</div>
+<p class="font-label-code text-body-sm text-outline">Author: Andi (Agent A)</p>
+</div>
+<!-- Warning Callout Box -->
+<div class="bg-[#F1C21B]/15 border border-[#F1C21B]/30 rounded p-2.5 flex items-start gap-2 text-on-surface">
+<span class="material-symbols-outlined text-[16px] text-[#F1C21B] shrink-0 mt-0.5">warning</span>
+<p class="font-body-sm text-body-sm leading-snug">
+<span class="font-label-code text-[11px] bg-surface-container-highest px-1 py-0.5 rounded text-on-surface font-medium">calculateTotal()</span> signature changed; used by <span class="font-medium text-[#BE95FF]">Header.tsx (Budi)</span>
+</p>
+</div>
+<!-- Action Buttons -->
+<div class="flex items-center gap-2 pt-1">
+<button class="bg-[#0F62FE] hover:bg-[#0353E9] text-white font-body-sm text-body-sm px-3 py-1.5 rounded transition-colors flex items-center gap-1 font-medium" onclick="document.getElementById('decision-card-2').classList.add('opacity-40'); this.innerText='Committed';">
+<span class="material-symbols-outlined text-[15px]">done_all</span>
+            Approve &amp; commit
+          </button>
+<button class="border border-surface-container-highest hover:bg-surface-container-high text-on-surface font-body-sm text-body-sm px-3 py-1.5 rounded transition-colors" onclick="document.getElementById('decision-card-2').classList.add('opacity-40'); this.innerText='Returned';">
+            Send back
+          </button>
+</div>
+</div>
+<!-- Below Column 3: Live Feed -->
+<div class="flex flex-col bg-surface-container-low border border-surface-container-highest rounded p-space-md gap-space-sm mt-space-xs">
+<div class="flex items-center justify-between pb-space-xs border-b border-surface-container-highest">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[15px] text-tertiary">sensors</span>
+<span class="font-label-agent text-label-agent uppercase tracking-widest text-on-surface">Live Feed</span>
+</div>
+<span class="font-label-code text-[10px] text-outline">STREAMING</span>
+</div>
+<div class="flex flex-col font-label-code text-[11px] gap-2">
+<!-- Row 1 -->
+<div class="flex items-center gap-2 text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="text-outline text-[10px] w-10">21:06</span>
+<span class="text-[#78A9FF] text-[8px]">●</span>
+<span class="truncate"><strong class="text-on-surface font-medium">Andi's Bob</strong> edited checkout.ts</span>
+</div>
+<!-- Row 2 -->
+<div class="flex items-center gap-2 text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="text-outline text-[10px] w-10">21:06</span>
+<span class="text-error text-[8px]">●</span>
+<span class="truncate"><strong class="text-[#BE95FF] font-medium">Budi's Bob</strong> <span class="text-secondary">blocked</span> · PreToolUse</span>
+</div>
+<!-- Row 3 -->
+<div class="flex items-center gap-2 text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="text-outline text-[10px] w-10">21:05</span>
+<span class="text-[#BE95FF] text-[8px]">●</span>
+<span class="truncate"><strong class="text-[#BE95FF] font-medium">Budi's Bob</strong> edited theme.css</span>
+</div>
+<!-- Row 4 -->
+<div class="flex items-center gap-2 text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="text-outline text-[10px] w-10">21:03</span>
+<span class="text-[#FF832B] text-[8px]">●</span>
+<span class="truncate"><strong class="text-on-surface font-medium">Andi</strong> submitted T-0 for review</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></main></div><footer class="fixed bottom-0 left-0 right-0 h-7 bg-surface-container-low border-t border-surface-container-highest z-50 flex items-center justify-between px-space-md font-label-code text-label-code text-outline"><div class="flex items-center gap-space-sm"><span class="text-tertiary">●</span><span class="text-on-surface">Live Collab</span><span>·</span><span>3 online</span><span>·</span><span class="text-secondary font-semibold">1 needs you</span></div><div class="flex items-center gap-space-sm"><span class="text-on-surface-variant">Bob radar: sync active</span><span>·</span><span class="text-tertiary">12ms</span></div></footer></body></html>

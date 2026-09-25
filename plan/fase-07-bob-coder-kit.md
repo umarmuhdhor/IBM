@@ -2,12 +2,13 @@
 
 | Field | Nilai |
 |---|---|
-| Jalur | Orang 2 — **jalankan di dalam IBM Bob** dan ekspor sesinya |
+| Jalur | **Lane B** (Orang 2) · branch `lane/bob` · sebagian besar kode ditulis di **Bob IDE** (Bob slice), Claude Code + ECC untuk test, review, dan bundel |
 | Slot WITA | Sab 26 Sep 10:00 – 16:00 |
 | Estimasi | 5 jam |
 | Prasyarat | 01 (hasil spike), 02. **Boleh paralel** memakai mock server (`pnpm dev:mock`) sebelum fase 05 selesai |
 | Requirement PRD | BC-01, BC-02, BC-03, BC-04, BC-07 (P0); kerangka BC-05 (P1) |
 | Model | Sonnet 5 · effort high |
+| Bob slice | **B2** `custom_modes.yaml` coder (bukti `02-coder-mode`) · **B3** hook `lock_guard` + `brief` (`03-hooks`) · **B4a** tool MCP coder (`04-mcp-coder`). Prompt siap tempel ditulis agent sebelum setiap slice. |
 | Fase berikutnya | 08 |
 
 ## Tujuan
@@ -76,11 +77,11 @@ Membuat Bob milik coder "sadar Radar": di awal sesi dan setiap prompt ia mendapa
    ```yaml
    customModes:
      - slug: coder
-       name: Radar Coder
+       name: Live Collab Coder
        roleDefinition: >-
-         Kamu adalah coder di workspace multiplayer Bob Radar. Beberapa AI dan manusia bekerja di
+         Kamu adalah coder di workspace multiplayer IBM Bob Live Collab. Beberapa AI dan manusia bekerja di
          folder yang sama secara live. Setiap file hanya boleh ditulis oleh satu task pada satu waktu.
-       whenToUse: Mengerjakan task yang dibagikan PM di workspace Bob Radar.
+       whenToUse: Mengerjakan task yang dibagikan PM di workspace IBM Bob Live Collab.
        customInstructions: |-
          1. Mulai setiap sesi dengan memanggil tool radar my_tasks. Kerjakan hanya task milikmu.
          2. Baca brief [Radar] di konteks. Brief adalah kebenaran terbaru tentang kunci dan keputusan PM.
@@ -123,6 +124,12 @@ Membuat Bob milik coder "sadar Radar": di awal sesi dan setiap prompt ia mendapa
 14. **Perbaikan perilaku**: kalau Bob mencoba ulang / memakai shell, perkuat instruksi mode (kalimat tegas, contoh), tambahkan kalimat penutup di pesan blokir. Uji ulang sampai 3 dari 3 percobaan benar.
 
 15. Commit `fase-07: bob coder kit (mode, hooks, radar-mcp coder tools)`.
+
+## Tambahan v0.3
+
+- Kit yang sama harus jalan di **Bob IDE dan Bob Shell**. Uji manual kedua permukaan (hasil spike 1/7 menentukan kanal blokir masing-masing).
+- Brief dan hook mencetak jejak `BobTrace` satu baris (mis. `⚓ hook · PreToolUse · lock_guard → blocked · 84 ms`) ke kanal yang terlihat di terminal Bob Shell, supaya momen near-miss terlihat di video. Jejak ini termasuk dalam batas 6 baris brief.
+- `RADAR_LANG=en` (default demo) atau `id` untuk teks brief/blokir.
 
 ## Verifikasi
 

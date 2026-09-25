@@ -2,12 +2,13 @@
 
 | Field | Nilai |
 |---|---|
-| Jalur | Orang 1 |
+| Jalur | **Lane A** (Orang 1) · branch `lane/core` |
 | Slot WITA | Sab 26 Sep 21:00 – Min 27 Sep 01:00 (PRD: "Sab 23:00–Min 05:00 commit per task + push") |
 | Estimasi | 3 jam |
 | Prasyarat | 05 |
-| Requirement PRD | SV-07, MA-04 (sisi server: `get_task_diff` + importer), §07.4, NFR-09 |
+| Requirement PRD | SV-07, MA-04 (sisi server: `get_task_diff` + importer), §07.4, NFR-09, **JT-03, JT-05, NFR-12 (relay terminal, v0.3)** |
 | Model | **Opus 5.5** · effort high (alt: Sonnet 5 · high) |
+| Bob slice | **A3**: formatter pesan commit per task + trailer (`services/git-message.ts`) · **A4**: `/review` Bob (mode Ask) atas `locks.ts` vs R4. Bukti `03-commit-format`, `04-locks-review`. |
 | Fase berikutnya | 10 (integrasi) — atau 12 bila tim paralel sudah di fase 10 |
 
 ## Tujuan
@@ -32,7 +33,7 @@ Saat PM menyetujui review, server meng-commit **hanya file milik task itu** ke r
      1. Ambil `task_touch` untuk task. Untuk setiap path: tulis `file.content` terkini ke working copy (buat folder), atau `git rm` bila `deleted`.
      2. `git add -- <paths>` (hanya path task; **jangan** `git add -A`).
      3. Kalau tidak ada perubahan staged (isi sama dengan HEAD) → kembalikan `{ sha: HEAD, empty: true }` (task tetap bisa selesai).
-     4. Commit dengan `--author "<git_name> <git_email>"` pemilik task, committer `Radar Server <radar@localhost>`, pesan R5 §3:
+     4. Commit dengan `--author "<git_name> <git_email>"` pemilik task, committer `Collab Server <radar@localhost>`, pesan R5 §3:
         ```text
         T-1: Kupon diskon
 
@@ -77,6 +78,17 @@ Saat PM menyetujui review, server meng-commit **hanya file milik task itu** ke r
 6. **Uji manual ke GitHub nyata** (LANGKAH MANUAL): dengan server deploy + `GIT_PUSH=true`, jalankan skenario singkat lewat `curl` (rencana → edit via sync → submit → proposal review → approve dengan token mc) dan pastikan commit muncul di GitHub atas nama coder dengan co-author IBM Bob (GitHub menampilkan avatar ganda bila email co-author dikenali). Screenshot → `docs/img/commit-github.png`.
 
 7. Commit `fase-06: git worker, task diff, impact analysis`.
+
+## Bagian v0.3 — Relay terminal (JT-03, JT-05, NFR-12)
+
+1. `services/terminals.ts`: registry `termId → {owner, title, agent, viewers:Set, ring: RingBuffer(262144), grant?}`. Hanya pemilik (`principal.member === owner`) yang boleh `share/unshare/frame/snapshot/resize/grant/revoke`. Penonton harus anggota workspace yang sama.
+2. Hub WS: routing pesan sesuai R3 §3.9. `term.subscribe` → kirim isi ring buffer, lalu minta `term.need_snapshot` ke host. Host putus → `term.ended {reason:"host_offline"}`.
+3. Batas: frame > 32 KB ditolak (`TERM_FRAME_TOO_LARGE`), dan maks 60 frame/detik per terminal (sisanya digabung/dibuang dengan log).
+4. `RECORD_TERMINALS=true` → frame disimpan ke tabel `term_frame` (tambahkan ke R2 lewat contract PR). `GET /v1/events/export?withTerminals=true` menyertakan frame.
+5. Event log: `term.shared`, `term.unshared`, `term.viewer.joined/left`, `term.input.granted/revoked` (tanpa isi frame).
+6. Test integrasi: host + 2 penonton (klien `ws`), urutan `seq` terjaga, penonton terlambat menerima ring, non-anggota ditolak, input tanpa grant ditolak (P1).
+7. Metrik `term.latency` di event `metric`.
+8. `security-reviewer` wajib untuk bagian ini.
 
 ## Verifikasi
 

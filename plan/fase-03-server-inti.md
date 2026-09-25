@@ -1,8 +1,8 @@
-# Fase 03 — Radar Server inti: DB, auth, event log, file store, WebSocket, deploy
+# Fase 03 — Collab Server inti: DB, auth, event log, file store, WebSocket, deploy
 
 | Field | Nilai |
 |---|---|
-| Jalur | Orang 1 |
+| Jalur | **Lane A** (Orang 1) · branch `lane/core` |
 | Slot WITA | Sab 26 Sep 02:30 – 07:00 (deploy server kosong target ≤ 04:00) |
 | Estimasi | 4 jam |
 | Prasyarat | 02 |
@@ -81,6 +81,12 @@ Server yang hidup terus (bukan serverless) dengan SQLite sebagai sumber kebenara
     - Alternatif: Render/Railway dengan disk persisten. Catat pilihan di DECISIONS.
 
 14. Commit `fase-03: server core (db, auth, events, files, ws)`.
+
+## Tambahan v0.3
+
+- Repo DB untuk token bernama `db/repo/access.ts` (bukan `token.ts`, R5 §8). Tabel SQL `token` boleh tetap.
+- Hub WS menerima `client: "app"` (token member, read-only `state` + `event`). Relay `term.*` dikerjakan di fase 06.
+- Deploy pertama ke Fly/Railway sebelum tidur, supaya Lane C bisa konek ke staging saat Sinkron 1.
 
 ## Verifikasi
 

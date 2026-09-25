@@ -2,7 +2,7 @@
 
 | Field | Nilai |
 |---|---|
-| Jalur | Semua (dipimpin Orang 2 yang memegang simulator & Bob; Orang 3 memegang Mission Control; Orang 1 bergabung setelah fase 06) |
+| Jalur | Semua, di **`main`** setelah PR ketiga lane di-merge (Sab 21:00). Dipimpin Lane B (simulator & Bob). Lane C memegang app di 3 Mac. Lane A memegang server. |
 | Slot WITA | Sab 26 Sep 21:00 – Min 27 Sep 02:00 · **Milestone Sab 23:00** |
 | Estimasi | 3–4 jam |
 | Prasyarat | 04, 05, 07, 08, 09. Fase 06 hanya dibutuhkan untuk langkah review/commit (sim langkah 6–7, 3 PC langkah 7) |
@@ -72,6 +72,13 @@ Membuktikan alur penuh PRD berjalan: **rencana → live → blokir → keputusan
 6. **Latihan kedua** setelah perbaikan (sebelum tidur bergilir) untuk memastikan stabil; ukur ulang metrik.
 
 7. Commit `fase-10: e2e simulator, fixes, milestone run`.
+
+## Tambahan v0.3 — uji di 3 Mac dengan app
+
+1. Ketiga Mac memakai **app Live Collab** (build `pnpm dev` atau `.app` dari spike 8). A: Bob IDE + app (panel Team). B: Bob Shell di terminal app. C: Mission Control + Bob `pm-lead`.
+2. Tambahkan ke milestone Sab 23:00: B menonton terminal Bob A (JT-01/02) dan latensi p95 tercatat.
+3. `scripts/sim-3pc.ts` ditambah langkah `term.share` + 1 penonton (tanpa Bob, frame sintetis).
+4. Rekam semua sesi uji dengan `RECORD_TERMINALS=true` sebagai bahan replay cadangan.
 
 ## Verifikasi
 

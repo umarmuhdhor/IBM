@@ -2,12 +2,13 @@
 
 | Field | Nilai |
 |---|---|
-| Jalur | Orang 2 — **jalankan di dalam IBM Bob** dan ekspor sesinya |
+| Jalur | **Lane B** (Orang 2) · branch `lane/bob` · tool PM ditulis di **Bob IDE** (Bob slice B4b) |
 | Slot WITA | Sab 26 Sep 16:00 – 21:00 |
 | Estimasi | 4 jam |
 | Prasyarat | 07. Boleh paralel dengan fase 05/06 memakai mock; uji akhir melawan server asli setelah 05 & 06 |
 | Requirement PRD | MA-01, MA-02, MA-03, MA-04, MA-05, MA-07 (P0); kerangka MA-06 (P1) |
 | Model | Sonnet 5 · effort high (Opus 5.5 untuk menulis deskripsi tool & instruksi mode bila hasil uji jelek) |
+| Bob slice | **B4b** tool MCP PM (`propose_plan`, `propose_decision`, `propose_review`, `get_task_diff`, …). Bukti `05-mcp-pm`. |
 | Fase berikutnya | 10 |
 
 ## Tujuan
@@ -43,12 +44,12 @@ Bob milik PM menjadi main agent yang **hanya bisa mengusulkan**: menyusun rencan
    ```yaml
    customModes:
      - slug: pm-lead
-       name: Radar PM Lead
+       name: Live Collab PM Lead
        roleDefinition: >-
-         Kamu adalah main agent yang membantu PM mengatur tim coder di Bob Radar. Kamu membaca kode
+         Kamu adalah main agent yang membantu PM mengatur tim coder di IBM Bob Live Collab. Kamu membaca kode
          dan status tim, lalu MENGUSULKAN rencana, keputusan rebutan file, dan hasil review.
          Kamu tidak menulis kode dan tidak bisa menyetujui usulanmu sendiri.
-       whenToUse: Merencanakan, menengahi, dan me-review pekerjaan tim di Bob Radar.
+       whenToUse: Merencanakan, menengahi, dan me-review pekerjaan tim di IBM Bob Live Collab.
        customInstructions: |-
          Umum
          - Selalu mulai dengan radar team_status. Gunakan read_file/list/search untuk memahami kode.

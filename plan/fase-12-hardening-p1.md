@@ -2,7 +2,7 @@
 
 | Field | Nilai |
 |---|---|
-| Jalur | Orang 1 (Orang 2 membantu BC-05 & SV-10 bila fase 13 cepat selesai) |
+| Jalur | **Lane A** (Orang 1) · branch `lane/core` (Lane B membantu BC-05 & SV-10 bila fase 13 cepat selesai) |
 | Slot WITA | Min 27 Sep 05:00 – 11:00 · **berakhir di GATE 2 (feature freeze) Min 11:00** |
 | Estimasi | 5 jam |
 | Prasyarat | 10 |
@@ -69,6 +69,11 @@ Kerjakan dari atas. Kalau jam 10:00 belum sampai sebuah item, **item itu dan sem
 10. **GATE 2 (11:00)**: bekukan fitur. Tandai di PROGRESS apa yang masuk/terpotong. Deploy final server & web. Tag git `v0.2.0-freeze`.
 
 11. Commit `fase-12: hardening and P1 features`.
+
+## Tambahan v0.3
+
+- IN-02 kode undangan: `radar-server invite --member B` → `rdr_inv_<base64url>` + `radar join --invite <kode>`. App (Settings) menerima kode yang sama (koordinasi dengan Lane C).
+- Endpoint `GET /v1/files/history` untuk UI-06 kalau belum ada.
 
 ## Verifikasi
 

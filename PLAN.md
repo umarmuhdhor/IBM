@@ -1,0 +1,242 @@
+# IBM Bob Live Collab — Plan eksekusi tim (v0.3)
+
+> Satu halaman untuk seluruh tim: siapa mengerjakan apa, di branch mana, dengan cara apa (Claude Code + ECC), kapan merge, dan bagaimana bukti IBM Bob dikumpulkan.
+> Produk: [`PRD.md`](PRD.md) · Desain: [`DESIGN.md`](DESIGN.md) · Prompt gambar UI: [`prompt_ui.md`](prompt_ui.md) · Detail per fase: [`plan/`](plan/README.md)
+> Event: IBM Bob 2.0 Hackathon (lablab.ai), **Jum 25 Sep 23:00 WITA → Min 27 Sep 23:00 WITA** (15:00 UTC).
+
+---
+
+## 0. Ringkasan 30 detik
+
+- **Apa yang dibangun:** *IBM Bob Live Collab*, aplikasi desktop macOS (`IBM Bob Live Collab.app`, fork dari [Orca](https://github.com/stablyai/orca), MIT) plus server kecil. Tim yang masing-masing memakai **akun IBM Bob sendiri** bisa bekerja di **satu workspace live** seperti Google Docs:
+  1. File yang ditulis Bob siapa pun langsung muncul di semua laptop.
+  2. Satu file hanya boleh ditulis satu Bob. Ini ditegakkan oleh hook `PreToolUse` Bob dan server.
+  3. Bob milik PM dalam mode `pm-lead` membagi kerja, menengahi rebutan file, dan me-review. Manusia yang menyetujui.
+  4. **Baru di v0.3:** anggota tim bisa **menonton terminal Bob rekan secara live**. Ikut mengetik di terminal itu adalah bonus.
+- **Cara membangunnya:** 3 orang, 3 lane paralel, masing-masing dengan AI sendiri (Claude Code + plugin **ECC**). Semua memakai satu `PROMPT.md` dan cukup mengganti 2 baris (`LANE`, `FASE`).
+- **Submit:** video MP4 ≤ 3 menit, 2 statement ≤ 500 kata, screenshot ringkasan task Bob dari **setiap** anggota (§10).
+- **Bukti Bob:** setiap fase punya **Bob slice**, yaitu bagian nyata yang dikerjakan di Bob IDE. Hasilnya dikumpulkan sebagai ekspor sesi dan screenshot ringkasan task ke `bob_sessions/<nama>/`.
+
+---
+
+## 1. Apakah ini feasible? (jawaban jujur)
+
+| Bagian | Feasible? | Dasar | Risiko utama → mitigasi |
+|---|---|---|---|
+| Tiap orang memakai akun Bob sendiri | Ya | Bob berjalan lokal di laptop masing-masing, dengan login masing-masing | – |
+| Hook blokir di Bob | Ya untuk **Bob Shell**. Untuk Bob IDE dicek saat spike. | Docs Bob Shell: `PreToolUse` exit 2 memblokir, stdout `SessionStart`/`UserPromptSubmit` masuk konteks, config `.bob/settings.json` | Kalau hook di IDE tidak jalan, penegakan tetap ada di server + sync agent (lapis 2). Coder IDE tetap aman, hanya penjelasan dari Bob-nya yang lebih lemah. |
+| File live sync | Ya | chokidar + WebSocket, sudah dirancang di plan v0.2 | Gema/loop → anti-gema berbasis hash (fase 04) |
+| Fork Orca menjadi `.app` | Ya | Orca = Electron 43 + electron-vite. Ada script `build:mac` / `build:unpack` + `electron-builder` | App tidak di-sign → dibuka dengan klik kanan → Open. Build native macOS helper butuh Xcode CLT → coba **sebelum kickoff** (§6). |
+| Menambah "IBM Bob" sebagai agent di Orca | Ya | Agent Orca didefinisikan di `src/shared/tui-agent.ts`, `tui-agent-config.ts`, `renderer/src/lib/agent-catalog.tsx` | Codebase Orca besar (~23k file) → perubahan **aditif** saja. Bob slice: Bob IDE membaca Orca dan menemukan titik sambungnya. |
+| Tonton terminal Bob rekan | Ya | Renderer Orca memakai xterm. Output di-tap lalu dikirim lewat WebSocket server Live Collab, dan penonton membuka xterm read-only. | Relay bawaan Orca (`cloud/apps/relay`, Postgres) **tidak dipakai** karena terlalu berat. Kita buat relay ringan sendiri. |
+| Ikut mengetik di terminal rekan | Ya, **bonus** | Input tamu diteruskan ke pty host setelah host mengizinkan | Bobcoin milik host yang terpakai. Keamanan: host harus menyalakan toggle. |
+| Bobcoin | Ketat | **40 Bobcoin per akun** (guide Mei 2026) | Anggaran per orang (§7). Main agent dipanggil hanya saat perlu. `--max-cost`. |
+| Aturan "Bob IDE harus jadi komponen inti" (guide Mei) | Ya | Demo: A memakai **Bob IDE**, B memakai **Bob Shell di dalam app Live Collab**, C (PM) memakai Bob mode `pm-lead` | Cek ulang guide 2.0 saat kickoff |
+
+**Kesimpulan:** feasible untuk 48 jam **kalau** perubahan di Orca dibatasi ke sidebar/panel baru dan registrasi agent. Jangan refactor internal Orca (pty daemon, relay, mobile).
+
+---
+
+## 2. Tim, lane, dan kepemilikan file
+
+Tiga lane berjalan paralel. **Batas lane = batas folder**, supaya merge hampir tidak pernah bentrok.
+
+| Lane | Pemilik | Fokus | Fase | Folder yang BOLEH disentuh |
+|---|---|---|---|---|
+| **A · Core** | Orang 1 | Server Radar, sync agent, mesin kunci, git worker, relay terminal | 00, 02, 03, 04, 05, 06, 12 | `radar/packages/{common,server,sync}`, `radar/scripts/{sim-3pc,bench-sync,mock-server}.ts`, `radar/examples/toko-demo`, root `radar/` config |
+| **B · Bob** | Orang 2 | Kit `.bob/`: mode `coder` + `pm-lead`, hook, `radar-mcp`, spike Bob, eksperimen, koordinator bukti Bob | 01, 07, 08, 13 | `radar/packages/{hooks,mcp}`, `radar/bob-kit`, `radar/spike`, `radar/scripts/{ab,metrics}*`, `bob_sessions/INDEX.md`, `BOB_DEVELOPMENT.md` |
+| **C · App** | **Aarief** | Fork Orca: agent `bob`, panel Live Collab, tonton terminal, `.dmg`, replay web, pitch | 09, 11, 14 (aset) | `src/**` (Orca), `radar/packages/{ui,web}`, `radar/docs/deck`, `resources/` (ikon) |
+| Bersama | Semua | Integrasi E2E, submission | 10, 14 | Masing-masing di foldernya sendiri |
+
+**Kontrak** (`radar/packages/common/**`, `radar/plan/ref/**`) hanya diubah oleh **Lane A** lewat "contract PR". Lane B/C yang butuh perubahan menulis entri `DECISIONS.md` (prefix `D-B..`/`D-C..`) lalu mention Lane A.
+
+---
+
+## 3. Struktur repo & branch
+
+```text
+github.com/<akun>/ibm-bob-live-collab          ← fork dari stablyai/orca (MIT, atribusi di README + LICENSE tetap)
+├── src/ …                            ← kode Orca (desktop). Lane C menambah src/renderer/src/components/radar/ dll
+├── radar/                            ← workspace pnpm TERPISAH (punya pnpm-workspace.yaml sendiri, seperti mobile/)
+│   ├── packages/{common,server,sync,hooks,mcp,ui,web}
+│   ├── bob-kit/  spike/  scripts/  examples/toko-demo/  docs/
+│   └── plan/                         ← folder plan/ ini dipindah ke sini di fase 00
+├── bob_sessions/<nama>/NN-slug/{summary.png, task.md}
+├── BOB_DEVELOPMENT.md
+└── README.md                         ← README juri (bagian atas), atribusi Orca
+```
+
+| Branch | Isi | Siapa merge |
+|---|---|---|
+| `main` | Integrasi. Selalu bisa `pnpm -C radar test` dan `pnpm tc` hijau | PR, di-review 1 orang lain (atau `/ecc:code-review` kalau semua sibuk) |
+| `lane/core` | Lane A | Orang 1 |
+| `lane/bob` | Lane B | Orang 2 |
+| `lane/app` | Lane C | Aarief |
+| `lane/<x>-<topik>` | Sub-branch opsional untuk AI kedua di lane yang sama (worktree) | pemilik lane |
+
+**Agar AI tidak menganggur:** satu orang boleh menjalankan **2 sesi Claude Code sekaligus** di 2 git worktree (`git worktree add ../br-app-replay lane/app-replay`). Orca sendiri adalah pengelola worktree, jadi kalian bisa memakai Orca untuk menjalankan lane masing-masing. Setiap lane punya daftar **"kerjaan saat menunggu"** (§5) yang hanya butuh mock server.
+
+---
+
+## 4. Cara menjalankan fase dengan ECC
+
+### 4.1 Pasang sekali (setiap orang, sebelum kickoff)
+
+```bash
+# di Claude Code
+/plugin marketplace add https://github.com/affaan-m/ECC
+/plugin install ecc@ecc
+/plugin list ecc@ecc          # catat nama command/agent yang benar-benar ada → DECISIONS.md
+```
+
+### 4.2 Siklus per fase (ditegakkan oleh `plan/PROMPT.md`)
+
+| Langkah | Alat ECC | Output |
+|---|---|---|
+| 1. Baca fase + kontrak | – | todo list |
+| 2. Rencana implementasi | `/ecc:plan` (agent **planner**) | rencana singkat di log fase |
+| 3. Test dulu | skill **tdd-workflow** (agent **tdd-guide**) | test merah |
+| 4. Implementasi | – | test hijau |
+| 5. **Bob slice** | Berhenti. Manusia mengerjakan bagian yang ditandai di Bob IDE, lalu `bob-evidence.sh` | `bob_sessions/<nama>/NN-*` |
+| 6. Review | `/ecc:code-review` (agent **code-reviewer** + **typescript-reviewer**) | temuan diperbaiki |
+| 7. Keamanan (fase 03, 05, 07, 11) | `/ecc:security-scan` (agent **security-reviewer**) | bersih |
+| 8. Verifikasi | skill **verification-loop**; kalau build merah → `/ecc:build-fix` (agent **build-error-resolver**) | semua perintah "Verifikasi" hijau |
+| 9. Simpan | `/ecc:save-session`, commit, update `PROGRESS.md` | siap PR |
+
+Nama command bisa berubah antar versi ECC. Kalau `/plugin list` menunjukkan nama lain, pakai padanannya dan catat di `DECISIONS.md`.
+
+### 4.3 Prompt satu baris per orang
+
+Salin blok di [`plan/PROMPT.md`](plan/PROMPT.md), ubah dua baris, lalu tempel ke Claude Code di root repo:
+
+```text
+LANE: C
+FASE: 09
+```
+
+Model per fase ada di `plan/README.md` §3 dan `plan/ref/R6-model-ai.md`.
+
+---
+
+## 5. Jadwal (WITA) & urutan per lane
+
+### 5.1 Sebelum kickoff (hari ini, **setup saja, tanpa kode produk**)
+
+Kode proyek baru mulai ditulis setelah kickoff. Setup lingkungan boleh dilakukan sebelumnya (cek ulang aturan saat kickoff).
+
+| Siapa | Tugas |
+|---|---|
+| Semua | Node 20+, pnpm 9, git ≥ 2.38, Xcode CLT, `gh auth login`, Claude Code + **ECC**. Bob IDE ≥ 2.0.1 + Bob Shell (`bob --version`). Login akun Bob hackathon begitu dibagikan. |
+| Aarief | Fork `stablyai/orca` → `ibm-bob-live-collab`, clone, `pnpm install && pnpm dev` jalan, `pnpm build:unpack` sukses (catat waktu & error). Tulis hasilnya di `DECISIONS.md` (D-C00). |
+| Orang 1 | Siapkan akun Fly.io/Railway + Vercel. Buat repo kosong `toko-demo`. |
+| Orang 2 | Baca docs Bob: hooks (Shell & IDE), custom modes, MCP, `bob run`. Siapkan checklist spike. |
+
+### 5.2 Selama hackathon
+
+| Waktu | Lane A · Core | Lane B · Bob | Lane C · App (Aarief) |
+|---|---|---|---|
+| Jum 23:00–Sab 00:30 | **00 Fondasi** di `main`: `radar/` workspace, toko-demo, CI, pindah `plan/` | Kickoff: baca guide 2.0, catat aturan bukti & Bobcoin | Kickoff. **Bob slice C1:** Bob IDE memetakan titik sambung Orca |
+| Sab 00:30–02:30 | **02 Common + mock** → merge ke `main` = **kontrak beku** | **01 Spike** (Bob Shell + IDE, hook, MCP, mode) | **09a** agent `bob` terdaftar di Orca, `bob` jalan di terminal Orca |
+| Sab 02:30–04:00 | 03 Server inti (mulai) | 01 Spike → **GATE 1 (04:00)** | 09b koneksi Live Collab (settings + WS client + store) melawan mock |
+| Sab 04:00–09:00 | 03 → 04 Sync agent | Tidur | Tidur 04:00–09:00 |
+| Sab 09:00–16:00 | Tidur 09:00–14:00 → 05 Kunci/task/proposal | **07** Kit coder (**di Bob IDE**) | **09c** panel Live Collab: Team, File & kunci, Keputusan, Feed (`@radar/ui`) |
+| **Sab 16:00** | **Sinkron 1:** semua lane merge ke `main` dan uji melawan server staging | | |
+| Sab 16:00–21:00 | 05 → 06 Git + diff + relay terminal (R3 §3.9) | **08** Main agent `pm-lead` (**di Bob IDE**) | **11a** Tonton terminal (P0) + tag agent live di editor (P1) |
+| **Sab 21:00–23:00** | **10 Integrasi E2E** di `main` (dipimpin B) → **Milestone 23:00**: rencana → live → blokir → keputusan jalan di 3 laptop | | |
+| Sab 23:00–Min 04:00 | Perbaikan E2E, lalu tidur bergilir | Tidur 23:30–04:30 | **11b** `.dmg` + replay web `/demo`, lalu tidur 01:00–06:00 |
+| Min 04:00–11:00 | **12** Hardening P1 | **13** Eksperimen A/B, cek `bob_sessions/` | 11c polish + ketik-tamu (bonus) · rekam footage 09:00 |
+| **Min 11:00** | **GATE 2: feature freeze** | | |
+| Min 11:00–19:00 | 14: README juri, gitleaks | 14: `BOB_DEVELOPMENT.md`, `bob_sessions/INDEX.md` | 14: video, deck, cover, `docs/SUBMISSION.md` |
+| Min 19:00–21:00 | **Submit** | | |
+| Min 21:00–23:00 | Buffer: cek incognito, link, video, tidak ada secret | | |
+
+### 5.3 Kerjaan saat menunggu (AI tidak boleh menganggur)
+
+| Lane | Kalau terblokir, kerjakan ini (cukup melawan mock) |
+|---|---|
+| A | Property test invariant kunci (R4), `bench-sync`, `sim-3pc` skenario tambahan, endpoint `/v1/files/history` |
+| B | Tambahan fixture payload hook, test MCP per role, prompt siap tempel `bob-kit/prompts/*`, draft `BOB_DEVELOPMENT.md` |
+| C | Storybook-like halaman `radar/packages/web/app/gallery` untuk semua komponen `@radar/ui`, kondisi kosong & error, screenshot cover, naskah video |
+
+---
+
+## 6. Aturan merge (singkat)
+
+1. PR kecil, satu fase atau setengah fase. Judul `fase-XX: …`.
+2. CI hijau: `pnpm -C radar typecheck && pnpm -C radar test`. Untuk perubahan `src/**`: `pnpm tc` dan test Orca yang terkait saja. Jangan jalankan seluruh `pnpm lint` Orca karena terlalu lama. Pakai `oxlint` pada file yang diubah.
+3. Kontrak diubah hanya lewat contract PR Lane A. Setelah itu lane lain **rebase** (jangan merge `main` bolak-balik).
+4. `PROGRESS.md`: setiap lane hanya mengedit baris fasenya sendiri. `DECISIONS.md`: append-only dengan ID ber-prefix lane (`D-A07`, `D-B03`, `D-C02`), jadi tidak ada tabrakan nomor.
+5. Titik sinkron wajib: **Sab 02:30** (kontrak), **Sab 16:00** (sinkron 1), **Sab 21:00** (E2E), **Min 11:00** (freeze).
+
+---
+
+## 7. Bukti IBM Bob (wajib juri) & anggaran Bobcoin
+
+Aturan: *"Your repository must include the code/files where IBM Bob assisted, plus IBM Bob task session summary screenshots from each team member."* Detail lengkap ada di [`plan/ref/R7-bukti-bob.md`](plan/ref/R7-bukti-bob.md).
+
+**Kenapa tidak bisa otomatis penuh:** Claude Code/ECC tidak bisa mengklik UI Bob IDE. Jadi alurnya setengah otomatis:
+
+1. Prompt fase berhenti di **Bob slice** dan mencetak prompt Bob yang siap tempel.
+2. Manusia menjalankan prompt itu di Bob IDE, lalu membuka History → task → klik header task → **Export task history**.
+3. `radar/scripts/bob-evidence.sh <nama> <NN-slug>` menjalankan `screencapture -i` untuk ringkasan task, mengambil file `.md` ekspor terbaru dari `~/Downloads`, memindahkan keduanya ke `bob_sessions/<nama>/<NN-slug>/`, dan menambah baris ke `bob_sessions/INDEX.md`.
+4. Commit kode hasil Bob dengan trailer `Bob-Assisted: bob_sessions/<nama>/<NN-slug>`.
+5. `pnpm -C radar evidence:check` (fase 14) memastikan setiap anggota punya screenshot + md dan setiap trailer menunjuk ke folder yang ada.
+
+**Bob slice per lane** (bagian yang benar-benar dibangun Bob):
+
+| # | Lane | Bob slice | Mode Bob | Estimasi Bobcoin |
+|---|---|---|---|---|
+| A1 | A | Repo contoh `toko-demo` (8 file + 6 task eksperimen) | Code | 3 |
+| A2 | A | `checkWrite()` tabel keputusan kunci + test tabel R4 §3 | Code | 4 |
+| A3 | A | Formatter commit per task + trailer `Co-authored-by: IBM Bob` | Code | 2 |
+| A4 | A | `/review` Bob atas `locks.ts` vs R4 (review silang) | Ask/Code | 2 |
+| B1 | B | Spike: hook payload logger + mode read-only | Code | 4 |
+| B2 | B | `custom_modes.yaml` coder + pm-lead | Code | 3 |
+| B3 | B | Hook `lock_guard` + `brief` | Code | 5 |
+| B4 | B | `radar-mcp` tool coder + PM | Code | 6 |
+| C1 | C | **Onboarding Orca dengan Bob:** "cari di mana agent didefinisikan dan cara menambah agent baru" → laporan HTML Bob | Ask/Plan | 3 |
+| C2 | C | Registrasi agent `bob` di Orca (3 file) | Code | 3 |
+| C3 | C | Komponen `@radar/ui`: `LockChip`, `AgentTag`, `DecisionCard` | Code | 4 |
+| C4 | C | Script `bob-evidence.sh` + `evidence:check` | Code | 2 |
+
+**Anggaran per akun (40):** build slices ±20 · gladi + rekam demo ±12 · cadangan 8. Eksperimen A/B (fase 13) dijalankan dengan akun yang masih paling banyak sisa. Kalau kurang, jumlah putaran dikurangi dan hal itu **dilaporkan jujur**.
+
+---
+
+## 8. Distribusi ke teman (cara install, ala Mosaic)
+
+| Komponen | Cara pasang | Prioritas |
+|---|---|---|
+| App desktop | `IBM Bob Live Collab.dmg` di GitHub Releases → seret ke Applications → klik kanan → Open (tidak di-sign) | P0 |
+| CLI `radar` (sync agent + kit) | `npm i -g https://github.com/<akun>/ibm-bob-live-collab/releases/download/v0.3.0/radar-cli.tgz` | P0 |
+| One-liner | `curl -fsSL https://ibm-bob-live-collab.vercel.app/install \| sh` → cek node & `bob`, pasang CLI, `radar join --invite <kode>` | P1 |
+| Undangan | `radar-server invite --member B` → kode `rdr_inv_…` (URL server + token, base64url) | P1 |
+
+Di dalam app: **Settings → Live Collab → tempel kode undangan**. App lalu menjalankan sync agent sebagai child process, memasang `.bob/` kit, dan mengecek `bob` CLI, hook, dan MCP (checklist hijau di onboarding, lihat DESIGN §5.9).
+
+---
+
+## 9. Definisi selesai (R0 · submit)
+
+- [ ] Semua P0 PRD v0.3 punya test hijau atau bukti manual di `radar/plan/log/`.
+- [ ] Alur demo penuh jalan di 3 laptop: rencana → live → blokir → keputusan → review → commit GitHub, **ditambah tonton terminal Bob rekan**.
+- [ ] `IBM Bob Live Collab.dmg` terunggah di Releases dan terpasang di 3 Mac.
+- [ ] Replay `/demo` jalan tanpa login dan tanpa API key.
+- [ ] `bob_sessions/` berisi screenshot ringkasan + ekspor md dari **ketiga** anggota. `evidence:check` hijau.
+- [ ] Video MP4 **≤ 3 menit** (≥ 90 detik solusi berjalan, narasi, pemakaian Bob jelas), deck PDF, cover 16:9, gitleaks bersih, repo publik.
+- [ ] **Long Description (Problem & Solution) ≤ 500 kata** dan **IBM Bob Usage Statement ≤ 500 kata** di `radar/docs/SUBMISSION.md`.
+
+---
+
+## 10. Yang dinilai & yang dikirim (lablab 2.0)
+
+| Kriteria juri | Jawaban kita | Di mana terlihat |
+|---|---|---|
+| **Application of Technology** (lengkap + jelas memakai Bob 2.0) | Bob adalah runtime produk (hook menegakkan kunci, custom mode `coder`/`pm-lead`, MCP `radar-mcp`, `bob` di app) **dan** alat bangun (Bob slice semua anggota) | video 2:25–2:50, `BOB_DEVELOPMENT.md`, panel "Bob inside" di replay |
+| **Presentation** | Video 3 menit dengan satu momen near-miss yang jelas, 3 layar berlabel warna, replay yang bisa diklik juri | PRD §15, DESIGN §5.4 |
+| **Business Value** | 41,7% pasangan PR agent berkonflik, review +91%. Tim yang sudah membeli Bob butuh cara bekerja bersama. | Long Description, deck slide 2 |
+| **Originality** | Multiplayer pertama yang native di primitif Bob (penegakan lewat hook, bukan saran), PM agent yang hanya mengusulkan, tonton terminal Bob rekan | tabel PRD §03 |
+
+Form lablab (detail di [`plan/fase-14-submission.md`](plan/fase-14-submission.md)): Title · Short Description · Long Description (≤ 500 kata) · **IBM Bob Usage Statement (≤ 500 kata)** · Tags · Public repo · **Screenshot ringkasan task Bob dari setiap anggota** · Demo Application Platform · Application URL · Cover · Video MP4 ≤ 3:00 · Slide PDF.
+
+Repo memakai file keamanan dari [ibm-hackathon-template](https://github.com/watsonxhackathon/ibm-hackathon-template) (`.gitignore`, `.bobignore`, `SECURITY.MD`). **Awas:** `.gitignore` template mengabaikan file baru yang namanya mengandung `token`, `secret`, `password`, `credentials`, atau bernama `config.json`, jadi jangan beri nama file seperti itu (R5 §8, dicek otomatis oleh `check:ignored`).

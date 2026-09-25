@@ -2,12 +2,13 @@
 
 | Field | Nilai |
 |---|---|
-| Jalur | Orang 1 |
+| Jalur | **Lane A** (Orang 1) · branch `lane/core` |
 | Slot WITA | Sab 26 Sep 16:00 – 21:00 |
 | Estimasi | 5 jam (fase terpenting) |
 | Prasyarat | 03 (04 disarankan untuk test lapis kedua) |
 | Requirement PRD | SV-02, SV-03, SV-04, SV-05, SV-06, MA-07 (sisi server), §06 seluruhnya, §07.3, §08.2, §09, BC-02/03 (sisi server brief) |
 | Model | **Opus 5.5** · effort high (jangan diturunkan) |
+| Bob slice | **A2**: `checkWrite()` + test tabel R4 §3 ditulis Bob IDE (mode Code). Prompt: "Implementasikan `checkWrite` di `radar/packages/server/src/services/locks.ts` persis tabel keputusan `radar/plan/ref/R4-mesin-kunci.md` §3, dengan test tabel vitest." Bukti `02-check-write`. Claude Code lalu menambah property test invariant. |
 | Fase berikutnya | 06 |
 
 ## Tujuan

@@ -2,7 +2,7 @@
 
 | Field | Nilai |
 |---|---|
-| Jalur | Orang 2 (+ A/B dari tim sebagai coder) |
+| Jalur | **Lane B** (Orang 2) · branch `lane/bob` (+ anggota lain sebagai coder) |
 | Slot WITA | Min 27 Sep 05:00 – 11:00 (PRD §18: eksperimen dijadwalkan Minggu pagi karena Bobcoin) |
 | Estimasi | 4 jam |
 | Prasyarat | 10 |
@@ -35,7 +35,7 @@ Menghasilkan angka jujur untuk pitch: berapa konflik merge, menit resolusi, dan 
 2. **Putaran A — cara biasa** (`scripts/ab/setup-round-a.sh`): buat branch `ab/a-coderA` dan `ab/a-coderB` dari commit awal di clone lokal toko-demo **terpisah** (tanpa Radar, tanpa hook: pastikan `.bob/` Radar tidak aktif). Coder A & B mengerjakan task masing-masing dengan Bob di branch sendiri, commit per task.
    - `scripts/ab/merge-check.ts`: merge `ab/a-coderA` lalu `ab/a-coderB` ke `ab/a-merge` dengan `git merge --no-commit`; hitung file konflik (`git diff --name-only --diff-filter=U`) & jumlah hunk (`<<<<<<<`); ukur menit resolusi manual (stopwatch, catat); jalankan build setelah resolusi. Output `round-a.json`.
 
-3. **Putaran B — dengan Bob Radar**: reset server & toko-demo ke commit awal yang sama; PM (C) meminta main agent menyusun rencana dari tujuan "Kerjakan 6 task di EXPERIMENT_TASKS.md" (rencana boleh berbeda dari pembagian manual — catat alokasi hasilnya); coder mengerjakan dengan prompt yang sama. Semua review lewat main agent + PM.
+3. **Putaran B — dengan IBM Bob Live Collab**: reset server & toko-demo ke commit awal yang sama; PM (C) meminta main agent menyusun rencana dari tujuan "Kerjakan 6 task di EXPERIMENT_TASKS.md" (rencana boleh berbeda dari pembagian manual — catat alokasi hasilnya); coder mengerjakan dengan prompt yang sama. Semua review lewat main agent + PM.
    - `scripts/ab/collect-round-b.ts`: ambil `GET /v1/events/export` + `GET /v1/report/session` → hitung blokir, keputusan, waktu blokir→keputusan, commit, review.flagged; konflik merge = coba merge semua commit task secara berurutan dari commit awal (harus 0 karena satu penulis per file — tetap diukur, bukan diasumsikan). Output `round-b.json`.
 
 4. **`scripts/metrics.ts`** — dari export event + tabel metric (endpoint atau file DB salinan): hitung semua metrik PRD §04:
@@ -50,13 +50,20 @@ Menghasilkan angka jujur untuk pitch: berapa konflik merge, menit resolusi, dan 
    | Kelengkapan bukti Bob | jumlah folder/ekspor di `bob_sessions/` vs daftar sesi di log fase |
    Output `metrics.json` + tabel markdown ke stdout.
 
-5. **Tulis hasil** `docs/EXPERIMENT.md`: tabel A vs B, grafik sederhana (opsional, PNG dari script atau tabel saja), 3–5 kalimat interpretasi **tanpa melebih-lebihkan**, bagian "Keterbatasan" (n kecil, skenario dirancang tim, efek belajar, Bob nondeterministik, satu repo kecil), dan kalimat siap pakai untuk pitch, mis. "Pada eksperimen kecil kami (6 task, 2 coder), cara biasa menghasilkan X file konflik dan Y menit resolusi; dengan Bob Radar 0 konflik dengan Z blokir yang diputuskan PM dalam median W detik."
+5. **Tulis hasil** `docs/EXPERIMENT.md`: tabel A vs B, grafik sederhana (opsional, PNG dari script atau tabel saja), 3–5 kalimat interpretasi **tanpa melebih-lebihkan**, bagian "Keterbatasan" (n kecil, skenario dirancang tim, efek belajar, Bob nondeterministik, satu repo kecil), dan kalimat siap pakai untuk pitch, mis. "Pada eksperimen kecil kami (6 task, 2 coder), cara biasa menghasilkan X file konflik dan Y menit resolusi; dengan IBM Bob Live Collab 0 konflik dengan Z blokir yang diputuskan PM dalam median W detik."
 
 6. **Tabel metrik final** untuk `BOB_DEVELOPMENT.md` & deck (fase 14): target vs hasil untuk setiap baris PRD §04, status ✅/⚠️/❌ jujur.
 
 7. **Ekspor sesi Bob** kedua putaran ke `bob_sessions/<nama>/eksperimen-a|b/`.
 
 8. Commit `fase-13: A/B experiment and metrics`.
+
+## Tambahan v0.3 — batas Bobcoin
+
+- Setiap akun hanya punya 40 Bobcoin (cek angka guide 2.0). Sebelum mulai, catat sisa Bobcoin setiap akun. Eksperimen **tidak boleh** membuat sisa akun turun di bawah 12, karena itu cadangan rekaman demo (PLAN.md §7).
+- Kalau sisa tidak cukup untuk 3 putaran per kondisi, jalankan 1 putaran per kondisi + `sim-3pc` tanpa Bob sebagai pelengkap, lalu laporkan keterbatasan ini dengan jujur.
+- Metrik utama mengikuti roast v0.1: total waktu sampai kedua task ter-merge dan test lulus, build rusak setelah merge, dan Bobcoin. Jangan menjadikan "0 konflik merge" sebagai klaim utama.
+- Sesi Bob eksperimen juga diekspor ke `bob_sessions/` (slice tambahan).
 
 ## Verifikasi
 

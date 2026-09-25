@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base { html, body { margin: 0; padding: 0; } body { overscroll-behavior: none; } main > :first-child { margin-top: 0 !important; } main > :last-child { margin-bottom: 0 !important; } } ::-webkit-scrollbar { display: none; }</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "surface-container-highest": "#353534", "on-primary": "#002979", "inverse-surface": "#e5e2e1", "secondary-fixed-dim": "#ffb0cd", "surface-container-high": "#2a2a2a", "surface-tint": "#b4c5ff", "surface": "#131313", "outline-variant": "#424656", "on-error": "#690005", "tertiary-container": "#008139", "on-tertiary": "#003915", "on-secondary-fixed-variant": "#841a51", "secondary-container": "#871c54", "surface-container-lowest": "#0e0e0e", "tertiary": "#64de81", "on-surface": "#e5e2e1", "on-primary-fixed-variant": "#003da9", "surface-variant": "#353534", "surface-dim": "#131313", "on-secondary-container": "#ff99c2", "on-primary-fixed": "#00174c", "background": "#131313", "inverse-on-surface": "#313030", "primary": "#b4c5ff", "on-tertiary-fixed": "#002109", "error-container": "#93000a", "on-background": "#e5e2e1", "tertiary-fixed-dim": "#64de81", "on-tertiary-fixed-variant": "#005322", "secondary": "#ffb0cd", "error": "#ffb4ab", "primary-container": "#0f62fe", "surface-container": "#201f1f", "on-secondary-fixed": "#3e0022", "on-error-container": "#ffdad6", "outline": "#8c90a2", "tertiary-fixed": "#81fb9a", "surface-container-low": "#1c1b1b", "inverse-primary": "#0052dd", "on-primary-container": "#f3f3ff", "on-secondary": "#64003a", "on-surface-variant": "#c3c6d8", "secondary-fixed": "#ffd9e5", "surface-bright": "#393939", "primary-fixed-dim": "#b4c5ff", "on-tertiary-container": "#d5ffd5", "primary-fixed": "#dbe1ff" }, "borderRadius": { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }, "spacing": { "gutter": "1rem", "space-md": "0.75rem", "space-xl": "1.5rem", "space-xs": "0.25rem", "space-sm": "0.5rem", "space-lg": "1rem", "margin": "1rem" }, "fontFamily": { "headline-md": [ "IBM Plex Sans" ], "headline-lg": [ "IBM Plex Sans" ], "body-md": [ "IBM Plex Sans" ], "label-code": [ "Space Mono" ], "body-sm": [ "IBM Plex Sans" ], "headline-sm": [ "IBM Plex Sans" ], "body-lg": [ "IBM Plex Sans" ], "label-meta": [ "IBM Plex Sans" ], "label-agent": [ "Space Mono" ] }, "fontSize": { "headline-md": [ "1.25rem", { "lineHeight": "1.75rem", "letterSpacing": "-0.01em", "fontWeight": "600" } ], "headline-lg": [ "1.5rem", { "lineHeight": "2rem", "letterSpacing": "-0.015em", "fontWeight": "600" } ], "body-md": [ "0.875rem", { "lineHeight": "1.35rem", "fontWeight": "400" } ], "label-code": [ "0.8125rem", { "lineHeight": "1.125rem", "fontWeight": "400" } ], "body-sm": [ "0.8125rem", { "lineHeight": "1.2rem", "fontWeight": "400" } ], "headline-sm": [ "1rem", { "lineHeight": "1.5rem", "fontWeight": "600" } ], "body-lg": [ "0.9375rem", { "lineHeight": "1.45rem", "fontWeight": "400" } ], "label-meta": [ "0.75rem", { "lineHeight": "1rem", "letterSpacing": "0.02em", "fontWeight": "500" } ], "label-agent": [ "0.6875rem", { "lineHeight": "0.875rem", "letterSpacing": "0.04em", "fontWeight": "700" } ] } } } };</script></head><body class="bg-surface-container-lowest text-on-surface font-body-md text-body-md select-none"><header class="fixed top-0 left-0 right-0 h-10 bg-surface-container-low border-b border-surface-container-highest z-50 flex items-center justify-between px-space-md"><div class="flex items-center gap-space-md"><div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded-full bg-[#FF5F56] border border-[#E0443E]"></div><div class="w-3 h-3 rounded-full bg-[#FFBD2E] border border-[#DEA123]"></div><div class="w-3 h-3 rounded-full bg-[#27C93F] border border-[#1AAB29]"></div></div><div class="h-4 w-[1px] bg-surface-container-highest ml-space-xs"></div><div class="flex items-center gap-space-sm"><img alt="IBM Bob Live Collab - macOS App Icon" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1VA0SVNo5rXtlPttikEe6hfv0WXvf75esd_W1x4cUxBtG9S76HXlqJYHoEKVR3A_5GXjXj9Gdp7PcZFaX8pHjldQVZcZJwqGHg9F1gf2Bk7oy4clCso5uDVyhxQdESHcv4Sv27p8GqJtWYuszmlcXS4FfqjTdVjhQQS8_AtMctXiZRd4Bk0WJ7btMHxL2sD1tKltzdsKQOcvCuYs2Wv8XfBhCgnQ8HqCaOLz-TEW7z7suMXmM3tMSUzPJvz"/><span class="font-headline-sm text-headline-sm text-on-surface font-semibold">IBM Bob Live Collab</span><span class="font-label-agent text-label-agent uppercase tracking-wider px-space-xs py-0.5 rounded bg-surface-container-highest border border-outline-variant text-on-surface-variant">v2.4 · connected</span></div></div><div class="flex items-center gap-space-md"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></header><aside class="fixed left-0 top-10 bottom-7 w-60 bg-surface-container-low border-r border-surface-container-highest z-40 flex flex-col justify-between overflow-y-auto"><div class="py-space-md flex flex-col gap-space-md"><nav class="flex flex-col px-space-sm gap-0.5" data-active-classes="bg-surface-container text-on-surface border-l-2 border-primary pl-[10px]"><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="workspaces" href="#"><span class="material-symbols-outlined text-[16px]">folder</span><span class="font-body-sm text-body-sm">Workspaces</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="people" href="#"><span class="material-symbols-outlined text-[16px]">group</span><span class="font-body-sm text-body-sm">People</span></a></nav><div class="flex flex-col gap-1"><div class="px-space-md py-1 font-label-agent text-label-agent uppercase tracking-widest text-outline">Live Collab</div><nav class="flex flex-col px-space-sm gap-0.5" data-active-classes="bg-surface-container text-on-surface border-l-2 border-secondary pl-[10px]"><a class="flex items-center justify-between px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="mission-control" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[16px]">dashboard</span><span class="font-body-sm text-body-sm">Mission Control</span></div><span class="px-1.5 py-0.2 rounded font-label-agent text-label-agent bg-secondary-container text-on-secondary-container border border-secondary">1</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="team" href="#"><span class="material-symbols-outlined text-[16px]">hub</span><span class="font-body-sm text-body-sm">Team</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="files-locks" href="#"><span class="material-symbols-outlined text-[16px]">lock</span><span class="font-body-sm text-body-sm">Files &amp; locks</span></a></nav></div><div class="flex flex-col gap-1"><div class="px-space-md py-1 font-label-agent text-label-agent uppercase tracking-widest text-outline">Projects</div><nav class="flex flex-col px-space-sm gap-0.5" data-active-classes="bg-surface-container text-on-surface border-l-2 border-primary pl-[10px]"><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="toko-demo" href="#"><span class="material-symbols-outlined text-[16px]">folder_open</span><span class="font-body-sm text-body-sm">toko-demo</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="live-collab" href="#"><span class="material-symbols-outlined text-[16px]">source</span><span class="font-body-sm text-body-sm">live-collab</span></a></nav></div></div><div class="p-space-sm border-t border-surface-container-highest flex items-center justify-between bg-surface-container-low"><div class="flex items-center gap-space-sm"><div class="relative flex items-center justify-center w-7 h-7 rounded-full bg-surface-container-high text-on-surface font-headline-sm text-headline-sm border border-surface-container-highest">A<span class="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-tertiary border border-surface-container-low"></span></div><div class="flex flex-col"><span class="font-body-sm text-body-sm text-on-surface leading-tight">Aarief</span><span class="font-label-agent text-label-agent text-outline leading-tight">signed in</span></div></div><button class="text-outline hover:text-on-surface p-1 transition-colors"><span class="material-symbols-outlined text-[16px]">settings</span></button></div></aside><div class="pl-60"><main class="relative pt-10 pb-7 min-h-screen bg-surface-container-lowest w-full px-space-lg py-space-md"><div class="flex flex-col w-full">
+<div class="w-full flex flex-col gap-space-md text-on-surface bg-[#0E0E10] p-space-md border border-[#2A2A2D] rounded relative overflow-hidden" style="background-image: radial-gradient(#2A2A2D 0.75px, transparent 0.75px); background-size: 12px 12px;">
+<!-- Top Web Application Bar for Session Replay -->
+<header class="flex items-center justify-between px-space-md py-space-sm bg-[#161616] border border-[#2A2A2D] rounded">
+<div class="flex items-center gap-space-md">
+<div class="flex items-center gap-space-xs text-[#78A9FF]">
+<span class="material-symbols-outlined text-[18px]">history</span>
+<span class="font-headline-sm text-headline-sm text-[#F4F4F4] tracking-tight">IBM Bob Live Collab — session replay</span>
+</div>
+<div class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#1E1E20] border border-[#2A2A2D]">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+<span class="font-label-agent text-label-agent text-on-surface-variant uppercase tracking-wider">no login · no API key</span>
+</div>
+</div>
+<nav class="flex items-center gap-space-lg font-body-sm text-body-sm text-on-surface-variant">
+<a class="hover:text-[#F4F4F4] transition-colors flex items-center gap-1" href="#repo">
+<span class="material-symbols-outlined text-[14px]">terminal</span>Repo
+        </a>
+<a class="hover:text-[#F4F4F4] transition-colors flex items-center gap-1" href="#sessions">
+<span class="material-symbols-outlined text-[14px]">data_object</span>bob_sessions
+        </a>
+<a class="hover:text-[#F4F4F4] transition-colors flex items-center gap-1" href="#video">
+<span class="material-symbols-outlined text-[14px]">videocam</span>Video
+        </a>
+<a class="hover:text-[#F4F4F4] transition-colors flex items-center gap-1" href="#deck">
+<span class="material-symbols-outlined text-[14px]">slideshow</span>Deck
+        </a>
+<div class="h-3.5 w-[1px] bg-[#2A2A2D]"></div>
+<a class="p-1 rounded text-on-surface-variant hover:text-[#F4F4F4] hover:bg-[#1E1E20] transition-colors" href="https://github.com" rel="noreferrer" target="_blank">
+<svg class="w-4 h-4 fill-current" viewbox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"></path></svg>
+</a>
+</nav>
+</header>
+<!-- Top Metric Counters: 4 Stat Cards -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-space-sm">
+<!-- Stat 1 -->
+<div class="bg-[#1E1E20] border border-[#2A2A2D] border-l-2 border-l-[#FF7EB6] p-space-md rounded flex flex-col justify-between">
+<div class="flex items-center justify-between text-outline">
+<span class="font-label-meta text-label-meta uppercase tracking-wider">COLLISION PREVENTION</span>
+<span class="material-symbols-outlined text-[16px] text-secondary">security_update_warning</span>
+</div>
+<div class="flex items-baseline gap-space-sm mt-1">
+<span class="font-label-code text-[28px] leading-none text-[#F4F4F4] font-bold">3</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">near-misses prevented</span>
+</div>
+<div class="mt-2 text-[10px] font-label-agent text-[#FF7EB6]">100% AUTOMATED LOCK_GUARD</div>
+</div>
+<!-- Stat 2 -->
+<div class="bg-[#1E1E20] border border-[#2A2A2D] border-l-2 border-l-tertiary p-space-md rounded flex flex-col justify-between">
+<div class="flex items-center justify-between text-outline">
+<span class="font-label-meta text-label-meta uppercase tracking-wider">GIT INTEGRITY</span>
+<span class="material-symbols-outlined text-[16px] text-tertiary">check_circle</span>
+</div>
+<div class="flex items-baseline gap-space-sm mt-1">
+<span class="font-label-code text-[28px] leading-none text-[#F4F4F4] font-bold">0</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">merge conflicts</span>
+</div>
+<div class="mt-2 text-[10px] font-label-agent text-tertiary">ZERO REBASE ABORTS</div>
+</div>
+<!-- Stat 3 -->
+<div class="bg-[#1E1E20] border border-[#2A2A2D] p-space-md rounded flex flex-col justify-between">
+<div class="flex items-center justify-between text-outline">
+<span class="font-label-meta text-label-meta uppercase tracking-wider">SUPERVISOR ACTIONS</span>
+<span class="material-symbols-outlined text-[16px] text-primary">alt_route</span>
+</div>
+<div class="flex items-baseline gap-space-sm mt-1">
+<span class="font-label-code text-[28px] leading-none text-[#F4F4F4] font-bold">4</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">decisions</span>
+</div>
+<div class="mt-2 text-[10px] font-label-agent text-outline">1 CRITICAL · 3 AUTOMATIC</div>
+</div>
+<!-- Stat 4 -->
+<div class="bg-[#1E1E20] border border-[#2A2A2D] p-space-md rounded flex flex-col justify-between">
+<div class="flex items-center justify-between text-outline">
+<span class="font-label-meta text-label-meta uppercase tracking-wider">LATENCY TO CONSENSUS</span>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">timer</span>
+</div>
+<div class="flex items-baseline gap-space-sm mt-1">
+<span class="font-label-code text-[28px] leading-none text-[#F4F4F4] font-bold">38 s</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">median decision</span>
+</div>
+<div class="mt-2 text-[10px] font-label-agent text-tertiary-fixed-dim">VS 4.2 MIN TEAM BASELINE</div>
+</div>
+</div>
+<!-- Main Section: 3 Simultaneous Bob Timelines + Right Detail Drawer -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-space-md items-start">
+<!-- 3-Column Simultaneous Timeline Container -->
+<div class="xl:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-space-sm">
+<!-- Column 1: Andi (Bob IDE) -->
+<div class="flex flex-col bg-[#161616] border border-[#2A2A2D] rounded overflow-hidden">
+<div class="px-space-md py-space-sm bg-[#1E1E20] border-b border-[#2A2A2D] flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="w-5 h-5 rounded flex items-center justify-center font-label-agent text-[10px] bg-[#78A9FF]/20 text-[#78A9FF] border border-[#78A9FF]/40 font-bold">A</span>
+<span class="font-headline-sm text-body-sm text-[#78A9FF] font-semibold">Andi · Bob IDE</span>
+</div>
+<span class="font-label-agent text-[10px] text-tertiary px-1.5 py-0.5 rounded bg-tertiary-container/20 border border-tertiary/30">RUNNING</span>
+</div>
+<div class="p-space-sm flex flex-col gap-2 min-h-[350px] font-label-code text-label-code">
+<div class="text-[10px] font-label-agent text-outline uppercase tracking-wider mb-1 flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-[#78A9FF]"></span>EXEC STREAM [02:38 - 02:44]
+            </div>
+<!-- Terminal Row 1 -->
+<div class="p-2 rounded bg-[#1E1E20] border border-[#2A2A2D] flex flex-col gap-0.5">
+<div class="flex items-center justify-between text-outline text-[11px]">
+<span>02:39.120</span>
+<span class="text-[#78A9FF]">fs_write</span>
+</div>
+<div class="text-on-surface">write_file checkout.ts</div>
+<div class="text-[10px] text-outline font-label-agent">lines 44-88 inserted</div>
+</div>
+<!-- Terminal Row 2 -->
+<div class="p-2 rounded bg-[#1E1E20] border border-[#2A2A2D] flex flex-col gap-0.5">
+<div class="flex items-center justify-between text-outline text-[11px]">
+<span>02:39.400</span>
+<span class="text-tertiary">mcp.guard</span>
+</div>
+<div class="text-tertiary flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">lock_open</span>
+<span>lock_guard → allowed</span>
+</div>
+<div class="text-[10px] text-outline font-label-agent">token: lk_and_992 (active 12m)</div>
+</div>
+<!-- Terminal Row 3 -->
+<div class="p-2 rounded bg-[#1E1E20] border border-[#2A2A2D] flex flex-col gap-0.5">
+<div class="flex items-center justify-between text-outline text-[11px]">
+<span>02:41.802</span>
+<span class="text-[#78A9FF]">test_runner</span>
+</div>
+<div class="text-on-surface">T-1 coupon implementation complete</div>
+<div class="text-[10px] text-tertiary font-label-agent">✓ 14 unit tests passed</div>
+</div>
+<!-- Status indicator -->
+<div class="mt-auto p-2 bg-[#121214] rounded border border-[#2A2A2D] text-[11px] text-outline flex items-center justify-between">
+<span>Checkout flow branch</span>
+<span class="text-on-surface font-label-agent">feat/t1-coupon</span>
+</div>
+</div>
+</div>
+<!-- Column 2: Mission Control · Citra -->
+<div class="flex flex-col bg-[#161616] border border-[#2A2A2D] rounded overflow-hidden">
+<div class="px-space-md py-space-sm bg-[#1E1E20] border-b border-[#2A2A2D] flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="w-5 h-5 rounded flex items-center justify-center font-label-agent text-[10px] bg-[#FF832B]/20 text-[#FF832B] border border-[#FF832B]/40 font-bold">C</span>
+<span class="font-headline-sm text-body-sm text-[#FF832B] font-semibold">Mission Control · Citra</span>
+</div>
+<span class="font-label-agent text-[10px] text-[#FF832B] px-1.5 py-0.5 rounded bg-[#FF832B]/10 border border-[#FF832B]/30">ARBITRATOR</span>
+</div>
+<div class="p-space-sm flex flex-col gap-2 min-h-[350px]">
+<div class="text-[10px] font-label-agent text-outline uppercase tracking-wider mb-1 flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-[#FF832B]"></span>DECISION PIPELINE
+            </div>
+<!-- Alert Card -->
+<div class="p-2.5 rounded bg-[#1E1E20] border border-[#FF7EB6]/60 border-l-2 border-l-[#FF7EB6] flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<span class="font-label-agent text-[10px] text-[#FF7EB6] uppercase font-bold tracking-wider">COLLISION WARNING</span>
+<span class="font-label-code text-[11px] text-outline">02:40.01</span>
+</div>
+<div class="font-body-sm text-body-sm text-[#F4F4F4] font-medium leading-tight">
+                Conflict detected: Budi needs checkout.ts
+              </div>
+<div class="text-[11px] text-on-surface-variant font-body-sm">
+                Resource lock held by Andi (exp 03:00)
+              </div>
+</div>
+<!-- Recommendation Card -->
+<div class="p-2.5 rounded bg-[#1E1E20] border border-[#2A2A2D] flex flex-col gap-1">
+<span class="font-label-agent text-[10px] text-primary uppercase tracking-wide">PM Recommendation</span>
+<div class="font-label-code text-label-code text-on-surface">
+                QUEUE Budi after T-1
+              </div>
+<div class="text-[11px] text-outline font-body-sm">
+                Sub-task diversion available: <span class="text-[#BE95FF]">Header.tsx</span>
+</div>
+</div>
+<!-- Resolution Card -->
+<div class="p-2 rounded bg-[#1E1E20] border border-[#2A2A2D] flex items-center justify-between text-body-sm">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-tertiary text-[16px]">verified</span>
+<span class="text-on-surface font-medium text-[12px]">Approved by Citra</span>
+</div>
+<span class="font-label-code text-tertiary text-[11px]">(14s)</span>
+</div>
+<div class="mt-auto p-2 bg-[#121214] rounded border border-[#2A2A2D] text-[11px] text-outline flex items-center justify-between">
+<span>Arbitration rule</span>
+<span class="text-[#FF832B] font-label-agent">RULE-AUTO-PIVOT</span>
+</div>
+</div>
+</div>
+<!-- Column 3: Budi · Bob Shell in Live Collab -->
+<div class="flex flex-col bg-[#161616] border border-[#2A2A2D] rounded overflow-hidden">
+<div class="px-space-md py-space-sm bg-[#1E1E20] border-b border-[#2A2A2D] flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="w-5 h-5 rounded flex items-center justify-center font-label-agent text-[10px] bg-[#BE95FF]/20 text-[#BE95FF] border border-[#BE95FF]/40 font-bold">B</span>
+<span class="font-headline-sm text-body-sm text-[#BE95FF] font-semibold">Budi · Bob Shell in Live Collab</span>
+</div>
+<span class="font-label-agent text-[10px] text-[#FA4D56] px-1.5 py-0.5 rounded bg-[#FA4D56]/15 border border-[#FA4D56]/40">NEEDS YOU → RESOLVED</span>
+</div>
+<div class="p-space-sm flex flex-col gap-2 min-h-[350px] font-label-code text-label-code">
+<div class="text-[10px] font-label-agent text-outline uppercase tracking-wider mb-1 flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-[#BE95FF]"></span>AGENT STACK [NEAR-MISS 02:40]
+            </div>
+<!-- Blocked Alert Row -->
+<div class="p-2 rounded bg-[#1E1E20] border border-[#FA4D56]/50 border-l-2 border-l-[#FA4D56] flex flex-col gap-0.5">
+<div class="flex items-center justify-between text-outline text-[11px]">
+<span>02:40.114</span>
+<span class="text-[#FA4D56]">hook_blocked</span>
+</div>
+<div class="text-[#FA4D56] font-semibold text-[12px] leading-tight">
+                PreToolUse · lock_guard → blocked · 84ms
+              </div>
+<div class="text-[10px] text-outline font-label-agent">Resource: checkout.ts (locked)</div>
+</div>
+<!-- Pivot Action Row -->
+<div class="p-2 rounded bg-[#1E1E20] border border-[#2A2A2D] flex flex-col gap-0.5">
+<div class="flex items-center justify-between text-outline text-[11px]">
+<span>02:40.890</span>
+<span class="text-[#BE95FF]">scheduler</span>
+</div>
+<div class="text-on-surface">
+                Pivot: switching to <span class="text-[#BE95FF]">Header.tsx</span>
+</div>
+<div class="text-[10px] text-outline font-label-agent">Target changed · zero idle time</div>
+</div>
+<!-- Success Active Row -->
+<div class="p-2 rounded bg-[#1E1E20] border border-[#2A2A2D] flex flex-col gap-0.5">
+<div class="flex items-center justify-between text-outline text-[11px]">
+<span>02:42.000</span>
+<span class="text-tertiary">state_sync</span>
+</div>
+<div class="text-tertiary">Zero downtime avoidance active</div>
+<div class="text-[10px] text-outline font-label-agent">compilation target updated</div>
+</div>
+<div class="mt-auto p-2 bg-[#121214] rounded border border-[#2A2A2D] text-[11px] text-outline flex items-center justify-between">
+<span>Budi sub-process</span>
+<span class="text-tertiary font-label-agent">UNBLOCKED (0 delay)</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Sidebar Drawer: Bob inside inspection -->
+<aside class="xl:col-span-4 flex flex-col bg-[#161616] border border-[#2A2A2D] rounded p-space-md">
+<div class="flex items-center justify-between pb-space-sm border-b border-[#2A2A2D]">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[18px] text-[#FF7EB6]">troubleshoot</span>
+<span class="font-headline-sm text-body-sm font-semibold text-[#F4F4F4]">Bob inside · Event #NM-8402</span>
+</div>
+<span class="font-label-agent text-[10px] px-1.5 py-0.5 rounded bg-secondary-container/50 border border-secondary text-on-secondary-container">INSPECTOR</span>
+</div>
+<div class="flex flex-col gap-space-sm mt-space-sm">
+<!-- Hook Trigger Indicator -->
+<div class="flex items-center justify-between font-label-agent text-[11px] bg-[#1E1E20] p-space-xs border border-[#2A2A2D] rounded">
+<span class="text-outline">TRIGGER HOOK</span>
+<span class="text-[#FA4D56] font-bold">hook PreToolUse · lock_guard</span>
+</div>
+<!-- Syntax Highlighted JSON Excerpt -->
+<div class="flex flex-col gap-1">
+<span class="font-label-meta text-[11px] text-outline uppercase tracking-wider">Payload inspection</span>
+<pre class="bg-[#0E0E10] border border-[#2A2A2D] p-space-sm rounded font-label-code text-[11px] leading-relaxed text-on-surface overflow-x-auto"><code>{
+  <span class="text-[#78A9FF]">"target"</span>: <span class="text-tertiary">"src/checkout/checkout.ts"</span>,
+  <span class="text-[#78A9FF]">"lock_holder"</span>: <span class="text-[#FF832B]">"Andi"</span>,
+  <span class="text-[#78A9FF]">"status"</span>: <span class="text-[#FA4D56]">"blocked"</span>,
+  <span class="text-[#78A9FF]">"held_since"</span>: <span class="text-outline">"02:38.10Z"</span>,
+  <span class="text-[#78A9FF]">"predicted_release"</span>: <span class="text-outline">"03:00.00Z"</span>
+}</code></pre>
+</div>
+<!-- MCP Diagnostics -->
+<div class="grid grid-cols-2 gap-space-xs font-label-code text-[11px]">
+<div class="p-1.5 rounded bg-[#1E1E20] border border-[#2A2A2D]">
+<div class="text-[9px] text-outline uppercase font-label-agent">ROUTING MCP</div>
+<div class="text-[#78A9FF] mt-0.5">mcp radar.why_blocked</div>
+</div>
+<div class="p-1.5 rounded bg-[#1E1E20] border border-[#2A2A2D]">
+<div class="text-[9px] text-outline uppercase font-label-agent">EXECUTION MODE</div>
+<div class="text-tertiary mt-0.5">mode: coder</div>
+</div>
+</div>
+<!-- Quote Bubble from Bob Agent -->
+<div class="flex flex-col gap-1">
+<span class="font-label-meta text-[11px] text-outline uppercase tracking-wider">Agent Self-Reflection</span>
+<div class="p-space-sm rounded bg-[#1E1E20] border border-[#2A2A2D] border-l-2 border-l-[#BE95FF] text-body-sm text-[#F4F4F4] italic relative">
+<span class="text-outline font-serif text-[18px] leading-none absolute top-1 left-1.5">“</span>
+<p class="pl-3 font-body-sm text-[12px] leading-snug">
+                checkout.ts is held by Andi for T-1. Switching to Header.tsx to maintain concurrency quota.
+              </p>
+</div>
+</div>
+<!-- Session Link Document -->
+<a class="flex items-center justify-between p-2 rounded bg-[#1E1E20] hover:bg-[#252528] border border-[#2A2A2D] transition-colors group" href="#doc">
+<div class="flex items-center gap-1.5 font-label-code text-[11px] text-[#78A9FF] group-hover:underline">
+<span>📄</span>
+<span>bob_sessions/budi/03-blocked.md</span>
+</div>
+<span class="material-symbols-outlined text-[14px] text-outline group-hover:text-[#F4F4F4]">open_in_new</span>
+</a>
+</div>
+</aside>
+</div>
+<!-- Full Width Timeline Scrubber Bar -->
+<div class="w-full bg-[#161616] border border-[#2A2A2D] rounded p-space-sm flex flex-col gap-2">
+<!-- Top Track: Scrubber line and chapter tags -->
+<div class="flex items-center justify-between font-label-code text-[11px] text-outline px-1">
+<div class="flex items-center gap-1 text-[#F4F4F4] font-medium">
+<span class="material-symbols-outlined text-[14px] text-tertiary">play_circle</span>
+<span class="text-[12px]">Replay Head:</span>
+<span class="text-[#78A9FF] font-bold">02:42</span>
+<span class="text-outline">/ 05:30</span>
+</div>
+<div class="hidden sm:flex items-center gap-space-lg text-[11px]">
+<span class="text-outline">00:00 Plan</span>
+<span class="text-outline">·</span>
+<span class="text-outline">01:15 Live</span>
+<span class="text-outline">·</span>
+<span class="text-[#FF7EB6] font-bold bg-[#FF7EB6]/15 border border-[#FF7EB6]/40 px-1.5 py-0.5 rounded">02:40 Near-miss</span>
+<span class="text-outline">·</span>
+<span class="text-outline">04:10 Review</span>
+<span class="text-outline">·</span>
+<span class="text-outline">05:30 Commit</span>
+</div>
+<div class="font-label-agent text-[10px] text-tertiary">BUFFERED 100%</div>
+</div>
+<!-- Scrubber Interaction Strip -->
+<div class="relative w-full h-4 flex items-center cursor-pointer group" id="scrubber-bar">
+<!-- Background track -->
+<div class="w-full h-1.5 bg-[#1E1E20] rounded relative overflow-hidden">
+<!-- Buffered Fill -->
+<div class="absolute left-0 top-0 bottom-0 bg-[#2A2A2D] w-full"></div>
+<!-- Progress Fill (approx 49%) -->
+<div class="absolute left-0 top-0 bottom-0 bg-primary-container w-[49.1%]"></div>
+</div>
+<!-- Chapter Markers on Track -->
+<div class="absolute left-[0%] w-1 h-3 bg-outline rounded -translate-x-1/2" title="Plan"></div>
+<div class="absolute left-[22.7%] w-1 h-3 bg-outline rounded -translate-x-1/2" title="Live"></div>
+<div class="absolute left-[48.5%] w-1.5 h-3.5 bg-[#FF7EB6] rounded -translate-x-1/2 shadow-none" title="Near-miss (Active)"></div>
+<div class="absolute left-[75.7%] w-1 h-3 bg-outline rounded -translate-x-1/2" title="Review"></div>
+<div class="absolute left-[100%] w-1 h-3 bg-outline rounded -translate-x-1/2" title="Commit"></div>
+<!-- Scrubber Playhead Knob -->
+<div class="absolute left-[49.1%] w-3 h-3 bg-[#F4F4F4] border-2 border-primary-container rounded -translate-x-1/2 cursor-grab group-hover:scale-125 transition-transform"></div>
+</div>
+<!-- Bottom Controls row -->
+<div class="flex items-center justify-between pt-1 border-t border-[#2A2A2D]">
+<!-- Play / Pause & Skip Buttons -->
+<div class="flex items-center gap-space-xs">
+<button class="w-7 h-7 flex items-center justify-center rounded bg-[#1E1E20] hover:bg-[#2A2A2D] text-on-surface border border-[#2A2A2D] transition-colors" title="Previous event">
+<span class="material-symbols-outlined text-[16px]">skip_previous</span>
+</button>
+<button class="w-7 h-7 flex items-center justify-center rounded bg-primary-container text-on-primary-container font-semibold transition-colors hover:bg-opacity-90" title="Pause / Play">
+<span class="material-symbols-outlined text-[16px]">pause</span>
+</button>
+<button class="w-7 h-7 flex items-center justify-center rounded bg-[#1E1E20] hover:bg-[#2A2A2D] text-on-surface border border-[#2A2A2D] transition-colors" title="Next event">
+<span class="material-symbols-outlined text-[16px]">skip_next</span>
+</button>
+<span class="font-label-code text-[11px] text-outline ml-2">Synced 3-agent multi-track</span>
+</div>
+<!-- Playback Speed Toggles -->
+<div class="flex items-center gap-1 font-label-code text-label-code">
+<span class="text-[11px] text-outline mr-1 font-label-meta">Speed:</span>
+<button class="px-2 py-0.5 rounded text-[11px] bg-[#1E1E20] border border-[#2A2A2D] text-outline hover:text-[#F4F4F4] transition-colors">1×</button>
+<button class="px-2 py-0.5 rounded text-[11px] bg-primary-container text-[#F4F4F4] font-bold border border-primary-container">2×</button>
+<button class="px-2 py-0.5 rounded text-[11px] bg-[#1E1E20] border border-[#2A2A2D] text-outline hover:text-[#F4F4F4] transition-colors">4×</button>
+</div>
+</div>
+</div>
+</div>
+</div></main></div><footer class="fixed bottom-0 left-0 right-0 h-7 bg-surface-container-low border-t border-surface-container-highest z-50 flex items-center justify-between px-space-md font-label-code text-label-code text-outline"><div class="flex items-center gap-space-sm"><span class="text-tertiary">●</span><span class="text-on-surface">Live Collab</span><span>·</span><span>3 online</span><span>·</span><span class="text-secondary font-semibold">1 needs you</span></div><div class="flex items-center gap-space-sm"><span class="text-on-surface-variant">Bob radar: sync active</span><span>·</span><span class="text-tertiary">12ms</span></div></footer></body></html>

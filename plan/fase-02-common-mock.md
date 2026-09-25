@@ -2,7 +2,7 @@
 
 | Field | Nilai |
 |---|---|
-| Jalur | Orang 1 |
+| Jalur | **Lane A** (Orang 1) · dikerjakan **di `main`**. Merge = **kontrak beku** (Sab ±02:30), lalu Lane B/C rebase. |
 | Slot WITA | Sab 26 Sep 01:00 – 02:30 |
 | Estimasi | 1,5 jam |
 | Prasyarat | 00 (fixture payload dari 01 boleh menyusul; pakai contoh sintetis dulu) |
@@ -94,6 +94,12 @@ Menerjemahkan kontrak R3/R4/R5 menjadi kode bersama yang diimpor semua paket, se
 14. **Test & build**: `pnpm --filter @radar/common test` (target ≥ 40 test), `build` menghasilkan `dist/` + `.d.ts`.
 
 15. Commit `fase-02: common contracts, reducer, mock server`.
+
+## Tambahan v0.3 (wajib)
+
+- `packages/common/src/term.ts`: tipe + zod untuk semua pesan `term.*` (R3 §3.9) dan klien `app`.
+- Mock server (`scripts/mock-server.ts`) mendukung `client: "app"`, `term.share/subscribe/frame/snapshot/unshare`. Skenario `--scenario terminal` memutar frame dari `scripts/fixtures/term-bob-session.json` (rekaman kecil output Bob, boleh sintetis) supaya Lane C bisa membangun WatchTerminalView sebelum fase 06.
+- Selector baru di `selectors.ts`: `needsYouCount(state)`, `memberStatus(state, member)` (`idle | writing | blocked`).
 
 ## Verifikasi
 

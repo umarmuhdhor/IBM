@@ -2,12 +2,13 @@
 
 | Field | Nilai |
 |---|---|
-| Jalur | Orang 2 (spike 1, 2, 3, 5, 6) + Orang 1 (spike 4) |
-| Slot WITA | Sab 26 Sep 01:00 – 04:00 · **GATE 1 Sab 04:00** |
+| Jalur | **Lane B** (spike 1–3, 5–7, branch `lane/bob`) + Lane A (spike 4, 30 menit) + **Lane C** (spike 8, dan membantu spike 7 di `lane/app`) |
+| Slot WITA | Sab 26 Sep 00:30 – 04:00 · **GATE 1 Sab 04:00** |
 | Estimasi | 3 jam (≈ 40% menyiapkan script, 60% uji manual di Bob IDE) |
 | Prasyarat | 00 |
 | Requirement PRD | §17 spike 1–6, §18 open question 1–5, dasar BC-01..04, MA-01 |
 | Model | Sonnet 5 · effort medium |
+| Bob slice | **B1**: hook payload logger + mode read-only ditulis di Bob IDE (bukti `01-spike-hooks`) |
 | Fase berikutnya | 02 (Orang 1) · 07 setelah tidur (Orang 2) — solo: **02** |
 
 ## Tujuan
@@ -36,6 +37,7 @@ Membuktikan (atau membantah) enam asumsi teknis yang menopang PRD sebelum menuli
 
 ### A. Siapkan artefak (agent)
 
+0. **Bob slice B1.** Langkah 1 dan 5 di bawah ditulis oleh **Bob IDE** (mode Code) dengan prompt: "Buat `radar/spike/hooks/log_payload.js` dan `radar/spike/.bob/custom_modes.yaml` sesuai `radar/plan/fase-01-spike-gate1.md` langkah A1 dan A5." Bukti: `bob-evidence.sh <nama> 01-spike-hooks`. Claude Code mengerjakan sisanya.
 1. **`spike/hooks/log_payload.js`** — CommonJS, tanpa dependensi:
    - Baca seluruh stdin (timeout 1 s), `JSON.parse` kalau bisa.
    - Tulis `spike/out/<event>-<timestamp>.json` berisi `{ argv, env: <hanya var berawalan BOB_/HOOK_/CLAUDE_>, cwd, stdinRaw, stdinJson }`.
@@ -58,7 +60,7 @@ Membuktikan (atau membantah) enam asumsi teknis yang menopang PRD sebelum menuli
 
 ### B. Uji manual (LANGKAH MANUAL — manusia di Bob IDE; agent menulis checklist ini ke log)
 
-Buka folder `spike/` sebagai workspace di Bob IDE. Untuk setiap spike, simpan bukti (screenshot atau file di `spike/out/`) dan isi tabel di `docs/SPIKE_RESULTS.md`.
+Buka folder `radar/spike/` sebagai workspace di Bob IDE **dan** di Bob Shell (`cd radar/spike && bob`). Hook Bob Shell terdokumentasi resmi (`.bob/settings.json`), sedangkan hook Bob IDE harus dibuktikan di sini. Untuk setiap spike, simpan bukti (screenshot atau file di `spike/out/`) dan isi tabel di `docs/SPIKE_RESULTS.md`.
 
 | # | Uji | Cara | Lulus kalau |
 |---|---|---|---|
@@ -75,6 +77,10 @@ Buka folder `spike/` sebagai workspace di Bob IDE. Untuk setiap spike, simpan bu
 | 8 | Overhead hook | `timing.js` | Catat ms; target total cek kunci < 300 ms (NFR-01) |
 | 9 | Nama grup tool & tool shell (OQ 2, 3) | Dari `pre-all-*.json` dan docs | Catat nama grup yang valid & nama tool eksekusi perintah |
 | 10 | Bentuk payload (dua bentuk BC-04) | Bandingkan `pre-*.json` dari IDE vs Shell | Catat bentuk mana yang dipakai masing-masing |
+| 11 | **Bob Shell di terminal Orca** (spike 7) | Lane C: `pnpm dev` app fork → pilih agent (sementara "custom command" `bob`) → jalankan `bob` di folder `spike/` → ulangi uji 1 & 3 dari terminal itu | Bob interaktif normal (warna, input, TUI), hook terpicu sama seperti di Terminal macOS. Catat mode injeksi prompt yang aman untuk `promptInjectionMode`. |
+| 12 | **Tap output xterm** (spike 7b) | Lane C: tambahkan `console.debug` sementara di titik `term.write` renderer (lihat Bob slice C1) | Data dari sesi `bob` bisa disalin tanpa mengganggu tampilan. Catat ukuran frame/detik saat Bob menjawab. |
+| 13 | **Build app** (spike 8) | Lane C: `pnpm build:unpack` (atau `build:mac`) di Mac tim | `.app` terbentuk dan bisa dibuka. Catat durasi dan error native helper. |
+| 14 | **Login akun** | `bob` CLI dan Bob IDE memakai akun hackathon yang sama | Keduanya jalan. Catat cara login CLI. |
 
 ### C. Keputusan GATE 1 (Sab 04:00)
 
@@ -89,6 +95,9 @@ Buka folder `spike/` sebagai workspace di Bob IDE. Untuk setiap spike, simpan bu
 | Spike 4 p95 ≥ 1 s atau event hilang | `SYNC = poll-1s` (sync agent memindai mtime setiap 1 s) |
 | Spike 5 gagal | Mode `pm-lead` tanpa grup `edit` & `command` + server menolak semua update dari role PM (sudah di R4) + instruksi mode tegas |
 | Spike 6 gagal di salah satu mode | Dokumentasikan; untuk PM gunakan REST lewat script `bob-kit/prompts` sebagai fallback |
+| Hook jalan di Shell tapi tidak di IDE | `ENFORCEMENT_IDE = server-only`. Demo blokir memakai coder Bob Shell (Budi). Andi (IDE) tetap diamankan lapis 2. |
+| Spike 11 gagal (Bob tidak nyaman di terminal Orca) | Budi menjalankan `bob` di Terminal macOS. Fitur tonton terminal tetap memakai terminal Orca biasa yang menjalankan `bob`, atau mode fallback: tonton output `bob run --format stream-json` |
+| Spike 13 gagal | Demo memakai `pnpm dev` di 3 Mac. `.dmg` dikejar di fase 11 bagian C. |
 
 10. Perbarui konstanta yang terdampak di rencana: `EDIT_TOOLS_REGEX` (R5 §4), daftar field path untuk normalisasi (dipakai fase 02 `hook-payload.ts`), nama grup tool & lokasi file konfigurasi Bob (fase 07/08), nama tool shell (instruksi mode `coder`). Tulis semuanya sebagai entri DECISIONS dan edit `plan/ref/R5-konvensi.md` bila regex berubah.
 
@@ -96,13 +105,13 @@ Buka folder `spike/` sebagai workspace di Bob IDE. Untuk setiap spike, simpan bu
 
 ## Verifikasi
 
-- `docs/SPIKE_RESULTS.md` punya 10 baris uji, masing-masing berisi: hasil (lulus/gagal/sebagian), bukti (path file/screenshot), catatan.
+- `docs/SPIKE_RESULTS.md` punya 14 baris uji, masing-masing berisi: hasil (lulus/gagal/sebagian), bukti (path file/screenshot), catatan.
 - `spike/out/` berisi minimal satu payload untuk setiap event hook (dikecualikan dari git; salin 1 contoh per event yang **sudah disensor** ke `docs/spike-payloads/` sebagai fixture test fase 02).
 - Bench spike 4 mencetak p50/p95/max.
 
 ## Kriteria selesai (DoD)
 
-- [ ] Semua 10 uji punya hasil tercatat (boleh "gagal" — yang penting diketahui).
+- [ ] Semua 14 uji punya hasil tercatat (boleh "gagal" — yang penting diketahui).
 - [ ] Keputusan GATE 1 (`ENFORCEMENT`, `SYNC`, jalur pesan blokir, jalur brief) tercatat di DECISIONS.
 - [ ] Fixture payload nyata (disensor) tersedia di `docs/spike-payloads/*.json` untuk test normalisasi fase 02/07.
 - [ ] OQ 1–5 PRD §18 terjawab di `docs/SPIKE_RESULTS.md`.
