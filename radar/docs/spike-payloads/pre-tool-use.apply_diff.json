@@ -1,0 +1,11 @@
+{
+  "session_id": "0123456789abcdef0123456789abcdef",
+  "cwd": "/Users/demo/toko-demo",
+  "hook_event_name": "PreToolUse",
+  "tool_name": "apply_diff",
+  "tool_input": {
+    "path": "sandbox/locked.ts",
+    "diff": "<<<<<<< SEARCH\n:start_line:1\n-------\n// Spike sandbox file: every edit to this file must be blocked by hooks/block_edit.js (spike 1, 2, 19, 20).\n=======\n// hi\n// Spike sandbox file: every edit to this file must be blocked by hooks/block_edit.js (spike 1, 2, 19, 20).\n>>>>>>> REPLACE"
+  },
+  "tool_use_id": "tooluse_EXAMPLE000000000000000"
+}

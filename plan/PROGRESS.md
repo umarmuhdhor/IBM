@@ -6,7 +6,7 @@ Waktu dalam WITA. Setiap lane **hanya mengedit baris fasenya sendiri** (supaya m
 | Fase | Judul | Lane | Branch | Status | Mulai | Selesai | Ringkasan satu kalimat | Log |
 |---|---|---|---|---|---|---|---|---|
 | 00 | Fondasi: fork Orca + `radar/` | Alief | main | [~] | Jum 25 17:20 | | Workspace `radar/` 7 paket hijau, template IBM, CI; menunggu Bob slice A1 (toko-demo) + langkah manual | log/fase-00.md |
-| 01 | Spike & GATE 1 | Umar | lane/bob | [ ] | | | | log/fase-01.md |
+| 01 | Spike & GATE 1 | Umar | lane/bob | [x] | Sab 26 00:10 | Sab 26 00:40 | GATE 1: hook+server, sync watch (p95 212 ms satu Mac), stderr exit 2 sampai ke model; uji 4 dua Mac menunggu Alief (D4) | log/fase-01.md |
 | 02 | Common + mock (kontrak beku) | Alief | lane/core | [ ] | | | | log/fase-02.md |
 | 03 | Server inti | Alief | lane/core | [ ] | | | | log/fase-03.md |
 | 04 | Sync agent | Alief | lane/core | [ ] | | | | log/fase-04.md |
@@ -31,7 +31,7 @@ Waktu dalam WITA. Setiap lane **hanya mengedit baris fasenya sendiri** (supaya m
 |---|---|---|---|
 | Kontrak beku (PR fase 02 merge) | Sab 26 Sep 02:30 | [ ] | Semua lane sinkron (PROMPT langkah 13) dan ganti `TODO(sync:alief)` |
 | Jendela kontrak hasil spike | Sab 26 Sep 04:00–04:30 | [ ] | Hanya field hook, `BobActivityReq`, `EDIT_TOOLS_REGEX` (PR `fase-02b`) |
-| GATE 1 — hasil spike | Sab 26 Sep 04:00 | [ ] | Penegakan hook Bob IDE, jalur pesan blokir, sinkron, build app, payload aktivitas |
+| GATE 1 — hasil spike | Sab 26 Sep 04:00 | [x] | D-umar-01: `ENFORCEMENT = hook+server`, `SYNC = watch`, fixture di `radar/docs/spike-payloads/`; build app (uji 13) di lane App |
 | Sinkron 1 — semua lane punya PR ter-merge | Sab 26 Sep 16:00 | [ ] | App konek ke server staging |
 | Fase 10 mulai (interupsi wajib) | Sab 26 Sep 21:00 | [ ] | PR keempat lane ter-merge ≤ 21:00 |
 | Milestone — alur penuh di 4 Mac | Sab 26 Sep 23:00 | [ ] | rencana → live → blokir → keputusan + tonton Bob rekan; PC D ikut |
@@ -68,7 +68,7 @@ Waktu dalam WITA. Setiap lane **hanya mengedit baris fasenya sendiri** (supaya m
 | A2 checkWrite | Core | Alief | | [ ] | |
 | A3 commit GitHub API | Core | Alief | | [ ] | |
 | A4 review locks | Core | Alief | | [ ] | |
-| B1 spike hooks | Bob | Umar | | [ ] | |
+| B1 spike hooks | Bob | Umar | `uaai_umar_task01_spike_hooks_summary.png` | [x] | 0.345 |
 | B2 coder mode | Bob | Umar | | [ ] | |
 | B3 hooks | Bob | Umar | | [ ] | |
 | B4a MCP coder | Bob | Umar | | [ ] | |

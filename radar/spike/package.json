@@ -1,0 +1,22 @@
+{
+  "name": "radar-spike",
+  "private": true,
+  "description": "Fase 01 spike (not part of the product). Hooks are CommonJS; sync scripts run with tsx.",
+  "type": "commonjs",
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "relay": "tsx sync/relay.ts",
+    "two-dir": "tsx sync/two-dir.ts",
+    "bench": "tsx sync/two-dir.ts --bench 50",
+    "timing": "node hooks/timing.js --bench 20"
+  },
+  "dependencies": {
+    "chokidar": "^4.0.3",
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.12.0",
+    "@types/ws": "^8.18.1",
+    "tsx": "^4.23.15"
+  }
+}

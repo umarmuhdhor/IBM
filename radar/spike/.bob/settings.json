@@ -1,0 +1,74 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node hooks/log_payload.js start",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node hooks/log_payload.js prompt",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node hooks/log_payload.js pre-all",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "^(write_file|apply_diff|search_and_replace|insert_content|office_edit)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node hooks/block_edit.js",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node hooks/log_payload.js post",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "node hooks/timing.js post",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node hooks/log_payload.js stop",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

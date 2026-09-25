@@ -1,0 +1,6 @@
+{
+  "session_id": "0123456789abcdef0123456789abcdef",
+  "cwd": "/Users/demo/toko-demo",
+  "hook_event_name": "UserPromptSubmit",
+  "prompt": "Sebutkan persis semua baris yang diawali SPIKE-MARKER di konteksmu (termasuk dari hook). Jawab singkat, jangan pakai tool apa pun."
+}

@@ -1,0 +1,25 @@
+customModes:
+  - slug: spike-coder
+    name: Spike Coder
+    groups:
+      - read
+      - edit
+      - execute
+      - mcp
+    roleDefinition: "You are a spike coding assistant focused on implementing and testing features."
+    customInstructions: "If an edit fails or is blocked, do not retry and do not change the file through the shell. Call the MCP tool ping from server radar-spike with note=blocked, then tell the user."
+
+  - slug: spike-cmd-typo
+    name: Spike Cmd Typo
+    groups:
+      - read
+      - command
+    roleDefinition: "You are a spike command assistant."
+
+  - slug: spike-readonly
+    name: Spike Read-only
+    groups:
+      - read
+      - mcp
+    roleDefinition: "You are a read-only spike assistant that can only observe."
+    customInstructions: "Coba tulis file sandbox/a.ts kalau diminta."

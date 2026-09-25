@@ -157,3 +157,32 @@ Format:
 - Alternatif yang ditolak: memakai tag `lane-<x>-fNN` untuk rebase (tag tidak ikut `--update-refs`); satu `INDEX.md` bersama (konflik di setiap rebase); menjalankan eksperimen setelah rekaman (tidak cukup waktu sebelum submit).
 - Dampak: PLAN §1/§2/§3/§5/§6/§7/§9/§10/§11/§12, PROMPT, CLAUDE.md, README, PRD, ARCHITECTURE, DESIGN, DATA_SOURCES, PROGRESS, plan/README, TODO, fase 00/01/03/06/07/09/10/11/12/13/14, `bob_sessions/{INDEX,README}.md`, `radar/scripts/bob-evidence.sh`, skill `live-collab-app`, `media-references/`.
 - File ref/ yang diperbarui: R1 (`admin init` member D), R2 (komentar `commit_started_at`), R3 §1 (matriks pm), R4 §2/§6.3 (TTL klaim), R5 §4 (`COMMIT_CLAIM_TTL_MS`), R7 (indeks per anggota, klaim C2).
+
+## D-umar-01 · 26 Sep 2026 00:35 · fase 01 · Keputusan GATE 1 + fakta Bob IDE 2.2.0
+
+- Keputusan (GATE 1, bukti di `radar/docs/SPIKE_RESULTS.md`, fixture di `radar/docs/spike-payloads/`):
+  1. **`ENFORCEMENT = hook+server`.** `PreToolUse` exit 2 memblok keempat tool edit, juga di dalam subagent (uji 1, 1b, 20a).
+  2. **Jalur pesan blokir: stderr hook exit 2 sampai ke model** di Bob IDE 2.2.0 (uji 2). Bob mengutip pesannya dan tidak mencoba ulang. Ini berbeda dari docs dan dari asumsi D-007 poin 2. Jalur cadangan tetap (instruksi mode + rules + `why_blocked`), dan terbukti jalan: setelah diblok, Bob memanggil tool MCP yang diminta instruksi mode (uji 17). JSON di stdout tetap diabaikan (uji 2b).
+  3. **Brief = stdout `SessionStart`/`UserPromptSubmit`** (uji 3). `SessionStart` terpicu per task Bob, bukan per jendela IDE.
+  4. **`SYNC = watch`** (chokidar 4, debounce 150 ms): p95 212 ms, 0 hilang, 0 gema di dua folder satu Mac. Uji dua Mac = TODO D4 (Alief).
+  5. **Timeout hook = fail-open** (uji 19). `lock_guard` harus selesai jauh di bawah `timeout` (rencana 3 s dengan `HOOK_SERVER_TIMEOUT_MS` 1,5 s tetap aman).
+  6. Grup mode tetap `execute` (terdokumentasi). Catatan: `command` juga diterima Bob IDE 2.2.0 (uji 20b), jadi D-007 poin 1 benar untuk docs, tapi `command` tidak "tanpa akses". `[read, mcp]` tidak punya edit maupun `execute_command` (uji 5).
+  7. `EDIT_TOOLS_REGEX` (R5 §4) **tidak berubah**.
+- Usulan kontrak untuk Lane Core (jendela fase-02b, Sab 04:00–04:30; Lane Bob tidak mengubah `plan/ref`):
+  - P1. Bentuk payload nyata Bob IDE 2.2.0 = `{ session_id, cwd, hook_event_name, tool_name, tool_input, tool_use_id }`, `PostToolUse` + `tool_response` (bukan `output`), `UserPromptSubmit` + `prompt`, `SessionStart` + `source`, `Stop` + `last_assistant_message`. Bentuk docs (`event`/`tool`/`input`) tidak terlihat; normalizer fase 02 sudah menerima keduanya, cukup tambah fixture nyata.
+  - P2. Path selalu di `tool_input.path` (relatif workspace) untuk `write_file`/`apply_diff`/`search_and_replace`/`insert_content`.
+  - P3. R3 §2.2 kalimat "Jalur `message` ke model: bukan stderr" → stderr menjadi jalur pertama (terbukti), tiga jalur lain jadi cadangan.
+  - P4. R3 §2.24 `turn.end`: `Stop` membawa `last_assistant_message`. Usul: tetap tidak dikirim (privasi, D-alief-01 poin 9), cukup ubah kalimat "hanya session ID".
+  - P5. `tool_response` `read_file` berisi isi file: hook tidak boleh meneruskannya ke server (sudah sesuai R3 §2.24 "isi file tidak pernah dikirim").
+- Fakta untuk fase 07/08 (lane Bob sendiri):
+  - Server MCP stdio dijalankan dengan cwd `/` → `radar-mcp` dipanggil lewat `${workspaceFolder}/…` dan menerima path workspace dari argumen/env, bukan `process.cwd()`. Nama tool di hook: `mcp__<server>__<tool>`. Client `mcp-use` 2.2.5, protokol `2025-11-25`.
+  - `alwaysAllow` jalan, kecuali panggilan pertama setelah `mcp.json` berubah (server hot-restart). Checklist onboarding: jangan ubah `mcp.json` tepat sebelum demo, atau lakukan satu panggilan pemanasan.
+  - Workspace untrusted = panel Bob kosong (bukan hook dilewati diam-diam). Onboarding: trust folder.
+  - Hook cwd = root workspace, tanpa env `BOB_*`, mewarisi env proses yang membuka Bob. Hook `.js` mewarisi `"type"` dari `package.json` terdekat → kit memakai `.cjs` atau `package.json` sendiri.
+  - `PreToolUse` terpicu sebelum dialog approve. Stdout `PostToolUse` tampil di transkrip → hook `mark_ai_edit` tidak mencetak apa pun.
+  - Overhead hook `node` ± 37–47 ms.
+  - Instance akun di Mac Umar = `ibm-coding-challenge-2` (us-east), bukan `ibm-coding-challenge-uat`. Perlu dikonfirmasi tim (TODO D2).
+- Alasan: hasil spike otomatis via CDP di Bob IDE 2.2.0 (18 task, ± 1,3 Bobcoin + B1 0,345).
+- Alternatif yang ditolak: `ENFORCEMENT = server-only` (tidak perlu, hook terbukti); `SYNC = poll-1s` (watch cukup cepat); pindah grup ke `command` (tidak terdokumentasi).
+- Dampak: fase 02 (fixture + normalizer, jendela 02b), fase 03 (`bob/activity` field), fase 07/08 (kit, `radar-mcp` path, onboarding), fase 10 (checklist trust + pemanasan MCP), fase 11a (`session_id` = Task Id Bob).
+- File ref/ yang diperbarui: – (usulan P1–P5 menunggu Alief).

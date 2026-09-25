@@ -1,0 +1,11 @@
+{
+  "session_id": "0123456789abcdef0123456789abcdef",
+  "cwd": "/Users/demo/toko-demo",
+  "hook_event_name": "PostToolUse",
+  "tool_name": "read_file",
+  "tool_input": {
+    "path": "sandbox/locked.ts"
+  },
+  "tool_response": "Contents of file sandbox/locked.ts:\n\n1 | // Spike sandbox file: every edit to this file must be blocked by hooks/block_edit.js (spike 1, 2, 19, 20).\n2 | export const owner = 'A (T-1)';\n3 | ",
+  "tool_use_id": "tooluse_EXAMPLE000000000000000"
+}

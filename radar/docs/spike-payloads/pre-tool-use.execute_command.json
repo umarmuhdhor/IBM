@@ -1,0 +1,10 @@
+{
+  "session_id": "0123456789abcdef0123456789abcdef",
+  "cwd": "/Users/demo/toko-demo",
+  "hook_event_name": "PreToolUse",
+  "tool_name": "execute_command",
+  "tool_input": {
+    "command": "echo '{\"event\":\"Stop\",\"session_id\":\"t\"}' | node hooks/log_payload.js stop"
+  },
+  "tool_use_id": "tooluse_EXAMPLE000000000000000"
+}
