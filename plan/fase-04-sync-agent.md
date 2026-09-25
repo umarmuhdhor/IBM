@@ -2,13 +2,13 @@
 
 | Field | Nilai |
 |---|---|
-| Jalur | **Lane A** (Orang 1) · branch `lane/core` |
+| Jalur | **Lane Alief** (Alief) · branch `lane/core` |
 | Slot WITA | Sab 26 Sep 07:00 – 10:00 |
 | Estimasi | 3 jam |
 | Prasyarat | 03 (dan keputusan `SYNC` dari GATE 1 di fase 01) |
 | Requirement PRD | SY-01, SY-02, SY-03, SY-04 (sisi klien), SY-05, dasar SY-07; §8.3; NFR-01 latensi sinkron |
 | Model | **Opus 5.5** · effort high (alt: Sonnet 5 · high) |
-| Fase berikutnya | 05 (setelah tidur Orang 1: Sab 16:00) |
+| Fase berikutnya | 05 (setelah tidur Alief: Sab 16:00) |
 
 ## Tujuan
 
@@ -94,7 +94,7 @@ server ──ws──────▶  │ file.changed → writer.atomicWrite  �
     - Reconnect: matikan & hidupkan server (atau tutup socket) → agent tersambung lagi dan mengejar perubahan yang terlewat via snapshot diff.
     (Test blokir antar-coder A↔B menunggu mesin kunci fase 05; tambahkan di sana.)
 
-12. **Bench** `scripts/bench-sync.ts`: server lokal + 2 agent di satu mesin, 100 penulisan acak berjeda 200 ms, cetak p50/p95/max `appliedTs(B) - writeTs(A)`; mode `--server <url>` untuk server deploy (2 agent lokal ke server Fly, mengukur round trip nyata). Simpan hasil ke `docs/EXPERIMENT.md` bagian "Latensi sinkron (bench)".
+12. **Bench** `scripts/bench-sync.ts`: server lokal + 2 agent di satu mesin, 100 penulisan acak berjeda 200 ms, cetak p50/p95/max `appliedTs(B) - writeTs(A)`; mode `--server <url>` untuk server deploy (2 agent lokal ke Worker Cloudflare, mengukur round trip nyata). Simpan hasil ke `docs/EXPERIMENT.md` bagian "Latensi sinkron (bench)".
 
 13. Commit `fase-04: sync agent`.
 
@@ -108,7 +108,7 @@ server ──ws──────▶  │ file.changed → writer.atomicWrite  �
 ```bash
 pnpm --filter @radar/sync test
 pnpm bench:sync                      # p95 < 1000 ms lokal (target PRD), catat angka
-pnpm bench:sync -- --server https://<app>.fly.dev --token-a … --token-b …
+pnpm bench:sync -- --server https://live-collab.<akun>.workers.dev --token-a … --token-b …
 # Manual 2 terminal:
 radar join http://localhost:8787 --workspace toko-demo --as A --token <tokA> --dir /tmp/wsA --no-kit
 radar join http://localhost:8787 --workspace toko-demo --as B --token <tokB> --dir /tmp/wsB --no-kit

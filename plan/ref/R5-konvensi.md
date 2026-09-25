@@ -84,28 +84,28 @@ Co-authored-by: IBM Bob <bob@ibm.com>
 
 ## 5. Variabel lingkungan
 
-### Server (`packages/server`, `.env` / secret Fly)
+### Server (`packages/server`: `vars` di `wrangler.jsonc`, secret lewat `wrangler secret put`, lokal di `.dev.vars` yang di-ignore)
 
 | Var | Contoh | Wajib | Keterangan |
 |---|---|---|---|
-| `PORT` | `8787` | ya | |
-| `DATA_DIR` | `/data` | ya | DB + clone repo; di Railway/Fly = volume |
+| `ADMIN_SECRET` | (secret) | ya | melindungi `/admin/*` (init, rotate token, reset) |
 | `WORKSPACE_ID` | `toko-demo` | ya | |
-| `REPO_URL` | `https://github.com/<org>/toko-demo.git` | ya | dipakai `init` dan push |
-| `GITHUB_TOKEN` | `ghp_…` | untuk push | fine-grained, hanya repo toko-demo, `contents:write` |
-| `GIT_PUSH` | `true` | – | `false` saat dev/test |
+| `GITHUB_REPO` | `<owner>/toko-demo` | ya | dipakai `init` (baca tree) dan commit lewat GitHub API |
+| `GITHUB_TOKEN` | (secret) | untuk commit | fine-grained, hanya repo toko-demo, Contents read & write |
+| `GITHUB_COMMIT` | `true` | – | `false` saat dev/test (commit dicatat tanpa memanggil GitHub) |
+| `RECORD_TERMINALS` | `false` | – | `true` saat merekam demo (frame disimpan untuk replay) |
 | `BOB_COAUTHOR` | `IBM Bob <bob@ibm.com>` | – | trailer co-author |
 | `AUTO_APPLY_QUEUE` | `true` | – | keputusan `antre` diterapkan tanpa klik (PRD §7.3) |
 | `HEARTBEAT_EXPIRE_MS` | `300000` | – | turunkan ke `60000` untuk demo SV-09 |
-| `CORS_ORIGIN` | `https://ibm-bob-live-collab.vercel.app,http://localhost:3000` | ya | |
+| `CORS_ORIGIN` | `https://ibm-bob-live-collab.pages.dev,http://localhost:3000` | ya | |
 | `PUBLIC_EXPORT` | `false` | – | izinkan `GET /v1/events/export` tanpa token |
-| `LOG_LEVEL` | `info` | – | |
+| `LOG_LEVEL` | `info` | – | log Worker terlihat di `wrangler tail` |
 
-### Web (`packages/web`, Vercel)
+### Web (`packages/web`, Cloudflare Pages, Next.js `output: 'export'`)
 
 | Var | Contoh | Keterangan |
 |---|---|---|
-| `NEXT_PUBLIC_RADAR_SERVER` | `https://ibm-bob-live-collab.fly.dev` | default URL di halaman login (token MC diketik manusia, disimpan di `localStorage`) |
+| `NEXT_PUBLIC_RADAR_SERVER` | `https://live-collab.<akun>.workers.dev` | default URL di halaman login (token MC diketik manusia, disimpan di `localStorage`) |
 | `NEXT_PUBLIC_REPO_URL`, `NEXT_PUBLIC_VIDEO_URL`, `NEXT_PUBLIC_SESSIONS_URL` | … | link di replay (UI-05, PRD §7.6) |
 
 ### Klien (sync, hook, radar-mcp)

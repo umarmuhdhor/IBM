@@ -2,7 +2,7 @@
 
 | Field | Nilai |
 |---|---|
-| Jalur | **Lane A** (Orang 1) · branch `lane/core` (Lane B membantu BC-05 & SV-10 bila fase 13 cepat selesai) |
+| Jalur | **Lane Alief** (Alief) · branch `lane/core` (Lane Umar membantu BC-05 & SV-10 bila fase 13 cepat selesai) |
 | Slot WITA | Min 27 Sep 05:00 – 11:00 · **berakhir di GATE 2 (feature freeze) Min 11:00** |
 | Estimasi | 5 jam |
 | Prasyarat | 10 |
@@ -63,8 +63,8 @@ Kerjakan dari atas. Kalau jam 10:00 belum sampai sebuah item, **item itu dan sem
    - Rate limit ringan `@fastify/rate-limit` untuk endpoint mc & proposals (mis. 60/menit/token).
    - Validasi ukuran body (1,5 MB WS, 256 KB REST).
    - Uji beban kecil: 5 member simulasi × 2 update/s selama 2 menit (`scripts/sim-3pc.ts --load`) → tidak ada error, p95 tetap dalam target (NFR-01, batas 5 anggota PRD §04).
-   - Uji "server restart saat demo": restart Fly machine → semua klien tersambung lagi < 10 s, MC memuat ulang state.
-   - Backup: job harian tidak perlu; cukup `radar-server export` sebelum rekaman.
+   - Uji "server restart saat demo": `wrangler deploy` ulang (DO restart) → semua klien tersambung lagi < 10 s, MC memuat ulang state.
+   - Backup: job harian tidak perlu; cukup `pnpm -C radar admin export` sebelum rekaman.
 
 10. **GATE 2 (11:00)**: bekukan fitur. Tandai di PROGRESS apa yang masuk/terpotong. Deploy final server & web. Tag git `v0.2.0-freeze`.
 
@@ -72,7 +72,7 @@ Kerjakan dari atas. Kalau jam 10:00 belum sampai sebuah item, **item itu dan sem
 
 ## Tambahan v0.3
 
-- IN-02 kode undangan: `radar-server invite --member B` → `rdr_inv_<base64url>` + `radar join --invite <kode>`. App (Settings) menerima kode yang sama (koordinasi dengan Lane C).
+- IN-02 kode undangan: `pnpm -C radar admin invite --member B` → `rdr_inv_<base64url>` + `radar join --invite <kode>`. App (Settings) menerima kode yang sama (koordinasi dengan Lane Aarief/Imelda).
 - Endpoint `GET /v1/files/history` untuk UI-06 kalau belum ada.
 
 ## Verifikasi

@@ -2,7 +2,7 @@
 
 | Field | Nilai |
 |---|---|
-| Jalur | **Lane B** (Orang 2) · branch `lane/bob` · tool PM ditulis di **Bob IDE** (Bob slice B4b) |
+| Jalur | **Lane Umar** (Umar) · branch `lane/bob` · tool PM ditulis di **Bob IDE** (Bob slice B4b) |
 | Slot WITA | Sab 26 Sep 16:00 – 21:00 |
 | Estimasi | 4 jam |
 | Prasyarat | 07. Boleh paralel dengan fase 05/06 memakai mock; uji akhir melawan server asli setelah 05 & 06 |

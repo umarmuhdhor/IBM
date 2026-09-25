@@ -3,7 +3,7 @@
 
 ## 0. Harness: Claude Code + ECC (v0.3)
 
-Semua fase dijalankan di **Claude Code dengan plugin ECC** (`/plugin install ecc@ecc`). `PROMPT.md` memanggil agent dan skill ECC berikut. Nama bisa berubah antar versi, jadi cocokkan dengan `/plugin list ecc@ecc` di fase 00 dan catat di DECISIONS (D-A00).
+Semua fase dijalankan di **Claude Code dengan plugin ECC** (`/plugin install ecc@ecc`). `PROMPT.md` memanggil agent dan skill ECC berikut. Nama bisa berubah antar versi, jadi cocokkan dengan `/plugin list ecc@ecc` di fase 00 dan catat di DECISIONS (D-alief-00).
 
 | Kebutuhan | ECC (command / agent / skill) | Dipakai di langkah PROMPT |
 |---|---|---|

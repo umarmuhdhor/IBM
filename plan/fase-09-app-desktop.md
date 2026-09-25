@@ -2,13 +2,13 @@
 
 | Field | Nilai |
 |---|---|
-| Jalur | **Lane C (Aarief)** · branch `lane/app` |
+| Jalur | **Aarief** (langkah 0–5, 7–14) · branch `lane/app` · **Imelda** (langkah 6: komponen `@radar/ui` + gallery) · branch `lane/web` |
 | Slot WITA | 09a Sab 00:30–02:30 · 09b Sab 02:30–04:00 · tidur 04:00–09:00 · 09c Sab 09:00–16:00 |
 | Estimasi | 9 jam |
 | Prasyarat | 00. 09a–09b **tidak** butuh 02. 09c memakai mock server fase 02 (`pnpm -C radar dev:mock`), lalu server asli setelah Sinkron 1 (Sab 16:00). |
 | Requirement PRD | DA-02, DA-03, DA-04, DA-06, UI-01..04, UI-07 (P0) · DA-05, UI-08 (P1) · NFR-10 |
 | Model | Sonnet 5 · effort high. Opus 5.5 untuk langkah 2 dan 6 (titik sambung Orca). |
-| Bob slice | **C1** onboarding Orca · **C2** registrasi agent `bob` · **C3** komponen `@radar/ui` |
+| Bob slice | **C1** onboarding Orca (Aarief) · **C2** registrasi agent `bob` (Aarief) · **I1** komponen `@radar/ui` (Imelda) |
 | Fase berikutnya | 11 |
 
 ## Tujuan
@@ -66,7 +66,7 @@ Tampilan mengikuti [`../DESIGN.md`](../DESIGN.md) §2–§5 dan mockup hasil `pr
 
 ### 09c · Panel Live Collab (Sab 09:00–16:00)
 
-6. **Bob slice C3 — komponen `@radar/ui` (Code mode, ±4 Bobcoin).** Prompt: "Di `radar/packages/ui/src`, buat komponen React presentasional sesuai `DESIGN.md` §2–§3: `AgentTag`, `MemberChip`, `LockChip`, `WritingPulse`, `BobTrace`, `DecisionCard`, `TaskCard`, `FeedItem`, plus `tokens.css` (CSS variables DESIGN §2.1, font IBM Plex dari `@fontsource`). Props murni, tanpa fetch. Tulis test @testing-library untuk `LockChip` (4 status) dan `DecisionCard` (Approve memanggil `onApprove`)." Bukti: `03-radar-ui-components`.
+6. **[Imelda] Bob slice I1 — komponen `@radar/ui` (Code mode, ±4 Bobcoin).** Prompt: "Di `radar/packages/ui/src`, buat komponen React presentasional sesuai `DESIGN.md` §2–§3: `AgentTag`, `MemberChip`, `LockChip`, `WritingPulse`, `BobTrace`, `DecisionCard`, `TaskCard`, `FeedItem`, plus `tokens.css` (CSS variables DESIGN §2.1, font IBM Plex dari `@fontsource`). Props murni, tanpa fetch. Tulis test @testing-library untuk `LockChip` (4 status) dan `DecisionCard` (Approve memanggil `onApprove`)." Bukti: `bob-evidence.sh imelda 01-radar-ui-components`.
    - Claude Code melengkapi sisa komponen (`ReviewCard`, `TerminalFrame`, `PresenceStack`, `BriefMeter`, `views/*`) mengikuti gaya yang dibuat Bob.
    - Halaman `packages/web/app/gallery/page.tsx` menampilkan semua komponen dengan data contoh, dipakai untuk mencocokkan dengan mockup `prompt_ui.md`.
 7. **Seksi sidebar** `RadarSidebarSection`: judul **LIVE COLLAB**, item Mission Control (badge jumlah "Needs you"), Team, Files & locks. Disisipkan ke sidebar Orca dengan satu baris import + render (titik dari ORCA_MAP).
@@ -107,7 +107,7 @@ pnpm -C radar dev:mock &  pnpm -C app dev                 # uji manual melawan m
 | Risiko | Fallback |
 |---|---|
 | Menyisipkan seksi ke sidebar Orca rumit | Buka Live Collab sebagai tab khusus dari Command palette Orca + satu tombol di status bar |
-| Alias Vite ke `radar/` bentrok dengan tsconfig Orca | Salin build `@radar/ui` (`tsc` → `dist`) dan impor dari `dist`. Catat D-C.. |
+| Alias Vite ke `radar/` bentrok dengan tsconfig Orca | Salin build `@radar/ui` (`tsc` → `dist`) dan impor dari `dist`. Catat D-app-.. |
 | `bob` tidak terdeteksi sebagai agent (status heuristik Orca) | Tidak apa-apa untuk R0: terminal tetap jalan. Status agent diambil dari event Live Collab. |
 | Waktu habis | Potong: NotificationsPanel → gabung ke TeamPanel. Settings cukup form tanpa checklist. |
 

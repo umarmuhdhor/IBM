@@ -1,7 +1,7 @@
 # R7 — Protokol bukti IBM Bob
 
 > Wajib juri. Diturunkan dari halaman submission lablab: *"Your repository must include the code/files where IBM Bob assisted, plus IBM Bob task session summary screenshots from each team member."* Ditambah **IBM Bob Usage Statement ≤ 500 kata** di form submission.
-> Langkah resmi screenshot ada di hackathon guide 2.0 yang dirilis saat kickoff. Kalau berbeda dari langkah di bawah, **guide resmi yang menang**. Perbedaannya dicatat di DECISIONS (D-B..).
+> Langkah resmi screenshot ada di hackathon guide 2.0 yang dirilis saat kickoff. Kalau berbeda dari langkah di bawah, **guide resmi yang menang**. Perbedaannya dicatat di DECISIONS (D-umar-..).
 
 ## 1. Apa yang harus ada di repo
 
@@ -9,11 +9,11 @@
 |---|---|---|---|
 | Screenshot ringkasan task (panel konsumsi/summary) | `bob_sessions/<nama>/<NN-slug>/summary.png` | **setiap** anggota, ≥ 3 slice per orang | `evidence:check` |
 | Ekspor riwayat task (markdown) | `bob_sessions/<nama>/<NN-slug>/task.md` | setiap anggota | `evidence:check` |
-| Indeks | `bob_sessions/INDEX.md` (tabel: folder · anggota · lane/fase · tanggal · ringkasan · file yang dibangun Bob · Bobcoin) | Lane B merapikan | manual |
+| Indeks | `bob_sessions/INDEX.md` (tabel: folder · anggota · lane/fase · tanggal · ringkasan · file yang dibangun Bob · Bobcoin) | Lane Umar merapikan | manual |
 | Kode yang dibantu Bob | commit dengan trailer `Bob-Assisted: bob_sessions/<nama>/<NN-slug>` | pemilik slice | `evidence:check` |
-| Narasi | `BOB_DEVELOPMENT.md` + IBM Bob Usage Statement di `docs/SUBMISSION.md` | Lane B | ≤ 500 kata untuk statement |
+| Narasi | `BOB_DEVELOPMENT.md` + IBM Bob Usage Statement di `docs/SUBMISSION.md` | Lane Umar | ≤ 500 kata untuk statement |
 
-`<nama>` = nama depan huruf kecil (`aarief`, …). `<NN-slug>` = nomor urut dua digit + slug, misalnya `01-orca-onboarding`, `02-register-bob-agent`.
+`<nama>` = nama depan huruf kecil: `alief`, `umar`, `aarief`, `imelda`. **Keempat anggota** wajib punya screenshot dan ekspor. `<NN-slug>` = nomor urut dua digit + slug, misalnya `01-orca-onboarding`, `02-register-bob-agent`.
 
 ## 2. Alur satu Bob slice (±5 menit overhead)
 

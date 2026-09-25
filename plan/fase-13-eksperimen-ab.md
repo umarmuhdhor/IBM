@@ -2,7 +2,7 @@
 
 | Field | Nilai |
 |---|---|
-| Jalur | **Lane B** (Orang 2) · branch `lane/bob` (+ anggota lain sebagai coder) |
+| Jalur | **Lane Umar** (Umar) · branch `lane/bob` (+ anggota lain sebagai coder) |
 | Slot WITA | Min 27 Sep 05:00 – 11:00 (PRD §18: eksperimen dijadwalkan Minggu pagi karena Bobcoin) |
 | Estimasi | 4 jam |
 | Prasyarat | 10 |

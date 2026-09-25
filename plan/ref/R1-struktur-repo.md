@@ -28,7 +28,7 @@ IBM/  (github.com/umarmuhdhor/IBM)
 ├── .github/workflows/ci.yml                                 ← CI kita (workflow Orca di app/.github tidak jalan)
 ├── BOB_DEVELOPMENT.md
 ├── bob_sessions/<nama>/<NN-slug>/{summary.png,task.md} + INDEX.md
-├── app/                               ← Orca (Electron). Lane C menambah:
+├── app/                               ← Orca (Electron). Lane Aarief/Imelda menambah:
 │   ├── src/shared/tui-agent.ts        ← + 'bob'
 │   ├── src/shared/tui-agent-config.ts ← + konfigurasi launch/detect bob
 │   ├── src/main/radar/                ← BARU: secure-store.ts (safeStorage), sync-supervisor.ts (P1)
@@ -57,9 +57,9 @@ IBM/  (github.com/umarmuhdhor/IBM)
 ```text
 packages/common/src/  index, constants, types, schemas, events, reducer, hook-payload, paths, ignore,
                       hash, http, config, brief, term (BARU: tipe & zod pesan term.*)
-packages/server/src/  main, cli, app, config, db/{schema.sql, migrate.ts, repo/*.ts: member, access,
+packages/server/src/  index (Worker, Hono), workspace-do (Durable Object), admin, config, db/{schema.sql, migrate.ts, sql.ts, repo/*.ts: member, access,
                       task, file, lock, allocation, request, proposal, review, event, notification},
-                      services/{events, files, locks, tasks, requests, proposals, brief, git, diff,
+                      services/{events, files, locks, tasks, requests, proposals, brief, github, git-message, diff,
                       heartbeat, report, terminals (BARU: relay + ring buffer)}, http/{auth, errors,
                       routes/*.ts}, ws/hub.ts
 packages/sync/src/    cli, agent, watcher, known, writer, sidecar, notify, kit
@@ -76,12 +76,12 @@ packages/web/app/     demo/page.tsx, gallery/page.tsx, install/route.ts (P2)
 | Paket | Runtime deps | Dev deps | Build |
 |---|---|---|---|
 | `@radar/common` | `zod` | `vitest` | `tsc` → `dist/` (ESM) |
-| `@radar/server` | `fastify@5`, `@fastify/websocket`, `@fastify/cors`, `better-sqlite3`, `simple-git`, `diff`, `pino`, `nanoid`, `commander`, `@radar/common` | `@types/better-sqlite3`, `vitest`, `fast-check`, `ws` | `tsc`; Docker untuk deploy |
+| `@radar/server` | `hono`, `@octokit/rest`, `diff`, `nanoid`, `zod`, `@radar/common` (CLI admin terpisah di `scripts/admin.ts` memakai `commander`) | `wrangler`, `@cloudflare/workers-types`, `@cloudflare/vitest-pool-workers`, `vitest`, `fast-check` | `wrangler deploy` (bundling esbuild bawaan wrangler) |
 | `@radar/sync` | `chokidar@4`, `ws`, `commander`, `ignore`, `picocolors`, `@radar/common` | `vitest` | `tsc`; `bin.radar = dist/cli.js` |
 | `@radar/hooks` | (tidak ada saat runtime — dibundel) `@radar/common` | `esbuild`, `vitest` | `esbuild` → `bob-kit/coder/.bob/hooks/*.js` (CJS, node20, tanpa dependensi eksternal) |
 | `@radar/mcp` | `@modelcontextprotocol/sdk`, `zod`, `@radar/common` | `esbuild`, `vitest` | `esbuild` bundle → `bob-kit/*/.bob/radar-mcp.js` (satu file) |
 | `@radar/ui` | `react@19` (peer), `@radar/common`, `lucide-react`, `@fontsource/ibm-plex-sans`, `@fontsource/ibm-plex-mono` | `vitest`, `@testing-library/react` | tanpa build: dikonsumsi sebagai source (alias Vite di Orca, `transpilePackages` di Next) |
-| `@radar/web` | `next@15`, `react@19`, `zustand`, `@xterm/xterm` (replay frame), `diff2html` atau `react-diff-viewer-continued`, `@radar/common`, `@radar/ui` | `tailwindcss@4`, `@playwright/test` | `next build` statis, deploy Vercel |
+| `@radar/web` | `next@15`, `react@19`, `zustand`, `@xterm/xterm` (replay frame), `diff2html` atau `react-diff-viewer-continued`, `@radar/common`, `@radar/ui` | `tailwindcss@4`, `@playwright/test` | `next build` (`output: 'export'`), deploy Cloudflare Pages |
 
 Aturan: **hook dan radar-mcp harus bisa jalan di workspace toko-demo tanpa `npm install`**. Karena itu keduanya dibundel menjadi satu file JS mandiri memakai `fetch` bawaan Node 20.
 
@@ -94,7 +94,10 @@ Aturan: **hook dan radar-mcp harus bisa jalan di workspace toko-demo tanpa `npm 
 | `test` | `pnpm -r test` |
 | `lint` | `eslint .` |
 | `format` | `prettier -w .` |
-| `dev:server` | `pnpm --filter @radar/server dev` (tsx watch, DATA_DIR=./.data) |
+| `dev:server` | `pnpm --filter @radar/server exec wrangler dev` (Worker + DO + SQLite lokal di http://localhost:8787) |
+| `deploy:server` | `pnpm --filter @radar/server exec wrangler deploy` |
+| `admin` | `tsx scripts/admin.ts` (init, token --rotate, invite, export, reset lewat `/admin/*`) |
+| `deploy:web` | `pnpm --filter @radar/web build && wrangler pages deploy packages/web/out --project-name ibm-bob-live-collab` |
 | `dev:web` | `pnpm --filter @radar/web dev` |
 | `dev:mock` | `tsx scripts/mock-server.ts --scenario demo` |
 | `bundle:kit` | build hooks + mcp → isi `bob-kit/` |
@@ -108,21 +111,21 @@ Aturan: **hook dan radar-mcp harus bisa jalan di workspace toko-demo tanpa `npm 
 
 ## 5. CLI
 
-### `radar-server` (paket server)
+### `admin` (pengganti `radar-server`, memanggil endpoint `/admin/*` di Worker, butuh env `ADMIN_SECRET`)
 
 ```text
-radar-server init --workspace toko-demo --repo <git-url|path> \
+pnpm -C radar admin init --server <url> --workspace toko-demo --repo <owner>/toko-demo \
   --member "A:coder:Alice:alice@example.com" \
   --member "B:coder:Budi:budi@example.com" \
   --member "C:pm:Citra:citra@example.com"
-  → clone repo ke $DATA_DIR/repo, impor file teks ke tabel file (versi 1),
+  → Worker membaca tree repo lewat GitHub API, impor file teks ke tabel file (versi 1),
     buat anggota + token, cetak token SEKALI (A, B, C, dan token Mission Control).
-radar-server start                      → jalankan HTTP + WS di $PORT
-radar-server token --member A --rotate  → token baru
-radar-server invite --member B          → kode undangan rdr_inv_<base64url {server, workspace, member, token}> (P1, IN-02)
-radar-server export --out events.json   → sama dengan GET /v1/events/export
-radar-server reset --confirm            → hapus DATA_DIR (hanya untuk dev)
+pnpm -C radar admin token --member A --rotate  → token baru
+pnpm -C radar admin invite --member B          → kode undangan rdr_inv_<base64url {server, workspace, member, token}> (P1, IN-02)
+pnpm -C radar admin export --out events.json [--with-terminals]  → sama dengan GET /v1/events/export
+pnpm -C radar admin reset --confirm            → hapus semua data DO (hanya untuk dev/gladi)
 ```
+Server sendiri tidak punya perintah `start`: lokal `pnpm -C radar dev:server` (wrangler dev), cloud `pnpm -C radar deploy:server`.
 
 ### `radar` (paket sync)
 

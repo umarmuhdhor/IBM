@@ -4,7 +4,7 @@
 
 | Versi | Tanggal | Event | Kickoff / submit | Pemilik |
 |---|---|---|---|---|
-| 0.3 · app desktop (fork Orca) + tonton terminal + ECC | 25 Sep 2026 | IBM Bob 2.0 Hackathon, 25–27 Sep 2026, 48 jam | Jum 23:00 / Min 23:00 WITA | Tim 3 orang (Lane A/B/C, lihat [`PLAN.md`](PLAN.md)) |
+| 0.3 · app desktop (fork Orca) + tonton terminal + ECC | 25 Sep 2026 | IBM Bob 2.0 Hackathon, 25–27 Sep 2026, 48 jam | Jum 23:00 / Min 23:00 WITA | Tim 4 orang: Alief, Umar, Aarief, Imelda (Lane Alief/Umar/Aarief-Imelda, lihat [`PLAN.md`](PLAN.md)) |
 
 Dokumen terkait: [`PLAN.md`](PLAN.md) (lane, jadwal, ECC, bukti Bob) · [`DESIGN.md`](DESIGN.md) (desain & layar) · [`prompt_ui.md`](prompt_ui.md) (prompt gambar UI) · [`plan/`](plan/README.md) (detail per fase).
 
@@ -145,7 +145,7 @@ Sumber pembanding: [MCP Agent Mail](https://github.com/Dicklesworthstone/mcp_age
 
 ## 05. Peran & hak akses
 
-Konfigurasi demo: tiga orang dengan tiga akun Bob. A (Andi) dan B (Budi) adalah coder, C (Citra) adalah PM. Setiap orang memakai Bob-nya sendiri dengan mode yang berbeda. Supaya kedua permukaan Bob terlihat, **A memakai Bob IDE** dan **B memakai Bob Shell di dalam app Live Collab**. Ketiganya membuka app Live Collab untuk panel Live Collab.
+Konfigurasi demo: tiga peran dengan tiga akun Bob (orang keempat tim merekam dan menonton sebagai penonton terminal). A (Andi) dan B (Budi) adalah coder, C (Citra) adalah PM. Setiap orang memakai Bob-nya sendiri dengan mode yang berbeda. Supaya kedua permukaan Bob terlihat, **A memakai Bob IDE** dan **B memakai Bob Shell di dalam app Live Collab**. Ketiganya membuka app Live Collab untuk panel Live Collab.
 
 | Peran | Siapa | Deskripsi |
 |---|---|---|
@@ -526,7 +526,7 @@ Mission Control kini menjadi view di app Live Collab (seksi sidebar **Live Colla
 | ID | Requirement | Kriteria penerimaan | Prioritas |
 |---|---|---|---|
 | IN-01 | CLI `radar` terpasang dari rilis | `npm i -g <url tarball rilis>` memasang `radar`. `radar join` jalan seperti di v0.2. | P0 |
-| IN-02 | Kode undangan | `radar-server invite --member B` mencetak `rdr_inv_…`. App dan CLI menerima kode itu. | P1 |
+| IN-02 | Kode undangan | `pnpm -C radar admin invite --member B` mencetak `rdr_inv_…`. App dan CLI menerima kode itu. | P1 |
 | IN-03 | Checklist onboarding | App mengecek: `bob` CLI ada, kit `.bob/` terpasang, hook terdaftar, `radar-mcp` bisa dijalankan, file tersinkron. Item gagal diberi satu kalimat perbaikan. | P1 |
 | IN-04 | Installer satu baris | `curl -fsSL <domain>/install \| sh` memasang CLI dan membuka unduhan `.dmg`. | P2 |
 | EV-01 | Folder bukti per anggota | `bob_sessions/<nama>/<NN-slug>/{summary.png, task.md}` untuk setiap Bob slice. `bob_sessions/INDEX.md` terisi. | P0 |
@@ -581,17 +581,17 @@ flowchart LR
     AC["App Live Collab<br>Mission Control"] --> BC["Bob, mode pm-lead"]
     BC --> MC1["radar-mcp"]
   end
-  subgraph SV["Collab Server (codename radar)"]
+  subgraph SV["Collab Server: Cloudflare Worker + Durable Object (codename radar)"]
     API["REST API"]
     WS["WebSocket hub<br>+ relay terminal"]
-    DB[("SQLite: file, kunci, task, event")]
-    GIT["Git worker"]
+    DB[("SQLite Durable Object: file, kunci, task, event")]
+    GIT["Commit via GitHub API"]
     API --> DB
     WS --> DB
     GIT --> DB
   end
   GH[("GitHub repo toko-demo")]
-  WEB["Replay web /demo (Vercel)"]
+  WEB["Landing + replay web /demo (Cloudflare Pages)"]
   HA -->|"cek kunci"| API
   HB -->|"cek kunci"| API
   MA1 -->|"task, why_blocked, submit"| API
@@ -616,10 +616,10 @@ Hook dan tool MCP memakai REST karena singkat dan sinkron. Sync agent dan app me
 | Kode Live Collab | TypeScript di Node 20+, workspace pnpm **terpisah** di `radar/` (seperti `mobile/` di Orca) | Tidak menyentuh graph paket Orca |
 | Komponen UI bersama | `@radar/ui` (React), diimpor app lewat alias Vite dan dipakai web replay | Satu set komponen untuk app dan replay |
 | Sync agent | CLI Node: `chokidar` + `ws` | Pemantau file yang matang di semua OS |
-| Server | Fastify + `ws` + `better-sqlite3` + `simple-git`, di Fly.io, Render, atau Railway | Butuh proses yang hidup terus untuk WebSocket dan Git |
+| Server | **Cloudflare Workers + Durable Objects** (Hono, WebSocket Hibernation API, SQLite bawaan DO), commit lewat **GitHub REST API** (Octokit). Plan Workers Free. | Serverless tapi stateful: satu DO per workspace menahan semua WebSocket dan memproses pesan satu per satu (cek kunci bebas race), URL tetap, gratis, dan tidak ada mesin yang harus dijaga. Lokal: `wrangler dev`. |
 | Hook | Script Node kecil yang dibundel esbuild | Jalan di Bob IDE dan Bob Shell tanpa `npm install` |
 | radar-mcp | MCP TypeScript SDK, transport stdio | Dipakai mode `coder` dan `pm-lead` |
-| Replay web | Next.js di Vercel, statis | Tetap hidup walaupun server mati |
+| Landing + replay web | Next.js (`output: 'export'`) di **Cloudflare Pages**, statis | Tetap hidup walaupun server mati. Satu akun Cloudflare dengan server. |
 | Cara membangun | Claude Code + plugin **ECC** (planner, tdd-guide, code-reviewer, security-reviewer) + **IBM Bob IDE** untuk Bob slice | Lihat [`PLAN.md`](PLAN.md) §4 dan §7 |
 
 ---
@@ -857,9 +857,10 @@ Rencana lengkap per lane, branch, titik sinkron, anggaran Bobcoin, dan cara menj
 
 | Lane | Pemilik | Fase |
 |---|---|---|
-| A · Core | Orang 1 | 00 fondasi · 02 kontrak · 03 server · 04 sync · 05 kunci · 06 git + relay terminal · 12 hardening |
-| B · Bob | Orang 2 | 01 spike · 07 kit coder · 08 main agent · 13 eksperimen · koordinator bukti Bob |
-| C · App | Aarief | 09 app desktop (fork Orca) · 11 tonton terminal + `.dmg` + replay · 14 aset submission |
+| Alief · Core | Alief | 00 fondasi · 02 kontrak · 03 server · 04 sync · 05 kunci · 06 git + relay terminal · 12 hardening |
+| Umar · Bob | Umar | 01 spike · 07 kit coder · 08 main agent · 13 eksperimen · koordinator bukti Bob |
+| Aarief/Imelda · App | Aarief | 09 app desktop (Orca di `app/`) · 11 tonton terminal + `.dmg` |
+| | Imelda | `@radar/ui` · 11 landing + replay web · 14 video, deck, cover, statement |
 | Semua | – | 10 integrasi E2E (milestone Sab 23:00) · 14 submission |
 
 ### Spike (Sab 00:30–04:00 WITA)
@@ -888,7 +889,7 @@ Rencana lengkap per lane, branch, titik sinkron, anggaran Bobcoin, dan cara menj
 
 | Risiko | Dampak | Mitigasi |
 |---|---|---|
-| Codebase Orca besar (~23k file), tooling ketat (oxlint, ratchet) | Lane C lambat | Perubahan aditif di folder `components/radar/` baru. Bob slice C1 memetakan titik sambung. Jalankan `pnpm -C app tc` + oxlint file yang diubah saja. |
+| Codebase Orca besar (~23k file), tooling ketat (oxlint, ratchet) | Lane Aarief/Imelda lambat | Perubahan aditif di folder `components/radar/` baru. Bob slice C1 memetakan titik sambung. Jalankan `pnpm -C app tc` + oxlint file yang diubah saja. |
 | Build `.dmg` gagal (native helper, signing) | Teman tidak bisa pasang | Coba `build:unpack` sebelum kickoff. Fallback: `pnpm -C app dev` di 3 Mac. App tidak di-sign → klik kanan → Open. |
 | Hook di Bob IDE tidak jalan | Coder IDE tidak diblokir oleh Bob-nya sendiri | Lapis 2 di server + sync agent. Demo blokir memakai Budi (Bob Shell). |
 | `.gitignore` template IBM mengabaikan nama file berisi `token`, `secret`, `password`, `credentials`, `config.json` | Kode hilang diam-diam dari repo | Larangan nama file di R5. CI menjalankan `radar/scripts/check-ignored.sh`. |

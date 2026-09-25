@@ -209,4 +209,4 @@ at the center. Flat, crisp vector, no text, no IBM logo.
 - [ ] Setiap layar punya minimal satu jejak primitif Bob (`hook · …`, `mcp · …`, mode `coder`/`pm-lead`).
 - [ ] Tidak ada logo IBM atau logo perusahaan nyata.
 - [ ] Teks terbaca dan ejaannya benar.
-- [ ] Kirim hasil ke Claude untuk dicocokkan dengan `DESIGN.md` sebelum Lane C mulai fase 09c.
+- [ ] Kirim hasil ke Claude untuk dicocokkan dengan `DESIGN.md` sebelum Lane Aarief/Imelda mulai fase 09c.

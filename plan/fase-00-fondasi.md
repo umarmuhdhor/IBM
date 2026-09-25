@@ -2,14 +2,14 @@
 
 | Field | Nilai |
 |---|---|
-| Jalur | **Lane A** (Orang 1), dikerjakan **di `main`** repo `umarmuhdhor/IBM`. Lane B/C membantu di langkah manual. |
+| Jalur | **Lane Alief** (Alief), dikerjakan **di `main`** repo `umarmuhdhor/IBM`. Lane Umar dan Lane Aarief/Imelda membantu di langkah manual. |
 | Slot WITA | Jum 25 Sep 23:00 – Sab 26 Sep 00:30 |
 | Estimasi | 1–1,5 jam (Orca **sudah** ada di `app/` sejak commit `7c86819`, dan `pnpm -C app install` sudah terbukti jalan) |
 | Prasyarat | – |
 | Requirement PRD | §12 stack, §16 R0, NFR-04, NFR-07, NFR-10, NFR-11 |
 | Model | Sonnet 5 · effort medium |
 | Bob slice | **A1**: toko-demo ditulis Bob IDE |
-| Fase berikutnya | Lane A: **02** · Lane B: **01** · Lane C: **09** |
+| Fase berikutnya | Lane Alief: **02** · Lane Umar: **01** · Lane Aarief/Imelda: **09** |
 
 ## Tujuan
 
@@ -94,7 +94,7 @@ Dokumen (PRD, PLAN, DESIGN, `plan/`) **tetap di root**, tidak dipindah.
 7. **Script bukti & pemeriksa nama file.**
    - `radar/scripts/check-ignored.sh` sesuai R5 §8 (bisa dijalankan dari root atau `radar/`).
    - `radar/scripts/bob-evidence.sh`: **stub** yang sudah bisa membuat folder, menjalankan `screencapture -i`, dan menambah baris INDEX. Versi lengkap (tunggu md di Downloads, sensor) dibuat di Bob slice C4 (fase 11). Stub ini dibutuhkan supaya Bob slice A1 dan B1 bisa dibuktikan sejak jam pertama.
-   - `plan/team.json`: `[{ "id": "A", "name": "<nama1>", "lane": "A" }, …]` (nama tanpa email).
+   - `plan/team.json`: `[{"id":"alief","lane":"core"},{"id":"umar","lane":"bob"},{"id":"aarief","lane":"app"},{"id":"imelda","lane":"app"}]` (tanpa email). Dipakai `evidence:check`.
 
 8. **Rapikan referensi UI.** Folder `UI Inspo & Design/` sudah di root (inspirasi + mockup Stitch). Tambahkan `UI Inspo & Design/README.md` yang menjelaskan bahwa mockup Stitch **hanya pedoman**, dan gaya app mengikuti Orca (DESIGN.md §0). Jangan commit video di atas 10 MB.
 
@@ -103,7 +103,7 @@ Dokumen (PRD, PLAN, DESIGN, `plan/`) **tetap di root**, tidak dipindah.
    - di tengah: indeks dokumen (isi README sekarang).
    - di bawah: "Desktop app built on top of [Orca](https://github.com/stablyai/orca) (MIT) by Stably AI — vendored in `app/`". README Orca tetap di `app/README.md`.
 
-10. **ECC.** Setiap orang menjalankan `/plugin list ecc@ecc`, lalu Lane A mencatat nama command/agent/skill yang **benar-benar ada** ke DECISIONS (D-A00) sebagai tabel padanan untuk `ref/R6` §0.
+10. **ECC.** Setiap orang menjalankan `/plugin list ecc@ecc`, lalu Lane Alief mencatat nama command/agent/skill yang **benar-benar ada** ke DECISIONS (D-alief-00) sebagai tabel padanan untuk `ref/R6` §0.
 
 11. **Branch lane.** `git switch -c lane/core && git push -u origin lane/core`, sama untuk `lane/bob` dan `lane/app`. Semua dibuat dari commit fase 00. Push ke `umarmuhdhor/IBM` butuh akses collaborator: minta Umar menambahkan anggota lain.
 
@@ -112,14 +112,14 @@ Dokumen (PRD, PLAN, DESIGN, `plan/`) **tetap di root**, tidak dipindah.
     2. Setiap orang: login Bob IDE **dan** Bob Shell (`bob`) dengan akun hackathon. Cek `bob --version`.
     3. Buat repo GitHub publik `toko-demo` dari `radar/examples/toko-demo/`.
     4. GitHub fine-grained token hanya untuk `toko-demo` (contents: read & write) → password manager, **bukan** repo.
-    5. Akun Fly.io/Railway (server) + Vercel (replay). Belum deploy.
+    5. Akun Cloudflare (Workers + Pages, plan Free) → `npx wrangler login`. Belum deploy.
     6. Sepakati nama anggota dan warna: A biru, B ungu, C oranye (DESIGN.md §2.1).
 
 13. **Commit** di `main`: `fase-00: fork Orca + radar workspace, IBM template, toko-demo` (dengan trailer `Bob-Assisted` untuk commit toko-demo), lalu push.
 
 ## Bob slice A1 — toko-demo
 
-- **Mode Bob:** Code. **Siapa:** Orang 1 (atau siapa pun yang Bob-nya menganggur).
+- **Mode Bob:** Code. **Siapa:** Alief (atau siapa pun yang Bob-nya menganggur).
 - **Prompt siap tempel:** "Buat repo contoh di `radar/examples/toko-demo/` sesuai tabel file di `plan/fase-00-fondasi.md` langkah 6. Vite + React + TypeScript, data sintetis, `Header.tsx` harus memanggil `calculateTotal(items)`. Tulis juga `EXPERIMENT_TASKS.md` dengan 6 task. Jalankan `npm install && npm run build` dan pastikan hijau."
 - **Bukti:** `radar/scripts/bob-evidence.sh <nama> 01-toko-demo`.
 - Claude Code lalu hanya me-review hasilnya dan menjalankan build.
@@ -142,7 +142,7 @@ git check-ignore -v .env && git status --short   # .env ter-ignore, tidak ada to
 - [ ] `radar/` build/typecheck/lint/test hijau (7 paket). `pnpm -C app tc` Orca hijau.
 - [ ] toko-demo build hijau, dikerjakan Bob (folder `bob_sessions/<nama>/01-toko-demo/` lengkap).
 - [ ] Tiga branch lane ada di remote.
-- [ ] Nama command ECC tercatat (D-A00). Checklist kickoff tertulis.
+- [ ] Nama command ECC tercatat (D-alief-00). Checklist kickoff tertulis.
 
 ## Risiko & fallback
 
@@ -154,6 +154,6 @@ git check-ignore -v .env && git status --short   # .env ter-ignore, tidak ada to
 
 ## Catatan handoff
 
-- Lane B langsung ke fase 01 di `lane/bob`.
-- Lane C ke fase 09 di `lane/app` (bagian a–b tidak butuh fase 02).
-- Lane A lanjut fase 02 di `main`. Merge fase 02 = kontrak beku (Sab ±02:30). Setelah itu Lane B dan C rebase.
+- Lane Umar langsung ke fase 01 di `lane/bob`.
+- Lane Aarief/Imelda ke fase 09 di `lane/app` (bagian a–b tidak butuh fase 02).
+- Lane Alief lanjut fase 02 di `main`. Merge fase 02 = kontrak beku (Sab ±02:30). Setelah itu Lane Umar dan C rebase.

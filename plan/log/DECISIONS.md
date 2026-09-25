@@ -37,7 +37,7 @@ Format:
   2. Repo produk = **fork GitHub `stablyai/orca`** (MIT) bernama `ibm-bob-live-collab`. Kode Live Collab di workspace pnpm terpisah `radar/`. Mission Control web v0.2 diganti view di app desktop. Web tinggal replay `/demo`.
   3. Fitur baru P0: tonton terminal Bob rekan (read-only). Ketik sebagai tamu = P1. Relay terminal dibuat sendiri di server Live Collab. Relay bawaan Orca (`cloud/apps/relay`, Postgres) tidak dipakai.
   4. Paket baru `@radar/ui` untuk komponen yang dipakai bersama app dan replay.
-  5. Pembangunan: 3 lane (A core, B Bob, C app) dengan branch `lane/*`. Hanya Lane A yang mengubah kontrak. ID DECISIONS berikutnya memakai prefix lane (`D-A..`, `D-B..`, `D-C..`).
+  5. Pembangunan: 3 lane (Alief = core, Umar = Bob, Aarief/Imelda = app) dengan branch `lane/*`. Hanya Lane Alief yang mengubah kontrak. ID DECISIONS berikutnya memakai prefix lane (`D-alief-..`, `D-umar-..`, `D-app-..`).
   6. Harness: Claude Code + plugin **ECC**. `PROMPT.md` memakai `LANE` + `FASE`.
   7. Bukti Bob memakai protokol R7 (Bob slice, `bob-evidence.sh`, trailer `Bob-Assisted`, `evidence:check`).
   8. Template IBM (`.gitignore`, `.bobignore`, `SECURITY.MD`, `.env.example`) digabung ke fork. Nama file terlarang (R5 §8): `db/repo/token.ts` → `db/repo/access.ts`.
@@ -59,3 +59,13 @@ Format:
   6. Skill & agent bersama di `.claude/`: `electron-pro` (VoltAgent, MIT), `electron-automation` (fcakyon/claude-codex-settings, Apache-2.0), `live-collab-app` (buatan tim). Daftar skill wajib per orang di PLAN.md §11.
 - Alasan: permintaan tim (pakai repo Umar, jangan buat repo publik baru, app langsung di repo itu), dan menghindari tabrakan dengan instalasi Orca asli.
 - Dampak: R1 §1–2, fase 00 (langkah fork dihapus), 09 (langkah 0), 11 (resep build), PLAN §1/§3/§5.1/§11, PROMPT konteks.
+
+## D-003 · 25 Sep 2026 · pra-kickoff · Nama lane per orang, Imelda anggota ke-4, server di Cloudflare
+
+- Keputusan:
+  1. Lane diberi nama pemiliknya: **Alief · Core** (server + sync, dulu Lane A), **Umar · Bob** (kit Bob, spike, pm-lead, eksperimen, koordinator bukti; dulu Lane B), **Aarief/Imelda · App** (dulu Lane C). Di dalam lane App: Aarief memegang app desktop di `app/` (fase 09 a/b/c, 11 A–C, E), Imelda memegang `@radar/ui`, landing + replay web (11 D), video, deck, cover, dan statement (14). Branch: `lane/core`, `lane/bob`, `lane/app`, `lane/web`. Prefix DECISIONS: `D-alief-..`, `D-umar-..`, `D-app-..`.
+  2. **Imelda = anggota ke-4 dengan akun IBM Bob sendiri.** Bob slice I1 (komponen UI), I2 (landing), I3 (Long Description + outline deck). `evidence:check` mensyaratkan ≥ 3 slice untuk **keempat** anggota.
+  3. **Server pindah ke Cloudflare Workers + Durable Objects** (plan Free): Hono, WebSocket Hibernation API, SQLite bawaan DO, satu DO per workspace. Git worker (`simple-git`) diganti **commit lewat GitHub REST API** (Git Data API). Web landing + replay di **Cloudflare Pages** (Next.js `output: 'export'`). CLI `radar-server` diganti `pnpm -C radar admin …` yang memanggil `/admin/*` (dilindungi `ADMIN_SECRET`). Kontrak REST/WebSocket/event (R3) **tidak berubah**.
+- Alasan: gratis, tanpa VPS atau homelab yang harus nyala terus, URL tetap, dan DO memproses pesan satu per satu sehingga cek kunci bebas race. Tim meminta penamaan per orang supaya lebih mudah dibaca.
+- Alternatif yang ditolak: Railway/Fly.io (butuh volume, tidak gratis penuh), homelab + Cloudflare Tunnel (laptop harus nyala 24 jam, URL berubah; tetap dipakai sebagai cadangan darurat), Vercel/Netlify Functions (stateless, tidak bisa menahan WebSocket), Supabase/Firebase (tetap butuh server untuk commit dan relay terminal).
+- Dampak: ARCHITECTURE §1–§3, PRD §12, R1 §3–§5, R2 §1, R5 §5, fase 03 (rewrite), 06 (GitHub API), 02 (mock Hono), 04, 10, 11, 12, 14, PLAN §1/§2/§5.2/§7/§11, PROGRESS, R7.

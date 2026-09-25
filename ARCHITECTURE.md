@@ -7,31 +7,32 @@
 ## 1. Gambaran besar
 
 ```text
-   LAPTOP SETIAP ANGGOTA (macOS)                              CLOUD
- ┌─────────────────────────────────────────┐
- │ IBM Bob (IDE atau Bob Shell)            │
- │   ├─ mode coder / pm-lead   (.bob/)     │   REST (cek kunci,     ┌──────────────────────────────┐
- │   ├─ hook: lock_guard, brief ───────────┼── task, usulan) ─────► │  COLLAB SERVER (1 proses)    │
- │   └─ MCP: radar-mcp ────────────────────┼──────────────────────► │  Node + Fastify              │
- │                                         │                        │  WebSocket hub               │
- │ App "IBM Bob Live Collab" (Electron)    │   WebSocket (event,    │  SQLite (file, kunci, task,  │
- │   ├─ terminal bob, panel Live Collab ◄──┼── persetujuan, frame   │          event)              │
- │   └─ Share / Watch terminal ◄───────────┼── terminal) ─────────► │  git worker ─────────────────┼──► GitHub (toko-demo)
- │                                         │                        │  hosting: Railway / Fly.io   │    commit per task
- │ Sync agent (CLI `radar`) ◄──────────────┼── WebSocket (isi file) │                              │
- │   pantau folder proyek ↔ server         │                        └──────────────┬───────────────┘
- └─────────────────────────────────────────┘                                       │ export event (JSON)
-                                                                                   ▼
-                                                            ┌──────────────────────────────────────┐
-                                                            │ Vercel: landing + replay /demo       │
-                                                            │ (statis, tanpa login & API key)      │
-                                                            └──────────────────────────────────────┘
+  LAPTOP SETIAP ANGGOTA (macOS)                         CLOUDFLARE (serverless, plan Free)
+ ┌────────────────────────────────────────┐
+ │ IBM Bob (IDE atau Bob Shell)           │  REST: cek kunci,   ┌───────────────────────────────────┐
+ │   ├─ mode coder / pm-lead (.bob/)      │  task, usulan       │ Worker "live-collab" (Hono)       │
+ │   ├─ hook: lock_guard, brief ──────────┼───────────────────► │   meneruskan semua ke ↓           │
+ │   └─ MCP: radar-mcp ───────────────────┼───────────────────► │ Durable Object "toko-demo"        │
+ │                                        │                     │   · WebSocket Hibernation         │
+ │ App "IBM Bob Live Collab" (Electron)   │  WebSocket: event,  │   · SQLite bawaan: file, kunci,   │
+ │   ├─ terminal bob, panel Live Collab ◄─┼─ persetujuan,       │     task, event, token (hash)     │
+ │   └─ Share / Watch terminal ◄──────────┼─ frame terminal ──► │   · relay terminal                │
+ │                                        │                     │   · pesan diproses 1 per 1        │
+ │ Sync agent (CLI `radar`) ◄─────────────┼─ WebSocket: file ─► │     (kunci bebas race)            │
+ │   pantau folder proyek ↔ server        │                     │   · commit via GitHub API ────────┼──► GitHub toko-demo
+ └────────────────────────────────────────┘                     └────────────────┬──────────────────┘    (commit per task)
+                                                                                 │ export event + frame (JSON)
+                                                                                 ▼
+                                                               ┌───────────────────────────────────┐
+                                                               │ Cloudflare Pages: landing + /demo │
+                                                               │ (statis, tanpa login & API key)   │
+                                                               └───────────────────────────────────┘
 ```
 
 Intinya:
-- **Server hanya satu.** Semua laptop terhubung ke sana.
+- **Server hanya satu "ruang"**: satu Durable Object per workspace di Cloudflare. Semua laptop terhubung ke sana. Serverless: tidak ada VPS atau laptop yang harus nyala terus.
 - **Kecerdasan AI 100% dari IBM Bob** di laptop masing-masing. Server tidak memanggil LLM apa pun.
-- **Web (Vercel) cuma untuk juri** dan tetap hidup walaupun server mati.
+- **Web (Cloudflare Pages) cuma untuk juri** dan tetap hidup walaupun server mati.
 
 ---
 
@@ -39,7 +40,7 @@ Intinya:
 
 | Komponen | Jalan di | Tech stack | Folder | Lane |
 |---|---|---|---|---|
-| **Collab Server** | cloud (Railway/Fly.io) | Node 24, TypeScript, **Fastify** (REST), **ws** (WebSocket), **better-sqlite3** (SQLite), **simple-git**, zod, pino | `radar/packages/server` | Core |
+| **Collab Server** | **Cloudflare Workers + Durable Objects** | TypeScript, **Hono** (REST), **WebSocket Hibernation API**, **SQLite bawaan Durable Object**, **GitHub REST API** (Octokit) untuk commit, zod, `diff` | `radar/packages/server` | Core (Alief) |
 | **Sync agent** (`radar` CLI) | laptop | Node, **chokidar** (pantau file), ws | `radar/packages/sync` | Core |
 | **Kontrak bersama** | – | TypeScript types + zod schema + reducer event | `radar/packages/common` | Core |
 | **Hook Bob** | laptop, dipanggil Bob | Script Node kecil, dibundel **esbuild** jadi 1 file | `radar/packages/hooks` → `radar/bob-kit/*/.bob/hooks` | Bob |
@@ -47,7 +48,7 @@ Intinya:
 | **Custom mode** `coder`, `pm-lead` | laptop (Bob) | YAML `.bob/custom_modes.yaml` | `radar/bob-kit` | Bob |
 | **App desktop** | laptop | **Electron 43** + **React 19** + zustand + **xterm** + Monaco + Tailwind/shadcn (basis: **Orca**) | `app/` | App |
 | **Komponen UI bersama** | app + web | React | `radar/packages/ui` | App |
-| **Landing + replay** | Vercel | **Next.js 15** (statis) + xterm (putar ulang terminal) | `radar/packages/web` | App |
+| **Landing + replay** | **Cloudflare Pages** | **Next.js 15** (`output: 'export'`, statis) + xterm (putar ulang terminal) | `radar/packages/web` | App (Imelda) |
 | **Repo demo** `toko-demo` | GitHub | Vite + React (data sintetis) | `radar/examples/toko-demo` → repo terpisah | Core |
 
 Toolchain: **Node 24 + pnpm 12** di semua laptop (`nvm use 24`).
@@ -58,13 +59,21 @@ Toolchain: **Node 24 + pnpm 12** di semua laptop (`nvm use 24`).
 
 | Apa | Di mana | Biaya | Catatan |
 |---|---|---|---|
-| Collab Server | **Railway** (utama) atau **Fly.io** | gratis sampai ±$5 | Wajib punya **volume** untuk SQLite + clone repo (`DATA_DIR`). Deploy dari GitHub, HTTPS/WSS langsung jadi. |
-| Server cadangan / dev | laptop siapa pun + **Cloudflare Tunnel** (`cloudflared tunnel --url http://localhost:8787`) | gratis | Untuk dev dan kalau cloud bermasalah. Laptop tidak boleh tidur. |
-| Landing + replay | **Vercel** | gratis | Statis, jadi aman dari server mati |
-| Kode | GitHub `umarmuhdhor/IBM` (publik) + `toko-demo` | gratis | Server butuh token GitHub khusus `toko-demo` untuk push (disimpan di secret Railway, **bukan** di repo) |
+| Collab Server | **Cloudflare Workers + Durable Objects** | **gratis** | `wrangler deploy` → `https://live-collab.<akun>.workers.dev`. Tanpa VPS atau volume. DO tidur saat sepi tapi WebSocket tetap tersambung. |
+| Commit ke GitHub | **GitHub REST API** | gratis (5.000 request/jam) | 1 commit ≈ 4 + jumlah file request. Token khusus `toko-demo` = secret Worker. |
+| Landing + replay | **Cloudflare Pages** | gratis | Statis, aman dari server mati. Satu akun dengan Worker. |
+| Dev lokal | `wrangler dev` | gratis | Worker + DO + SQLite jalan di laptop, identik dengan cloud |
+| Cadangan darurat | `wrangler dev` + Cloudflare Tunnel | gratis | Hanya kalau akun Cloudflare bermasalah saat demo |
+| Kode | GitHub `umarmuhdhor/IBM` + `toko-demo` | gratis | – |
 | App `.dmg` | GitHub Release | gratis | Tidak di-sign Apple → klik kanan → Open |
 
-**Tidak dibutuhkan:** VPS, database cloud (Postgres dan sejenisnya), API key LLM, watsonx, atau login OAuth. Token per anggota dibuat oleh `radar-server init`.
+Kuota Workers Free: 100k request/hari. Pesan WebSocket masuk dihitung 20:1, pesan keluar gratis, dan SQLite DO gratis. Semua itu jauh di atas kebutuhan hackathon.
+
+**Tidak dibutuhkan:** VPS, homelab yang nyala terus, database cloud, API key LLM, watsonx, atau OAuth. Token per anggota dibuat oleh `pnpm -C radar admin init`.
+
+**Kenapa Durable Object cocok:**
+- Satu objek per workspace menerima semua koneksi dan memproses pesan satu per satu, jadi dua Bob yang berebut file di milidetik yang sama tidak mungkin sama-sama menang, tanpa lock tambahan.
+- Batas yang relevan: Worker depan 10 ms CPU per request (hanya meneruskan ke DO), DO 30 s CPU per pesan, dan pesan WebSocket hingga 32 MiB.
 
 ---
 
@@ -76,7 +85,7 @@ Toolchain: **Node 24 + pnpm 12** di semua laptop (`nvm use 24`).
 | 2 | **Blokir** | Bob B mau menulis `checkout.ts` → hook `PreToolUse` → `POST /v1/locks/check` → milik A → **exit 2** (edit batal) → Bob B memanggil MCP `why_blocked` → permintaan masuk ke "Needs you" PM |
 | 3 | **Keputusan PM** | main agent C (`pm-lead`) memanggil MCP `propose_decision` → kartu di Mission Control → **manusia** C klik Approve → server menerapkan → brief di prompt B berikutnya |
 | 4 | **Tonton terminal** | app A: Share → `term.frame` ke server → server me-relay ke penonton → xterm read-only di app B (< 500 ms) |
-| 5 | **Review & commit** | B submit task → main agent `get_task_diff` + `propose_review` → C Approve → git worker commit file task (author coder, `Co-authored-by: IBM Bob`) → push GitHub → kunci dilepas / pindah antrean |
+| 5 | **Review & commit** | B submit task → main agent `get_task_diff` + `propose_review` → C Approve → DO membuat commit lewat GitHub API (author coder, `Co-authored-by: IBM Bob`) → kunci dilepas / pindah antrean |
 
 Dua lapis penegakan: **hook** mencegah Bob menulis, dan **server** menolak `file.update` dari bukan pemilik kunci. Lapis kedua ini juga menangkap edit manual dan `sed`.
 

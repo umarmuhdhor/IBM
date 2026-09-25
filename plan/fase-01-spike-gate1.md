@@ -2,14 +2,14 @@
 
 | Field | Nilai |
 |---|---|
-| Jalur | **Lane B** (spike 1–3, 5–7, branch `lane/bob`) + Lane A (spike 4, 30 menit) + **Lane C** (spike 8, dan membantu spike 7 di `lane/app`) |
+| Jalur | **Lane Umar** (spike 1–3, 5–7, branch `lane/bob`) + Lane Alief (spike 4, 30 menit) + **Lane Aarief/Imelda** (spike 8, dan membantu spike 7 di `lane/app`) |
 | Slot WITA | Sab 26 Sep 00:30 – 04:00 · **GATE 1 Sab 04:00** |
 | Estimasi | 3 jam (≈ 40% menyiapkan script, 60% uji manual di Bob IDE) |
 | Prasyarat | 00 |
 | Requirement PRD | §17 spike 1–6, §18 open question 1–5, dasar BC-01..04, MA-01 |
 | Model | Sonnet 5 · effort medium |
 | Bob slice | **B1**: hook payload logger + mode read-only ditulis di Bob IDE (bukti `01-spike-hooks`) |
-| Fase berikutnya | 02 (Orang 1) · 07 setelah tidur (Orang 2) — solo: **02** |
+| Fase berikutnya | 02 (Alief) · 07 setelah tidur (Umar) — solo: **02** |
 
 ## Tujuan
 
@@ -52,7 +52,7 @@ Membuktikan (atau membantah) enam asumsi teknis yang menopang PRD sebelum menuli
    - `spike-readonly`: groups `[read, mcp]` + instruksi "Coba tulis file sandbox/a.ts kalau diminta."
 6. **`spike/mcp/echo-server.mjs`** — server MCP stdio minimal (boleh memakai `@modelcontextprotocol/sdk` dari root `node_modules` dengan path absolut, atau implementasi JSON-RPC manual) dengan tool `ping({ note })` → `pong <note> role=<env RADAR_ROLE> cwd=<cwd>`.
    `spike/.bob/mcp.json` → `{ "mcpServers": { "radar-spike": { "command": "node", "args": ["<abs path>/spike/mcp/echo-server.mjs"], "env": { "RADAR_ROLE": "coder" } } } }` (lokasi & format file MCP proyek diverifikasi di spike 6).
-7. **Spike 4 (Orang 1) — `spike/sync/relay.ts` + `two-dir.ts`**:
+7. **Spike 4 (Alief) — `spike/sync/relay.ts` + `two-dir.ts`**:
    - `relay.ts`: server `ws` kecil yang meneruskan `{path, content, hash, t0}` ke klien lain.
    - `two-dir.ts`: dua watcher `chokidar@4` di `spike/tmp/A` dan `spike/tmp/B` (bisa di 2 PC berbeda dengan `--relay ws://<ip>:8799`), debounce 150 ms, anti-gema hash, penulisan atomik (tmp + rename).
    - Mode bench: tulis 50 file berurutan di A, ukur `t(apply di B) - t(write di A)`, cetak p50/p95/max. Mode "Bob": biarkan Bob menulis di A, amati B.
@@ -69,7 +69,7 @@ Buka folder `radar/spike/` sebagai workspace di Bob IDE **dan** di Bob Shell (`c
 | 2 | Apa yang diterima model setelah blokir | Setelah uji 1, tanya Bob: "Pesan persis apa yang kamu terima dari hook tadi?" + lihat panel/log Bob | Catat apakah stderr diteruskan ke model, formatnya, dan apakah Bob mencoba ulang otomatis |
 | 2b | Keputusan via JSON | Ganti ke `block_edit.js --json`, ulangi | Catat apakah Bob menghormati JSON (kalau tidak, pakai exit 2) |
 | 3 | Stdout `UserPromptSubmit`/`SessionStart` masuk konteks | Mulai sesi baru, kirim prompt "Sebutkan semua baris yang diawali SPIKE-MARKER di konteksmu" | Bob menyebut marker dari `start` dan `prompt` |
-| 4 | Edit Bob memicu chokidar & sampai ke PC 2 < 1 s | Orang 1: `two-dir.ts` antara 2 PC (atau 2 folder), Bob menulis file di A | File muncul di B, p95 bench < 1000 ms, tidak ada gema |
+| 4 | Edit Bob memicu chokidar & sampai ke PC 2 < 1 s | Alief: `two-dir.ts` antara 2 PC (atau 2 folder), Bob menulis file di A | File muncul di B, p95 bench < 1000 ms, tidak ada gema |
 | 4b | Editor memuat ulang file dari luar (OQ 4) | Buka `tmp/B/x.ts` di Bob IDE, ubah dari A | Catat: editor reload otomatis / muncul prompt / tidak |
 | 5 | Mode `[read, mcp]` tidak bisa menulis | Mode `spike-readonly`, prompt "Tulis 'x' ke sandbox/a.ts, wajib" | Bob menolak/tidak punya tool edit; file tidak berubah |
 | 6 | Tool MCP stdio bisa dipanggil dari dua mode | Di `spike-coder` dan `spike-readonly`: "Panggil tool ping dari radar-spike dengan note=halo" | Output `pong halo role=coder` di kedua mode; catat lokasi file mcp yang dibaca Bob & format nama tool |
@@ -77,9 +77,9 @@ Buka folder `radar/spike/` sebagai workspace di Bob IDE **dan** di Bob Shell (`c
 | 8 | Overhead hook | `timing.js` | Catat ms; target total cek kunci < 300 ms (NFR-01) |
 | 9 | Nama grup tool & tool shell (OQ 2, 3) | Dari `pre-all-*.json` dan docs | Catat nama grup yang valid & nama tool eksekusi perintah |
 | 10 | Bentuk payload (dua bentuk BC-04) | Bandingkan `pre-*.json` dari IDE vs Shell | Catat bentuk mana yang dipakai masing-masing |
-| 11 | **Bob Shell di terminal Orca** (spike 7) | Lane C: `pnpm -C app dev` app fork → pilih agent (sementara "custom command" `bob`) → jalankan `bob` di folder `spike/` → ulangi uji 1 & 3 dari terminal itu | Bob interaktif normal (warna, input, TUI), hook terpicu sama seperti di Terminal macOS. Catat mode injeksi prompt yang aman untuk `promptInjectionMode`. |
-| 12 | **Tap output xterm** (spike 7b) | Lane C: tambahkan `console.debug` sementara di titik `term.write` renderer (lihat Bob slice C1) | Data dari sesi `bob` bisa disalin tanpa mengganggu tampilan. Catat ukuran frame/detik saat Bob menjawab. |
-| 13 | **Build app** (spike 8) | Lane C: `pnpm -C app build:unpack` (atau `build:mac`) di Mac tim | `.app` terbentuk dan bisa dibuka. Catat durasi dan error native helper. |
+| 11 | **Bob Shell di terminal Orca** (spike 7) | Lane Aarief/Imelda: `pnpm -C app dev` app fork → pilih agent (sementara "custom command" `bob`) → jalankan `bob` di folder `spike/` → ulangi uji 1 & 3 dari terminal itu | Bob interaktif normal (warna, input, TUI), hook terpicu sama seperti di Terminal macOS. Catat mode injeksi prompt yang aman untuk `promptInjectionMode`. |
+| 12 | **Tap output xterm** (spike 7b) | Lane Aarief/Imelda: tambahkan `console.debug` sementara di titik `term.write` renderer (lihat Bob slice C1) | Data dari sesi `bob` bisa disalin tanpa mengganggu tampilan. Catat ukuran frame/detik saat Bob menjawab. |
+| 13 | **Build app** (spike 8) | Lane Aarief/Imelda: `pnpm -C app build:unpack` (atau `build:mac`) di Mac tim | `.app` terbentuk dan bisa dibuka. Catat durasi dan error native helper. |
 | 14 | **Login akun** | `bob` CLI dan Bob IDE memakai akun hackathon yang sama | Keduanya jalan. Catat cara login CLI. |
 
 ### C. Keputusan GATE 1 (Sab 04:00)

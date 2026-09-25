@@ -1,11 +1,12 @@
-# R2 — Skema database (SQLite, `better-sqlite3`)
+# R2 — Skema database (SQLite di Cloudflare Durable Object)
 
 > Salin blok SQL di bawah **persis** ke `packages/server/src/db/schema.sql`. Migrasi berikutnya ditambahkan sebagai file bernomor (`002_*.sql`) dan dicatat di `log/DECISIONS.md`.
 
 ## 1. Prinsip
 
-- Satu proses server, satu file DB (`$DATA_DIR/radar.db`), mode WAL.
-- **Semua operasi kunci/task/proposal dijalankan di dalam `db.transaction(...)`**. Karena `better-sqlite3` sinkron dan server satu proses, transaksi ini menjadi titik serialisasi tunggal: tidak ada race antar-permintaan.
+- Satu **Durable Object** per workspace (`WorkspaceDO`, nama = `WORKSPACE_ID`) dengan SQLite bawaan (`ctx.storage.sql`). Tidak ada file DB atau volume yang kita urus. Data permanen di Cloudflare.
+- **Semua operasi kunci/task/proposal dijalankan di dalam `ctx.storage.transactionSync(...)`** (dibungkus `db.tx`). DO memproses satu pesan pada satu waktu, dan `sql.exec` sinkron, jadi transaksi ini menjadi titik serialisasi tunggal: tidak ada race antar-permintaan.
+- Jangan memakai `PRAGMA journal_mode`/`BEGIN`/`COMMIT` manual di `schema.sql`, karena DO yang mengatur transaksi. Batas ukuran satu baris/nilai 2 MB, sehingga `MAX_FILE_BYTES` 1 MB aman.
 - Waktu disimpan sebagai epoch milidetik (`INTEGER`). Tampilan memakai zona `Asia/Makassar` (WITA).
 - Path file: POSIX, relatif terhadap root workspace, tanpa `./` di depan, contoh `src/checkout/checkout.ts`.
 - ID manusiawi: task `T-<seq>`, permintaan `R-<seq>`, proposal `P-<seq>`, review `RV-<seq>`. `seq` diambil dari tabel `counter`.
@@ -211,7 +212,7 @@ CREATE TABLE IF NOT EXISTS metric (
 CREATE INDEX IF NOT EXISTS metric_name ON metric(name, ts);
 ```
 
-## 3. Seed awal (oleh `radar-server init`)
+## 3. Seed awal (oleh `POST /admin/init`, lewat `pnpm -C radar admin init`)
 
 | Tabel | Isi |
 |---|---|

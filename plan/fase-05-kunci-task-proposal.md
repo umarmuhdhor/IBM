@@ -2,7 +2,7 @@
 
 | Field | Nilai |
 |---|---|
-| Jalur | **Lane A** (Orang 1) · branch `lane/core` |
+| Jalur | **Lane Alief** (Alief) · branch `lane/core` |
 | Slot WITA | Sab 26 Sep 16:00 – 21:00 |
 | Estimasi | 5 jam (fase terpenting) |
 | Prasyarat | 03 (04 disarankan untuk test lapis kedua) |

@@ -13,7 +13,8 @@
   2. Satu file hanya boleh ditulis satu Bob. Ini ditegakkan oleh hook `PreToolUse` Bob dan server.
   3. Bob milik PM dalam mode `pm-lead` membagi kerja, menengahi rebutan file, dan me-review. Manusia yang menyetujui.
   4. **Baru di v0.3:** anggota tim bisa **menonton terminal Bob rekan secara live**. Ikut mengetik di terminal itu adalah bonus.
-- **Cara membangunnya:** 3 orang, 3 lane paralel, masing-masing dengan AI sendiri (Claude Code + plugin **ECC**). Semua memakai satu `PROMPT.md` dan cukup mengganti 2 baris (`LANE`, `FASE`).
+- **Tim:** Alief (server), Umar (integrasi Bob), Aarief (app desktop), Imelda (UI web, video, pitch).
+- **Cara membangunnya:** 4 orang, 3 lane paralel, masing-masing dengan AI sendiri (Claude Code + plugin **ECC**). Semua memakai satu `PROMPT.md` dan cukup mengganti 2 baris (`LANE`, `FASE`).
 - **Submit:** video MP4 ≤ 3 menit, 2 statement ≤ 500 kata, screenshot ringkasan task Bob dari **setiap** anggota (§10).
 - **Bukti Bob:** setiap fase punya **Bob slice**, yaitu bagian nyata yang dikerjakan di Bob IDE. Hasilnya dikumpulkan sebagai ekspor sesi dan screenshot ringkasan task ke `bob_sessions/<nama>/`.
 
@@ -25,6 +26,7 @@
 |---|---|---|---|
 | Tiap orang memakai akun Bob sendiri | Ya | Bob berjalan lokal di laptop masing-masing, dengan login masing-masing | – |
 | Hook blokir di Bob | Ya untuk **Bob Shell**. Untuk Bob IDE dicek saat spike. | Docs Bob Shell: `PreToolUse` exit 2 memblokir, stdout `SessionStart`/`UserPromptSubmit` masuk konteks, config `.bob/settings.json` | Kalau hook di IDE tidak jalan, penegakan tetap ada di server + sync agent (lapis 2). Coder IDE tetap aman, hanya penjelasan dari Bob-nya yang lebih lemah. |
+| Server tanpa VPS | Ya | **Cloudflare Workers + Durable Objects** (plan Free): WebSocket Hibernation, SQLite bawaan, satu DO per workspace. Commit lewat GitHub REST API. Web di Cloudflare Pages. Detail di `ARCHITECTURE.md` §3. | Tim belum familiar DO → plugin resmi `cloudflare@cloudflare` (skill `durable-objects`). Cadangan: `wrangler dev` + Cloudflare Tunnel. |
 | File live sync | Ya | chokidar + WebSocket, sudah dirancang di plan v0.2 | Gema/loop → anti-gema berbasis hash (fase 04) |
 | Orca (di `app/`) menjadi `.app` | **Ya, terbukti** | Di Mac Aarief (25 Sep): install 71 s, lalu build `.app` ad-hoc signed jadi (575 MB). Resepnya ada di fase 11 langkah 9: `app/mobile` wajib di-install, helper Computer Use dilewati, dan `CSC_NAME=-`. | App tidak di-sign Apple → klik kanan → Open. **Jangan buka build sebelum appId diganti** (fase 09 langkah 0), karena bisa bentrok dengan data Orca asli. |
 | Menambah "IBM Bob" sebagai agent di Orca | Ya | Agent Orca didefinisikan di `src/shared/tui-agent.ts`, `tui-agent-config.ts`, `renderer/src/lib/agent-catalog.tsx` | Codebase Orca besar (~23k file) → perubahan **aditif** saja. Bob slice: Bob IDE membaca Orca dan menemukan titik sambungnya. |
@@ -39,16 +41,19 @@
 
 ## 2. Tim, lane, dan kepemilikan file
 
-Tiga lane berjalan paralel. **Batas lane = batas folder**, supaya merge hampir tidak pernah bentrok.
+Empat orang, tiga lane, semua berjalan paralel. **Batas lane = batas folder**, supaya merge hampir tidak pernah bentrok.
 
 | Lane | Pemilik | Fokus | Fase | Folder yang BOLEH disentuh |
 |---|---|---|---|---|
-| **A · Core** | Orang 1 | Server Radar, sync agent, mesin kunci, git worker, relay terminal | 00, 02, 03, 04, 05, 06, 12 | `radar/packages/{common,server,sync}`, `radar/scripts/{sim-3pc,bench-sync,mock-server}.ts`, `radar/examples/toko-demo`, root `radar/` config |
-| **B · Bob** | Orang 2 | Kit `.bob/`: mode `coder` + `pm-lead`, hook, `radar-mcp`, spike Bob, eksperimen, koordinator bukti Bob | 01, 07, 08, 13 | `radar/packages/{hooks,mcp}`, `radar/bob-kit`, `radar/spike`, `radar/scripts/{ab,metrics}*`, `bob_sessions/INDEX.md`, `BOB_DEVELOPMENT.md` |
-| **C · App** | **Aarief** | Fork Orca: agent `bob`, panel Live Collab, tonton terminal, `.dmg`, replay web, pitch | 09, 11, 14 (aset) | `src/**` (Orca), `radar/packages/{ui,web}`, `radar/docs/deck`, `resources/` (ikon) |
+| **Alief · Core** | Alief | Collab Server di **Cloudflare Workers + Durable Objects**, sync agent, mesin kunci, commit via GitHub API, relay terminal | 00, 02, 03, 04, 05, 06, 12 | `radar/packages/{common,server,sync}`, `radar/scripts/{sim-3pc,bench-sync,mock-server}.ts`, `radar/examples/toko-demo`, root `radar/` config |
+| **Umar · Bob** | Umar | Kit `.bob/`: mode `coder` + `pm-lead`, hook, `radar-mcp`, spike Bob, eksperimen, **koordinator bukti Bob** | 01, 07, 08, 13 | `radar/packages/{hooks,mcp}`, `radar/bob-kit`, `radar/spike`, `radar/scripts/{ab,metrics}*`, `bob_sessions/INDEX.md`, `BOB_DEVELOPMENT.md` |
+| **Aarief/Imelda · App** | **Aarief** | App desktop (Orca di `app/`): agent `bob`, panel Live Collab, tonton terminal, `.dmg` | 09 (a, b, c-wiring), 11 (A, B, C) | `app/**`, `resources/` ikon |
+| | **Imelda** | Komponen UI bersama `@radar/ui`, landing + replay web (Cloudflare Pages), video, deck, cover, statement submission | 09 (langkah 6: komponen), 11 (D: landing + replay), 14 (media & statement) | `radar/packages/{ui,web}`, `radar/docs/{deck,video,SUBMISSION.md}` |
 | Bersama | Semua | Integrasi E2E, submission | 10, 14 | Masing-masing di foldernya sendiri |
 
-**Kontrak** (`radar/packages/common/**`, `plan/ref/**`) hanya diubah oleh **Lane A** lewat "contract PR". Lane B/C yang butuh perubahan menulis entri `DECISIONS.md` (prefix `D-B..`/`D-C..`) lalu mention Lane A.
+Branch: `lane/core` (Alief), `lane/bob` (Umar), `lane/app` (Aarief), `lane/web` (Imelda). Aarief dan Imelda sama-sama merge ke `main`. Imelda mengubah `@radar/ui` dan Aarief memakainya di app, jadi sepakati props komponen di awal (DESIGN.md §3).
+
+**Kontrak** (`radar/packages/common/**`, `plan/ref/**`) hanya diubah oleh **Lane Alief** lewat "contract PR". Lane Umar dan Lane Aarief/Imelda yang butuh perubahan menulis entri `DECISIONS.md` (prefix `D-umar-..`/`D-app-..`) lalu mention Lane Alief.
 
 ---
 
@@ -59,7 +64,7 @@ github.com/umarmuhdhor/IBM            ← repo tim (milik Umar, SUDAH PUBLIK)
 ├── README.md PLAN.md PRD.md DESIGN.md prompt_ui.md   ← dokumen tetap di root
 ├── plan/  arsip/  "UI Inspo & Design"/
 ├── .claude/                          ← agent & skill bersama (§11), ikut ter-clone ke semua orang
-├── app/                              ← Orca (Electron) disalin dari stablyai/orca@bf40d35, MIT. Lane C bekerja di sini.
+├── app/                              ← Orca (Electron) disalin dari stablyai/orca@bf40d35, MIT. Lane Aarief/Imelda bekerja di sini.
 ├── radar/                            ← workspace pnpm Live Collab (dibuat fase 00): packages, bob-kit, spike, scripts, docs
 ├── bob_sessions/<nama>/NN-slug/{summary.png, task.md}
 └── BOB_DEVELOPMENT.md
@@ -72,9 +77,10 @@ Toolchain: **Node 24 + pnpm 12** (syarat `app/`). `nvm install 24 && nvm use 24`
 | Branch | Isi | Siapa merge |
 |---|---|---|
 | `main` | Integrasi. Selalu bisa `pnpm -C radar test` dan `pnpm -C app tc` hijau | PR, di-review 1 orang lain (atau `/ecc:code-review` kalau semua sibuk) |
-| `lane/core` | Lane A | Orang 1 |
-| `lane/bob` | Lane B | Orang 2 |
-| `lane/app` | Lane C | Aarief |
+| `lane/core` | Lane Alief | Alief |
+| `lane/bob` | Lane Umar | Umar |
+| `lane/app` | Lane Aarief/Imelda: app desktop | Aarief |
+| `lane/web` | Lane Aarief/Imelda: `@radar/ui` + web + media | Imelda |
 | `lane/<x>-<topik>` | Sub-branch opsional untuk AI kedua di lane yang sama (worktree) | pemilik lane |
 
 **Agar AI tidak menganggur:** satu orang boleh menjalankan **2 sesi Claude Code sekaligus** di 2 git worktree (`git worktree add ../br-app-replay lane/app-replay`). Orca sendiri adalah pengelola worktree, jadi kalian bisa memakai Orca untuk menjalankan lane masing-masing. Setiap lane punya daftar **"kerjaan saat menunggu"** (§5) yang hanya butuh mock server.
@@ -113,7 +119,7 @@ Nama command bisa berubah antar versi ECC. Kalau `/plugin list` menunjukkan nama
 Salin blok di [`plan/PROMPT.md`](plan/PROMPT.md), ubah dua baris, lalu tempel ke Claude Code di root repo:
 
 ```text
-LANE: C
+LANE: Aarief
 FASE: 09
 ```
 
@@ -131,27 +137,27 @@ Kode proyek baru mulai ditulis setelah kickoff. Setup lingkungan boleh dilakukan
 |---|---|
 | Semua | Node 20+, pnpm 9, git ≥ 2.38, Xcode CLT, `gh auth login`, Claude Code + **ECC**. Bob IDE ≥ 2.0.1 + Bob Shell (`bob --version`). Login akun Bob hackathon begitu dibagikan. |
 | Aarief | ✅ Orca di `app/` (commit `7c86819`) · ✅ install · ✅ build `.app`. Sisa: pasang plugin §11 (ECC, typescript-lsp, frontend-design), Bob IDE + Bob Shell, dan generate gambar yang belum ada (#12 landing). |
-| Orang 1 | Siapkan akun Fly.io/Railway + Vercel. Buat repo kosong `toko-demo`. |
-| Orang 2 | Baca docs Bob: hooks (Shell & IDE), custom modes, MCP, `bob run`. Siapkan checklist spike. |
+| Alief | Buat **akun Cloudflare** (plan Free), `npx wrangler login`, dan coba deploy contoh Durable Object WebSocket. Pasang plugin `cloudflare@cloudflare`. Buat repo kosong `toko-demo` + fine-grained token GitHub. |
+| Umar | Baca docs Bob: hooks (Shell & IDE), custom modes, MCP, `bob run`. Siapkan checklist spike. |
 
 ### 5.2 Selama hackathon
 
-| Waktu | Lane A · Core | Lane B · Bob | Lane C · App (Aarief) |
-|---|---|---|---|
-| Jum 23:00–Sab 00:30 | **00 Fondasi** di `main`: `radar/` workspace, toko-demo, CI, pindah `plan/` | Kickoff: baca guide 2.0, catat aturan bukti & Bobcoin | Kickoff. **Bob slice C1:** Bob IDE memetakan titik sambung Orca |
-| Sab 00:30–02:30 | **02 Common + mock** → merge ke `main` = **kontrak beku** | **01 Spike** (Bob Shell + IDE, hook, MCP, mode) | **09a** agent `bob` terdaftar di Orca, `bob` jalan di terminal Orca |
-| Sab 02:30–04:00 | 03 Server inti (mulai) | 01 Spike → **GATE 1 (04:00)** | 09b koneksi Live Collab (settings + WS client + store) melawan mock |
-| Sab 04:00–09:00 | 03 → 04 Sync agent | Tidur | Tidur 04:00–09:00 |
-| Sab 09:00–16:00 | Tidur 09:00–14:00 → 05 Kunci/task/proposal | **07** Kit coder (**di Bob IDE**) | **09c** panel Live Collab: Team, File & kunci, Keputusan, Feed (`@radar/ui`) |
-| **Sab 16:00** | **Sinkron 1:** semua lane merge ke `main` dan uji melawan server staging | | |
-| Sab 16:00–21:00 | 05 → 06 Git + diff + relay terminal (R3 §3.9) | **08** Main agent `pm-lead` (**di Bob IDE**) | **11a** Tonton terminal (P0) + tag agent live di editor (P1) |
-| **Sab 21:00–23:00** | **10 Integrasi E2E** di `main` (dipimpin B) → **Milestone 23:00**: rencana → live → blokir → keputusan jalan di 3 laptop | | |
-| Sab 23:00–Min 04:00 | Perbaikan E2E, lalu tidur bergilir | Tidur 23:30–04:30 | **11b** `.dmg` + replay web `/demo`, lalu tidur 01:00–06:00 |
-| Min 04:00–11:00 | **12** Hardening P1 | **13** Eksperimen A/B, cek `bob_sessions/` | 11c polish + ketik-tamu (bonus) · rekam footage 09:00 |
-| **Min 11:00** | **GATE 2: feature freeze** | | |
-| Min 11:00–19:00 | 14: README juri, gitleaks | 14: `BOB_DEVELOPMENT.md`, `bob_sessions/INDEX.md` | 14: video, deck, cover, `docs/SUBMISSION.md` |
-| Min 19:00–21:00 | **Submit** | | |
-| Min 21:00–23:00 | Buffer: cek incognito, link, video, tidak ada secret | | |
+| Waktu | Alief · Core | Umar · Bob | Aarief · App desktop | Imelda · UI & web |
+|---|---|---|---|---|
+| Jum 23:00–Sab 00:30 | **00 Fondasi** di `main` | Kickoff: baca guide 2.0, catat aturan bukti & Bobcoin | **Bob slice C1**: Bob memetakan titik sambung Orca | Kickoff. Siapkan `@radar/ui` (tokens, Tailwind) setelah 00 |
+| Sab 00:30–02:30 | **02 Common + mock** → `main` = **kontrak beku** | **01 Spike** | **09a** agent `bob` + ganti appId | **Bob slice I1**: `LockChip`, `AgentTag`, `DecisionCard` |
+| Sab 02:30–04:00 | 03 Server (Worker + DO) mulai | 01 → **GATE 1 (04:00)** | 09b koneksi Live Collab melawan mock | sisa komponen + halaman `/gallery` |
+| Sab 04:00–09:00 | 03 → 04 Sync agent | Tidur | Tidur | Tidur |
+| Sab 09:00–16:00 | Tidur 09–14 → 05 Kunci/task/proposal | **07** Kit coder (**di Bob IDE**) | **09c** pasang panel Live Collab di app | views `MissionControl`/`TeamPanel`/`FilesLocks` di `@radar/ui` + **I2** landing |
+| **Sab 16:00** | **Sinkron 1:** semua lane merge ke `main`, uji melawan Worker staging | | | |
+| Sab 16:00–21:00 | 05 → 06 GitHub API + diff + relay terminal | **08** `pm-lead` (**di Bob IDE**) | **11a** tonton terminal | **11 D** replay player + `/demo` (fixture) |
+| **Sab 21:00–23:00** | **10 Integrasi E2E** di `main` → **Milestone 23:00** di 4 laptop | | | |
+| Sab 23:00–Min 04:00 | Perbaikan E2E, tidur bergilir | Tidur 23:30–04:30 | **11b** `.dmg`, tidur 01:00–06:00 | naskah video + storyboard, tidur 00:00–05:00 |
+| Min 04:00–11:00 | **12** Hardening | **13** Eksperimen, cek `bob_sessions/` | 11c polish + ketik tamu (bonus) | rekam footage 09:00, replay dari rekaman nyata |
+| **Min 11:00** | **GATE 2: feature freeze** | | | |
+| Min 11:00–19:00 | 14: README juri, gitleaks | 14: `BOB_DEVELOPMENT.md`, Bob Usage Statement | 14: rilis `.dmg`, uji pasang | 14: **video, deck, cover, Long Description** |
+| Min 19:00–21:00 | **Submit** (Imelda isi form) | | | |
+| Min 21:00–23:00 | Buffer: cek incognito, link, video, tidak ada secret | | | |
 
 ### 5.3 Kerjaan saat menunggu (AI tidak boleh menganggur)
 
@@ -167,8 +173,8 @@ Kode proyek baru mulai ditulis setelah kickoff. Setup lingkungan boleh dilakukan
 
 1. PR kecil, satu fase atau setengah fase. Judul `fase-XX: …`.
 2. CI hijau: `pnpm -C radar typecheck && pnpm -C radar test`. Untuk perubahan `src/**`: `pnpm -C app tc` dan test Orca yang terkait saja. Jangan jalankan seluruh `pnpm lint` Orca karena terlalu lama. Pakai `oxlint` pada file yang diubah.
-3. Kontrak diubah hanya lewat contract PR Lane A. Setelah itu lane lain **rebase** (jangan merge `main` bolak-balik).
-4. `PROGRESS.md`: setiap lane hanya mengedit baris fasenya sendiri. `DECISIONS.md`: append-only dengan ID ber-prefix lane (`D-A07`, `D-B03`, `D-C02`), jadi tidak ada tabrakan nomor.
+3. Kontrak diubah hanya lewat contract PR Lane Alief. Setelah itu lane lain **rebase** (jangan merge `main` bolak-balik).
+4. `PROGRESS.md`: setiap lane hanya mengedit baris fasenya sendiri. `DECISIONS.md`: append-only dengan ID ber-prefix lane (`D-alief-07`, `D-umar-03`, `D-app-02`), jadi tidak ada tabrakan nomor.
 5. Titik sinkron wajib: **Sab 02:30** (kontrak), **Sab 16:00** (sinkron 1), **Sab 21:00** (E2E), **Min 11:00** (freeze).
 
 ---
@@ -187,20 +193,24 @@ Aturan: *"Your repository must include the code/files where IBM Bob assisted, pl
 
 **Bob slice per lane** (bagian yang benar-benar dibangun Bob):
 
-| # | Lane | Bob slice | Mode Bob | Estimasi Bobcoin |
+| # | Pemilik | Bob slice | Mode Bob | Estimasi Bobcoin |
 |---|---|---|---|---|
-| A1 | A | Repo contoh `toko-demo` (8 file + 6 task eksperimen) | Code | 3 |
-| A2 | A | `checkWrite()` tabel keputusan kunci + test tabel R4 §3 | Code | 4 |
-| A3 | A | Formatter commit per task + trailer `Co-authored-by: IBM Bob` | Code | 2 |
-| A4 | A | `/review` Bob atas `locks.ts` vs R4 (review silang) | Ask/Code | 2 |
-| B1 | B | Spike: hook payload logger + mode read-only | Code | 4 |
-| B2 | B | `custom_modes.yaml` coder + pm-lead | Code | 3 |
-| B3 | B | Hook `lock_guard` + `brief` | Code | 5 |
-| B4 | B | `radar-mcp` tool coder + PM | Code | 6 |
-| C1 | C | **Onboarding Orca dengan Bob:** "cari di mana agent didefinisikan dan cara menambah agent baru" → laporan HTML Bob | Ask/Plan | 3 |
-| C2 | C | Registrasi agent `bob` di Orca (3 file) | Code | 3 |
-| C3 | C | Komponen `@radar/ui`: `LockChip`, `AgentTag`, `DecisionCard` | Code | 4 |
-| C4 | C | Script `bob-evidence.sh` + `evidence:check` | Code | 2 |
+| A1 | Alief | Repo contoh `toko-demo` (8 file + 6 task eksperimen) | Code | 3 |
+| A2 | Alief | `checkWrite()` tabel keputusan kunci + test tabel R4 §3 | Code | 4 |
+| A3 | Alief | Commit per task lewat GitHub API + trailer `Co-authored-by: IBM Bob` | Code | 3 |
+| A4 | Alief | `/review` Bob atas `locks.ts` vs R4 (review silang) | Ask/Code | 2 |
+| B1 | Umar | Spike: hook payload logger + mode read-only | Code | 4 |
+| B2 | Umar | `custom_modes.yaml` coder + pm-lead | Code | 3 |
+| B3 | Umar | Hook `lock_guard` + `brief` | Code | 5 |
+| B4 | Umar | `radar-mcp` tool coder + PM | Code | 6 |
+| C1 | Aarief | **Onboarding Orca dengan Bob:** "di mana agent didefinisikan dan cara menambah agent baru" → laporan HTML Bob | Ask/Plan | 3 |
+| C2 | Aarief | Registrasi agent `bob` di Orca (3 file) | Code | 3 |
+| C4 | Aarief | Script `bob-evidence.sh` + `evidence:check` | Code | 2 |
+| I1 | Imelda | Komponen `@radar/ui`: `LockChip`, `AgentTag`, `DecisionCard` + test | Code | 4 |
+| I2 | Imelda | Landing page `/` (Application URL) | Code | 3 |
+| I3 | Imelda | Draf Long Description + outline deck dari PRD (**document understanding** Bob: baca `PRD.md`, hasilkan `.docx`/HTML) | Ask/Code | 3 |
+
+Setiap orang minimal 3 slice (syarat `evidence:check`).
 
 **Anggaran per akun (40):** build slices ±20 · gladi + rekam demo ±12 · cadangan 8. Eksperimen A/B (fase 13) dijalankan dengan akun yang masih paling banyak sisa. Kalau kurang, jumlah putaran dikurangi dan hal itu **dilaporkan jujur**.
 
@@ -212,8 +222,8 @@ Aturan: *"Your repository must include the code/files where IBM Bob assisted, pl
 |---|---|---|
 | App desktop | `IBM Bob Live Collab.dmg` di GitHub Releases → seret ke Applications → klik kanan → Open (tidak di-sign) | P0 |
 | CLI `radar` (sync agent + kit) | `npm i -g https://github.com/umarmuhdhor/IBM/releases/download/v0.3.0/radar-cli.tgz` | P0 |
-| One-liner | `curl -fsSL https://ibm-bob-live-collab.vercel.app/install \| sh` → cek node & `bob`, pasang CLI, `radar join --invite <kode>` | P1 |
-| Undangan | `radar-server invite --member B` → kode `rdr_inv_…` (URL server + token, base64url) | P1 |
+| One-liner | `curl -fsSL https://ibm-bob-live-collab.pages.dev/install \| sh` → cek node & `bob`, pasang CLI, `radar join --invite <kode>` | P1 |
+| Undangan | `pnpm -C radar admin invite --member B` → kode `rdr_inv_…` (URL server + token, base64url) | P1 |
 
 Di dalam app: **Settings → Live Collab → tempel kode undangan**. App lalu menjalankan sync agent sebagai child process, memasang `.bob/` kit, dan mengecek `bob` CLI, hook, dan MCP (checklist hijau di onboarding, lihat DESIGN §5.9).
 
@@ -248,7 +258,7 @@ Repo memakai file keamanan dari [ibm-hackathon-template](https://github.com/wats
 
 ## 11. Skill & agent wajib untuk setiap orang
 
-Supaya AI ketiga orang bekerja dengan standar yang sama. **Yang ada di `.claude/` repo otomatis terbawa saat clone**, jadi tidak perlu dipasang. Sisanya dipasang sekali per orang sebelum kickoff.
+Supaya AI keempat orang bekerja dengan standar yang sama. **Yang ada di `.claude/` repo otomatis terbawa saat clone**, jadi tidak perlu dipasang. Sisanya dipasang sekali per orang sebelum kickoff.
 
 ### 11.1 Semua orang
 
@@ -256,10 +266,12 @@ Supaya AI ketiga orang bekerja dengan standar yang sama. **Yang ada di `.claude/
 |---|---|---|
 | **ECC** (planner, tdd-workflow, verification-loop, code-reviewer, typescript-reviewer, security-review, build-error-resolver, `git-workflow`) | `/plugin marketplace add https://github.com/affaan-m/ECC` → `/plugin install ecc@ecc` | siklus setiap fase (PROMPT.md) |
 | **typescript-lsp** (resmi) | `/plugin install typescript-lsp@claude-plugins-official` | navigasi & diagnosa TypeScript, penting di codebase Orca yang besar |
-| **Context7** (MCP, sudah tersambung di akun Aarief) | connector claude.ai | dokumentasi terbaru Electron, Fastify, Next.js, MCP SDK, xterm |
+| **Context7** (MCP, sudah tersambung di akun Aarief) | connector claude.ai | dokumentasi terbaru Electron, Cloudflare Workers/Durable Objects, Hono, Next.js, MCP SDK, xterm |
 | Skill pribadi yang sudah ada di Mac Aarief: `investigate-first`, `surgical-patch`, `safe-refactor`, `verify-and-stop` | sudah terpasang (Aarief). Teman boleh menyalin dari `~/.claude/skills/` Aarief. | perubahan kecil & aman di kode Orca |
 
-### 11.2 Lane C · App (Aarief)
+### 11.2 Lane Aarief/Imelda · App
+
+Aarief memakai semua baris di bawah. Imelda minimal: ECC React/frontend, `frontend-design`, `e2e-testing`, `nextjs-turbopack`, `remotion-video-creation`, `video-editing`, dan `frontend-slides`.
 
 | Skill / agent | Sumber | Dipakai untuk |
 |---|---|---|
@@ -271,26 +283,27 @@ Supaya AI ketiga orang bekerja dengan standar yang sama. **Yang ada di `.claude/
 | ECC `remotion-video-creation`, `video-editing`, `frontend-slides` | ECC | video ≤ 3 menit & deck (fase 14) |
 | Skill Orca `orca-cli`, `orchestration` | `app/skills/` | memakai Orca sendiri untuk menjalankan beberapa agent/worktree paralel |
 
-### 11.3 Lane A · Core
+### 11.3 Lane Alief · Core
 
 | Skill / agent | Dipakai untuk |
 |---|---|
-| ECC `backend-patterns`, `api-design`, `deployment-patterns`, `docker-patterns`, `security-review` | Fastify + WebSocket + SQLite + deploy Fly/Railway |
+| **Cloudflare (resmi)**: `/plugin marketplace add cloudflare/skills` → `/plugin install cloudflare@cloudflare`. Isinya skill `durable-objects`, `workers-best-practices`, `wrangler`, `nextjs-on-cloudflare` + MCP Cloudflare | Worker + Durable Object + WebSocket Hibernation + SQLite DO + deploy |
+| ECC `backend-patterns`, `api-design`, `security-review` | desain REST/WS, auth token |
 | ECC agent `database-reviewer`, `silent-failure-hunter`, `performance-optimizer` | skema SQLite, error yang tertelan, latensi sinkron/relay |
 | ECC `mcp-server-patterns` | review kontrak yang dipakai radar-mcp |
 
-### 11.4 Lane B · Bob
+### 11.4 Lane Umar · Bob
 
 | Skill / agent | Dipakai untuk |
 |---|---|
 | **mcp-server-dev** (resmi): `/plugin install mcp-server-dev@claude-plugins-official` + ECC `mcp-server-patterns` | `radar-mcp` (stdio, tool coder & PM) |
 | ECC `documentation-lookup` / agent `docs-lookup` + Context7 | docs Bob (hooks, custom modes, MCP, `bob run`) |
 | ECC `tdd-workflow` (hook diuji dengan stdin fixture) | hook `lock_guard`, `brief` |
-| **IBM Bob sendiri** (Bob IDE + Bob Shell) | Bob slice B1–B4. Lane B adalah pemakai Bob paling berat. |
+| **IBM Bob sendiri** (Bob IDE + Bob Shell) | Bob slice B1–B4. Lane Umar adalah pemakai Bob paling berat. |
 
 ### 11.5 Cek sebelum kickoff (setiap orang)
 
-Di Claude Code: `/plugin list`, lalu pastikan ada `ecc`, `typescript-lsp`, serta `frontend-design` (Lane C) atau `mcp-server-dev` (Lane B). Di terminal:
+Di Claude Code: `/plugin list`, lalu pastikan ada `ecc`, `typescript-lsp`, serta `frontend-design` (Lane Aarief/Imelda) atau `mcp-server-dev` (Lane Umar). Di terminal:
 
 ```bash
 ls .claude/skills .claude/agents          # dari repo: electron-automation, live-collab-app, electron-pro

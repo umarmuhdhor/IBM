@@ -2,7 +2,7 @@
 
 | Field | Nilai |
 |---|---|
-| Jalur | **Lane B** (Orang 2) · branch `lane/bob` · sebagian besar kode ditulis di **Bob IDE** (Bob slice), Claude Code + ECC untuk test, review, dan bundel |
+| Jalur | **Lane Umar** (Umar) · branch `lane/bob` · sebagian besar kode ditulis di **Bob IDE** (Bob slice), Claude Code + ECC untuk test, review, dan bundel |
 | Slot WITA | Sab 26 Sep 10:00 – 16:00 |
 | Estimasi | 5 jam |
 | Prasyarat | 01 (hasil spike), 02. **Boleh paralel** memakai mock server (`pnpm dev:mock`) sebelum fase 05 selesai |

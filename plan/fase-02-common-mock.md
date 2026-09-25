@@ -2,13 +2,13 @@
 
 | Field | Nilai |
 |---|---|
-| Jalur | **Lane A** (Orang 1) · dikerjakan **di `main`**. Merge = **kontrak beku** (Sab ±02:30), lalu Lane B/C rebase. |
+| Jalur | **Lane Alief** (Alief) · dikerjakan **di `main`**. Merge = **kontrak beku** (Sab ±02:30), lalu Lane Umar dan Lane Aarief/Imelda rebase. |
 | Slot WITA | Sab 26 Sep 01:00 – 02:30 |
 | Estimasi | 1,5 jam |
 | Prasyarat | 00 (fixture payload dari 01 boleh menyusul; pakai contoh sintetis dulu) |
 | Requirement PRD | BC-04 (normalisasi dua bentuk payload), UI-04/UI-05 (reducer bersama), NFR-06 (brief ≤ 6 baris) |
 | Model | Sonnet 5 · effort medium |
-| Fase berikutnya | 03 (Orang 1). Setelah fase ini Orang 2 (07) dan Orang 3 (09) bisa bekerja melawan mock |
+| Fase berikutnya | 03 (Alief). Setelah fase ini Umar (07) dan Aarief (09) bisa bekerja melawan mock |
 
 ## Tujuan
 
@@ -83,7 +83,7 @@ Menerjemahkan kontrak R3/R4/R5 menjadi kode bersama yang diimpor semua paket, se
     - Test: urutan event skenario demo PRD §15 → state akhir sesuai layar PRD §11 (T-1 dikerjakan, T-0 review, checkout.ts dipegang A dengan antrean B, dll.).
     Buat juga `selectors.ts`: `tasksByColumn(state)` (kolom UI: Draf = proposal plan `menunggu`, Dikerjakan = `terbuka|dikerjakan`, Review, Selesai), `fileTree(state)` (pohon folder dengan status kunci), `pendingDecisions(state)`.
 
-13. **Mock server `scripts/mock-server.ts`** (tsx, Fastify + `@fastify/websocket`, semua in-memory):
+13. **Mock server `scripts/mock-server.ts`** (tsx, Hono `@hono/node-server` + `ws`, semua in-memory. Protokol sama persis dengan Worker):
     - Mengimplementasikan SEMUA endpoint R3 §2 dengan logika sederhana namun konsisten: peta kunci `path → {memberId, taskId, state}`, `checkWrite` versi ringkas (tabel R4 §3 baris 1–10), permintaan dedup, proposal & decision (token `mc-dev`), brief sederhana.
     - Token tetap untuk dev: `A=tok-a`, `B=tok-b`, `C=tok-c`, `mc=mc-dev` (hanya mock!).
     - WebSocket `/ws`: `hello`, `welcome`, `snapshot`/`state`, `file.update` → `file.changed` ke klien lain, `event` ke klien mc.
@@ -98,7 +98,7 @@ Menerjemahkan kontrak R3/R4/R5 menjadi kode bersama yang diimpor semua paket, se
 ## Tambahan v0.3 (wajib)
 
 - `packages/common/src/term.ts`: tipe + zod untuk semua pesan `term.*` (R3 §3.9) dan klien `app`.
-- Mock server (`scripts/mock-server.ts`) mendukung `client: "app"`, `term.share/subscribe/frame/snapshot/unshare`. Skenario `--scenario terminal` memutar frame dari `scripts/fixtures/term-bob-session.json` (rekaman kecil output Bob, boleh sintetis) supaya Lane C bisa membangun WatchTerminalView sebelum fase 06.
+- Mock server (`scripts/mock-server.ts`) mendukung `client: "app"`, `term.share/subscribe/frame/snapshot/unshare`. Skenario `--scenario terminal` memutar frame dari `scripts/fixtures/term-bob-session.json` (rekaman kecil output Bob, boleh sintetis) supaya Lane Aarief/Imelda bisa membangun WatchTerminalView sebelum fase 06.
 - Selector baru di `selectors.ts`: `needsYouCount(state)`, `memberStatus(state, member)` (`idle | writing | blocked`).
 
 ## Verifikasi
@@ -132,5 +132,5 @@ curl -s -X POST localhost:8787/v1/proposals/P-1/decision -H 'authorization: Bear
 
 ## Catatan handoff
 
-- Orang 2: jalankan `pnpm dev:mock` untuk mengembangkan hook & radar-mcp (fase 07) dengan token `tok-a`/`tok-b`/`tok-c`.
-- Orang 3: `pnpm dev:mock` + WS `ws://localhost:8787/ws` token `mc-dev` untuk Mission Control (fase 09).
+- Umar: jalankan `pnpm dev:mock` untuk mengembangkan hook & radar-mcp (fase 07) dengan token `tok-a`/`tok-b`/`tok-c`.
+- Aarief: `pnpm dev:mock` + WS `ws://localhost:8787/ws` token `mc-dev` untuk Mission Control (fase 09).

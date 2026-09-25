@@ -2,7 +2,7 @@
 
 | Field | Nilai |
 |---|---|
-| Jalur | **Lane C (Aarief)** · branch `lane/app` (sub-branch opsional `lane/app-replay` di worktree kedua untuk bagian C) |
+| Jalur | **Aarief**: bagian A, B, C, E (`lane/app`) · **Imelda**: bagian D, landing + replay (`lane/web`) |
 | Slot WITA | 11a Sab 16:00–21:00 · 11b Sab 23:00–Min 01:00 · tidur 01:00–06:00 · 11c Min 06:00–11:00 |
 | Estimasi | 9 jam |
 | Prasyarat | 09. Relay `term.*` server dari fase 06 (sebelum siap, pakai mock fase 02 yang sudah mendukung `term.*`). Rekaman nyata dari fase 10 untuk replay. |
@@ -28,7 +28,7 @@
 - Build: `IBM Bob Live Collab-<ver>-arm64.dmg` di GitHub Release `v0.3.0` + `radar-cli.tgz`
 - `packages/web/app/page.tsx` (landing = **Application URL** di form lablab), `packages/web/app/demo/page.tsx`, `packages/web/lib/replay-player.ts`, `scripts/export-replay.ts` → `packages/web/public/demo/{events.json,frames.json,meta.json,bob-quotes.json}`
 - `scripts/bob-evidence.sh` (lengkap), `scripts/evidence-check.ts`
-- Deploy Vercel `ibm-bob-live-collab.vercel.app/demo`
+- Deploy Cloudflare Pages `ibm-bob-live-collab.pages.dev` (`pnpm -C radar deploy:web`)
 
 ## Langkah kerja
 
@@ -65,14 +65,14 @@
 12. GitHub Release `v0.3.0` (`gh release create`): `.dmg`, `radar-cli.tgz`, catatan pasang (klik kanan → Open, atau `xattr -dr com.apple.quarantine "/Applications/IBM Bob Live Collab.app"`).
 13. Uji pasang di **Mac teman** dari nol: unduh → pasang → Settings → Connect → tersinkron. Catat waktunya (metrik "< 3 menit").
 
-### D. Replay web `/demo` (11c, P0)
+### D. [Imelda] Landing + replay web (P0) · Bob slice **I2** landing
 
 14. **`scripts/export-replay.ts`**: input export server (`GET /v1/events/export?withTerminals=true` dari sesi rekaman dengan `RECORD_TERMINALS=true`) + `bob-quotes.src.json`. Output `events.json` (sensor: gagal kalau ada `rdr_`, `ghp_`, `sk-`), `frames.json` (frame terminal A dan B, dikompresi, target < 3 MB), dan `meta.json` (chapter Plan/Live/Near-miss/Review/Commit, link repo/bob_sessions/video/deck).
 15. **`lib/replay-player.ts`**: play/pause/seek/speed. Seek = `applyEvents` sampai `t`, plus memutar ulang frame terminal sampai `t` (snapshot tiap 10 s untuk seek cepat).
 16. **`/demo`** (DESIGN §5.8): header + badge `no login · no API key`. Counter. Tiga kolom: Andi (mini xterm replay), Mission Control (views `@radar/ui` read-only), Budi (mini xterm replay). Timeline chapter. Panel **Bob inside**: untuk event yang dipilih, tampilkan primitif Bob (hook/MCP/mode), payload ringkas, kutipan Bob, dan link ke `bob_sessions/...` di GitHub. Autoplay 2×, jeda > 5 s dipadatkan.
-17. Statis (`force-static`), tanpa panggilan jaringan selain origin. Playwright `e2e/demo.spec.ts` (skill `e2e-testing`): autoplay jalan, near-miss muncul ≤ 30 s di 8×, klik event → Bob inside, dan tidak ada request ke domain lain.
+17. Statis penuh: `next.config` `output: 'export'` (hasil di `packages/web/out/`, dideploy ke Cloudflare Pages), tanpa panggilan jaringan selain origin. Playwright `e2e/demo.spec.ts` (skill `e2e-testing`): autoplay jalan, near-miss muncul ≤ 30 s di 8×, klik event → Bob inside, dan tidak ada request ke domain lain.
 18. **Landing `/`** (UI-09, DESIGN §5.11, ±30 menit): hero (judul, tagline, GIF near-miss), tombol utama **Watch the live replay** → `/demo`, tombol **Download for macOS** → `.dmg` di Release terbaru (URL dari `meta.json`), 3 langkah pasang (termasuk klik kanan → Open), dan link Repo · bob_sessions · Video · Deck. Tambahkan kalimat "Community hackathon project, not an official IBM product · built on Orca (MIT)". Statis, tanpa login.
-19. Deploy Vercel. Buka `/` dan `/demo` dari incognito dan ponsel (tab A/MC/B).
+19. Deploy Cloudflare Pages (`pnpm -C radar deploy:web`). Buka `/` dan `/demo` dari incognito dan ponsel (tab A/MC/B).
 
 ### E. Bob slice C4 — script bukti (kapan saja di fase ini, ±2 Bobcoin)
 
@@ -92,7 +92,7 @@ ls -lh dist/*.dmg                  # atau lokasi output electron-builder
 - [ ] JT-01/02: tonton terminal Bob rekan di 2 Mac, p95 < 500 ms (angka dari log), dan share mati secara default.
 - [ ] DA-01: `.dmg` terpasang di Mac teman dari nol (< 3 menit), Release `v0.3.0` publik.
 - [ ] UI-05: `/demo` jalan tanpa login, API key, atau server. Panel Bob inside berfungsi.
-- [ ] UI-09: landing `/` live di Vercel, dengan tombol replay dan download `.dmg` yang berfungsi.
+- [ ] UI-09: landing `/` live di Cloudflare Pages, dengan tombol replay dan download `.dmg` yang berfungsi.
 - [ ] EV-02: `bob-evidence.sh` lengkap dan dipakai minimal sekali oleh anggota lain.
 - [ ] JT-04 selesai **atau** ditunda dengan alasan tercatat (urutan potong PRD §16).
 
@@ -100,7 +100,7 @@ ls -lh dist/*.dmg                  # atau lokasi output electron-builder
 
 | Risiko | Fallback |
 |---|---|
-| Titik tap xterm sulit dijangkau (output lewat worker/webgl) | Tap di level IPC data pty yang masuk ke renderer (sebelum ke xterm). Pilihan terakhir: tap di main process pada listener pty, tanpa mengubah alurnya. Catat D-C.. |
+| Titik tap xterm sulit dijangkau (output lewat worker/webgl) | Tap di level IPC data pty yang masuk ke renderer (sebelum ke xterm). Pilihan terakhir: tap di main process pada listener pty, tanpa mengubah alurnya. Catat D-app-.. |
 | Frame terlalu besar (TUI Bob me-redraw penuh) | Batasi 20 fps, gabungkan frame, kirim snapshot setiap 5 s dan buang frame lama |
 | `.dmg` gagal dibuat | Kirim `.app` di dalam `.zip` (`--dir` + `ditto -c -k`). Demo tetap memakai `pnpm -C app dev`. |
 | Gatekeeper memblokir app | Instruksi `xattr` di README + Release notes |

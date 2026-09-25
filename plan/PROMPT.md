@@ -6,9 +6,10 @@ Syarat: plugin ECC terpasang (`/plugin install ecc@ecc`, lihat [`../PLAN.md`](..
 
 | Lane | Urutan fase |
 |---|---|
-| A · Core | `00 → 02 → 03 → 04 → 05 → 06 → 10 → 12 → 14` |
-| B · Bob | `01 → 07 → 08 → 10 → 13 → 14` |
-| C · App | `09 → 11 → 10 → 14` (fase 09 bagian a/b boleh mulai sebelum 02 selesai, memakai mock) |
+| Alief · Core | `00 → 02 → 03 → 04 → 05 → 06 → 10 → 12 → 14` |
+| Umar · Bob | `01 → 07 → 08 → 10 → 13 → 14` |
+| Aarief · App desktop | `09 (a, b, c) → 11 (A, B, C) → 10 → 14` (09a/b boleh mulai sebelum 02, memakai mock) |
+| Imelda · UI & web | `09 (langkah 6) → 11 (D) → 10 → 14` |
 | Solo | `00 → 01 → … → 14` |
 
 Alternatif tanpa salin-tempel: ubah dua baris di file ini, lalu ketik ke Claude Code: `Jalankan instruksi di plan/PROMPT.md`.
@@ -16,7 +17,7 @@ Alternatif tanpa salin-tempel: ubah dua baris di file ini, lalu ketik ke Claude 
 ---
 
 ```text
-LANE: C
+LANE: Aarief        # Alief | Umar | Aarief | Imelda
 FASE: 09
 
 <peran>
@@ -36,10 +37,10 @@ Laporan dalam Bahasa Indonesia. Kode, nama file, komentar: Bahasa Inggris.
   Path kode lain tanpa prefix (packages/, scripts/, docs/, bob-kit/) = relatif ke radar/.
 - Toolchain: Node 24 + pnpm 12. Jalankan `nvm use 24` sebelum perintah pnpm.
   Selalu pakai `pnpm -C app …` atau `pnpm -C radar …`.
-- Skill wajib: lihat PLAN.md §11. Untuk LANE C selalu muat skill `live-collab-app`, dan pakai
+- Skill wajib: lihat PLAN.md §11. Untuk LANE Aarief/Imelda selalu muat skill `live-collab-app`, dan pakai
   `electron-automation` untuk melihat UI yang kamu buat sebelum menyatakan langkah UI selesai.
 - LANE menentukan folder yang BOLEH kamu ubah (PLAN.md §2). Jangan menyentuh folder lane lain.
-  Kalau perlu, tulis "Catatan handoff" + entri DECISIONS ber-prefix lane (D-A.., D-B.., D-C..).
+  Kalau perlu, tulis "Catatan handoff" + entri DECISIONS ber-prefix lane (D-alief-.., D-umar-.., D-app-..).
 </konteks>
 
 <langkah>
@@ -48,7 +49,7 @@ Laporan dalam Bahasa Indonesia. Kode, nama file, komentar: Bahasa Inggris.
 
 2. BACA berurutan: plan/README.md, plan/PROGRESS.md, plan/log/DECISIONS.md, file fase, lalu SEMUA
    "Bacaan wajib" di file fase. Kalau plan/log/fase-<FASE>.md sudah ada → mode LANJUT.
-   Untuk LANE C: baca juga orca:AGENTS.md dan orca:CLAUDE.md dan patuhi aturannya.
+   Untuk LANE Aarief/Imelda: baca juga orca:AGENTS.md dan orca:CLAUDE.md dan patuhi aturannya.
 
 3. CEK PRASYARAT & BRANCH. Prasyarat di PROGRESS.md harus [x], kecuali file fase mengizinkan mock.
    Pastikan kamu berada di branch lane (lane/core | lane/bob | lane/app) atau sub-branch lane.
@@ -64,7 +65,7 @@ Laporan dalam Bahasa Indonesia. Kode, nama file, komentar: Bahasa Inggris.
    Pengecualian: konfigurasi murni, dokumen, dan layout UI (UI cukup smoke test atau Playwright).
 
 6. EKSEKUSI. Aturan:
-   a. Ikuti kontrak plan/ref PERSIS. Perubahan kontrak hanya oleh LANE A. Lane lain mengusulkan
+   a. Ikuti kontrak plan/ref PERSIS. Perubahan kontrak hanya oleh LANE Alief. Lane lain mengusulkan
       lewat DECISIONS lalu berhenti di langkah itu.
    b. Hanya scope fase ini. Temuan lain → "Catatan handoff".
    c. P0 sebelum P1. P2 hanya kalau diminta file fase.
@@ -103,7 +104,7 @@ Laporan dalam Bahasa Indonesia. Kode, nama file, komentar: Bahasa Inggris.
 
 11. COMMIT & PR. Commit "fase-<FASE>: <judul>" (konvensi R5 §3). Push branch lane. Kalau file fase
     bilang "PR ke main", buat PR dengan `gh pr create` (judul = pesan commit, isi = ringkasan log).
-    Jangan merge sendiri, kecuali fase 00/02 (Lane A) yang memang di main.
+    Jangan merge sendiri, kecuali fase 00/02 (Lane Alief) yang memang di main.
 
 12. SIMPAN SESI. Jalankan /ecc:save-session (atau padanannya) dengan nama "lane<LANE>-fase<FASE>".
 
