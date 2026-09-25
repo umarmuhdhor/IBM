@@ -39,11 +39,11 @@ export function createRadarClient(config: LocalConfig | null, timeoutMs = MCP_FE
       throw new RadarToolError(MSG_UNAVAILABLE);
     }
     const text = await res.text();
-    let json: unknown = undefined;
+    let json: unknown;
     try {
       json = text ? JSON.parse(text) : undefined;
     } catch {
-      json = undefined;
+      // not JSON (e.g. a proxy error page): fall through with no body
     }
     if (!res.ok) {
       // R3 §1 error body: { error: { code, message } }

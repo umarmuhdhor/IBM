@@ -1,4 +1,3 @@
-import { z } from 'zod';
 import { defineTool } from '../types.js';
 
 interface Holder {
@@ -30,7 +29,7 @@ export default defineTool({
   title: 'Mengapa edit ditolak',
   description: 'Panggil SEGERA setelah edit ditolak Radar. Menjelaskan pemilik file, task-nya, dan apa yang bisa kamu kerjakan sekarang.',
   inputSchema: {},
-  async run(_args: z.infer<z.ZodObject<{}>>, client) {
+  async run(_args, client) {
     const data = await client.get<BlockResponse>('/v1/blocks/last');
     const { block } = data;
     if (!block) return 'Tidak ada blokir terbaru. Kamu bebas mengedit file yang tersedia di task-mu.';

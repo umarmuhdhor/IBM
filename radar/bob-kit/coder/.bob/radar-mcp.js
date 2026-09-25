@@ -28546,11 +28546,10 @@ function createRadarClient(config2, timeoutMs = MCP_FETCH_TIMEOUT_MS) {
       throw new RadarToolError(MSG_UNAVAILABLE);
     }
     const text = await res.text();
-    let json2 = void 0;
+    let json2;
     try {
       json2 = text ? JSON.parse(text) : void 0;
     } catch {
-      json2 = void 0;
     }
     if (!res.ok) {
       const err = json2?.error;

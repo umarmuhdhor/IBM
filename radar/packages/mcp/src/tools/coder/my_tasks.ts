@@ -1,4 +1,3 @@
-import { z } from 'zod';
 import { defineTool } from '../types.js';
 
 interface TaskFile {
@@ -25,7 +24,7 @@ export default defineTool({
   title: 'Lihat task aktif',
   description: 'Panggil di awal setiap sesi. Menampilkan task milikmu, file yang boleh kamu tulis, dan file yang masih antre.',
   inputSchema: {},
-  async run(_args: z.infer<z.ZodObject<{}>>, client) {
+  async run(_args, client) {
     const data = await client.get<TasksResponse>('/v1/tasks?owner=me&status=open');
     const { tasks, activeTaskId } = data;
     if (!tasks.length) return 'Tidak ada task aktif saat ini.';
