@@ -31,13 +31,13 @@ export default defineTool({
     if (!tasks.length) return 'Tidak ada task aktif saat ini.';
 
     const lines: string[] = [];
-    for (const task of tasks) {
+    const ordered = [...tasks].sort((a, b) => Number(b.id === activeTaskId) - Number(a.id === activeTaskId));
+    for (const task of ordered) {
       const isActive = task.id === activeTaskId;
-      const label = isActive ? `(${task.status})` : `(${task.status})`;
-      lines.push(`Task aktif: ${task.id} ${task.title} ${label}`);
+      lines.push(`${isActive ? 'Task aktif' : 'Task'}: ${task.id} ${task.title} (${task.status})`);
       for (const f of task.files) {
         if (f.lock) {
-          lines.push(`  ${f.path} — dipegang`);
+          lines.push(`  ${f.path} — ${f.lock}`);
         } else if (f.waitingFor) {
           lines.push(`  ${f.path} — antre #${f.queuePos}, menunggu ${f.waitingFor}`);
         } else {

@@ -16,7 +16,7 @@ export default defineTool({
     summary: z.string().max(500).describe('Ringkasan perubahan (maks 500 karakter)'),
   },
   async run(args, client) {
-    const data = await client.post<SubmitResponse>(`/v1/tasks/${args.task_id}/submit`, { summary: args.summary });
+    const data = await client.post<SubmitResponse>(`/v1/tasks/${encodeURIComponent(args.task_id)}/submit`, { summary: args.summary });
     return `${data.taskId} diajukan untuk review (${data.files.length} file).`;
   },
 });

@@ -177,6 +177,27 @@ describe('radar-mcp coder tools (BC-07, R3 §7)', () => {
     expect(text).toContain('3');
   });
 
+  it('submit_task: encodes the task id in the URL', async () => {
+    await call('submit_task', { task_id: 'T-2/../../admin', summary: 'x' });
+    expect(seen[0]?.url).toBe('/v1/tasks/T-2%2F..%2F..%2Fadmin/submit');
+  });
+
+  it('my_tasks: only the active task is called active, other lock states are named', async () => {
+    const saved = TASKS.tasks.slice();
+    TASKS.tasks.push({
+      id: 'T-5', title: 'Footer', description: '', ownerId: 'B', status: 'terbuka', adhoc: false, baseCommit: 'x', editCount: 0,
+      files: [{ path: 'src/ui/Footer.tsx', lock: 'dipesan', queuePos: 0 }],
+    });
+    try {
+      const { text } = await call('my_tasks');
+      expect(text.match(/Task aktif/g)).toHaveLength(1);
+      expect(text).toMatch(/T-5 Footer/);
+      expect(text).toMatch(/Footer\.tsx.*dipesan/);
+    } finally {
+      TASKS.tasks.splice(0, TASKS.tasks.length, ...saved);
+    }
+  });
+
   it('submit_task: a 409 from the server becomes a readable error, not a crash', async () => {
     submitConflict = true;
     const { text, isError } = await call('submit_task', { task_id: 'T-2', summary: 'x' });
