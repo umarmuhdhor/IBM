@@ -9,3 +9,7 @@ useDefault = true
 [[allowlists]]
 description = "Upstream Orca vendoring commit (public MIT code, not team secrets)"
 commits = ["7c86819ec824e89a7e0a9b80097709e8c6edd7bf"]
+
+[[allowlists]]
+description = "Fake GitHub-PAT-shaped test fixture in radar/packages/web/src/replay/sanitize.test.ts, used to unit-test the fase 11D1 secret sensor (sanitize.ts) — not a real credential (fase-11D1 log)"
+regexes = ["ghp_1234567890abcdef1234567890abcdef1234"]

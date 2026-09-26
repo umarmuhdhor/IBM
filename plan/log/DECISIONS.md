@@ -311,3 +311,11 @@ Format:
 - Alasan: I1 dan I2 adalah Bob slice wajib (bukti judging), bukan pekerjaan Claude Code langsung.
 - Dampak: fase 11D1 tidak bisa ditutup (PR, gerbang UI, `/gallery`) sampai kedua slice ini selesai dan direview.
 - File ref/ yang diperbarui: –
+- **Superseded**: I1 dan I2 sekarang selesai (commit `2058da47`, `99d85138`; lihat `plan/log/fase-11D1.md`).
+
+## D-imelda-07 · 26 Sep 2026 · fase 11D1 · Allowlist gitleaks untuk fixture test sensor secret
+
+- Keputusan: `.gitleaks.toml` dapat satu `[[allowlists]]` baru (pola `regexes`, bukan `commits`, supaya tidak melonggarkan seluruh commit): string `ghp_1234567890abcdef1234567890abcdef1234` di `radar/packages/web/src/replay/sanitize.test.ts:21` — fixture sengaja dibuat mirip GitHub PAT asli buat menguji `sanitizeEvents()` (sensor secret export replay, fase 11D1), bukan kredensial nyata. CI `ci / gitleaks` di PR #11 gagal karena ini; dikonfirmasi dengan `gitleaks detect` lokal (1 leak → 0 leak setelah allowlist).
+- Alasan: mengikuti pola yang sudah ada (allowlist commit vendoring Orca, D-alief-00) daripada mengubah/menghapus test yang justru sengaja menguji kasus token bocor.
+- Dampak: tidak ada perubahan kode fungsional, hanya konfigurasi CI. `.gitleaks.toml` di luar folder lane manapun (root repo); dicatat di sini karena tim sepakat kontrak di `radar/packages/common`/`plan/ref` lewat Alief, tapi config CI seperti ini lebih longgar — kalau ada keberatan, revert baris `regexes` ini.
+- File ref/ yang diperbarui: – (bukan `plan/ref`).
