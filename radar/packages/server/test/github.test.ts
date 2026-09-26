@@ -272,6 +272,34 @@ describe('commit through the Durable Object', () => {
     expect(t2?.status).toBe('review');
   });
 
+  it('SY-06: a file deleted over sync is committed as sha null; one created and deleted in the task is left out', async () => {
+    const { stub } = freshWorkspace();
+    const t = await twoTasks(stub);
+    const sync = await hello(stub, t.A!, 'sync');
+    await call(stub, 'POST', '/v1/tasks/T-1/activate', { token: t.A });
+    sync.send(await update('n1', 'src/tmp.ts', 0, '// scratch\n'));
+    await sync.byType('file.ack');
+    sync.send({ t: 'file.delete', id: 'd1', d: { path: 'src/tmp.ts', baseVersion: 1, clientTs: 0 } });
+    await sync.byType('file.ack');
+    sync.send({ t: 'file.delete', id: 'd2', d: { path: 'src/a.ts', baseVersion: 1, clientTs: 0 } });
+    await sync.byType('file.ack');
+    sync.ws.close();
+    expect((await call(stub, 'POST', '/v1/tasks/T-1/submit', { token: t.A, body: { summary: 'hapus a' } })).status).toBe(200);
+    const p = await call(stub, 'POST', '/v1/proposals', { token: t.C, body: { kind: 'review', reason: 'ok', payload: { taskId: 'T-1', verdict: 'setujui' } } });
+    adoptWorkspace();
+    await runInDurableObject(stub, async (inst: WorkspaceDO) => {
+      const saved = inst.committer;
+      inst.committer = committer();
+      try {
+        await expect(decideProposalFlow(inst, p.json.proposalId as string, { approve: true })).resolves.toMatchObject({ status: 'disetujui' });
+      } finally {
+        inst.committer = saved;
+      }
+    });
+    const tree = mock.calls.find((c) => c.pathname.endsWith('/git/trees'))?.body as { tree: { path: string; sha?: string | null }[] };
+    expect(tree.tree).toEqual([{ path: 'src/a.ts', mode: '100644', type: 'blob', sha: null }]);
+  });
+
   it('PATCH 409 refreshes the head, keeps state, and the retry succeeds', async () => {
     const { stub } = freshWorkspace();
     const t = await twoTasks(stub);

@@ -5,7 +5,7 @@ import type { WorkspaceDeps } from '../deps';
 import { setOffline, setOnline } from '../db/repo/member';
 import { principalForToken } from '../http/auth';
 import { appendEvent } from '../services/events';
-import { applyUpdate } from '../services/files';
+import { applyDelete, applyUpdate } from '../services/files';
 import { buildSnapshot, buildState } from '../services/state';
 import { endStaleEpisode } from '../services/stale';
 import type { ReadyAttachment } from './hub';
@@ -56,6 +56,9 @@ export function handleMessage(deps: WorkspaceDeps, ws: WebSocket, raw: string | 
     case 'file.update':
       handleFileUpdate(deps, ws, att, msg);
       return;
+    case 'file.delete':
+      handleFileDelete(deps, ws, att, msg);
+      return;
     case 'file.applied':
       handleFileApplied(deps, att, msg);
       return;
@@ -67,7 +70,7 @@ export function handleMessage(deps: WorkspaceDeps, ws: WebSocket, raw: string | 
       hub.send(ws, { t: 'error', d: { code: 'BAD_REQUEST', message: 'hello sudah diterima.' } });
       return;
     default:
-      // file.delete (P1) and term.* (fase 06 P1) are not handled yet.
+      // term.* (terminal relay, P1) is not handled yet.
       hub.send(ws, { t: 'error', d: { code: 'BAD_REQUEST', message: `Pesan ${msg.t} belum didukung server.` } });
   }
 }
@@ -136,6 +139,32 @@ function handleFileUpdate(deps: WorkspaceDeps, ws: WebSocket, att: ReadyAttachme
         ...(msg.id ? { id: msg.id } : {}),
         d: { ...(msg.id ? { id: msg.id } : {}), path: r.path, reason: r.reason, holder: r.holder, server: r.server },
       };
+  hub.send(ws, reply);
+}
+
+function handleFileDelete(deps: WorkspaceDeps, ws: WebSocket, att: ReadyAttachment, msg: WsMessageOf<'file.delete'>): void {
+  const { hub, db } = deps;
+  const p = att.principal;
+  if (att.client !== 'sync' || p.kind !== 'member') {
+    hub.send(ws, { t: 'error', d: { code: 'FORBIDDEN', message: 'Hanya klien sync yang boleh mengirim file.delete.' } });
+    return;
+  }
+  const now = deps.now();
+  const r = deps.transact((uow) => {
+    const res = applyDelete(db, uow, { now, authorizeWrite: deps.authorizeWrite }, p, msg.d);
+    if (res.ok && res.changed) {
+      uow.toSync.push({
+        except: ws,
+        msg: { t: 'file.changed', d: { path: res.path, version: res.version, content: null, hash: null, deleted: true, by: p.memberId, taskId: res.taskId, serverTs: now } },
+      });
+    }
+    return res;
+  });
+  const id = msg.id ? { id: msg.id } : {};
+  // The ack of a delete carries an empty hash: there is no content.
+  const reply: WsMessage = r.ok
+    ? { t: 'file.ack', ...id, d: { ...id, path: r.path, version: r.version, hash: '' } }
+    : { t: 'file.rejected', ...id, d: { ...id, path: r.path, reason: r.reason, holder: r.holder, server: r.server } };
   hub.send(ws, reply);
 }
 

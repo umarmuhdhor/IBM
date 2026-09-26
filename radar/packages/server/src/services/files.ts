@@ -137,3 +137,48 @@ export function applyUpdate(
   });
   return { ok: true, path, version, hash, content: input.content, changed: true, taskId };
 }
+
+export type DeleteResult =
+  | { ok: true; path: string; version: number; changed: boolean; taskId: string | null }
+  | { ok: false; path: string; reason: RejectReason; holder: LockHolder | null; server: ServerFile };
+
+/**
+ * `file.delete` (SY-06): the same write rule as an update (R4 §3), then a tombstone version (`deleted=1`,
+ * content null). The task touch is marked deleted, so the commit sends a tree entry with `sha: null`.
+ * Deleting a missing or already deleted file is a no-op success.
+ */
+export function applyDelete(
+  db: Db,
+  uow: UnitOfWork,
+  deps: { now: number; authorizeWrite: AuthorizeWrite },
+  member: MemberPrincipal,
+  input: { path: string; baseVersion: number },
+): DeleteResult {
+  const path = cleanPath(input.path);
+  if (path === null) return { ok: false, path: input.path, reason: 'conflict', holder: null, server: NO_FILE };
+  const f = getFile(db, path);
+  if (!f || f.deleted) return { ok: true, path, version: f?.version ?? 0, changed: false, taskId: null };
+
+  const decision = deps.authorizeWrite({ db, uow, now: deps.now }, member, path, 'sync');
+  if (!decision.allow) {
+    appendEvent(db, uow, {
+      ts: deps.now,
+      actor: member.memberId,
+      type: 'file.rejected',
+      payload: { path, by: member.memberId, reason: decision.reason, holderMemberId: decision.holder?.memberId ?? null, holderTaskId: decision.holder?.taskId ?? null },
+    });
+    return { ok: false, path, reason: decision.reason, holder: decision.holder, server: serverCopy(f) };
+  }
+  // Same rule as an update: deleting a copy that another member changed since is a conflict.
+  if (input.baseVersion < f.version && f.updated_by !== member.memberId) return { ok: false, path, reason: 'conflict', holder: null, server: serverCopy(f) };
+
+  const version = f.version + 1;
+  const taskId = decision.taskId;
+  writeFileVersion(db, { path, version, hash: '', content: null, size: 0, by: member.memberId, taskId, now: deps.now });
+  if (taskId !== null) {
+    upsertTouch(db, { taskId, path, firstVersion: f.version, lastVersion: version, deleted: true });
+    bumpEditCount(db, taskId, deps.now);
+  }
+  appendEvent(db, uow, { ts: deps.now, actor: member.memberId, type: 'file.deleted', payload: { path, version, by: member.memberId, taskId } });
+  return { ok: true, path, version, changed: true, taskId };
+}

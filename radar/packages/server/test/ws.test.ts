@@ -296,3 +296,48 @@ describe('hibernation (fase 03 step 11)', () => {
     expect(s.json.files[0]).toMatchObject({ version: 2, updatedBy: 'A' });
   });
 });
+
+describe('file.delete (SY-06)', () => {
+  it('a delete is acked, becomes a tombstone version, and reaches the other sync clients', async () => {
+    const { stub } = freshWorkspace();
+    const t = await seedTestWorkspace(stub);
+    const a = await hello(stub, t.A!, 'sync');
+    const b = await hello(stub, t.B!, 'sync');
+    a.send({ t: 'file.delete', id: 'd1', d: { path: 'src/app.ts', baseVersion: 1, clientTs: 0 } });
+    const ack = await a.byType('file.ack');
+    expect(ack).toMatchObject({ d: { path: 'src/app.ts', version: 2, hash: '' } });
+    const changed = await b.byType('file.changed');
+    expect(changed).toMatchObject({ d: { path: 'src/app.ts', version: 2, deleted: true, content: null, hash: null, by: 'A' } });
+    const rows = await runInDurableObject(stub, (_i, st) => ({
+      file: st.storage.sql.exec<{ deleted: number; version: number }>(`SELECT deleted, version FROM file WHERE path = 'src/app.ts'`).one(),
+      touch: st.storage.sql.exec<{ deleted: number }>(`SELECT deleted FROM task_touch WHERE path = 'src/app.ts'`).toArray(),
+      events: st.storage.sql.exec<{ n: number }>(`SELECT count(*) AS n FROM event WHERE type = 'file.deleted'`).one().n,
+    }));
+    expect(rows).toEqual({ file: { deleted: 1, version: 2 }, touch: [{ deleted: 1 }], events: 1 });
+  });
+
+  it('deleting a file another member holds is rejected like an update; a missing file is a no-op ack', async () => {
+    const { stub } = freshWorkspace();
+    const t = await seedTestWorkspace(stub);
+    const a = await hello(stub, t.A!, 'sync');
+    const b = await hello(stub, t.B!, 'sync');
+    a.send(await update('u1', 'src/app.ts', 1, 'export const a = 2;\n'));
+    await a.byType('file.ack');
+    b.send({ t: 'file.delete', id: 'd1', d: { path: 'src/app.ts', baseVersion: 2, clientTs: 0 } });
+    expect(await b.byType('file.rejected')).toMatchObject({ d: { path: 'src/app.ts', reason: 'held_by_other', server: { version: 2, deleted: false } } });
+    b.send({ t: 'file.delete', id: 'd2', d: { path: 'src/none.ts', baseVersion: 0, clientTs: 0 } });
+    expect(await b.byType('file.ack')).toMatchObject({ d: { path: 'src/none.ts', version: 0 } });
+  });
+
+  it('a new update after a delete brings the file back with the next version', async () => {
+    const { stub } = freshWorkspace();
+    const t = await seedTestWorkspace(stub);
+    const a = await hello(stub, t.A!, 'sync');
+    a.send({ t: 'file.delete', id: 'd1', d: { path: 'src/app.ts', baseVersion: 1, clientTs: 0 } });
+    await a.byType('file.ack');
+    a.send(await update('u1', 'src/app.ts', 2, 'export const back = 1;\n'));
+    expect(await a.byType('file.ack')).toMatchObject({ d: { version: 3 } });
+    const touch = await runInDurableObject(stub, (_i, st) => st.storage.sql.exec<{ deleted: number }>(`SELECT deleted FROM task_touch WHERE path = 'src/app.ts'`).one());
+    expect(touch.deleted).toBe(0);
+  });
+});
