@@ -131,6 +131,7 @@ radar/spike/out/
 # wrangler local secrets
 .dev.vars
 .dev.vars.*
+!.dev.vars.example
 radar/**/.wrangler/
 radar/**/.next/
 radar/**/out/

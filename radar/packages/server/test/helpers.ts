@@ -17,6 +17,7 @@ export interface Ws {
 export interface WsIn {
   t: string;
   id?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tests read nested message fields freely
   d?: any;
   raw: string;
 }
@@ -31,6 +32,7 @@ export async function call(
   method: string,
   path: string,
   opts: { token?: string; body?: unknown; headers?: Record<string, string>; raw?: string } = {},
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tests read nested response fields freely
 ): Promise<{ status: number; json: any; text: string; headers: Headers }> {
   const headers: Record<string, string> = { ...opts.headers };
   if (opts.token) headers.authorization = `Bearer ${opts.token}`;

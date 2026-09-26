@@ -7,6 +7,8 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-09-01",
   "compatibility_flags": ["nodejs_compat"],
+  // Bundle @radar/common from source so `wrangler dev`/`deploy` never need a prior build.
+  "alias": { "@radar/common": "../common/src/index.ts" },
   "durable_objects": {
     "bindings": [{ "name": "WORKSPACE", "class_name": "WorkspaceDO" }],
   },
