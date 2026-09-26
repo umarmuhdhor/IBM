@@ -11,6 +11,7 @@ import {
   readRadarConnection,
   saveRadarConnection
 } from './secure-store'
+import { stopSyncAgent } from './sync-agent'
 import { RadarWsClient } from './ws-client'
 
 let activeClient: RadarWsClient | null = null
@@ -32,7 +33,7 @@ function stopClient(): void {
   activeClient = null
 }
 
-function startClient(connection: RadarConnection): void {
+export function startClient(connection: RadarConnection): void {
   stopClient()
   activeClient = new RadarWsClient(connection, publishUpdate)
   activeClient.connect()
@@ -65,6 +66,7 @@ export function registerRadarConnectionIpc(): void {
   })
   ipcMain.handle('radar:clear-connection', () => {
     stopClient()
+    stopSyncAgent()
     clearRadarConnection()
   })
   ipcMain.handle('radar:checks', (_event, workspacePath: unknown) =>
@@ -77,7 +79,11 @@ export function registerRadarConnectionIpc(): void {
     return readSharePrompts(workspacePath)
   })
   ipcMain.handle('radar:set-share-prompts', (_event, value: unknown) => {
-    if (!isRecord(value) || typeof value.workspacePath !== 'string' || typeof value.enabled !== 'boolean') {
+    if (
+      !isRecord(value) ||
+      typeof value.workspacePath !== 'string' ||
+      typeof value.enabled !== 'boolean'
+    ) {
       throw new Error('Invalid Live Collab share prompts request')
     }
     return writeSharePrompts(value.workspacePath, value.enabled)

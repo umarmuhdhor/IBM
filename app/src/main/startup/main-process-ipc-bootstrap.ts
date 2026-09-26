@@ -1,5 +1,6 @@
 import { ipcMain } from 'electron'
 import { registerRadarConnectionIpc } from '../radar/connection-ipc'
+import { registerRadarJoinIpc } from '../radar/join'
 import { recoverLegacyWorkerTerminalsForRendererStartup } from './legacy-worker-renderer-recovery'
 import { logStartupMilestone } from './startup-diagnostics'
 import { mainProcessState as state } from './main-process-state'
@@ -7,6 +8,7 @@ import { resolveOpenedMarkdownDocuments } from './os-opened-markdown-files'
 
 export function registerMainProcessIpcHandlers(): void {
   registerRadarConnectionIpc()
+  registerRadarJoinIpc()
   ipcMain.handle('app:awaitFirstWindowStartupServices', async () => {
     await Promise.all([
       state.firstWindowStartupServicesReady,

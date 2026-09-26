@@ -114,7 +114,9 @@ const commonExtraResources = [
   ...bundledRipgrepExtraResources,
   bundledPluginResources,
   skillFreshnessResources,
-  emojiShortcodeDatasetResource
+  emojiShortcodeDatasetResource,
+  // Live Collab: radar sync CLI + Bob kit, run with the app's Electron in Node mode (build:radar-cli).
+  { from: 'resources/radar-cli', to: 'radar-cli' }
 ]
 // Why: native speech addons must be real files outside app.asar; copy only the
 // package matching the artifact target instead of every optional variant.
@@ -230,6 +232,7 @@ module.exports = {
     // it from process.resourcesPath; exclude the source copy from app.asar.
     '!resources/onboarding/feature-wall/**',
     '!resources/skills/**',
+    '!resources/radar-cli/**',
     // Why: bundled plugins ship via extraResources to resources/plugins/launch;
     // packing the source tree into app.asar would duplicate those exact bytes.
     '!resources/plugins/launch/**',

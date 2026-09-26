@@ -61,7 +61,7 @@ export function createApp(deps: WorkspaceDeps): Hono {
     const code = normalizeJoinCode(parseWith(JoinReq, await readJson(c.req.raw)).code);
     const memberId = code === null ? null : memberForJoinCode(deps.db, sha256Hex(code), deps.now());
     const member = memberId === null ? null : getMember(deps.db, memberId);
-    if (!member) throw new RadarError(404, 'NOT_FOUND', 'Kode gabung salah atau sudah kedaluwarsa. Minta kode baru ke pemilik workspace.');
+    if (!member) throw new RadarError(404, 'NOT_FOUND', 'This join code is wrong or has expired. Ask the workspace owner for a new code.');
     const workspace = deps.workspaceId();
     const token = rotateToken(deps, member.id);
     const res: JoinRes = { workspace, member: member.id, role: member.role, invite: encodeInvite({ server: new URL(c.req.url).origin, workspace, member: member.id, token }) };
