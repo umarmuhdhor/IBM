@@ -27,3 +27,12 @@ export type RadarJoinCode = {
 }
 
 export type RadarJoinRole = 'coder' | 'pm'
+
+/** D-alief-12: the owner's folder became the workspace; `code` is the first open code (already copied). */
+export type RadarOpenFolderResult = {
+  connection: RadarConnectionSummary
+  folder: string
+  files: number
+  skipped: number
+  code: RadarJoinCode
+}

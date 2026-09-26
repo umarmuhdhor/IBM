@@ -1,37 +1,14 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import type { RadarConnectionSummary } from '../../../../shared/radar-connection'
-import {
-  DEFAULT_RADAR_SERVER,
-  type RadarJoinRole,
-  type RadarSyncStatus
-} from '../../../../shared/radar-join'
+import { DEFAULT_RADAR_SERVER, type RadarJoinRole } from '../../../../shared/radar-join'
+import { ipcErrorText, syncLine, useRadarSyncStatus } from './use-radar-sync-status'
 
 type Props = {
   connection: RadarConnectionSummary | null
   onConnectionChange: (connection: RadarConnectionSummary | null) => void
-}
-
-const STOPPED: RadarSyncStatus = {
-  state: 'stopped',
-  folder: null,
-  files: null,
-  message: null
-}
-
-function syncLine(status: RadarSyncStatus): string {
-  if (status.state === 'syncing') {
-    return `Syncing ${status.files ?? 0} files`
-  }
-  if (status.state === 'starting') {
-    return status.message ?? 'Connecting and downloading files…'
-  }
-  if (status.state === 'error') {
-    return status.message ?? 'Sync stopped'
-  }
-  return status.message ?? 'Not syncing'
 }
 
 /**
@@ -52,12 +29,7 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
   const setMessage = (text: string | null, key = connectionKey) =>
     setNote(text === null ? null : { text, key })
   const [invalid, setInvalid] = useState(false)
-  const [sync, setSync] = useState<RadarSyncStatus>(STOPPED)
-
-  useEffect(() => {
-    void window.api.radar.getSyncStatus().then(setSync)
-    return window.api.radar.onSyncStatus(setSync)
-  }, [])
+  const sync = useRadarSyncStatus()
 
   const join = async () => {
     setBusy(true)
@@ -77,12 +49,9 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
         `${result.connection.workspace}/${result.connection.member}`
       )
     } catch (error) {
-      // Why: Electron prefixes IPC errors with the channel name; keep only the server's sentence.
-      const text =
-        error instanceof Error
-          ? error.message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '')
-          : ''
-      setMessage(text || 'Unable to join. Check the code and your internet connection.')
+      setMessage(
+        ipcErrorText(error) || 'Unable to join. Check the code and your internet connection.'
+      )
       setInvalid(true)
     } finally {
       setBusy(false)

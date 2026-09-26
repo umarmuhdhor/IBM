@@ -15,9 +15,10 @@ function until(expiresAt: number): string {
  * IN-03, Mission Control only (D-alief-10): make an open join code and share it. A teammate who uses it
  * enters their own name and role, and only then appears in the list below.
  */
-export function InviteCodesCard() {
+export function InviteCodesCard({ firstCode = null }: { firstCode?: RadarJoinCode | null }) {
   const members = useRadarStore((store) => store.state?.members)
-  const [codes, setCodes] = useState<RadarJoinCode[]>([])
+  // Why: sharing a folder already made (and copied) one code; list it so the owner can copy it again.
+  const [codes, setCodes] = useState<RadarJoinCode[]>(firstCode ? [firstCode] : [])
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const joined = Object.values(members ?? {}).sort((a, b) => a.id.localeCompare(b.id))
@@ -58,8 +59,8 @@ export function InviteCodesCard() {
       <div className="space-y-1">
         <h3 className="text-sm font-semibold">Invite teammates</h3>
         <p className="text-xs text-muted-foreground">
-          Make a code (it is copied for you) and send it privately. Your teammate pastes it into Live Collab → Join and
-          enters their name and role. One code adds one person.
+          Make a code (it is copied for you) and send it privately. Your teammate pastes it into
+          Live Collab → Join and enters their name and role. One code adds one person.
         </p>
       </div>
       <Button size="sm" variant="outline" disabled={busy} onClick={() => void make()}>
