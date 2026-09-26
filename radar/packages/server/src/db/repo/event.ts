@@ -28,3 +28,14 @@ export function recentEvents(db: Db, n: number): EventRow[] {
 export function lastEventId(db: Db): number {
   return db.one<{ id: number | null }>('SELECT max(id) AS id FROM event')?.id ?? 0;
 }
+
+/** Events after `sinceId` with one of `types`, the newest `limit` of them, oldest first (brief, R4 §8). */
+export function eventsAfter(db: Db, sinceId: number, types: readonly string[], limit: number): EventRow[] {
+  if (types.length === 0) return [];
+  return db.all<EventRow>(
+    `SELECT * FROM (SELECT * FROM event WHERE id > ? AND type IN (${types.map(() => '?').join(',')}) ORDER BY id DESC LIMIT ?) ORDER BY id`,
+    sinceId,
+    ...types,
+    limit,
+  );
+}

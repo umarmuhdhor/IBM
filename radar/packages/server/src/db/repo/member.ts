@@ -43,3 +43,7 @@ export function setOnline(db: Db, id: string, online: boolean): void {
 export function setOffline(db: Db, id: string, lastHeartbeat: number): void {
   db.run('UPDATE member SET online = 0, last_heartbeat = ? WHERE id = ?', lastHeartbeat, id);
 }
+
+export function setActiveTask(db: Db, id: string, taskId: string | null): void {
+  db.run('UPDATE member SET active_task_id = ? WHERE id = ? AND active_task_id IS NOT ?', taskId, id, taskId);
+}

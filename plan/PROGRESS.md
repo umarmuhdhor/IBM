@@ -10,7 +10,7 @@ Waktu dalam WITA. Setiap lane **hanya mengedit baris fasenya sendiri** (supaya m
 | 02 | Common + mock (kontrak beku) | Alief | lane/core | [x] | Sab 26 03:30 | Sab 26 04:15 | `@radar/common` (zod R3, reducer murni, selector, normalizer hook nyata, subpath `/node`), mock server semua route R3 + WS; 105 test; ref R1/R3/R5 diperbarui (D-alief-02) | log/fase-02.md |
 | 03 | Server inti | Alief | lane/core | [x] | Sab 26 04:20 | Sab 26 09:05 | Worker + DO SQLite (auth, event log, file versi, hub WS hibernasi, alarm, admin API + CLI), 52 test server + 14 CLI, uji `wrangler dev` lokal; deploy `live-collab.afindo-mi01.workers.dev` Sab 26 12:40 | log/fase-03.md |
 | 04 | Sync agent | Alief | lane/core | [x] | Sab 26 09:15 | Sab 26 13:20 | CLI `radar` (join/start/status/kit), WS + snapshot + watcher (rescan 2 s), sidecar konflik, `--json-status`, `radar-cli.tgz`; 43 test, bench p95 159 ms lokal / 295 ms Cloudflare | log/fase-04.md |
-| 05 | Kunci, task, permintaan, proposal | Alief | lane/core | [ ] | | | | log/fase-05.md |
+| 05 | Kunci, task, permintaan, proposal | Alief | lane/core | [x] | Sab 26 13:20 | Sab 26 14:30 | Mesin kunci R4 (`checkWrite` oleh Bob A2, antrean, transfer, revoke), task/permintaan/usulan/brief/team REST, commit dua transaksi (stub sampai 06); 110 test server incl. property I1–I10 300×60 + alur demo 9 langkah | log/fase-05.md |
 | 06 | Commit GitHub, diff (relay terminal P1) | Alief | lane/core | [ ] | | | | log/fase-06.md |
 | 07 | Kit `.bob/` coder | Umar | lane/bob | [x] | Sab 26 00:45 | Sab 26 01:10 | Kit coder (5 hook, radar-mcp 5 tool, mode + rules), 57 test hijau, uji Bob IDE jalur blokir 3/3 melawan fake server; uji di toko-demo asli = fase 10 | log/fase-07.md |
 | 08 | Main agent `pm-lead` | Umar | lane/bob | [x] | Sab 26 01:12 | Sab 26 01:30 | 8 tool PM (tanpa approve), kit PM, uji Bob IDE MA-01/02/03/04 (3/3)/05/07 melawan fake server; uji server asli = fase 10 | log/fase-08.md |
@@ -45,7 +45,7 @@ Waktu dalam WITA. Setiap lane **hanya mengedit baris fasenya sendiri** (supaya m
 |---|---|---|---|
 | SY-01..05 | 04 (+05 untuk SY-04) | [ ] | |
 | SV-01, SV-08 | 03 | [ ] | |
-| SV-02..06 | 05 | [ ] | |
+| SV-02..06 | 05 | [x] | `test/engine.test.ts`, `test/invariants.prop.test.ts`, `test/flow.int.test.ts`, `locks.test.ts` (log fase 05); uji produksi fase 10 |
 | SV-07 | 06 | [ ] | |
 | BC-01..04, BC-07 | 07 | [x] | hooks 41 + mcp 16 test; Bob IDE vs fake server (log fase 07); ulang di toko-demo asli fase 10 |
 | MA-01..05, MA-07 | 08 (+05, 06) | [~] | sisi Bob: 20 test PM + uji Bob IDE vs fake server (log fase 08); sisi server = fase 05/06 |
@@ -65,7 +65,7 @@ Waktu dalam WITA. Setiap lane **hanya mengedit baris fasenya sendiri** (supaya m
 | ID | Lane | Pemilik | Folder `bob_sessions/…` | Status | Bobcoin |
 |---|---|---|---|---|---|
 | A1 toko-demo | Core | Alief | `uaai_alief_task01_toko_demo_summary.png` | [x] | 1.80 |
-| A2 checkWrite | Core | Alief | | [ ] | |
+| A2 checkWrite | Core | Alief | `uaai_alief_task02_check_write_summary.png` | [x] | 5.28 |
 | A3 commit GitHub API | Core | Alief | | [ ] | |
 | A4 review locks | Core | Alief | | [ ] | |
 | B1 spike hooks | Bob | Umar | `uaai_umar_task01_spike_hooks_summary.png` | [x] | 0.345 |

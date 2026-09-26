@@ -34,7 +34,7 @@ function zodMessage(err: ZodError): string {
 export function toErrorResponse(err: unknown): Response {
   if (err instanceof RadarError) return errorJson(err.status, err.code, err.message);
   if (err instanceof ZodError) return errorJson(422, 'VALIDATION', zodMessage(err));
-  console.error('radar: unhandled error', err instanceof Error ? `${err.name}: ${err.message}` : String(err));
+  console.error('radar: unhandled error', err instanceof Error ? (err.stack ?? `${err.name}: ${err.message}`) : String(err));
   return errorJson(500, 'INTERNAL', 'Terjadi kesalahan di server.');
 }
 
