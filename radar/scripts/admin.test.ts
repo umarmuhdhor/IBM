@@ -2,8 +2,8 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
-import { MAX_FILE_BYTES } from '../packages/common/src/index.js';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { decodeInvite, MAX_FILE_BYTES } from '../packages/common/src/index.js';
 import { AdminError, adminCall, batchFiles, collectRepoFiles, formatTokenTable, main, parseMemberSpec, runInit, type RepoFile } from './admin.js';
 import { startMockServer, type MockServer } from './mock-server.js';
 
@@ -136,6 +136,29 @@ describe('main', () => {
   it('rejects a response that does not match the schema', async () => {
     const fetchImpl: typeof fetch = async () => Response.json({ nope: true });
     await expect(adminCall({ server: 'http://x', secret: SECRET, fetchImpl }, 'POST', '/admin/reset', { confirm: true }, { safeParse: () => ({ success: false as const }) })).rejects.toBeInstanceOf(AdminError);
+  });
+  it('invite rotates the token, reads the workspace name with it, and prints one rdr_inv_ code', async () => {
+    const seen: { url: string; secret: string | null; auth: string | null }[] = [];
+    vi.stubGlobal('fetch', async (input: string | URL | Request, init?: RequestInit) => {
+      const url = String(input);
+      const h = new Headers(init?.headers);
+      seen.push({ url, secret: h.get('x-admin-secret'), auth: h.get('authorization') });
+      if (url.endsWith('/admin/token')) return Response.json({ member: 'B', token: 'rdr_new_b' });
+      return Response.json({
+        workspace: { id: 'w1', name: 'toko-demo', headCommit: null, repoUrl: null },
+        members: [], tasks: [], locks: [], allocations: [], files: [], requests: [], proposals: [], cursor: 0, serverTime: 1,
+      });
+    });
+    cleanups.push(() => void vi.unstubAllGlobals());
+    const out: string[] = [];
+    expect(await main(['invite', '--server', 'https://x.example/', '--member', 'B'], { ADMIN_SECRET: SECRET }, (l) => out.push(l))).toBe(0);
+    // The admin secret goes only to /admin/*; the member read uses the new token.
+    expect(seen.map((x) => [x.url, x.secret !== null, x.auth])).toEqual([
+      ['https://x.example/admin/token', true, null],
+      ['https://x.example/v1/state', false, 'Bearer rdr_new_b'],
+    ]);
+    expect(decodeInvite(out.at(-1)!)).toEqual({ v: 1, server: 'https://x.example', workspace: 'toko-demo', member: 'B', token: 'rdr_new_b' });
+    expect(await main(['invite', '--server', 'https://x.example', '--member', 'mc'], { ADMIN_SECRET: SECRET }, () => undefined)).toBe(2);
   });
   it('formats the token table', () => {
     expect(formatTokenTable({ A: 't1', mc: 't2' })).toBe('member  token\nA       t1\nmc      t2');

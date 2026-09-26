@@ -1,4 +1,4 @@
-// `pnpm -C radar admin <init|token|export|reset>` (fase 03 step 8): replaces the v0.2 `radar-server` CLI by
+// `pnpm -C radar admin <init|token|invite|export|reset>` (fase 03 step 8): replaces the v0.2 `radar-server` CLI by
 // calling the Worker's /admin/* endpoints. ADMIN_SECRET is read from the environment only, never from argv,
 // so it does not end up in shell history. Tokens are printed once; store them in the team password manager.
 import { execFileSync } from 'node:child_process';
@@ -13,11 +13,13 @@ import {
   AdminInitRes,
   AdminMember,
   AdminTokenRes,
+  encodeInvite,
   ErrorRes,
   ExportRes,
   isProbablyBinary,
   MAX_FILE_BYTES,
   OkRes,
+  StateRes,
 } from '../packages/common/src/index.js';
 import { createIgnoreMatcher } from '../packages/common/src/node.js';
 
@@ -41,8 +43,17 @@ export class AdminError extends Error {
   }
 }
 
-export async function adminCall<T>(c: AdminClient, method: 'GET' | 'POST', path: string, body: unknown, schema: Schema<T>): Promise<T> {
-  const headers: Record<string, string> = { 'x-admin-secret': c.secret };
+export function adminCall<T>(c: AdminClient, method: 'GET' | 'POST', path: string, body: unknown, schema: Schema<T>): Promise<T> {
+  return call(c, { 'x-admin-secret': c.secret }, method, path, body, schema);
+}
+
+/** A read with a member token (the admin secret is not sent to member endpoints). */
+export function memberCall<T>(c: AdminClient, token: string, path: string, schema: Schema<T>): Promise<T> {
+  return call(c, { authorization: `Bearer ${token}` }, 'GET', path, undefined, schema);
+}
+
+async function call<T>(c: AdminClient, auth: Record<string, string>, method: 'GET' | 'POST', path: string, body: unknown, schema: Schema<T>): Promise<T> {
+  const headers: Record<string, string> = { ...auth };
   if (body !== undefined) headers['content-type'] = 'application/json';
   const res = await (c.fetchImpl ?? fetch)(c.server.replace(/\/+$/, '') + path, {
     method,
@@ -169,6 +180,7 @@ const USAGE = `usage (ADMIN_SECRET must be set in the environment):
   admin init   --server <url> --workspace <name> [--repo owner/name] [--branch main] [--repo-dir <clone>]
                --member ID:role:Name[:email] ... [--force]
   admin token  --server <url> --member <ID|mc>
+  admin invite --server <url> --member <ID>   (rotates the token; prints an rdr_inv_ code for radar join --invite)
   admin export --server <url> [--out <file>] [--from <id>] [--to <id>]
   admin reset  --server <url> --confirm`;
 
@@ -190,7 +202,7 @@ export async function main(argv: string[], env: NodeJS.ProcessEnv = process.env,
       to: { type: 'string' },
     },
   });
-  if (!command || !['init', 'token', 'export', 'reset'].includes(command) || !values.server) {
+  if (!command || !['init', 'token', 'invite', 'export', 'reset'].includes(command) || !values.server) {
     out(USAGE);
     return 2;
   }
@@ -230,6 +242,18 @@ export async function main(argv: string[], env: NodeJS.ProcessEnv = process.env,
     }
     const r = await adminCall(c, 'POST', '/admin/token', { member, rotate: true }, AdminTokenRes);
     out(formatTokenTable({ [r.member]: r.token }));
+    return 0;
+  }
+  if (command === 'invite') {
+    const member = values.member?.[0];
+    if (!member || member === 'mc') {
+      out(member === 'mc' ? 'invite is for coder/pm members; use `admin token --member mc` for Mission Control.' : USAGE);
+      return 2;
+    }
+    const r = await adminCall(c, 'POST', '/admin/token', { member, rotate: true }, AdminTokenRes);
+    const state = await memberCall(c, r.token, '/v1/state', StateRes);
+    out(`Invite for ${r.member} (shown once; the old token no longer works; share it privately, never in the repo or a public chat):`);
+    out(encodeInvite({ server: c.server, workspace: state.workspace.name, member: r.member, token: r.token }));
     return 0;
   }
   if (command === 'export') {

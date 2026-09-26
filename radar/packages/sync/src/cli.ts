@@ -5,7 +5,7 @@ import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { Command, Option } from 'commander';
 import pc from 'picocolors';
-import { HealthRes, MEMBER_COLORS, TasksRes } from '@radar/common';
+import { decodeInvite, HealthRes, InviteInvalidError, MEMBER_COLORS, TasksRes } from '@radar/common';
 import { ConfigInvalidError, ConfigMissingError, loadLocalConfig, type LocalConfig } from '@radar/common/node';
 import { SyncAgent, SYNC_CLIENT_VERSION } from './agent.js';
 import { findKitDir, installKit, type KitRole } from './kit.js';
@@ -173,6 +173,39 @@ function loadConfigOrExit(dir: string): LocalConfig {
   }
 }
 
+export interface JoinTarget {
+  server: string;
+  workspace: string;
+  member: string;
+  token: string;
+}
+
+/**
+ * IN-02: `radar join --invite <code>` (or RADAR_INVITE) fills server, workspace, member and token from one code;
+ * otherwise all four come from the arguments (token from --token or RADAR_TOKEN). Returns an error text instead
+ * of throwing, and never echoes the code or the token.
+ */
+export function resolveJoin(
+  server: string | undefined,
+  o: { workspace?: string; as?: string; token?: string; invite?: string },
+  env: NodeJS.ProcessEnv = process.env,
+): JoinTarget | { error: string } {
+  // RADAR_INVITE applies only when no server is given, so a stale env value never overrides explicit arguments.
+  const invite = o.invite ?? (server ? undefined : env.RADAR_INVITE);
+  if (invite) {
+    if (server || o.workspace || o.as || o.token) return { error: '--invite sudah berisi server, workspace, member, dan token; jangan digabung dengan argumen itu.' };
+    try {
+      const i = decodeInvite(invite);
+      return { server: i.server, workspace: i.workspace, member: i.member, token: i.token };
+    } catch (e) {
+      return { error: e instanceof InviteInvalidError ? e.message : 'Kode undangan tidak bisa dibaca.' };
+    }
+  }
+  const token = o.token ?? env.RADAR_TOKEN;
+  if (!server || !o.workspace || !o.as || !token) return { error: 'Butuh --invite <kode>, atau <server> --workspace --as dengan --token / env RADAR_TOKEN.' };
+  return { server, workspace: o.workspace, member: o.as, token };
+}
+
 const modeOption = () => new Option('--mode <mode>', 'watch (default) or poll-1s (GATE 1 fallback)').choices(['watch', 'poll-1s']);
 
 export function buildProgram(): Command {
@@ -180,10 +213,11 @@ export function buildProgram(): Command {
   const out = (s: string) => process.stdout.write(`${s}\n`);
 
   program
-    .command('join <server>')
+    .command('join [server]')
     .description('write .radar/local.json, sync the workspace, install the .bob kit, keep syncing')
-    .requiredOption('--workspace <name>', 'workspace name, e.g. toko-demo')
-    .requiredOption('--as <member>', 'your member id (A, B, C, …)')
+    .option('--invite <code>', 'rdr_inv_ code from `admin invite` (or set RADAR_INVITE so it stays out of shell history)')
+    .option('--workspace <name>', 'workspace name, e.g. toko-demo (without --invite)')
+    .option('--as <member>', 'your member id (A, B, C, …) (without --invite)')
     .option('--token <token>', 'member token (or set RADAR_TOKEN so it stays out of shell history)')
     .option('--dir <dir>', 'workspace folder', '.')
     .addOption(new Option('--kit <role>', 'kit to install; defaults to the role the server reports').choices(['coder', 'pm']))
@@ -193,16 +227,17 @@ export function buildProgram(): Command {
     .addOption(modeOption())
     .option('--verbose', 'print every sync.log line')
     .option('--json-status', 'print status as JSON lines (for the desktop app)')
-    .action(async (server: string, o: { workspace: string; as: string; token?: string; dir: string; kit: string | boolean; kitDir?: string; forceKit?: boolean; mode?: SyncMode; verbose?: boolean; jsonStatus?: boolean }) => {
-      const token = o.token ?? process.env.RADAR_TOKEN;
-      if (!token) {
-        process.stderr.write(pc.red('✖ --token atau env RADAR_TOKEN wajib.\n'));
+    .action(async (serverArg: string | undefined, o: { invite?: string; workspace?: string; as?: string; token?: string; dir: string; kit: string | boolean; kitDir?: string; forceKit?: boolean; mode?: SyncMode; verbose?: boolean; jsonStatus?: boolean }) => {
+      const target = resolveJoin(serverArg, o);
+      if ('error' in target) {
+        process.stderr.write(pc.red(`✖ ${target.error}\n`));
         process.exit(2);
       }
+      const { server, workspace, member, token } = target;
       const root = resolve(o.dir);
       mkdirSync(root, { recursive: true });
       const kitRole = typeof o.kit === 'string' ? (o.kit as KitRole) : undefined;
-      const files = writeJoinFiles({ root, server, workspace: o.workspace, member: o.as, token, role: kitRole ?? 'coder' });
+      const files = writeJoinFiles({ root, server, workspace, member, token, role: kitRole ?? 'coder' });
       if (!o.jsonStatus) out(pc.dim(`.radar/local.json ditulis (0600)${files.excluded ? `; .radar/ ditambahkan ke ${files.excluded}` : ''}`));
       const cfg = loadConfigOrExit(root);
       const code = await runAgent(cfg, {
@@ -212,7 +247,7 @@ export function buildProgram(): Command {
         afterStart: (agent) => {
           const p = agent.principal;
           const role: KitRole = p?.kind === 'member' ? p.role : (kitRole ?? 'coder');
-          if (role !== cfg.role) writeJoinFiles({ root, server, workspace: o.workspace, member: o.as, token, role });
+          if (role !== cfg.role) writeJoinFiles({ root, server, workspace, member, token, role });
           if (o.kit === false) return;
           const r = installKit({ root, role: kitRole ?? role, kitDir: findKitDir(o.kitDir), force: o.forceKit ?? false });
           if (!o.jsonStatus) reportKit(r, kitRole ?? role, out);
