@@ -34,3 +34,9 @@
 - Temuan 1 (diperbaiki + redeploy): `fetch` global yang disimpan lalu dipanggil detached melempar `Illegal invocation` di workerd → default committer sekarang closure `(...args) => fetch(...args)` + test regresi.
 - Temuan 2 (BLOKIR, butuh manusia): `POST /git/trees` → 403 `Resource not accessible by personal access token` (GET commit lolos). PAT di produksi tidak punya Contents write untuk `aliefauzan/toko-demo` (kemungkinan dibuat untuk repo lain sebelum pindah B3, atau read-only). Alief: buat PAT fine-grained baru (hanya repo ini, Contents read & write, tanpa Workflows) lalu `npx wrangler secret put GITHUB_TOKEN` (diketik sendiri, jangan di chat), kemudian approve ulang P-4 (`POST /v1/proposals/P-4/decision {approve:true}` token mc) → commit T-1 ter-push → screenshot halaman commit ke `radar/docs/img/commit-github.png`.
 - State produksi saat ini (aman, tidak rusak): T-1 `review` (touch checkout v1→v2 berisi baris proof), T-2 `terbuka` kosong, P-4 `menunggu`, head `ed9e4b2` belum bergerak, `GITHUB_COMMIT=true` tetap ON untuk fase 10.
+
+## Bukti push selesai (Sab 26 Sep 18:00 WITA)
+- Alief memperbaiki izin PAT (Contents → Read and write). Approve ulang P-4 → `disetujui`, commit `c0576499` `pushed:true`, 1 file (`src/checkout/checkout.ts` +1 baris proof).
+- GitHub: author Alice `<alice@example.com>`, parent `ed9e4b2` (fast-forward), pesan persis R5 §3 + 4 trailer (`Radar-Task`, `Radar-Main-Agent-Proposal: P-4`, `Reviewed-by: Citra (PM)`, `Co-authored-by: IBM Bob`). Head produksi → `c0576499`, T-1 `selesai`.
+- Screenshot: `radar/docs/img/commit-github.png` (halaman commit, message + diff +1 terlihat).
+- DoD SV-07: [x]. T-2 `terbuka` kosong peninggalan skrip proof (aman; workspace di-reset di fase 10).
