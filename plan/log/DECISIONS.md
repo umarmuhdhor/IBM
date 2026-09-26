@@ -357,3 +357,30 @@ Format:
 - Alasan: `ci / gitleaks` di PR #18 merah. `gitleaks/gitleaks-action@v2` memasang gitleaks 8.24.3, yang diam-diam mengabaikan `[[allowlists]]` level atas; gitleaks lokal 8.30.1 membacanya, jadi scan lokal hijau. `[allowlist]` dibaca kedua versi (dicek lokal: rentang PR 0 leak, commit Orca 0 leak).
 - Alternatif ditolak: pin `GITLEAKS_VERSION` di `ci.yml` (file CI bersama); tulis ulang histori untuk menambah `gitleaks:allow`.
 - File ref/ yang diperbarui: –
+
+- Keputusan:
+  1. **`my_tasks` tidak lagi mengirim `owner=me`.** Tabel tool R3 §7 menulis `GET /v1/tasks?owner=me&status=open`, tetapi server fase 05 menjawab 403 "Hanya task milikmu sendiri." untuk `owner` selain ID pemanggil (`packages/server/src/http/routes/tasks.ts:15`). R3 §2.4 menyebut `owner` default = pemanggil, jadi tool memanggil `GET /v1/tasks?status=open` (lolos di mock dan server). **Usulan ke Alief:** samakan baris R3 §7 dengan §2.4 (atau server menerima `me` seperti mock). Tidak ada perubahan kontrak dari lane Bob.
+  2. **`mark_ai_edit` → `POST /v1/ai-edits`:** penanda `TODO(sync:alief)` diganti komentar biasa. Kode sisi Bob sudah final (R3 §2.20); route di Worker = fase 12 (BC-05, P1). Sampai itu ada, 404 hanya ditulis ke `.radar/hook.log` (fail-open, tidak memperlambat edit: panggilan paralel dengan `bob/activity`).
+  3. **`spike/fake-radar/server.mjs`:** tidak lagi dipakai untuk uji; uji Bob IDE fase 10 memakai Worker asli (`wrangler dev`). File disimpan hanya untuk mereproduksi bukti fase 07/08.
+  4. Log fase 10 lane Bob = `plan/log/fase-10-bob.md` (fase 10 dikerjakan semua lane; file terpisah supaya PR lane tidak bentrok).
+- Temuan demo (bukan kontrak, untuk naskah PRD §15 / `docs/DEMO_SCRIPT.md`):
+  - Dengan tujuan "Tambah fitur kupon diskon di checkout dan dark mode", Bob PM menaruh kupon di `coupon.ts` + `App.tsx`, **tanpa `checkout.ts`** (di toko-demo `applyCoupon` dipanggil dari `App.tsx`). Adegan blokir naskah butuh `checkout.ts` dipegang A → sebut file di tujuan (lihat LANGKAH MANUAL fase-10-bob).
+  - Brief start B menyebut file yang dipegang A, jadi Bob B memilih `request_file` tanpa mencoba edit (sama dengan handoff fase 07). Kartu permintaan dan keputusan tetap muncul, tetapi notifikasi "Bob B diblokir" hanya muncul kalau Bob benar-benar mencoba edit.
+  - Bob coder kadang menjawab dalam bahasa Inggris walau prompt Indonesia.
+- Alasan: test integrasi `packages/mcp/test/server.int.test.ts` (RED `ffc816a3` → GREEN `7c759f72`) dan 4 sesi Bob IDE 2.2.0 melawan Worker lokal.
+- Dampak: Alief (R3 §7), Imelda/semua (naskah demo), fase 12 (`/v1/ai-edits`).
+- File ref/ yang diperbarui: – (usulan saja).
+
+## D-alief-07 · 26 Sep 2026 · fase 10 · Simulator sim-3pc + fix `owner=me`, tanpa ubah kontrak
+
+- Keputusan:
+  1. **`GET /v1/tasks?owner=me` = task pemanggil** (terima usulan D-umar-04 P1; R3 §7 tabel `my_tasks` vs §2.4 default pemanggil). Tanpa perubahan `plan/ref` (perilaku sudah tersirat di §2.4).
+  2. **`scripts/sim-3pc.ts`**: skenario PRD §15 tanpa Bob (3 SyncAgent asli + bundle `lock_guard` + WS mentah layer-2 + REST plan/decision/review/commit mc), metrik (p95 check < 300 ms, dual-writer 0, flagged ≥ 1), export `packages/web/public/demo/events.sim.json`. Opsi `--until/--runs/--server`; remote wajib `--allow-remote-wipe` + token env (tidak pernah argv), `GITHUB_COMMIT=false` di lokal.
+  3. **Runner di `packages/sync/scripts/sim-3pc.ts` + wrapper tipis `radar/scripts/sim-3pc.ts`** (jalur spec tetap ada): symlink `wrangler` di `radar/node_modules` rusak di pnpm 12 — preseden D-alief-04 poin 9.
+  4. **Lingkungan sesi ini**: runner Muse Spark (OpenCode), bukan Opus 5.5 (R6 §2); skill/agent `ecc:*` tidak ada → TDD manual + subagent `general` sebagai reviewer (4 review, HIGH diperbaiki). Authorship ikut D-alief-06 (author `aliefauzan`, tanpa trailer asisten).
+  5. **Temuan `return promise` + `finally`**: `return finish()` di dalam `try` membiarkan `finally` (`harness.close()`) berpacu dengan fetch export (ECONNRESET deterministik) — wajib `return await finish()`. Berlaku untuk semua harness `createTestHarness` + cleanup `finally`.
+- Alasan: fase 10 butuh bukti otomatis sebelum milestone 21:00; D-umar-04 memblokir `my_tasks` R3 §7.
+- Alternatif yang ditolak: sim di `radar/scripts/` dengan `wrangler` sebagai dep root (symlink rusak); WS layer-2 lewat socket agent (menggantikan socket = `replaced`, jadi dipakai socket mentah terpisah).
+- Dampak: fase 11D2 (replay cadangan), fase 12 (MEDIUM tercatat di log fase-10), milestone 21:00 (LANGKAH MANUAL di log).
+- File ref/ yang diperbarui: – (tidak ada perubahan kontrak).
+- Selisih vs `origin/main`: D-alief-06 (authorship) ada di worktree `lane/core` lain dan belum di-`main` saat entri ini ditulis; commit fase ini mengikutinya tanpa memodifikasi file itu.

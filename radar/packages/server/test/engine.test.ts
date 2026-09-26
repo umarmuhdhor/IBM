@@ -413,6 +413,13 @@ describe('tasks and requests edge cases (R3 §2.5, §2.7, §2.9)', () => {
     expect((await call(stub, 'GET', '/v1/tasks?owner=B', { token: t.B })).json.tasks.map((x: { id: string }) => x.id)).toEqual(['T-2']);
   });
 
+  it("a coder can use ?owner=me for their own tasks (R3 §7 my_tasks, D-umar-04)", async () => {
+    const { stub, t } = await setup([P], [Q]);
+    const r = await call(stub, 'GET', '/v1/tasks?owner=me', { token: t.B });
+    expect(r.status).toBe(200);
+    expect(r.json.tasks.map((x: { id: string }) => x.id)).toEqual(['T-2']);
+  });
+
   it('request_file: free file → bebas; held file → 201 then duplicate 200 with the same id', async () => {
     const { stub, t } = await setup([P], [Q]);
     expect((await call(stub, 'POST', '/v1/requests', { token: t.B, body: { path: R } })).json).toMatchObject({ requestId: null, status: 'bebas' });

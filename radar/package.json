@@ -19,7 +19,7 @@
     "dev:web": "pnpm --filter \"@radar/web^...\" build && pnpm --filter @radar/web dev",
     "dev:mock": "tsx scripts/mock-server.ts",
     "bundle:kit": "pnpm --filter @radar/hooks --filter @radar/mcp run bundle",
-    "sim": "echo \"fase-10: scripts/sim-3pc.ts\"",
+    "sim": "pnpm --filter \"@radar/sync^...\" build && cd packages/sync && tsx scripts/sim-3pc.ts",
     "bench:sync": "pnpm --filter \"@radar/sync^...\" build && cd packages/sync && tsx scripts/bench-sync.ts",
     "metrics": "echo \"fase-13: scripts/metrics.ts\"",
     "secrets:scan": "gitleaks detect --source .. --log-opts=\"--all\"",

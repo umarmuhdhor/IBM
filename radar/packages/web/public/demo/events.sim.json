@@ -1,0 +1,841 @@
+{
+  "exportedAt": 1790000094500,
+  "events": [
+    {
+      "id": 1,
+      "ts": 1790000000000,
+      "actor": "server",
+      "type": "workspace.created",
+      "payload": {
+        "workspaceId": "sim-3pc",
+        "headCommit": null,
+        "fileCount": 0
+      }
+    },
+    {
+      "id": 2,
+      "ts": 1790000001500,
+      "actor": "server",
+      "type": "member.created",
+      "payload": {
+        "memberId": "A",
+        "name": "Andi",
+        "role": "coder"
+      }
+    },
+    {
+      "id": 3,
+      "ts": 1790000003000,
+      "actor": "server",
+      "type": "member.created",
+      "payload": {
+        "memberId": "B",
+        "name": "Budi",
+        "role": "coder"
+      }
+    },
+    {
+      "id": 4,
+      "ts": 1790000004500,
+      "actor": "server",
+      "type": "member.created",
+      "payload": {
+        "memberId": "C",
+        "name": "Citra",
+        "role": "pm"
+      }
+    },
+    {
+      "id": 5,
+      "ts": 1790000006000,
+      "actor": "C",
+      "type": "proposal.created",
+      "payload": {
+        "proposalId": "P-1",
+        "kind": "plan",
+        "refId": null,
+        "reason": "Dua fitur paralel: kupon dan dark mode",
+        "payload": {
+          "goal": "Tambah fitur kupon diskon (total dihitung di src/checkout/checkout.ts) dan dark mode",
+          "tasks": [
+            {
+              "ref": "kupon",
+              "title": "Kupon",
+              "description": "",
+              "ownerId": "A",
+              "files": [
+                "src/checkout/checkout.ts",
+                "src/checkout/coupon.ts",
+                "src/routes.ts"
+              ],
+              "queuedFiles": []
+            },
+            {
+              "ref": "dark",
+              "title": "Dark mode",
+              "description": "",
+              "ownerId": "B",
+              "files": [
+                "src/ui/theme.css",
+                "src/ui/Header.tsx"
+              ],
+              "queuedFiles": [
+                "src/routes.ts"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": 6,
+      "ts": 1790000007500,
+      "actor": "mc",
+      "type": "proposal.decided",
+      "payload": {
+        "proposalId": "P-1",
+        "kind": "plan",
+        "status": "disetujui",
+        "by": "mc",
+        "note": null
+      }
+    },
+    {
+      "id": 7,
+      "ts": 1790000009000,
+      "actor": "mc",
+      "type": "task.created",
+      "payload": {
+        "taskId": "T-1",
+        "title": "Kupon",
+        "description": "",
+        "ownerId": "A",
+        "status": "terbuka",
+        "files": [
+          "src/checkout/checkout.ts",
+          "src/checkout/coupon.ts",
+          "src/routes.ts"
+        ],
+        "queuedFiles": [],
+        "adhoc": false
+      }
+    },
+    {
+      "id": 8,
+      "ts": 1790000010500,
+      "actor": "mc",
+      "type": "task.created",
+      "payload": {
+        "taskId": "T-2",
+        "title": "Dark mode",
+        "description": "",
+        "ownerId": "B",
+        "status": "terbuka",
+        "files": [
+          "src/ui/theme.css",
+          "src/ui/Header.tsx"
+        ],
+        "queuedFiles": [
+          "src/routes.ts"
+        ],
+        "adhoc": false
+      }
+    },
+    {
+      "id": 9,
+      "ts": 1790000012000,
+      "actor": "server",
+      "type": "lock.reserved",
+      "payload": {
+        "path": "src/checkout/checkout.ts",
+        "taskId": "T-1",
+        "memberId": "A",
+        "source": "plan"
+      }
+    },
+    {
+      "id": 10,
+      "ts": 1790000013500,
+      "actor": "server",
+      "type": "lock.reserved",
+      "payload": {
+        "path": "src/checkout/coupon.ts",
+        "taskId": "T-1",
+        "memberId": "A",
+        "source": "plan"
+      }
+    },
+    {
+      "id": 11,
+      "ts": 1790000015000,
+      "actor": "server",
+      "type": "lock.reserved",
+      "payload": {
+        "path": "src/routes.ts",
+        "taskId": "T-1",
+        "memberId": "A",
+        "source": "plan"
+      }
+    },
+    {
+      "id": 12,
+      "ts": 1790000016500,
+      "actor": "server",
+      "type": "lock.reserved",
+      "payload": {
+        "path": "src/ui/theme.css",
+        "taskId": "T-2",
+        "memberId": "B",
+        "source": "plan"
+      }
+    },
+    {
+      "id": 13,
+      "ts": 1790000018000,
+      "actor": "server",
+      "type": "lock.reserved",
+      "payload": {
+        "path": "src/ui/Header.tsx",
+        "taskId": "T-2",
+        "memberId": "B",
+        "source": "plan"
+      }
+    },
+    {
+      "id": 14,
+      "ts": 1790000019500,
+      "actor": "server",
+      "type": "lock.queued",
+      "payload": {
+        "path": "src/routes.ts",
+        "taskId": "T-2",
+        "memberId": "B",
+        "pos": 1
+      }
+    },
+    {
+      "id": 15,
+      "ts": 1790000021000,
+      "actor": "A",
+      "type": "member.online",
+      "payload": {
+        "memberId": "A"
+      }
+    },
+    {
+      "id": 16,
+      "ts": 1790000022500,
+      "actor": "B",
+      "type": "member.online",
+      "payload": {
+        "memberId": "B"
+      }
+    },
+    {
+      "id": 17,
+      "ts": 1790000024000,
+      "actor": "C",
+      "type": "member.online",
+      "payload": {
+        "memberId": "C"
+      }
+    },
+    {
+      "id": 18,
+      "ts": 1790000025500,
+      "actor": "A",
+      "type": "lock.acquired",
+      "payload": {
+        "path": "src/checkout/checkout.ts",
+        "taskId": "T-1",
+        "memberId": "A",
+        "auto": false
+      }
+    },
+    {
+      "id": 19,
+      "ts": 1790000027000,
+      "actor": "A",
+      "type": "task.status",
+      "payload": {
+        "taskId": "T-1",
+        "from": "terbuka",
+        "to": "dikerjakan",
+        "by": "A"
+      }
+    },
+    {
+      "id": 20,
+      "ts": 1790000028500,
+      "actor": "A",
+      "type": "file.changed",
+      "payload": {
+        "path": "src/checkout/checkout.ts",
+        "version": 2,
+        "hash": "a75288cf01b191424f91d6a783dbee75d1a5f79a48fbefbd57ebb3b54a163450",
+        "by": "A",
+        "taskId": "T-1",
+        "size": 140,
+        "patch": "===================================================================\n--- a/src/checkout/checkout.ts\n+++ b/src/checkout/checkout.ts\n@@ -1,3 +1,4 @@\n export function calculateTotal(items: { price: number }[]): number {\n   return items.reduce((sum, item) => sum + item.price, 0);\n }\n+// sim-a0\n"
+      }
+    },
+    {
+      "id": 21,
+      "ts": 1790000030000,
+      "actor": "C",
+      "type": "sync.applied",
+      "payload": {
+        "path": "src/checkout/checkout.ts",
+        "version": 2,
+        "memberId": "C",
+        "latencyMs": 3
+      }
+    },
+    {
+      "id": 22,
+      "ts": 1790000031500,
+      "actor": "B",
+      "type": "sync.applied",
+      "payload": {
+        "path": "src/checkout/checkout.ts",
+        "version": 2,
+        "memberId": "B",
+        "latencyMs": 3
+      }
+    },
+    {
+      "id": 23,
+      "ts": 1790000033000,
+      "actor": "B",
+      "type": "lock.acquired",
+      "payload": {
+        "path": "src/ui/theme.css",
+        "taskId": "T-2",
+        "memberId": "B",
+        "auto": false
+      }
+    },
+    {
+      "id": 24,
+      "ts": 1790000034500,
+      "actor": "B",
+      "type": "task.status",
+      "payload": {
+        "taskId": "T-2",
+        "from": "terbuka",
+        "to": "dikerjakan",
+        "by": "B"
+      }
+    },
+    {
+      "id": 25,
+      "ts": 1790000036000,
+      "actor": "B",
+      "type": "file.changed",
+      "payload": {
+        "path": "src/ui/theme.css",
+        "version": 2,
+        "hash": "f34792b32370a08ea04326be34dceb954a2e580b9166d3b97bc028ed739e3c94",
+        "by": "B",
+        "taskId": "T-2",
+        "size": 57,
+        "patch": "===================================================================\n--- a/src/ui/theme.css\n+++ b/src/ui/theme.css\n@@ -1,4 +1,5 @@\n :root {\n   --bg: #ffffff;\n   --fg: #111111;\n }\n+/* sim-b0 */\n"
+      }
+    },
+    {
+      "id": 26,
+      "ts": 1790000037500,
+      "actor": "C",
+      "type": "sync.applied",
+      "payload": {
+        "path": "src/ui/theme.css",
+        "version": 2,
+        "memberId": "C",
+        "latencyMs": 4
+      }
+    },
+    {
+      "id": 27,
+      "ts": 1790000039000,
+      "actor": "A",
+      "type": "sync.applied",
+      "payload": {
+        "path": "src/ui/theme.css",
+        "version": 2,
+        "memberId": "A",
+        "latencyMs": 5
+      }
+    },
+    {
+      "id": 28,
+      "ts": 1790000040500,
+      "actor": "B",
+      "type": "request.created",
+      "payload": {
+        "requestId": "R-1",
+        "path": "src/checkout/checkout.ts",
+        "requesterMemberId": "B",
+        "requesterTaskId": "T-2",
+        "holderMemberId": "A",
+        "holderTaskId": "T-1",
+        "source": "hook"
+      }
+    },
+    {
+      "id": 29,
+      "ts": 1790000042000,
+      "actor": "B",
+      "type": "lock.blocked",
+      "payload": {
+        "path": "src/checkout/checkout.ts",
+        "memberId": "B",
+        "taskId": "T-2",
+        "holderMemberId": "A",
+        "holderTaskId": "T-1",
+        "via": "hook",
+        "requestId": "R-1"
+      }
+    },
+    {
+      "id": 30,
+      "ts": 1790000043500,
+      "actor": "B",
+      "type": "bob.activity",
+      "payload": {
+        "memberId": "B",
+        "kind": "tool.pre",
+        "sessionId": "0123456789abcdef0123456789abcdef",
+        "mode": "coder",
+        "tool": "apply_diff",
+        "paths": [
+          "src/checkout/checkout.ts"
+        ],
+        "decision": "block"
+      }
+    },
+    {
+      "id": 31,
+      "ts": 1790000045000,
+      "actor": "B",
+      "type": "lock.blocked",
+      "payload": {
+        "path": "src/checkout/checkout.ts",
+        "memberId": "B",
+        "taskId": "T-2",
+        "holderMemberId": "A",
+        "holderTaskId": "T-1",
+        "via": "hook",
+        "requestId": "R-1"
+      }
+    },
+    {
+      "id": 32,
+      "ts": 1790000046500,
+      "actor": "B",
+      "type": "lock.acquired",
+      "payload": {
+        "path": "src/ui/Header.tsx",
+        "taskId": "T-2",
+        "memberId": "B",
+        "auto": false
+      }
+    },
+    {
+      "id": 33,
+      "ts": 1790000048000,
+      "actor": "B",
+      "type": "bob.activity",
+      "payload": {
+        "memberId": "B",
+        "kind": "tool.pre",
+        "sessionId": "0123456789abcdef0123456789abcdef",
+        "mode": "coder",
+        "tool": "apply_diff",
+        "paths": [
+          "src/ui/Header.tsx"
+        ],
+        "decision": "allow"
+      }
+    },
+    {
+      "id": 34,
+      "ts": 1790000049500,
+      "actor": "B",
+      "type": "file.changed",
+      "payload": {
+        "path": "src/ui/Header.tsx",
+        "version": 2,
+        "hash": "dd8089e0872e33aa024eb375553aa0bf3b578d399aca052e0b9822477c1e0172",
+        "by": "B",
+        "taskId": "T-2",
+        "size": 220,
+        "patch": "===================================================================\n--- a/src/ui/Header.tsx\n+++ b/src/ui/Header.tsx\n@@ -2,4 +2,5 @@\n \n export function Header({ items }: { items: { price: number }[] }): string {\n   return `<header>Total: ${calculateTotal(items)}</header>`;\n }\n+{/* sim: dark toggle */}\n"
+      }
+    },
+    {
+      "id": 35,
+      "ts": 1790000051000,
+      "actor": "C",
+      "type": "sync.applied",
+      "payload": {
+        "path": "src/ui/Header.tsx",
+        "version": 2,
+        "memberId": "C",
+        "latencyMs": 2
+      }
+    },
+    {
+      "id": 36,
+      "ts": 1790000052500,
+      "actor": "A",
+      "type": "sync.applied",
+      "payload": {
+        "path": "src/ui/Header.tsx",
+        "version": 2,
+        "memberId": "A",
+        "latencyMs": 2
+      }
+    },
+    {
+      "id": 37,
+      "ts": 1790000054000,
+      "actor": "B",
+      "type": "member.reconnected",
+      "payload": {
+        "memberId": "B"
+      }
+    },
+    {
+      "id": 38,
+      "ts": 1790000055500,
+      "actor": "B",
+      "type": "lock.blocked",
+      "payload": {
+        "path": "src/checkout/checkout.ts",
+        "memberId": "B",
+        "taskId": "T-2",
+        "holderMemberId": "A",
+        "holderTaskId": "T-1",
+        "via": "sync",
+        "requestId": "R-1"
+      }
+    },
+    {
+      "id": 39,
+      "ts": 1790000057000,
+      "actor": "B",
+      "type": "file.rejected",
+      "payload": {
+        "path": "src/checkout/checkout.ts",
+        "by": "B",
+        "reason": "held_by_other",
+        "holderMemberId": "A",
+        "holderTaskId": "T-1"
+      }
+    },
+    {
+      "id": 40,
+      "ts": 1790000058500,
+      "actor": "B",
+      "type": "member.offline",
+      "payload": {
+        "memberId": "B"
+      }
+    },
+    {
+      "id": 41,
+      "ts": 1790000060000,
+      "actor": "C",
+      "type": "proposal.created",
+      "payload": {
+        "proposalId": "P-2",
+        "kind": "decision",
+        "refId": "R-1",
+        "reason": "T-1 hampir selesai, B antre",
+        "payload": {
+          "requestId": "R-1",
+          "option": "antre"
+        }
+      }
+    },
+    {
+      "id": 42,
+      "ts": 1790000061500,
+      "actor": "server",
+      "type": "lock.queued",
+      "payload": {
+        "path": "src/checkout/checkout.ts",
+        "taskId": "T-2",
+        "memberId": "B",
+        "pos": 1
+      }
+    },
+    {
+      "id": 43,
+      "ts": 1790000063000,
+      "actor": "auto",
+      "type": "request.decided",
+      "payload": {
+        "requestId": "R-1",
+        "outcome": "antre",
+        "proposalId": "P-2",
+        "auto": true
+      }
+    },
+    {
+      "id": 44,
+      "ts": 1790000064500,
+      "actor": "auto",
+      "type": "proposal.decided",
+      "payload": {
+        "proposalId": "P-2",
+        "kind": "decision",
+        "status": "diterapkan_otomatis",
+        "by": "auto",
+        "note": null
+      }
+    },
+    {
+      "id": 45,
+      "ts": 1790000066000,
+      "actor": "A",
+      "type": "bob.activity",
+      "payload": {
+        "memberId": "A",
+        "kind": "tool.pre",
+        "sessionId": "0123456789abcdef0123456789abcdef",
+        "mode": "coder",
+        "tool": "apply_diff",
+        "paths": [
+          "src/checkout/checkout.ts"
+        ],
+        "decision": "allow"
+      }
+    },
+    {
+      "id": 46,
+      "ts": 1790000067500,
+      "actor": "A",
+      "type": "file.changed",
+      "payload": {
+        "path": "src/checkout/checkout.ts",
+        "version": 3,
+        "hash": "4e63020a553a09e9be4994727ad0dc2dec39970e2ef674d85f8dc1aa2046fad6",
+        "by": "A",
+        "taskId": "T-1",
+        "size": 159,
+        "patch": "===================================================================\n--- a/src/checkout/checkout.ts\n+++ b/src/checkout/checkout.ts\n@@ -1,4 +1,3 @@\n-export function calculateTotal(items: { price: number }[]): number {\n-  return items.reduce((sum, item) => sum + item.price, 0);\n+export function calculateTotal(items: { price: number }[], shipping: number): number {\n+  return items.reduce((sum, item) => sum + item.price, 0) + shipping;\n }\n-// sim-a0\n"
+      }
+    },
+    {
+      "id": 47,
+      "ts": 1790000069000,
+      "actor": "A",
+      "type": "lock.review",
+      "payload": {
+        "path": "src/checkout/checkout.ts",
+        "taskId": "T-1"
+      }
+    },
+    {
+      "id": 48,
+      "ts": 1790000070500,
+      "actor": "A",
+      "type": "lock.review",
+      "payload": {
+        "path": "src/checkout/coupon.ts",
+        "taskId": "T-1"
+      }
+    },
+    {
+      "id": 49,
+      "ts": 1790000072000,
+      "actor": "A",
+      "type": "lock.review",
+      "payload": {
+        "path": "src/routes.ts",
+        "taskId": "T-1"
+      }
+    },
+    {
+      "id": 50,
+      "ts": 1790000073500,
+      "actor": "A",
+      "type": "task.submitted",
+      "payload": {
+        "taskId": "T-1",
+        "summary": "Kupon diskon persen + ongkir",
+        "files": [
+          "src/checkout/checkout.ts"
+        ]
+      }
+    },
+    {
+      "id": 51,
+      "ts": 1790000075000,
+      "actor": "A",
+      "type": "task.status",
+      "payload": {
+        "taskId": "T-1",
+        "from": "dikerjakan",
+        "to": "review",
+        "by": "A"
+      }
+    },
+    {
+      "id": 52,
+      "ts": 1790000076500,
+      "actor": "C",
+      "type": "sync.applied",
+      "payload": {
+        "path": "src/checkout/checkout.ts",
+        "version": 3,
+        "memberId": "C",
+        "latencyMs": 1
+      }
+    },
+    {
+      "id": 53,
+      "ts": 1790000078000,
+      "actor": "C",
+      "type": "proposal.created",
+      "payload": {
+        "proposalId": "P-3",
+        "kind": "review",
+        "refId": "T-1",
+        "reason": "Kupon aman, Header ikut terdampak",
+        "payload": {
+          "taskId": "T-1",
+          "verdict": "setujui_beri_tahu",
+          "notes": "",
+          "notify": [
+            {
+              "memberId": "B",
+              "message": "calculateTotal(items, shipping) berubah."
+            }
+          ],
+          "flags": []
+        }
+      }
+    },
+    {
+      "id": 54,
+      "ts": 1790000079500,
+      "actor": "mc",
+      "type": "proposal.decided",
+      "payload": {
+        "proposalId": "P-3",
+        "kind": "review",
+        "status": "disetujui",
+        "by": "mc",
+        "note": null
+      }
+    },
+    {
+      "id": 55,
+      "ts": 1790000081000,
+      "actor": "mc",
+      "type": "review.created",
+      "payload": {
+        "reviewId": "RV-1",
+        "taskId": "T-1",
+        "verdict": "setujui_beri_tahu"
+      }
+    },
+    {
+      "id": 56,
+      "ts": 1790000082500,
+      "actor": "mc",
+      "type": "task.status",
+      "payload": {
+        "taskId": "T-1",
+        "from": "review",
+        "to": "selesai",
+        "by": "mc"
+      }
+    },
+    {
+      "id": 57,
+      "ts": 1790000084000,
+      "actor": "server",
+      "type": "lock.released",
+      "payload": {
+        "path": "src/checkout/checkout.ts",
+        "taskId": "T-1"
+      }
+    },
+    {
+      "id": 58,
+      "ts": 1790000085500,
+      "actor": "server",
+      "type": "lock.transferred",
+      "payload": {
+        "path": "src/checkout/checkout.ts",
+        "fromTaskId": "T-1",
+        "toTaskId": "T-2",
+        "toMemberId": "B",
+        "cause": "queue"
+      }
+    },
+    {
+      "id": 59,
+      "ts": 1790000087000,
+      "actor": "server",
+      "type": "lock.released",
+      "payload": {
+        "path": "src/checkout/coupon.ts",
+        "taskId": "T-1"
+      }
+    },
+    {
+      "id": 60,
+      "ts": 1790000088500,
+      "actor": "server",
+      "type": "lock.released",
+      "payload": {
+        "path": "src/routes.ts",
+        "taskId": "T-1"
+      }
+    },
+    {
+      "id": 61,
+      "ts": 1790000090000,
+      "actor": "server",
+      "type": "lock.transferred",
+      "payload": {
+        "path": "src/routes.ts",
+        "fromTaskId": "T-1",
+        "toTaskId": "T-2",
+        "toMemberId": "B",
+        "cause": "queue"
+      }
+    },
+    {
+      "id": 62,
+      "ts": 1790000091500,
+      "actor": "server",
+      "type": "commit.created",
+      "payload": {
+        "taskId": "T-1",
+        "sha": "local-c8b4e47239dba661",
+        "author": "A",
+        "files": [
+          "src/checkout/checkout.ts"
+        ],
+        "pushed": false
+      }
+    },
+    {
+      "id": 63,
+      "ts": 1790000093000,
+      "actor": "mc",
+      "type": "notify.sent",
+      "payload": {
+        "notificationId": 5,
+        "memberId": "B",
+        "message": "calculateTotal(items, shipping) berubah.",
+        "by": "mc"
+      }
+    }
+  ]
+}
