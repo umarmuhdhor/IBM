@@ -36,6 +36,7 @@ stateDiagram-v2
 | `draf` | `terbuka` | PM menyetujui proposal plan | `task.created`, alokasi + kunci `dipesan` |
 | `draf` | `batal` | PM menolak proposal plan | proposal `ditolak` |
 | `terbuka` | `dikerjakan` | edit pertama pada file task (check atau update) | `task.status`, `member.active_task_id = task` |
+| `terbuka` | `review` | `submit_task` langsung (task punya edit tetapi tidak pernah pindah ke `dikerjakan`, mis. tulis via sync tanpa check dulu) | lock task → `review` |
 | `dikerjakan` | `review` | `submit_task` | lock task → `review` |
 | `review` | `dikerjakan` | review `kembalikan` disetujui, ATAU pemilik mengedit file task saat review | proposal review `menunggu` untuk task ini → `kedaluwarsa` |
 | `review` | `selesai` | review `setujui*` disetujui | commit, lepas/pindah kunci |

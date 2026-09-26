@@ -3,7 +3,7 @@
 import { WS_PING_FRAME, WS_PONG_FRAME } from '@radar/common';
 import { DurableObject } from 'cloudflare:workers';
 import type { Hono } from 'hono';
-import { stubCommitter, type GitHubCommitter } from './committer';
+import type { GitHubCommitter } from './committer';
 import type { WorkspaceDeps } from './deps';
 import { migrate } from './db/migrate';
 import { getMeta } from './db/repo/meta';
@@ -11,6 +11,7 @@ import { createDb, type Db } from './db/sql';
 import { createApp } from './http/routes';
 import { ActivityLimiter } from './services/activity';
 import { authorizeWriteLocks, type AuthorizeWrite } from './services/files';
+import { createCommitter } from './services/github';
 import { expireCommitClaims } from './services/proposals';
 import { UnitOfWork } from './services/uow';
 import { Hub } from './ws/hub';
@@ -23,8 +24,8 @@ export class WorkspaceDO extends DurableObject<Env> implements WorkspaceDeps {
   readonly scheduler: AlarmScheduler;
   readonly limiter = new ActivityLimiter();
   readonly authorizeWrite: AuthorizeWrite = authorizeWriteLocks;
-  // Not readonly: tests swap in a failing committer.
-  committer: GitHubCommitter = stubCommitter;
+  // Set in the constructor from env (fase 06 owns the default; tests swap in fakes).
+  committer!: GitHubCommitter;
   private readonly app: Hono;
   // Re-declared public so the DO itself can serve as WorkspaceDeps.
   declare readonly ctx: DurableObjectState<Record<string, never>>;
@@ -32,6 +33,7 @@ export class WorkspaceDO extends DurableObject<Env> implements WorkspaceDeps {
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
+    this.committer = createCommitter(env);
     this.db = createDb(ctx.storage);
     this.hub = new Hub(ctx);
     this.scheduler = new AlarmScheduler(ctx.storage, [() => helloDeadline(this)]);

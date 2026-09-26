@@ -88,8 +88,8 @@ describe('flow: plan → block → decision → review → approve (fase 05 step
     const briefB = await call(stub, 'GET', `/v1/brief?kind=prompt&since=${cursorB}`, { token: t.B });
     expect(briefB.json.lines.join('\n')).toContain('Keputusan PM');
 
-    // 7. A edits, submits; PM proposes "setujui_beri_tahu"; Mission Control approves: T-1 selesai, the stub commit
-    //    is recorded, and checkout.ts moves to B (SV-06) with a note in B's brief.
+    // 7. A edits, submits; PM proposes "setujui_beri_tahu"; Mission Control approves: T-1 selesai, the local
+    //    commit (GITHUB_COMMIT=false) is recorded, and checkout.ts moves to B (SV-06) with a note in B's brief.
     syncA.send(await update('a1', CHECKOUT, 1, '// checkout with coupon\n'));
     await syncA.byType('file.ack');
     const submit = await call(stub, 'POST', '/v1/tasks/T-1/submit', { token: t.A, body: { summary: 'Kupon diskon persen' } });
@@ -113,7 +113,8 @@ describe('flow: plan → block → decision → review → approve (fase 05 step
     expect(approve.status).toBe(200);
     expect(approve.json.status).toBe('disetujui');
     const t1 = await runInDurableObject(stub, (_i, st) => st.storage.sql.exec<{ status: string; commit_sha: string | null }>("SELECT status, commit_sha FROM task WHERE id = 'T-1'").one());
-    expect(t1).toEqual({ status: 'selesai', commit_sha: 'pending-fase-06' });
+    expect(t1?.status).toBe('selesai');
+    expect(t1?.commit_sha).toMatch(/^local-[0-9a-f]+$/);
     expect(await lockOf(CHECKOUT)).toEqual({ task_id: 'T-2', state: 'dipesan' });
     expect(await lockOf(ROUTES)).toEqual({ task_id: 'T-2', state: 'dipesan' });
     expect(await lockOf(COUPON)).toBeNull();

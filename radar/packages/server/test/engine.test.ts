@@ -211,7 +211,7 @@ describe('two-transaction commit (R4 §6.3)', () => {
   });
 });
 
-describe('role matrix for fase 05 endpoints (R3 §1)', () => {
+describe('role matrix for fase 05–06 endpoints (R3 §1)', () => {
   it('each role gets 403 exactly where the matrix says ❌', async () => {
     const { stub } = freshWorkspace();
     const t = await seedTestWorkspace(stub);
@@ -229,6 +229,7 @@ describe('role matrix for fase 05 endpoints (R3 §1)', () => {
       { method: 'GET', path: '/v1/requests', allowed: ['C', 'mc'] },
       { method: 'POST', path: '/v1/proposals', body: { kind: 'review', reason: 'x', payload: { taskId: 'T-9', verdict: 'setujui' } }, allowed: ['C'] },
       { method: 'GET', path: '/v1/proposals', allowed: ['C', 'mc'] },
+      { method: 'GET', path: '/v1/tasks/T-9/diff', allowed: ['C', 'mc'] },
       { method: 'POST', path: '/v1/notify', body: { memberId: 'A', message: 'hai' }, allowed: ['C'] },
       { method: 'POST', path: '/v1/proposals/P-9/decision', body: { approve: true }, allowed: ['mc'] },
       { method: 'POST', path: '/v1/locks/revoke', body: { path: 'src/app.ts', reason: 'x' }, allowed: ['mc'] },

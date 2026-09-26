@@ -629,7 +629,7 @@
       "type": "commit.created",
       "payload": {
         "taskId": "T-1",
-        "sha": "pending-fase-06",
+        "sha": "local-52428546399e861c",
         "author": "A",
         "files": [
           "src/checkout/checkout.ts"
