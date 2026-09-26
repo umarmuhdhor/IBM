@@ -3,9 +3,9 @@
 // End-to-end demo story (PRD §15) without Bob: three real SyncAgents (A, B, C) against a real Worker,
 // the real bundled `lock_guard` hook for the block step, and a raw WebSocket for the layer-2 rejection.
 // Local mode boots the Worker with wrangler's createTestHarness and GITHUB_COMMIT=false (the commit is
-// recorded as local-<hash>, GitHub is never called). Remote mode runs against a URL with tokens from
-// RADAR_TOKEN_A / RADAR_TOKEN_B / RADAR_TOKEN_C / RADAR_TOKEN_MC and a pre-reset scratch workspace:
-// it runs `admin init --force`, so NEVER point it at production during the milestone window.
+// recorded as local-<hash>, GitHub is never called). Remote mode runs against a URL with RADAR_ADMIN_SECRET:
+// it runs `admin init --force` (which issues fresh tokens and revokes the old ones), so NEVER point it at
+// production during the milestone window.
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -102,10 +102,7 @@ export async function runSim(opts: SimOptions): Promise<number> {
     base = opts.server.replace(/\/+$/, '');
     if (!opts.allowRemoteWipe) fail('setup', `refusing to wipe ${base}: pass --allow-remote-wipe to confirm admin init --force (never point this at production)`);
     if (base.startsWith('http://')) console.error('[sim] WARNING: remote over plain http:// — tokens travel in cleartext; prefer https://');
-    const env = (k: string) => process.env[k];
-    tokens = { A: env('RADAR_TOKEN_A') ?? '', B: env('RADAR_TOKEN_B') ?? '', C: env('RADAR_TOKEN_C') ?? '', mc: env('RADAR_TOKEN_MC') ?? '' };
-    for (const m of ['A', 'B', 'C', 'mc']) if (!tokens[m]) fail('setup', `remote mode needs RADAR_TOKEN_${m} in the environment`);
-    adminSecret = env('RADAR_ADMIN_SECRET') ?? '';
+    adminSecret = process.env.RADAR_ADMIN_SECRET ?? '';
     if (!adminSecret) fail('setup', 'remote mode needs RADAR_ADMIN_SECRET in the environment (admin init --force follows)');
   }
 
@@ -184,7 +181,8 @@ export async function runSim(opts: SimOptions): Promise<number> {
     expectOk('init', init.status === 201, `admin init: HTTP ${init.status} ${JSON.stringify(init.json).slice(0, 200)}`);
     const got = init.json.tokens as Record<string, string> | undefined;
     expectOk('init', !!got?.A && !!got?.B && !!got?.C && !!got?.mc, 'admin init returned no tokens');
-    if (!remote) tokens = got as Record<string, string>;
+    // init --force rotates every token, so both modes use the ones it returns.
+    tokens = got as Record<string, string>;
     const seeded = await http('POST', '/admin/files', { admin: true, body: { headCommit: null, files: SEED_FILES } });
     expectOk('seed', seeded.status === 200, `admin files: HTTP ${seeded.status} ${JSON.stringify(seeded.json).slice(0, 200)}`);
 
