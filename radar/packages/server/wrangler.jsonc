@@ -1,6 +1,5 @@
 {
-  // Worker + Durable Object for IBM Bob Live Collab (R1, R5 §5).
-  // The WorkspaceDO binding and SQLite migration are added in fase 03.
+  // Worker + Durable Object for IBM Bob Live Collab (R1, R5 §5, fase 03).
   // Secrets (ADMIN_SECRET, GITHUB_TOKEN) are never stored here:
   // `npx wrangler secret put <NAME>` in production, `.dev.vars` (git-ignored) locally.
   "$schema": "../../node_modules/wrangler/config-schema.json",
@@ -8,8 +7,17 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-09-01",
   "compatibility_flags": ["nodejs_compat"],
+  "durable_objects": {
+    "bindings": [{ "name": "WORKSPACE", "class_name": "WorkspaceDO" }],
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["WorkspaceDO"] }],
   "vars": {
     "WORKSPACE_ID": "toko-demo",
+    "CORS_ORIGIN": "*",
+    "PUBLIC_EXPORT": "false",
+    "BOB_COAUTHOR": "IBM Bob <bob@ibm.com>",
+    "AUTO_APPLY_QUEUE": "true",
+    "GITHUB_REPO": "",
     "GITHUB_COMMIT": "false",
     "LOG_LEVEL": "info",
   },
