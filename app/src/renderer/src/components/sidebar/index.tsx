@@ -19,6 +19,14 @@ import { resolveLeftSidebarStyleVariables } from '@/lib/left-sidebar-appearance'
 import { useSystemPrefersDark } from '@/components/terminal-pane/use-system-prefers-dark'
 import { lazyWithRetry } from '@/lib/lazy-with-retry'
 import { LocalGitToolchainScanBanner } from './LocalGitToolchainScanBanner'
+import { RadarSidebarSection } from '@/components/radar/RadarSidebarSection'
+import { RadarPanel } from '@/components/radar/RadarPanel'
+import { useRadarSession } from '@/components/radar/use-radar-session'
+import { getRadarViewModel } from '@/components/radar/radar-view-model'
+import type { RadarPanelTab } from '@/components/radar/radar-panel-tab'
+import { useRadarStore } from '@/store/radar-store'
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
+import { WORKSPACE_TOP_CHROME_HEIGHT, STATUS_BAR_RESERVE_HEIGHT } from './workspace-chrome-metrics'
 
 // Why lazy: the Agents list pulls the whole activity pipeline (virtualizer, markdown
 // previews, thread derivation); users on the workspace view should not load or render any of it.
@@ -90,6 +98,9 @@ function Sidebar({
   const fetchAllWorktrees = useAppStore((s) => s.fetchAllWorktrees)
   const activeModal = useAppStore((s) => s.activeModal)
   const statusBarVisible = useAppStore((s) => s.statusBarVisible)
+  const radarState = useRadarStore((s) => s.state)
+  const { connection: radarConnection, setConnection: setRadarConnection } = useRadarSession()
+  const [radarTab, setRadarTab] = React.useState<RadarPanelTab | null>(null)
   const systemPrefersDark = useSystemPrefersDark()
   const leftSidebarStyle = useMemo(
     () => resolveLeftSidebarStyleVariables(settings, systemPrefersDark),
@@ -165,6 +176,14 @@ function Sidebar({
             <SidebarHeader
               onWorkspaceBoardMenuOpenChange={setWorkspaceBoardMenuOpen}
               activityOptionsTarget={setAgentOptionsTarget}
+            />
+            <RadarSidebarSection
+              needsYou={radarState ? getRadarViewModel(radarState).needsYou : 0}
+              onOpen={(tab) => {
+                closeWorkspaceBoard()
+                setAgentDashboardDrawerOpen(false)
+                setRadarTab(tab)
+              }}
             />
             {sidebarBody === 'agents' ? (
               <React.Suspense fallback={<div className="min-h-0 flex-1" />}>
@@ -276,6 +295,19 @@ function Sidebar({
           />
         </React.Suspense>
       ) : null}
+      <Sheet open={sidebarOpen && radarTab !== null} onOpenChange={(open) => { if (!open) { setRadarTab(null) } }} modal={false}>
+        <SheetContent
+          side="left"
+          showCloseButton
+          aria-describedby={undefined}
+          className="sm:max-w-none"
+          overlayStyle={{ top: WORKSPACE_TOP_CHROME_HEIGHT, left: sidebarWidth, bottom: statusBarVisible ? STATUS_BAR_RESERVE_HEIGHT : 0, pointerEvents: 'none' }}
+          style={{ ...leftSidebarStyle, left: `var(--workspace-sidebar-live-width, ${sidebarWidth}px)`, top: WORKSPACE_TOP_CHROME_HEIGHT, bottom: statusBarVisible ? STATUS_BAR_RESERVE_HEIGHT : 0, height: 'auto', width: `min(calc(100vw - ${sidebarWidth}px), 1100px)` }}
+        >
+          <SheetTitle className="sr-only">Live Collab</SheetTitle>
+          {radarTab && <RadarPanel tab={radarTab} connection={radarConnection} onConnectionChange={setRadarConnection} onTabChange={setRadarTab} />}
+        </SheetContent>
+      </Sheet>
     </TooltipProvider>
   )
 }

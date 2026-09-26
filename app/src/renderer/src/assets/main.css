@@ -26,6 +26,31 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Live Collab components inherit Orca's active theme. */
+:root {
+  --lc-bg: var(--background);
+  --lc-surface-1: var(--worktree-sidebar);
+  --lc-surface-2: var(--card);
+  --lc-surface-3: var(--secondary);
+  --lc-border: var(--border);
+  --lc-border-strong: var(--ring);
+  --lc-text: var(--foreground);
+  --lc-text-muted: var(--muted-foreground);
+  --lc-text-faint: var(--muted-foreground);
+  --lc-accent: var(--primary);
+  --lc-accent-soft: var(--primary-foreground);
+  --lc-ok: var(--status-success);
+  --lc-warn: var(--status-warning);
+  --lc-danger: var(--destructive);
+  --lc-font-sans: var(--font-sans);
+  --lc-font-mono: var(--font-mono);
+  --lc-member-a: #78a9ff;
+  --lc-member-b: #be95ff;
+  --lc-member-c: #ff832b;
+  --lc-member-d: #08bdba;
+  --lc-needs-you: #ff7eb6;
+}
+
 /* Why: hover-reveal controls (sidebar/row action buttons) hide with `opacity-0`
    and fade in via `group-hover`. Touch devices have no hover, so those controls
    stay invisible. Gate the hide behind `can-hover:` so touch (hover: none) keeps

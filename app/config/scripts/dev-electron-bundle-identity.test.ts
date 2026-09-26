@@ -41,6 +41,10 @@ function patchesUnder(dockTitle: string, branch: string) {
 }
 
 describe('dev-electron-bundle-identity', () => {
+  it('uses the Live Collab identity in the macOS menu and notifications', () => {
+    expect(DEV_BUNDLE_ID).toBe('dev.livecollab.app.dev')
+    expect(DEV_BUNDLE_DISPLAY_NAME).toBe('IBM Bob Live Collab Dev')
+  })
   it('leaves process.env untouched, including its object identity', () => {
     const envBefore = process.env
     const snapshot = { ...process.env }
@@ -66,7 +70,7 @@ describe('dev-electron-bundle-identity', () => {
   })
 
   it('keeps the bundle display name in step with the name safeStorage keys off', () => {
-    // Two independently hardcoded 'Orca Dev' strings: this one names the bundle (notifications,
+    // Two independently hardcoded Live Collab names: this one names the bundle (notifications,
     // System Settings), and getDevInstanceIdentity().appName drives app.setName, which decides the
     // Keychain service name. Drift would split the two without anything else failing.
     expect(DEV_BUNDLE_DISPLAY_NAME).toBe(getDevInstanceIdentity(true, {}).appName)

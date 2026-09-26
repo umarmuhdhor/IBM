@@ -4,18 +4,20 @@ const handlers = vi.hoisted(() => new Map<string, (_event: unknown, value?: unkn
 const store = vi.hoisted(() => ({
   clearRadarConnection: vi.fn(),
   getRadarConnectionSummary: vi.fn(),
-  readRadarConnection: vi.fn(() => null),
+  readRadarConnection: vi.fn<() => unknown>(() => null),
   saveRadarConnection: vi.fn()
 }))
 const validation = vi.hoisted(() => ({ isRadarConnection: vi.fn() }))
 const client = vi.hoisted(() => ({ connect: vi.fn(), disconnect: vi.fn() }))
 const windows = vi.hoisted(() => ({ getAllWindows: vi.fn(() => []) }))
+const checks = vi.hoisted(() => ({ runRadarChecks: vi.fn() }))
 
 vi.mock('electron', () => ({
   ipcMain: { handle: vi.fn((name, handler) => handlers.set(name, handler)) },
   BrowserWindow: windows
 }))
 vi.mock('./secure-store', () => store)
+vi.mock('./checks', () => checks)
 vi.mock('../../shared/radar-connection', () => validation)
 vi.mock('./ws-client', () => ({
   RadarWsClient: class {
@@ -74,5 +76,22 @@ describe('Radar connection IPC', () => {
   it('clears the saved connection', () => {
     handlers.get('radar:clear-connection')?.(null)
     expect(store.clearRadarConnection).toHaveBeenCalledOnce()
+  })
+
+  it('restarts a saved connection so a newly mounted renderer receives state', () => {
+    store.readRadarConnection.mockReturnValueOnce({ server: 'http://127.0.0.1:8787', workspace: 'demo', member: 'A', role: 'coder', token: 'synthetic-value' })
+    handlers.get('radar:refresh')?.(null)
+    expect(client.connect).toHaveBeenCalledOnce()
+  })
+
+  it('runs settings checks for a workspace path only', async () => {
+    checks.runRadarChecks.mockResolvedValue({ bobVersion: 'bob 2.0.5', bobSettings: true })
+    await expect(handlers.get('radar:checks')?.(null, '/work/toko-demo')).resolves.toEqual({
+      bobVersion: 'bob 2.0.5',
+      bobSettings: true
+    })
+    expect(checks.runRadarChecks).toHaveBeenCalledWith('/work/toko-demo')
+    await handlers.get('radar:checks')?.(null, { path: '/etc' })
+    expect(checks.runRadarChecks).toHaveBeenLastCalledWith(null)
   })
 })

@@ -1,7 +1,7 @@
 import type { RadarState } from '@radar/ui'
 import { create } from 'zustand'
 import type { RadarWsUpdate } from '../../../shared/radar-update'
-import { applyRadarEvent, normalizeRadarState } from '../lib/radar/state-placeholder'
+import { applyRadarEvent, normalizeRadarState } from '../lib/radar/state-adapter'
 
 type RadarStore = {
   state: RadarState | null

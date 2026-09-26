@@ -3,6 +3,7 @@ import { isRadarConnection } from '../../shared/radar-connection'
 import type { RadarConnection } from '../../shared/radar-connection'
 import type { RadarWsUpdate } from '../../shared/radar-update'
 import { cancelTask, decideProposal, revokeLock } from './api'
+import { runRadarChecks } from './checks'
 import {
   clearRadarConnection,
   getRadarConnectionSummary,
@@ -47,6 +48,12 @@ export function registerRadarConnectionIpc(): void {
     publishUpdate({ kind: 'status', connected: false })
   }
   ipcMain.handle('radar:get-connection', () => getRadarConnectionSummary())
+  ipcMain.handle('radar:refresh', () => {
+    const saved = readRadarConnection()
+    if (saved) {
+      startClient(saved)
+    }
+  })
   ipcMain.handle('radar:set-connection', (_event, value: unknown) => {
     if (!isRadarConnection(value)) {
       throw new Error('Invalid Live Collab connection')
@@ -59,6 +66,9 @@ export function registerRadarConnectionIpc(): void {
     stopClient()
     clearRadarConnection()
   })
+  ipcMain.handle('radar:checks', (_event, workspacePath: unknown) =>
+    runRadarChecks(typeof workspacePath === 'string' ? workspacePath : null)
+  )
   ipcMain.handle('radar:decide', (_event, value: unknown) => {
     if (
       !isRecord(value) ||

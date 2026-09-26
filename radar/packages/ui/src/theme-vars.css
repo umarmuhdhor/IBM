@@ -1,13 +1,63 @@
 /*
- * Live Collab theme variables (DESIGN.md §2.1). Named theme-vars.css, not tokens.css:
- * the IBM template .gitignore drops any file matching *token* (R5 §8).
- * Inside the Orca app these map onto Orca's own variables in main.css (D-006 point 6).
+ * Live Collab theme variables — web/replay only (DESIGN.md §2.1, §2.2).
+ * Named theme-vars.css, not tokens.css: the IBM template .gitignore drops any
+ * file matching *token* (R5 §8).
+ *
+ * Inside the Orca app these map onto Orca's own variables in main.css (D-006 §6).
+ * The app must NOT import this file; it provides its own --lc-* mappings.
+ *
+ * IBM Plex fonts are loaded here for web/replay only.
+ * The app uses Orca's bundled fonts; @radar/ui components reference var(--lc-font-*)
+ * so both environments stay consistent without this file.
  */
+
+/* IBM Plex fonts — OFL licensed, for replay and web media only */
+@import '@fontsource/ibm-plex-sans/400.css';
+@import '@fontsource/ibm-plex-sans/500.css';
+@import '@fontsource/ibm-plex-sans/600.css';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+
 :root {
-  --lc-member-a: #78a9ff;
-  --lc-member-b: #be95ff;
-  --lc-member-c: #ff832b;
-  --lc-status-ok: #42be65;
-  --lc-status-warn: #f1c21b;
-  --lc-status-error: #fa4d56;
+  /* ── Surfaces (Carbon gray scale) ─────────────────────────── */
+  --lc-bg:           #0e0e10;   /* app background                          */
+  --lc-surface-1:    #161616;   /* panel, sidebar (Carbon gray 100)        */
+  --lc-surface-2:    #1e1e20;   /* cards, inputs                           */
+  --lc-surface-3:    #262626;   /* hover, raised card (gray 90)            */
+
+  /* ── Borders ──────────────────────────────────────────────── */
+  --lc-border:       #2a2a2d;   /* 1 px dividers                           */
+  --lc-border-strong:#393939;   /* weak focus ring (gray 80)               */
+
+  /* ── Typography ───────────────────────────────────────────── */
+  --lc-text:         #f4f4f4;   /* primary text (gray 10)                  */
+  --lc-text-muted:   #a8a8a8;   /* labels (gray 40)                        */
+  --lc-text-faint:   #6f6f6f;   /* timestamp, meta (gray 60)               */
+
+  /* ── Accent ───────────────────────────────────────────────── */
+  --lc-accent:       #0f62fe;   /* primary button, link (IBM Blue 60)      */
+  --lc-accent-soft:  #a6c8ff;   /* text on dark accent, focus ring (Blue 30) */
+
+  /* ── Status ───────────────────────────────────────────────── */
+  --lc-ok:           #42be65;   /* green (Green 40)                        */
+  --lc-warn:         #f1c21b;   /* yellow (Yellow 30)                      */
+  --lc-danger:       #fa4d56;   /* red/block (Red 50)                      */
+
+  /* ── Needs-you accent ─────────────────────────────────────── */
+  --lc-needs-you:    #ff7eb6;   /* DecisionCard border, active input (Magenta 40) */
+
+  /* ── Person colors ────────────────────────────────────────── */
+  --lc-member-a:     #78a9ff;   /* Andi · coder · Blue 40                  */
+  --lc-member-b:     #be95ff;   /* Budi · coder · Purple 40               */
+  --lc-member-c:     #ff832b;   /* Citra · PM · Orange 40                 */
+  --lc-member-d:     #08bdba;   /* Dewi · coder · Teal 40                 */
+
+  /* ── Typography scale (web/replay, IBM Plex) ─────────────── */
+  --lc-font-sans:    'IBM Plex Sans', Inter, system-ui, sans-serif;
+  --lc-font-mono:    'IBM Plex Mono', 'Menlo', monospace;
+
+  /* ── Legacy aliases kept for backward-compat ─────────────── */
+  --lc-status-ok:    var(--lc-ok);
+  --lc-status-warn:  var(--lc-warn);
+  --lc-status-error: var(--lc-danger);
 }

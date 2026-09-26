@@ -328,6 +328,11 @@ const TUI_AGENT_CONFIG_SOURCE: Record<TuiAgent, TuiAgentConfigSource> = {
   },
   bob: {
     detectCmd: 'bob',
+    // Bob Shell 2.0.5 imports node:sqlite; use Node 24 when nvm is available.
+    launchCmdByPlatform: {
+      darwin:
+        'sh -c \'if [ -s "$HOME/.nvm/nvm.sh" ]; then . "$HOME/.nvm/nvm.sh" >/dev/null && nvm exec 24 bob "$@"; else exec bob "$@"; fi\' bob'
+    },
     // UNVERIFIED: Bob Shell prompt handling needs a live check. Avoid passing prompts as CLI arguments.
     promptInjectionMode: 'stdin-after-start'
   }

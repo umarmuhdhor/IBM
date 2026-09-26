@@ -1,6 +1,6 @@
 # Log fase 09 — App desktop (Lane Aarief · `lane/app`)
 
-- **Status:** [~] berjalan (09a).
+- **Status:** [x] implementasi dan gerbang fase 09 selesai Sab 26 Sep 11:30 WITA. Gerbang UI + security lulus 11:05, uji koneksi live melawan mock lulus 11:19. Snapshot dan PR: 09a [#6](https://github.com/umarmuhdhor/IBM/pull/6), 09b [#7](https://github.com/umarmuhdhor/IBM/pull/7), 09c [#8](https://github.com/umarmuhdhor/IBM/pull/8).
 - **Mulai:** Sab 26 Sep 2026 00:12 WITA · branch `lane/app` (dibuat dari `origin/main` `ed1f2951`, tanpa upstream).
 - **Model:** Claude Opus 5.5 · high (R6 §2 menyarankan Sonnet 5 high; Opus diizinkan untuk titik sambung Orca).
 
@@ -9,10 +9,10 @@
 Aturan yang tetap berlaku: `CLAUDE.md`, `plan/PROMPT.md` (LANE Aarief, FASE auto), `plan/fase-09-app-desktop.md`, kontrak `plan/ref/R1–R7`, D-007 + D-alief-01 di `plan/log/DECISIONS.md`. Hanya boleh mengubah `app/**`, `radar/packages/ui`, plus output yang disebut fase 09 (`radar/docs/ORCA_MAP.*`, `bob_sessions/*aarief*`). Toolchain: `export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"; nvm use 24`. Commit kecil per langkah. Jangan force-push main; jangan sentuh folder lane lain.
 
 **Langkah berikutnya (urut):**
-1. Tulis `radar/docs/ORCA_MAP.md`: ringkasan `radar/docs/ORCA_MAP.html` (hasil Bob C1, jangan diubah) + tabel koreksi path:baris. Klaim Bob yang sudah diketahui keliru: baris "PTY output → xterm" di `runtime-terminal-inspection.ts:251` sebenarnya jalur *input* (`window.api.pty.write`). Verifikasi setiap path:baris dengan `grep -n`.
-2. BOB SLICE C2 (P1, Bob mode **Agent**, bukan Ask): tulis test merah dulu (kasus `bob` di `app/src/shared/tui-agent-config.test.ts` dll.), lalu kirim prompt fase 09 langkah 2 ke Bob IDE, bukti `radar/scripts/bob-evidence.sh aarief 02 register_bob_agent`, commit hasil Bob apa adanya dengan trailer `Bob-Assisted: bob_sessions/<png>`. Daftar file: `grep -rlw kiro app/src | grep -v .test.` (11 file; `agent-favicon-assets.ts` boleh dilewati, glyph pakai `AgentLetterIcon`). `promptInjectionMode` = paling konservatif, tandai "BELUM DIVERIFIKASI". `pnpm -C app tc` harus hijau.
-3. 09b: alias Vite/tsconfig/vitest ke `radar/packages/{common,ui}/src` (`app/electron.vite.config.ts`, `app/config/tsconfig.web.json`, `app/config/vitest.config.ts`, dedupe react/lucide) → secure-store + IPC → ws-client + store + api (lihat keputusan di bawah).
-4. 09c: BOB SLICE C3 (`@radar/ui` komponen), lalu panel sidebar/Mission Control/Team/Files/Settings/status bar, gerbang UI, review, PR `lane/app-f09a|b|c` (PROMPT langkah 11).
+1. DA-02 P1 terverifikasi: menu New tab menampilkan **IBM Bob** dengan glyph B; pemilihan dari UI membuka Terminal 2 dan Bob Shell 2.0.5 otomatis. Pesan `halo` dijawab normal dengan tim `ibm-coding-challenge-uat`. Screenshot lokal `/tmp/bob_app_picker_response.png` (tidak di-commit karena menampilkan identitas akun).
+2. PR Core #4 sudah di-merge ke `main` sebagai `8dd22e1c`; `lane/app` direbase ke commit itu. Placeholder tipe, reducer, dan keepalive telah diganti dengan `@radar/common`.
+3. Checklist Settings, gerbang UI, security review, koneksi WS live, dan Approve P-2 melawan mock telah lulus. Screenshot aman tanpa informasi pribadi ada di `app/docs/img/app-mission-control.png`.
+4. Snapshot 09a/09b/09c sudah dibuat sebelum commit 11a. PR #6/#7 merged; #8 menunggu CI hijau, lalu merge sesuai PROMPT langkah 11/13. Commit Bob C2/C3 memiliki `Co-authored-by: IBM Bob <bob@ibm.com>`; avatar GitHub Bob bergantung pada alamat email akun yang belum dikonfirmasi.
 
 **Keputusan yang sudah diambil (tulis ke DECISIONS sebagai D-aarief-01 saat commit berikutnya):**
 - Role di Settings = `coder | mc` (R3 §1/§2.14: hanya token `mc` boleh decision; fase 09 langkah 5 menulis `pm`).
@@ -20,7 +20,7 @@ Aturan yang tetap berlaku: `CLAUDE.md`, `plan/PROMPT.md` (LANE Aarief, FASE auto
 - `theme-vars.css` fase 00 memakai `--lc-member-*`/`--lc-status-*`; DESIGN memakai `--lc-person-a/b/c` + `--lc-needs-you`; tambah `--lc-person-d` (#08BDBA, R5 §4).
 - Mission Control dibuka dengan pola drawer/sheet seperti Agent Dashboard (bukan tab content type baru).
 
-**Otomasi Bob IDE (terbukti, detail di `radar/docs/SPIKE_RESULTS.md` bagian "Bob IDE UI automation via CDP"):** Bob IDE jalan dengan `--remote-debugging-port=9223` pada folder `app/`. Chat ada di iframe `vscode-webview://`; pakai `Runtime.evaluate` ke target iframe (helper ±30 baris Node 24; tidak ikut repo, buat ulang bila perlu).
+**Otomasi Bob IDE:** Bob IDE berjalan dengan `--remote-debugging-port=9223` pada folder `app/`. Target chat ada pada iframe `vscode-webview://`; daftar target melalui `http://127.0.0.1:9223/json`, hubungkan WebSocket debugger target iframe, lalu pakai CDP `Runtime.evaluate` untuk input/click. Bukti slice ada di `bob_sessions/*aarief*`; helper lokal sementara tidak di-commit.
 
 ## Ringkasan planner (`ecc:planner`)
 
@@ -38,24 +38,43 @@ Aturan yang tetap berlaku: `CLAUDE.md`, `plan/PROMPT.md` (LANE Aarief, FASE auto
 - [x] 3. Alias paket UI/common di Vite renderer, Vitest, `tsconfig.web.json`, dan `tsconfig.tc.web.json`; React/React DOM/lucide di-dedupe. `pnpm -C app tc:web` hijau.
 - [x] 4. Penyimpanan koneksi aman + IPC: ciphertext `userData/radar/connection.bin`, menolak OS encryption yang tidak tersedia, `get`/`set` hanya mengembalikan ringkasan tanpa token, `clear` menghapus file. Test merah sebelum implementasi, lalu 7/7 lulus.
 - [x] 5. 09b: WebSocket di main (`hello` mc/app, keepalive string persis, backoff 0,5→8 s, stop pada 4401), store renderer dari snapshot/event, dan aksi MC via IPC (`decide`, `revoke`, `cancelTask`). Test merah untuk WS, endpoint, store task/kunci/proposal sebelum implementasi; 19/19 test terkait lulus.
-- [ ] 6–14. 09c.
+- [x] 6. BOB SLICE C3 lewat CDP Bob IDE, commit asli `c9e33b6c` dengan `Bob-Assisted` dan `Co-authored-by: IBM Bob <bob@ibm.com>`. Bukti `bob_sessions/uaai_aarief_task03_radar_ui_components_summary.png` (2.27 Bobcoin). Dua suite test ditulis merah sebelum Bob; hasil Bob 6/6 test dan typecheck hijau. Review terpisah: ganti satu warna hex pada komponen, jangan menandai pemilik task online bila status belum diketahui, rapikan EOF.
+- [x] 6a. Komponen pelengkap `ReviewCard`, `BriefMeter`, `PresenceStack` disiapkan dengan dua suite test merah dahulu, lalu 8/8 test UI dan typecheck hijau. Komponen ini mengikuti props murni dan token `--lc-*`.
+- [x] 7. Seksi LIVE COLLAB disisipkan setelah header sidebar dengan Mission Control, Team, Files & locks, Settings; badge Needs you dihitung dari proposal pending. Drawer mengikuti pola Sheet Orca.
+- [~] 8–9. Mission Control menampilkan task, keputusan, feed, ringkasan lock, dan notifikasi blocked/decision; Team dan Files & locks membaca state WS; Settings menyimpan koneksi melalui IPC dan status bar menampilkan ringkasan. Tombol Open in Bob IDE memakai launcher editor Orca pada worktree aktif. Test coder read-only dan keputusan MC menunggu event server lulus. Checklist Settings selesai (`c86c479b`, `cbbfd4d4`): tombol Test menjalankan IPC `radar:checks` di main (versi Bob Shell lewat launcher Node 24 + `runProcess`, keberadaan `.bob/settings.json` di workspace aktif) dan status WebSocket. Coder melihat kartu keputusan tanpa tombol (`13f4c917`). Verifikasi koneksi UI dengan token tetap LANGKAH MANUAL 2.
+- [x] 8a. Renderer yang baru mount meminta `radar:refresh` setelah berlangganan update, agar frame `state` tidak hilang bila WS main tersambung sebelum UI siap. Handler membaca koneksi aman di main dan memulai ulang WS; token tidak dikirim ke renderer. Test IPC merah dahulu, lalu 5/5 lulus dan `app tc` hijau.
+- [x] 8b. Perbaikan startup dari uji manual: `app/vite.web.config.ts` belum memiliki alias `@radar/ui`/`@radar/common`, walau config Electron/Vitest sudah. `pnpm -C app build:web` gagal persis seperti laporan user sebelum patch, lalu hijau setelah alias dan dedupe React/lucide ditambah. `ORCA_BACKGROUND_LAUNCH=1 pnpm -C app dev` mencapai `starting electron app` + CDP 9339; proses dihentikan setelah verifikasi startup.
+- [x] 10. Branding utama — commit `d10f10d7`: nama bundle dev/menu, titlebar, judul web, landing, pilihan ikon default, serta aset ikon macOS/Windows memakai IBM Bob Live Collab dan gambar tiga Bob dari pengguna. Test komponen/ikon/identitas dibuat merah sebelum implementasi. App Electron lokal berhasil dibuka; screenshot landing melalui CDP 9339 diperiksa secara visual.
+- [x] 11. Kondisi kosong/error: belum konek → kartu "Connect to a Live Collab workspace" + tombol Open settings; server putus → badge merah "Disconnected", state terakhir tetap tampil (store hanya mengubah `connected`). Uji tanpa token melawan mock asli: kredensial sintetis salah → mock menutup 4401 → client membuka tepat 1 socket (tanpa reconnect) dan status akhir `connected:false` (probe sementara, dihapus setelah lulus).
+- [x] 12–13. Gerbang UI `better-interface` + security review PASS (lihat "Hasil verifikasi").
+- [x] 14a. Uji koneksi live (26 Sep 11:18–11:19): app Dev background + Playwright CDP 9339. Kode demo `mc` dibaca script dari `radar/scripts/mock/hub.ts` langsung di memori dan diisi ke field password; nilainya tidak dicetak ke chat, log, file repo, atau commit. Hasil: header `● Live Collab`, field token kosong lagi setelah Connect, Test → WebSocket Connected / Bob Shell 2.0.5; skenario demo diputar (57 event); kartu keputusan muncul 14.6 s setelah membuka Mission Control; klik Approve pada review P-2 → Needs you 1 → 0, dan `GET /v1/state` mock menunjukkan `P-2=disetujui` + event `proposal.decided P-2` (keputusan benar-benar sampai ke `POST /v1/proposals/:id/decision`). Notifikasi `Bob B diblokir di checkout.ts` tampil. Screenshot `app/docs/img/app-mission-control.png` (1512×982, dark). `app-home`/`app-coder` belum diambil karena terminal workspace uji menampilkan info pribadi mesin; diambil ulang di toko-demo saat fase 10.
+- [x] 14. Snapshot PR 09a/09b/09c dibuka sebagai #6/#7/#8. Branding About, mock server, dan Bob Shell sudah diverifikasi. PR 09b/09c bertumpuk sampai fase sebelumnya merged.
+- [x] Sinkron fase 02: PR #4 diperiksa (CI hijau, mergeable, review kontrak) lalu squash-merge ke `main` sebagai `8dd22e1c`. `lane/app` direbase ke `origin/main` tanpa menyentuh folder lane lain. Test merah membuktikan snapshot array dan event resmi belum ditangani, kemudian `@radar/common` dipakai untuk tipe/reducer/keepalive. Test merah kedua menangkap duplikasi jam feed lalu diperbaiki. About menambah kredit Orca setelah test merah.
 
 ## File dibuat/diubah
 
 - `app/config/electron-builder.config.cjs`, `app/config/scripts/electron-builder-mac-channel-config.test.mjs`, `app/src/main/startup/{dev-instance-identity,configure-process}{,.test}.ts`
-- `radar/docs/ORCA_MAP.html`, `radar/docs/SPIKE_RESULTS.md` (append), `bob_sessions/uaai_aarief_task01_orca_onboarding_summary.png`, `bob_sessions/index/aarief.md`
+- `radar/docs/ORCA_MAP.html`, `bob_sessions/uaai_aarief_task01_orca_onboarding_summary.png`, `bob_sessions/index/aarief.md`
 - `radar/packages/ui/src/types-temp.ts` (placeholder), `radar/docs/ORCA_MAP.md` (verifikasi C1), `app/src/shared/tui-agent-{config,selection}.test.ts` (test merah C2)
 - C2 Bob: `app/src/shared/{tui-agent,tui-agent-config,tui-agent-display-names,tui-agent-selection,telemetry-property-schemas,agent-kind,skills-cli-agent-keys}.ts`, `app/src/renderer/src/lib/{agent-catalog.tsx,agent-status.ts}`, bukti dan indeks Aarief. Review sesudah commit: komentar konfigurasi diubah ke Bahasa Inggris; satu baris dukungan IBM Bob ditambah di `app/docs/site/content/docs/agents/supported.mdx`.
 - 09b langkah 3: `app/electron.vite.config.ts`, `app/config/{tsconfig.web.json,tsconfig.tc.web.json,vitest.config.ts}`.
 - 09b langkah 4: `app/src/shared/radar-connection.ts`, `app/src/main/radar/{secure-store,connection-ipc}{,.test}.ts`, `app/src/main/startup/main-process-ipc-bootstrap.ts`, `app/src/preload/api/radar-bridge.ts`, `app/src/preload/{api-types,index}.ts`.
 - 09b langkah 5: `app/src/main/radar/{ws-client,api}{,.test}.ts`, `app/src/shared/radar-update.ts`, `app/src/renderer/src/lib/radar/state-placeholder.ts`, `app/src/renderer/src/store/radar-store{,.test}.ts`, penyesuaian IPC/preload, `radar/packages/ui/src/index.ts`, dan include TypeScript di `app/config/tsconfig*.web.json`.
-- `plan/PROGRESS.md` (baris 09 `[~]`)
+- 09c langkah 6: komponen Bob `radar/packages/ui/src/{LockChip,MemberChip,WritingPulse,BobTrace,DecisionCard,TaskCard,FeedItem}.tsx`, `theme-vars.css`, `index.ts`, dua test merah, bukti PNG dan indeks Aarief. Review kecil pada `DecisionCard`, `TaskCard`, `BobTrace`.
+- 09c langkah 6a: `radar/packages/ui/src/{ReviewCard,BriefMeter,PresenceStack}.tsx`, dua test dan ekspor dari `index.ts`.
+- 09c tema app: blok `--lc-*` aditif di `app/src/renderer/src/assets/main.css`; nilai netral/status/font merujuk variabel Orca, nilai mentah hanya warna anggota dan kebutuhan PM.
+- 09c panel: `app/src/renderer/src/components/radar/*`, sisipan `sidebar/index.tsx` dan `status-bar/StatusBarSurface.tsx`; `radar/packages/ui/src/AgentTag.tsx` dilengkapi status idle/writing/blocked dan `DecisionCard.tsx` dibersihkan dari variabel tidak terpakai.
+- 09c refresh state: `app/src/main/radar/connection-ipc{,.test}.ts`, `app/src/preload/api/radar-bridge.ts`, `app/src/renderer/src/components/radar/use-radar-session.ts`.
+- 09c startup: `app/vite.web.config.ts` (alias untuk build pairing web).
+- 09c notifikasi dan Bob IDE: `app/src/renderer/src/components/radar/{NotificationsPanel{,.test},TeamPanel,MissionControlView}.tsx`.
+- 09c branding: `app/resources/app-icons/bob-live-collab.png` (cutout transparan dari gambar pengguna), `app/resources/{icon.png,build/icon.png,build/icon.icns,build/icon.ico}`, `app/src/renderer/src/components/radar/LiveCollabMark{,.test}.tsx`, landing/titlebar/judul HTML, dan identitas bundle dev. Aset sumber diunduh pengguna; tidak menyertakan data pribadi.
+- 09c Bob Shell: `app/src/shared/tui-agent-config{,.test}.ts` — launcher macOS memakai `nvm exec 24 bob` bila nvm tersedia; Linux tetap `bob`.
+- Sinkron fase 02: `radar/packages/ui/src/types.ts` menggantikan `types-temp.ts`; `app/src/renderer/src/lib/radar/state-adapter.ts` menggantikan `state-placeholder.ts`; alias main Vite/TS, test dan view terkait diperbarui. `app/src/main/menu/gpu-acceleration-about-panel{,.test}.ts` menambah kredit asal Orca.
+- `plan/PROGRESS.md` (baris 09 `[x]`)
 
 ## Placeholder aktif
 
-- `radar/packages/ui/src/types-temp.ts` — `TODO(sync:alief)`: tipe view R3 §5/§6; status tolak diasumsikan `ditolak`.
-- `app/src/renderer/src/lib/radar/state-placeholder.ts` — `TODO(sync:alief)`: adapter snapshot/event sementara sampai reducer + schemas `@radar/common` fase 02 masuk main.
-- `app/src/main/radar/ws-client.ts` — `TODO(sync:alief)`: impor konstanta keepalive dari `@radar/common` setelah fase 02.
+Tidak ada `TODO(sync:alief)` tersisa di `app/**` atau `radar/packages/ui`.
 
 ## Hasil verifikasi
 
@@ -66,20 +85,66 @@ Aturan yang tetap berlaku: `CLAUDE.md`, `plan/PROMPT.md` (LANE Aarief, FASE auto
 - 09b langkah 3: `pnpm -C app tc:web` exit 0.
 - 09b langkah 4: 7/7 test penyimpanan/IPC lulus; `pnpm -C app tc:node` dan `tc:web` exit 0; oxlint pada 9 file TS terkait exit 0. File hanya memuat ciphertext; tidak ada token dalam respons `get`/`set`.
 - 09b langkah 5: `pnpm -C app test src/main/radar src/renderer/src/store/radar-store.test.ts` 19/19 lulus; `pnpm -C app tc` exit 0; oxlint file terkait exit 0. `tc:web` sempat TS6307 pada source paket UI, lalu hijau setelah include source workspace ditambah.
+- 09c langkah 6: `pnpm -C radar --filter @radar/ui test` 6/6 lulus; `pnpm -C radar --filter @radar/ui typecheck` exit 0; Bob menyelesaikan 9 file sumber dalam batas folder yang diminta.
+- 09c panel awal: `pnpm -C app tc`, test radar renderer 3/3, `pnpm -C radar --filter @radar/ui test` 9/9, typecheck UI, dan `check:code-quality:changed` tanpa temuan. `radar-view-model.test.ts` dibuat merah sebelum helper; test keputusan UI membuktikan coder read-only dan MC tidak optimistis.
+- 09c notifikasi: test merah sebelum komponen; test radar renderer 4/4 dan `pnpm -C app tc` hijau. `bob --version` gagal pada Node 20 (`node:sqlite`), berhasil pada Node 24: versi 2.0.5; sesi login/terminal interaktif belum dicoba.
+- 09c branding dan Bob Shell: test merah lebih dahulu untuk gambar landing serta ikon app; 21/21 test terarah hijau, `pnpm -C app tc`, `pnpm -C app build:web`, dan `check:code-quality:changed` lulus. Perintah launcher macOS diuji tanpa login: `sh -c '...' bob --version` menampilkan Node v24.21.0 dan Bob 2.0.5. `pnpm -C app dev` berhasil membuka Electron dengan nama bundle `IBM Bob Live Collab Dev`; `CFBundleDisplayName` diperiksa lewat `plutil`.
+- Uji interaktif Bob Shell melalui terminal Electron/CDP 9339: `. "$HOME/.nvm/nvm.sh" && nvm exec 24 bob` berjalan, menampilkan `Running node v24.21.0` dan Bob Shell 2.0.5. Prompt kepercayaan hanya untuk folder uji `IBM Bob Live Collab Test` dipilih; tahap berikutnya menampilkan `Complete sign-in in your browser`. Tidak ada login/token yang dimasukkan agent. Screenshot uji disimpan lokal sementara, tidak di-commit.
+- Tangkapan layar pengguna setelah login browser memperlihatkan `IBM License Agreement` dengan pilihan membuka dokumen memakai Enter dan menerima/menolak memakai `y`/`n`. Penerimaan lisensi menjadi langkah manual pengguna; agent tidak memilih atas nama pengguna.
+- Sesudah pengguna menyelesaikan lisensi, Bob Shell menampilkan composer siap pakai. Uji pesan `halo` lewat terminal Electron/CDP diterima oleh UI, lalu layanan Bob mengembalikan `TrialExpiredError` dengan keterangan masa free trial berakhir dan meminta upgrade paket. Ini batas akun eksternal, bukan kegagalan launcher/Node/app. Agent tidak mengubah akun, login, atau langganan. Tidak ada respons Bob terhadap `halo`; verifikasi P1 DA-02 tetap tertunda.
+- Uji lanjutan 26 Sep 2026: Bob IDE menunjukkan tim aktif `ibm-coding-challenge-uat`. Picker `/team` Bob Shell menunjukkan `bob-001` sebagai tim trial yang aktif dan `ibm-coding-challenge-uat` sebagai tim enterprise. Tim enterprise dipilih dengan ArrowDown + Enter lewat CDP 9339; picker dibuka ulang dan menandai tim challenge aktif. Pesan `halo` berikutnya dijawab Bob Shell: “Halo! Ada yang bisa saya bantu?”. Tidak ada login, token, atau perubahan langganan oleh agent. Respons Shell terverifikasi; pemilihan agent dari UI masih perlu diuji untuk DoD DA-02.
+- Uji DA-02 dari UI app: klik New tab → menu menampilkan `B IBM Bob` → klik pilihan itu. Terminal 2 terbuka otomatis pada workspace uji, Bob Shell 2.0.5 siap tanpa galat Node atau login tambahan, dan `halo` dibalas “Halo! Ada yang bisa saya bantu?”. Screenshot `/tmp/bob_app_picker_response.png` disimpan lokal saja karena memuat identitas akun. DoD P1 DA-02 lulus.
+- Sinkron fase 02: `pnpm -C app tc`, build Electron dan web, 15/15 test radar, 9/9 test `@radar/ui`, 12/12 test About, serta `pnpm -C radar check:ignored` lulus pada Node 24. Warning ukuran chunk/CSS dari build tetap nonblocking. `pnpm -C radar dev:mock` mengembalikan `/healthz` OK. Snapshot demo tanpa token (3 anggota, 3 task, 7 lock, 61 event) disuntikkan hanya ke store renderer melalui CDP 9339; screenshot `/tmp/radar_mock_mission_control.png` menunjukkan task/keputusan/feed tanpa temuan visual HIGH. Uji WS dan keputusan MC selanjutnya lulus pada langkah 14a.
+- CI PR 09b mula-mula gagal karena job app memasang `app/` saja, sedangkan typecheck memasukkan source `@radar/common`/`@radar/ui` yang memerlukan dependensi paket Radar. Perintah `pnpm -C app tc` kini memasang dua paket Radar itu dari lockfile sebelum typecheck (`0e4ec49e`); uji lokal pada Node 24 exit 0. PR 09a #6 merged sebagai `d503869a` dan PR 09b #7 merged sebagai `579d2cb0`; snapshot berikutnya direbase ke `origin/main` setiap kali.
+
+### Review visual branding (screenshot lokal, tidak di-commit)
+
+| Tampilan | Temuan | Tingkat | Tindakan |
+|---|---|---|---|
+| Landing Electron 1970×1280 via CDP 9339 | Tiga Bob tampak utuh dan kontras pada latar gelap; judul dan tombol tidak bertabrakan. | Tidak ada HIGH | Lulus pemeriksaan visual; gambar kerja lokal di `/tmp/bob-live-collab-landing.png`. |
+| Titlebar/workspace | Nama IBM Bob Live Collab tampil; workspace lama tetap dapat dibuka. | Tidak ada HIGH | Lulus pemeriksaan visual. |
+
+Skill `better-interface` tidak tersedia pada sesi ini; inspeksi visual langsung dipakai sebagai padanan untuk perubahan branding.
+
+### Gerbang UI `better-interface` — Settings + Mission Control (26 Sep, Claude Code)
+
+Scope: `RadarSettingsPane`, `RadarPanel`, drawer di `sidebar/index.tsx`, `MissionControlView` + `ReviewCard`/`DecisionCard`. Dokumen yang dibaca: `app/AGENTS.md`, `app/docs/STYLEGUIDE.md`, DESIGN.md. Semua 6 domain skill dimuat (accessibility, layout, writing, typography, colors, ui). Screenshot via Playwright CDP 9339 (light 2000×1317 dan dark 1512×982), lokal saja.
+
+| Severity | Domain | Location | Before | After | Status |
+|---|---|---|---|---|---|
+| HIGH | Writing | `RadarSettingsPane.tsx` catch `runChecks`/`disconnect` | "Checks could not run." / "Could not remove the connection." | "Unable to run checks. Try again." / "Unable to forget the connection. Try again." | Fixed `cbbfd4d4` |
+| HIGH | Accessibility | `RadarSettingsPane.tsx` tombol Forget | Tombol hapus koneksi (token harus diisi ulang) tampil sama dengan Test | "Forget connection", `text-destructive`, dipisah `ml-auto` | Fixed `cbbfd4d4` |
+| HIGH | Layout/Writing | `ReviewCard.tsx` di view coder | Tombol tanpa gaya tampil sebagai teks "Approve & commit Send back"; coder melihat aksi yang tidak bisa dipakai | Prop `readOnly` di ReviewCard/DecisionCard; coder tidak melihat tombol, gaya tombol sama dengan DecisionCard | Fixed `13f4c917` |
+| MEDIUM | Writing | checklist Settings | "Not found on PATH", "Missing in this folder", "Not connected" | Tiap status gagal menyebut cara memperbaiki | Fixed `cbbfd4d4` |
+| MEDIUM | Accessibility | pesan status | `<p role="status">` dirender kondisional | Region `role="status"` stabil membungkus pesan + checklist; Test → "Testing…" | Fixed `cbbfd4d4` |
+| MEDIUM | Writing | placeholder Server URL | `http://localhost:3000` | `http://localhost:8787` (port mock/worker) | Fixed `cbbfd4d4` |
+| MEDIUM | Correctness | `checks.ts` | Baris terakhir `bob --version` = `commit: …` | Ambil baris semver (lewati `Running node …`) | Fixed `cbbfd4d4` + test output asli |
+| LOW | Typography | checklist | Instruksi panjang ber-font mono, pecah jelek | Mono hanya untuk nilai versi | Fixed `cbbfd4d4` |
+
+Verifikasi: focus-visible terlihat di semua stop Tab form (outline ring Orca); kontras terukur tema light: `--lc-ok` 5.02:1, destructive 4.87:1, muted 4.74:1 di atas kartu putih (lulus 4.5:1). Status checklist tidak hanya warna (● / ○ + teks). **Not verified:** kontras terukur tema dark (inspeksi visual saja), zoom 200%/lebar 320 (app desktop, drawer lebar tetap), screen reader nyata. Temuan design-lint di `Landing.tsx:78`, `StatusBarSurface.tsx:159,288` berasal dari kode Orca asli (`7c86819e`), tidak disentuh. Verdict: **Approve** (tidak ada HIGH tersisa).
+
+Catatan alat: `pnpm -C app run check:code-quality:changed` tidak memeriksa file yang sudah di-commit di monorepo ini, karena `git diff --name-only` mengembalikan `app/src/...` sedangkan filter mengharapkan `src/...`. Padanan dijalankan manual: `git diff --name-only --relative origin/main -- 'src/**/*.ts' 'src/**/*.tsx' | xargs pnpm exec oxlint` (62 file, 1 error `curly` → fixed `aa625358`) dan design-lint pada file renderer (restyle `SheetContent` milik kita → fixed `aa625358`).
+
+### Security review (langkah 13, agent `security-reviewer`, read-only)
+
+PASS. Token hanya dibaca di `secure-store.ts` dan dipakai di header Bearer (`api.ts`) + frame WS hello (`ws-client.ts`); IPC hanya mengembalikan `RadarConnectionSummary` (tanpa token); tidak ada `console`/logger yang memuat token; tidak ada perubahan `webPreferences`/`nodeIntegration`; semua handler `radar:*` memvalidasi input; `radar:checks` hanya launcher tetap + cek keberadaan file berpath absolut; URL server dibatasi http/https. Satu-satunya nilai mirip token di diff adalah fixture test `synthetic-value`. Nama file lolos aturan R5 §8.
 
 ## Deviasi
 
-- Model Opus 5.5 (lihat atas). Otomasi Bob memakai CDP langsung ke iframe webview karena `agent-browser` tidak bisa masuk frame (SPIKE_RESULTS).
+- Snapshot fase 09 mengikuti PROMPT langkah 11; commit fase 11a dipisahkan dari snapshot fase 09.
+- DoD "UI-01..04 dengan server asli setelah Sinkron 1": server fase 03 belum di `main` (PR #5 konflik), jadi uji melawan server asli pindah ke fase 10, sama seperti lane Bob.
+- Uji live memakai kode contoh mock yang tercantum di source publik, dibaca di memori saja tanpa menyimpannya di artefak.
+
+- Model Opus 5.5 (lihat atas). Otomasi Bob memakai CDP langsung ke iframe webview karena browser automation biasa tidak masuk frame.
 - Batas koneksi, role, token UI, dan drawer dicatat di D-aarief-01.
-- Review C2: registrasi exhaustive `Record<TuiAgent,...>` lengkap tanpa cast baru, `detectCmd`/`launchCmd`/`expectedProcess` = `bob`, glyph B generik. `stdin-after-start` menghindari argumen prompt CLI tetapi tetap mengirim followup lewat PTY bila ada; perilaku Bob Shell **BELUM DIVERIFIKASI**. Tidak ada channel IPC atau `nodeIntegration` baru. Gerbang screenshot UI dilakukan sebelum PR 09a.
-- 09b: path `lib/radar/{ws-client,api}.ts` dari rencana dipindah ke main process sesuai D-aarief-01, sehingga header Bearer hanya dipasang di main. `RadarState` dari server bisa berupa array (§2.21); adapter sementara mengubahnya menjadi record. Keputusan Approve/Deny tetap menunggu `proposal.decided` dari WS; API tidak mengubah store secara optimistis.
+- Review C2: registrasi exhaustive `Record<TuiAgent,...>` lengkap tanpa cast baru, `detectCmd`/`launchCmd`/`expectedProcess` = `bob`, glyph B generik. `stdin-after-start` menghindari argumen prompt CLI tetapi tetap mengirim followup lewat PTY bila ada; Bob Shell kini terverifikasi melalui UI. Tidak ada channel IPC atau `nodeIntegration` baru.
+- 09b: path `lib/radar/{ws-client,api}.ts` dari rencana dipindah ke main process sesuai D-aarief-01, sehingga header Bearer hanya dipasang di main. Snapshot array §2.21 sekarang diubah oleh `stateFromSnapshot` resmi. Keputusan Approve/Deny tetap menunggu `proposal.decided` dari WS; API tidak mengubah store secara optimistis.
 
 ## LANGKAH MANUAL
 
-1. Pasang/aktifkan Bob Shell CLI `bob` di PATH Mac ini secara mandiri; jangan kirim kredensial ke repo atau chat. Bob IDE tetap jalur P0, sehingga ini hanya verifikasi P1 DA-02.
-2. Jalankan `pnpm -C app dev` dengan `ORCA_BACKGROUND_LAUNCH=1`, buka UI secara manual, buat worktree, pilih **IBM Bob**, lalu cek terminal menjalankan `bob` dan jawab "halo". Jika CLI meminta login, selesaikan sendiri di aplikasi Bob.
-3. Balas **"manual selesai"** beserta hasil singkat (jalan/gagal dan pesan error tanpa kredensial). Setelah itu lanjutkan 09a (screenshot gerbang UI dan tombol Open in Bob IDE), lalu 09b.
-4. Jika ingin GitHub menampilkan akun/avatar IBM Bob sebagai co-author, konfirmasi alamat email GitHub IBM Bob untuk mengganti default `bob@ibm.com` (plan/TODO.md B6) sebelum snapshot 09a didorong. Trailer co-author sudah ada di commit C2; identitas pendorong branch tidak menentukan co-author commit.
+1. DA-02 sudah lulus dari pemilih agent UI; tidak ada langkah akun Bob tersisa.
+2. Gerbang koneksi UI live selesai 26 Sep 11:19 (checklist 14a). Pengguna tidak perlu mengisi kode demo lagi untuk verifikasi fase 09.
+3. Jika ingin GitHub menampilkan akun/avatar IBM Bob sebagai co-author, konfirmasi alamat email GitHub IBM Bob untuk mengganti default `bob@ibm.com` (plan/TODO.md B6) sebelum snapshot 09a didorong. Trailer co-author sudah ada di commit C2; identitas pendorong branch tidak menentukan co-author commit.
 
 ## Catatan handoff lintas lane
 

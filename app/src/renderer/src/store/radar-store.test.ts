@@ -1,18 +1,19 @@
 import { beforeEach, describe, expect, it } from 'vitest'
+import { StateRes } from '@radar/common'
 import { useRadarStore } from './radar-store'
 
-const emptyState = {
+const emptyState = StateRes.parse({
   workspace: { id: 'demo', name: 'demo', headCommit: null, repoUrl: null },
-  members: {},
-  tasks: {},
-  locks: {},
-  files: {},
-  requests: {},
-  proposals: {},
-  feed: [],
-  bobActivity: {},
+  members: [],
+  tasks: [],
+  locks: [],
+  allocations: [],
+  files: [],
+  requests: [],
+  proposals: [],
+  recentEvents: [],
   cursor: 0
-}
+})
 
 describe('Radar renderer store', () => {
   beforeEach(() => useRadarStore.getState().actions.clear())
@@ -33,7 +34,8 @@ describe('Radar renderer store', () => {
           ownerId: 'A',
           status: 'dikerjakan',
           files: ['src/checkout.ts'],
-          queuedFiles: []
+          queuedFiles: [],
+          adhoc: false
         }
       },
       latencyMs: 31
@@ -45,7 +47,7 @@ describe('Radar renderer store', () => {
         ts: 110,
         actor: 'server',
         type: 'lock.acquired',
-        payload: { path: 'src/checkout.ts', taskId: 'T-1', memberId: 'A' }
+        payload: { path: 'src/checkout.ts', taskId: 'T-1', memberId: 'A', auto: false }
       },
       latencyMs: 28
     })
@@ -69,8 +71,8 @@ describe('Radar renderer store', () => {
       kind: 'state',
       data: {
         ...emptyState,
-        tasks: [{ id: 'T-2', title: 'Review', ownerId: 'B', status: 'review' }],
-        locks: [{ path: 'src/routes.ts', taskId: 'T-2', memberId: 'B', state: 'review' }]
+        tasks: [{ id: 'T-2', title: 'Review', ownerId: 'B', status: 'review', files: [], editCount: 0 }],
+        locks: [{ path: 'src/routes.ts', taskId: 'T-2', memberId: 'B', state: 'review', queue: [] }]
       }
     })
     expect(useRadarStore.getState().state?.tasks['T-2']?.title).toBe('Review')
@@ -110,5 +112,30 @@ describe('Radar renderer store', () => {
       latencyMs: 15
     })
     expect(useRadarStore.getState().state?.proposals['P-5']?.status).toBe('disetujui')
+  })
+
+  it('rebuilds the feed and applies live events from the shared server contract', () => {
+    const snapshot = StateRes.parse({
+      workspace: { id: 'demo', name: 'Demo', headCommit: null, repoUrl: null },
+      members: [{
+        id: 'A', name: 'Aarief', role: 'coder', color: null, online: false,
+        stale: false, activeTaskId: null, blocked: false, writingUntil: 0
+      }],
+      tasks: [], locks: [], allocations: [], files: [], requests: [], proposals: [],
+      recentEvents: [{
+        id: 1, ts: 100, actor: 'server', type: 'member.created',
+        payload: { memberId: 'A', name: 'Aarief', role: 'coder' }
+      }],
+      cursor: 1
+    })
+    const { receive } = useRadarStore.getState().actions
+    receive({ kind: 'state', data: snapshot })
+    expect(useRadarStore.getState().state?.feed[0]?.type).toBe('member.created')
+
+    receive({ kind: 'event', data: {
+      id: 2, ts: 110, actor: 'server', type: 'member.online', payload: { memberId: 'A' }
+    }, latencyMs: 12 })
+    expect(useRadarStore.getState().state?.members.A?.online).toBe(true)
+    expect(useRadarStore.getState().state?.feed[0]?.type).toBe('member.online')
   })
 })
