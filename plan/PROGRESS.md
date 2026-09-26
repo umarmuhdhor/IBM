@@ -65,7 +65,7 @@ Waktu dalam WITA. Setiap lane **hanya mengedit baris fasenya sendiri** (supaya m
 | ID | Lane | Pemilik | Folder `bob_sessions/…` | Status | Bobcoin |
 |---|---|---|---|---|---|
 | A1 toko-demo | Core | Alief | `uaai_alief_task01_toko_demo_summary.png` | [x] | 1.80 |
-| A2 checkWrite | Core | Alief | | [ ] | |
+| A2 checkWrite | Core | Alief | `uaai_alief_task02_check_write_summary.png` | [x] | 5.28 |
 | A3 commit GitHub API | Core | Alief | | [ ] | |
 | A4 review locks | Core | Alief | | [ ] | |
 | B1 spike hooks | Bob | Umar | `uaai_umar_task01_spike_hooks_summary.png` | [x] | 0.345 |
