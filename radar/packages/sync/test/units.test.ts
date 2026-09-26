@@ -1,5 +1,5 @@
 // Unit tests for the small sync-agent modules (fase 04): known, writer, sidecar, notify, log.
-import { chmodSync, existsSync, mkdirSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, lstatSync, mkdirSync, readdirSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { sha256Hex } from '@radar/common';
@@ -62,6 +62,32 @@ describe('writer', () => {
     }
   });
 
+  it('never follows a symlink out of the workspace, for a file or a folder', () => {
+    const root = tempDir();
+    const outside = tempDir();
+    writeFileSync(join(outside, 'victim.txt'), 'keep\n');
+    symlinkSync(join(outside, 'victim.txt'), join(root, 'link.txt'));
+    symlinkSync(outside, join(root, 'ext'));
+    expect(() => atomicWrite(root, 'link.txt', 'pwned')).toThrow(UnsafePathError);
+    expect(() => atomicWrite(root, 'ext/new.txt', 'pwned')).toThrow(UnsafePathError);
+    expect(() => readLocal(root, 'link.txt')).toThrow(UnsafePathError);
+    expect(() => removeLocal(root, 'ext/victim.txt')).toThrow(UnsafePathError);
+    expect(read(outside, 'victim.txt')).toBe('keep\n');
+    expect(existsSync(join(outside, 'new.txt'))).toBe(false);
+    // Removing the link itself is fine: the link lives inside the workspace.
+    removeLocal(root, 'link.txt');
+    expect(existsSync(join(outside, 'victim.txt'))).toBe(true);
+  });
+
+  it('writes through a symlink that stays inside the workspace', () => {
+    const root = tempDir();
+    writeFileSync(join(root, 'real.ts'), 'old\n');
+    symlinkSync('real.ts', join(root, 'alias.ts'));
+    atomicWrite(root, 'alias.ts', 'new\n');
+    expect(read(root, 'real.ts')).toBe('new\n');
+    expect(lstatSync(join(root, 'alias.ts')).isSymbolicLink()).toBe(true);
+  });
+
   it('readLocal classifies missing, text, too large and binary files', () => {
     const root = tempDir();
     writeFileSync(join(root, 'a.ts'), 'a\n');
@@ -95,7 +121,7 @@ describe('sidecar', () => {
 });
 
 describe('notify messages', () => {
-  const holder = { memberId: 'A', memberName: 'Alice', taskId: 'T-1', taskTitle: 'Kupon', state: 'held' as const };
+  const holder = { memberId: 'A', memberName: 'Alice', taskId: 'T-1', taskTitle: 'Kupon', state: 'dipegang' as const };
   it('names the holder for held_by_other', () => {
     expect(formatRejection({ path: 'src/checkout/checkout.ts', reason: 'held_by_other', holder, sidecar: 'src/checkout/checkout.ts.radar-rejected' })).toBe(
       '✖ Perubahanmu di src/checkout/checkout.ts ditolak: dipegang Alice (T-1 Kupon). Isimu disimpan di checkout.ts.radar-rejected.',

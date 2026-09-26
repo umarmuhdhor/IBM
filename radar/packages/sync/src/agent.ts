@@ -22,7 +22,7 @@ import { createSyncLog, type SyncLog } from './log.js';
 import { formatRejection, terminalNotifier, type Notifier } from './notify.js';
 import { writeSidecar } from './sidecar.js';
 import { createWatcher, isIgnored, listFiles, type SyncMode, type Watcher } from './watcher.js';
-import { atomicWrite, readLocal, removeLocal, safeRelative, UnsafePathError } from './writer.js';
+import { atomicWrite, readLocal, removeLocal, safeRelative, UnsafePathError, type LocalFile } from './writer.js';
 
 /** Close code for a sync socket replaced by a newer one of the same member (R3 §3). */
 export const WS_CLOSE_REPLACED = 4000;
@@ -101,6 +101,8 @@ export class SyncAgent extends EventEmitter {
   private watching = false;
   private isStopped = false;
   private resetSeen = false;
+  /** A 'connection lost' notice is showing; the next welcome answers it with 'connected again'. */
+  private offlineNotified = false;
   private attempt = 0;
   private seq = 0;
   private lastPong = 0;
@@ -270,6 +272,11 @@ export class SyncAgent extends EventEmitter {
       this.resetSeen = true;
       this.notify({ level: 'warn', text: 'Workspace di-reset server. File lokal yang tidak ada di server tidak diunggah otomatis.' });
     }
+    // One notice per outage, not per reconnect attempt; local edits are uploaded after the reconnect.
+    if (this.everSynced && !this.offlineNotified) {
+      this.offlineNotified = true;
+      this.notify({ level: 'warn', text: '⚠ Koneksi ke server terputus. Mencoba lagi; edit lokal diunggah setelah tersambung.' });
+    }
     this.scheduleReconnect();
   }
 
@@ -279,6 +286,7 @@ export class SyncAgent extends EventEmitter {
     const base = Math.min(maxMs, minMs * 2 ** Math.min(this.attempt - 1, 16));
     const delay = Math.round(base * (0.8 + Math.random() * 0.4));
     this.log('reconnect', `attempt ${this.attempt} in ${delay}ms`);
+    // Not unref'd on purpose: a pending reconnect is what keeps `radar start` alive while offline.
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null;
       this.connect();
@@ -353,6 +361,10 @@ export class SyncAgent extends EventEmitter {
   private onWelcome(msg: WsMessageOf<'welcome'>): void {
     this.principal = msg.d.principal;
     if (this.everSynced) this.stats.reconnects++;
+    if (this.offlineNotified) {
+      this.offlineNotified = false;
+      this.notify({ level: 'info', text: '✓ Koneksi ke server tersambung lagi.' });
+    }
     this.attempt = 0;
     const who = msg.d.principal.kind === 'member' ? `${msg.d.principal.memberId} (${msg.d.principal.role})` : 'mc';
     this.log('welcome', `${who} workspace ${msg.d.workspace}`);
@@ -444,7 +456,7 @@ export class SyncAgent extends EventEmitter {
   /** After a snapshot: send local edits the server does not have yet, then drain paths buffered while offline. */
   private scanLocal(): void {
     const isPm = this.principal?.kind === 'member' && this.principal.role === 'pm';
-    for (const rel of listFiles(this.root, (r) => this.matcher.ignores(r))) {
+    for (const rel of listFiles(this.root, (r) => this.matcher.ignores(r), (err) => this.log('scan.error', String(err)))) {
       this.dirty.delete(rel);
       if (!this.known.get(rel) && (isPm || this.resetSeen)) {
         // A PM cannot write, and a reset workspace must not be refilled with stale local files.
@@ -516,25 +528,28 @@ export class SyncAgent extends EventEmitter {
       const n = (this.retries.get(path) ?? 0) + 1;
       this.retries.set(path, n);
       if (n > MAX_VERIFY_RETRIES) {
+        // The next local edit starts a fresh budget.
+        this.retries.delete(path);
         this.log('reject.giveup', `${path} not verified after ${MAX_VERIFY_RETRIES} retries`);
+        this.notify({ level: 'error', text: `✖ ${path} gagal diverifikasi server setelah ${MAX_VERIFY_RETRIES} kali coba. Simpan ulang file untuk mencoba lagi.` });
         return;
       }
       this.log('reject.retry', `${path} attempt ${n}`);
       setTimeout(() => this.processPath(path), this.o.debounceMs).unref();
       return;
     }
-    const serverHas = s.version > 0 && !s.deleted && s.content !== null && s.hash !== null;
+    const serverFile = s.version > 0 && !s.deleted && s.content !== null && s.hash !== null ? { version: s.version, hash: s.hash, content: s.content } : null;
     const local = readLocal(this.root, path);
-    if (serverHas && local.kind === 'text' && local.hash === s.hash) {
-      this.known.set(path, { version: s.version, hash: s.hash as string });
+    if (serverFile && local.kind === 'text' && local.hash === serverFile.hash) {
+      this.known.set(path, { version: serverFile.version, hash: serverFile.hash });
       this.log('reject.equal', `${path} ${d.reason} (local already equals server v${s.version})`);
       return;
     }
     let sidecar: string | null = null;
     if (local.kind !== 'missing') sidecar = writeSidecar(this.root, path, d.reason === 'conflict' ? 'conflict' : 'rejected', local.kind === 'text' ? local.content : local.bytes);
-    if (serverHas) {
-      this.known.set(path, { version: s.version, hash: s.hash as string });
-      atomicWrite(this.root, path, s.content as string);
+    if (serverFile) {
+      this.known.set(path, { version: serverFile.version, hash: serverFile.hash });
+      atomicWrite(this.root, path, serverFile.content);
     } else {
       this.known.delete(path);
       removeLocal(this.root, path);
@@ -558,7 +573,9 @@ export class SyncAgent extends EventEmitter {
     let path: string;
     try {
       path = safeRelative(rel);
-    } catch {
+    } catch (err) {
+      if (!(err instanceof UnsafePathError)) throw err;
+      this.log('local.unsafe', rel);
       return;
     }
     if (isIgnored((r) => this.matcher.ignores(r), path, false)) return;
@@ -566,7 +583,14 @@ export class SyncAgent extends EventEmitter {
       this.dirty.add(path);
       return;
     }
-    const local = readLocal(this.root, path);
+    let local: LocalFile;
+    try {
+      local = readLocal(this.root, path);
+    } catch (err) {
+      if (!(err instanceof UnsafePathError)) throw err;
+      this.log('local.unsafe', `${path} (symlink out of the workspace)`);
+      return;
+    }
     if (local.kind === 'missing') return;
     if (local.kind !== 'text') {
       if (!this.skipped.has(path)) {

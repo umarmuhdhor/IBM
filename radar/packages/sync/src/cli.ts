@@ -44,7 +44,7 @@ export function writeJoinFiles(o: JoinFiles): { configFile: string; excluded: st
   // writeFileSync keeps the mode of an existing file.
   chmodSync(configFile, 0o600);
 
-  let gitignore = '';
+  let gitignore: string;
   try {
     gitignore = readFileSync(join(o.root, '.gitignore'), 'utf8');
   } catch {

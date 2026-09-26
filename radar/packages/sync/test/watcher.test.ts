@@ -1,4 +1,5 @@
 // Watcher (fase 04 step 4): per-path debounce, ignore rules, temp files, and the poll-1s fallback.
+import { EventEmitter } from 'node:events';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -12,11 +13,11 @@ afterEach(async () => {
   cleanupDirs();
 });
 
-function start(root: string, mode: 'watch' | 'poll-1s' = 'watch', pollMs?: number) {
+function start(root: string, mode: 'watch' | 'poll-1s' = 'watch', pollMs?: number, rescanMs?: number) {
   const changed: string[] = [];
   const unlinked: string[] = [];
   const matcher = createIgnoreMatcherFromText('');
-  const w = createWatcher({ root, mode, debounceMs: 100, pollMs, ignores: (rel) => matcher.ignores(rel), onChange: (p) => changed.push(p), onUnlink: (p) => unlinked.push(p) });
+  const w = createWatcher({ root, mode, debounceMs: 100, pollMs, rescanMs, ignores: (rel) => matcher.ignores(rel), onChange: (p) => changed.push(p), onUnlink: (p) => unlinked.push(p) });
   watchers.push(w);
   return { w, changed, unlinked };
 }
@@ -46,6 +47,35 @@ describe('watcher (chokidar)', () => {
     await waitFor(() => changed.includes('ok.ts'), 3000, 'ok.ts');
     await sleep(200);
     expect(changed).toEqual(['ok.ts']);
+  });
+
+  it('rescan reports writes the fs watcher lost and re-watches their folder', async () => {
+    // macOS: libuv shares one FSEvents stream per process and rebuilds it for every new watched folder;
+    // events in that window are lost (bench: 3 of 8 runs lost a new folder). A silent fake stands in for it.
+    const added: string[] = [];
+    const silent = Object.assign(new EventEmitter(), {
+      add(p: string) {
+        added.push(p);
+        return silent;
+      },
+      getWatched: () => ({}) as Record<string, string[]>,
+      close: async () => undefined,
+    });
+    const root = tempDir();
+    const changed: string[] = [];
+    const w = createWatcher(
+      { root, debounceMs: 20, rescanMs: 50, ignores: () => false, onChange: (p) => changed.push(p), onUnlink: () => {} },
+      { watch: () => (setImmediate(() => silent.emit('ready')), silent) as never },
+    );
+    watchers.push(w);
+    await w.ready;
+    mkdirSync(join(root, 'gen'));
+    writeFileSync(join(root, 'gen/a.ts'), 'a');
+    await waitFor(() => changed.includes('gen/a.ts'), 2000, 'rescan reports gen/a.ts');
+    expect(added).toContain(join(root, 'gen'));
+    changed.length = 0;
+    writeFileSync(join(root, 'gen/a.ts'), 'a-longer');
+    await waitFor(() => changed.includes('gen/a.ts'), 2000, 'rescan reports the second write');
   });
 
   it('reports deletes separately', async () => {

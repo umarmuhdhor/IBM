@@ -125,6 +125,33 @@ describe('sync agent against the real server', () => {
     expect(B.a.connected).toBe(true);
   }, 10_000);
 
+  it('an edit made while disconnected is uploaded after the reconnect', async () => {
+    const t = await seedTestWorkspace(server.url, SEED);
+    const notices: string[] = [];
+    const [A, B] = await Promise.all([agent(t.A!, 'A'), agent(t.B!, 'B', { notify: (n) => notices.push(n.text) })]);
+    B.a.dropConnection();
+    await waitFor(() => !B.a.connected, 1000, 'B disconnected');
+    writeFileSync(join(B.root, 'src/utils.ts'), '// B offline edit\n');
+    await waitFor(() => read(A.root, 'src/utils.ts') === '// B offline edit\n', 5000, 'offline edit reaches A');
+    expect(B.a.stats.updatesSent).toBe(1);
+    // disconnect and reconnect are shown without --verbose
+    expect(notices.join('\n')).toMatch(/terputus/);
+    expect(notices.join('\n')).toMatch(/tersambung lagi/);
+  }, 10_000);
+
+  it('a .gitignore edit is honoured at once: newly ignored files stop syncing', async () => {
+    const t = await seedTestWorkspace(server.url, SEED);
+    const [A, B] = await Promise.all([agent(t.A!, 'A'), agent(t.B!, 'B')]);
+    writeFileSync(join(A.root, '.gitignore'), 'local-notes.md\n');
+    await waitFor(() => read(B.root, '.gitignore') === 'local-notes.md\n', 3000, '.gitignore reaches B');
+    writeFileSync(join(A.root, 'local-notes.md'), 'private\n');
+    writeFileSync(join(A.root, 'src/utils.ts'), '// after gitignore\n');
+    await waitFor(() => read(B.root, 'src/utils.ts') === '// after gitignore\n', 3000, 'normal file still syncs');
+    await sleep(300);
+    expect(read(B.root, 'local-notes.md')).toBeNull();
+    expect(A.a.stats.updatesSent).toBe(2);
+  }, 10_000);
+
   it('a second agent for the same member replaces the first, which stops for good', async () => {
     const t = await seedTestWorkspace(server.url, SEED);
     const first = await agent(t.A!, 'A');

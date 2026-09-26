@@ -1,7 +1,7 @@
 // Local file IO for the sync agent: atomic writes (tmp file + rename), classified reads, hashing.
 import { createHash, randomBytes } from 'node:crypto';
-import { chmodSync, lstatSync, mkdirSync, readFileSync, realpathSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import { basename, dirname, join } from 'node:path';
+import { chmodSync, mkdirSync, readFileSync, realpathSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { basename, dirname, join, sep } from 'node:path';
 import { isProbablyBinary, MAX_FILE_BYTES, normalizeRelative, PathOutsideWorkspaceError } from '@radar/common';
 
 export class UnsafePathError extends Error {
@@ -42,11 +42,43 @@ export type LocalFile =
   | { kind: 'binary'; bytes: Buffer }
   | { kind: 'text'; content: string; hash: string; bytes: Buffer };
 
+/**
+ * Real path of `abs` with every symlink followed. A missing tail is appended as is to the real path of
+ * its nearest existing ancestor, so a file about to be created still resolves through linked folders.
+ */
+function realPathOf(abs: string): string {
+  const rest: string[] = [];
+  let cur = abs;
+  for (;;) {
+    try {
+      return join(realpathSync(cur), ...rest);
+    } catch (err) {
+      const code = (err as NodeJS.ErrnoException).code;
+      const parent = dirname(cur);
+      if ((code !== 'ENOENT' && code !== 'ENOTDIR') || parent === cur) throw err;
+      rest.unshift(basename(cur));
+      cur = parent;
+    }
+  }
+}
+
+/**
+ * Resolves `<root>/<rel>` through symlinks and throws UnsafePathError if the result leaves the
+ * workspace. A file or folder symlinked out of the workspace must never be read, written or deleted.
+ */
+function resolveInside(root: string, rel: string, followLast: boolean): string {
+  const abs = join(root, safeRelative(rel));
+  const realRoot = realpathSync(root);
+  const real = followLast ? realPathOf(abs) : join(realPathOf(dirname(abs)), basename(abs));
+  if (!real.startsWith(realRoot + sep)) throw new UnsafePathError(rel);
+  return real;
+}
+
 /** Reads `<root>/<rel>`. A directory or a file that vanished counts as missing. */
 export function readLocal(root: string, rel: string): LocalFile {
   let bytes: Buffer;
   try {
-    bytes = readFileSync(join(root, safeRelative(rel)));
+    bytes = readFileSync(resolveInside(root, rel, true));
   } catch (err) {
     const code = (err as NodeJS.ErrnoException).code;
     if (code === 'ENOENT' || code === 'EISDIR' || code === 'ENOTDIR') return { kind: 'missing' };
@@ -59,16 +91,10 @@ export function readLocal(root: string, rel: string): LocalFile {
   return { kind: 'text', content, hash: hashText(content), bytes };
 }
 
-/** Resolves a symlinked target so the write replaces the link's file, not the link. */
-function writeTarget(abs: string): string {
-  try {
-    return lstatSync(abs).isSymbolicLink() ? realpathSync(abs) : abs;
-  } catch (err) {
-    if ((err as NodeJS.ErrnoException).code === 'ENOENT') return abs;
-    throw err;
-  }
-}
-
+/**
+ * Windows only in practice: an editor or indexer may hold the target open for a moment. The back-off
+ * is synchronous on purpose (at most ~300 ms in total) so atomicWrite stays synchronous for its callers.
+ */
 function renameWithRetry(from: string, to: string): void {
   for (let attempt = 0; ; attempt++) {
     try {
@@ -76,7 +102,6 @@ function renameWithRetry(from: string, to: string): void {
       return;
     } catch (err) {
       const code = (err as NodeJS.ErrnoException).code;
-      // Windows: an editor or indexer may hold the target open for a moment.
       if ((code === 'EPERM' || code === 'EBUSY') && attempt < 5) {
         const until = Date.now() + 20 * (attempt + 1);
         while (Date.now() < until) {
@@ -89,9 +114,12 @@ function renameWithRetry(from: string, to: string): void {
   }
 }
 
-/** Writes `content` to `<root>/<rel>` via a temp file + rename, keeping the old file mode. */
+/**
+ * Writes `content` to `<root>/<rel>` via a temp file + rename, keeping the old file mode. A symlink
+ * inside the workspace is written through (its target is replaced, not the link).
+ */
 export function atomicWrite(root: string, rel: string, content: string | Buffer): void {
-  const target = writeTarget(join(root, safeRelative(rel)));
+  const target = resolveInside(root, rel, true);
   const dir = dirname(target);
   mkdirSync(dir, { recursive: true });
   let mode: number | undefined;
@@ -111,7 +139,7 @@ export function atomicWrite(root: string, rel: string, content: string | Buffer)
   }
 }
 
-/** Deletes `<root>/<rel>`; a missing file is fine. */
+/** Deletes `<root>/<rel>` (a symlink itself, not its target); a missing file is fine. */
 export function removeLocal(root: string, rel: string): void {
-  rmSync(join(root, safeRelative(rel)), { force: true });
+  rmSync(resolveInside(root, rel, false), { force: true });
 }
