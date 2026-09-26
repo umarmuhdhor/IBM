@@ -147,3 +147,9 @@ Tidak ada temuan HIGH. Aksi destruktif (ganti folder) memakai konfirmasi di hala
 - Tampilan owner: nama folder, status sync, kode besar + **Copy code**, **Open in IBM Bob**, **Show folder**, **Share a different folder…** (konfirmasi di halaman, tombol `destructive`).
 - Test app radar: 85 lulus. Typecheck node/web dan oxlint bersih.
 - Screenshot app dev (HOME terisolasi, tanpa folder terbuka): item Multiplayer di sidebar, kartu Multiplayer di atas kartu Join. Tampilan dengan folder terbuka dan tampilan owner: Not verified secara visual (diuji di `ShareFolderCard.test.tsx`). Tanpa temuan HIGH.
+
+### Revisi: Stop sharing dan gantian owner
+
+- Server `POST /v1/workspace/close` (mc): test di `open-workspace.test.ts` (member 403, tanpa token 401, socket tertutup, token lama 401, teman bisa share setelahnya). Server 181 test lulus.
+- App: **Stop sharing…** (konfirmasi, tombol `destructive`), kartu Multiplayer untuk semua peran, **Join with a different code**. Test app radar 90 lulus; typecheck dan oxlint bersih.
+- UI gate: perubahan kecil pada kartu yang sama (tombol + konfirmasi di halaman). Tidak ada temuan HIGH; tampilan owner Not verified secara visual (diuji di test komponen).
