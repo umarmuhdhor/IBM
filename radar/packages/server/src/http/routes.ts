@@ -169,7 +169,7 @@ export function createApp(deps: WorkspaceDeps): Hono {
         throw new RadarError(
           409,
           'CONFLICT',
-          `This server already has the workspace ${current}. Ask its owner for a join code, or use your own server to share a folder.`,
+          `${getMember(deps.db, 'A')?.name ?? 'Someone'} is sharing ${current}. Ask them to stop sharing first, or ask them for a join code.`,
         );
       }
       await deps.wipe();
