@@ -20585,6 +20585,8 @@ var ERROR_CODES = [
   "CONFLICT",
   "VALIDATION",
   "INTERNAL",
+  "RATE_LIMITED",
+  "PAYLOAD_TOO_LARGE",
   "TERM_NOT_FOUND",
   "TERM_NOT_OWNER",
   "TERM_NO_GRANT",
@@ -21185,7 +21187,8 @@ var AdminInitReq = external_exports.object({
   /** GitHub `owner/name`; optional so a local dev workspace can run without a repo. */
   repo: external_exports.string().regex(/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/).optional(),
   branch: external_exports.string().min(1).max(255).default("main"),
-  members: external_exports.array(AdminMember).min(1).max(8).refine((ms) => new Set(ms.map((m) => m.id)).size === ms.length, "member ids must be unique").refine((ms) => ms.every((m) => m.id !== "mc"), 'member id "mc" is reserved'),
+  /** Empty is fine: teammates then join with open codes and pick their own name and role (D-alief-10). */
+  members: external_exports.array(AdminMember).max(8).refine((ms) => new Set(ms.map((m) => m.id)).size === ms.length, "member ids must be unique").refine((ms) => ms.every((m) => m.id !== "mc"), 'member id "mc" is reserved').default([]),
   /** Wipe an existing workspace first. Without it a second init is 409. */
   force: external_exports.boolean().optional()
 });
@@ -21442,6 +21445,39 @@ var import_ignore = __toESM(require_ignore(), 1);
 
 // ../common/src/hash.ts
 var encoder = new TextEncoder();
+
+// ../common/src/invite.ts
+var Invite = external_exports.object({
+  v: external_exports.literal(1),
+  server: external_exports.string().url(),
+  workspace: external_exports.string().min(1),
+  member: external_exports.string().min(1),
+  token: external_exports.string().min(1)
+});
+
+// ../common/src/join-code.ts
+var JOIN_CODE_TTL_HOURS_MAX = 720;
+var AdminJoinCodeReq = external_exports.object({
+  member: external_exports.string().min(1).max(64).optional(),
+  ttlHours: external_exports.number().int().min(1).max(JOIN_CODE_TTL_HOURS_MAX).optional()
+});
+var AdminJoinCodeRes = external_exports.object({
+  /** null for an open code. */
+  member: external_exports.string().nullable(),
+  code: external_exports.string(),
+  expiresAt: external_exports.number().int()
+});
+var JoinReq = external_exports.object({
+  code: external_exports.string().min(1).max(32),
+  name: external_exports.string().trim().min(1).max(100).optional(),
+  role: external_exports.enum(["coder", "pm"]).optional()
+});
+var JoinRes = external_exports.object({
+  workspace: external_exports.string(),
+  member: external_exports.string(),
+  role: external_exports.enum(["coder", "pm"]),
+  invite: external_exports.string()
+});
 
 // ../common/src/config.ts
 var import_node_fs = require("node:fs");

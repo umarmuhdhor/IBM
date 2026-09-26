@@ -255,11 +255,8 @@ describe('Bob kit against the real server (PRD §15 up to review)', () => {
     const post = { ...prePayload(roots.B, THEME), hook_event_name: 'PostToolUse', tool_response: 'ok' };
     expect((await hook('B', 'mark_ai_edit', [], post)).code).toBe(0);
     expect((await hook('B', 'stop', [], { session_id: 's1', cwd: roots.B, hook_event_name: 'Stop' })).code).toBe(0);
-    // POST /v1/ai-edits is P1 (fase 12, BC-05): until it lands only that call may be logged as not sent.
-    const lines = hookLog('B').split('\n');
-    // …and only because the route is missing (404), not for any other reason.
-    for (const l of lines.filter((x) => x.includes('ai-edits not sent'))) expect(l).toContain('404');
-    expect(lines.filter((l) => !l.includes('ai-edits not sent')).join('\n')).not.toMatch(/not sent|config invalid/);
+    // bob/activity and POST /v1/ai-edits (Worker route since fase 12) are both accepted: nothing logged as not sent.
+    expect(hookLog('B')).not.toMatch(/not sent|config invalid/);
 
     // bob.activity goes to app/mc sockets (JT-01), not to /v1/activity; team_activity still reads the team feed.
     const act = await tool('A', 'team_activity');

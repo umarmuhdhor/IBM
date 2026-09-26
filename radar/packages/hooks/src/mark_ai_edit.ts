@@ -41,8 +41,7 @@ async function main(): Promise<void> {
     }),
   ];
   if (EDIT_TOOLS_REGEX.test(tool) && hook.paths.length > 0) {
-    // POST /v1/ai-edits (R3 §2.20, BC-05, P1): the mock accepts it, the Worker adds it in fase 12 (D-umar-04).
-    // The call is final on the Bob side; until the route exists the 404 is only logged.
+    // POST /v1/ai-edits (R3 §2.20, BC-05, P1; Worker route since fase 12). Fail-open: a failure is only logged.
     sends.push(
       radarFetch(cfg, 'POST', '/v1/ai-edits', { paths: hook.paths, tool, sessionId: hook.sessionId }, ACTIVITY_TIMEOUT_MS).catch(
         (err: unknown) => logLine(cfg.root, 'mark_ai_edit', `ai-edits not sent: ${String(err)}`),
