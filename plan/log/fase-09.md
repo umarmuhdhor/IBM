@@ -9,7 +9,7 @@
 Aturan yang tetap berlaku: `CLAUDE.md`, `plan/PROMPT.md` (LANE Aarief, FASE auto), `plan/fase-09-app-desktop.md`, kontrak `plan/ref/R1–R7`, D-007 + D-alief-01 di `plan/log/DECISIONS.md`. Hanya boleh mengubah `app/**`, `radar/packages/ui`, plus output yang disebut fase 09 (`radar/docs/ORCA_MAP.*`, `bob_sessions/*aarief*`). Toolchain: `export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"; nvm use 24`. Commit kecil per langkah. Jangan force-push main; jangan sentuh folder lane lain.
 
 **Langkah berikutnya (urut):**
-1. Bob Shell P1 sudah teruji merespons `halo` setelah tim aktif dipindah dari `bob-001` (trial) ke `ibm-coding-challenge-uat` (enterprise) melalui `/team` di terminal app. Tim baru ditandai aktif saat picker dibuka ulang. Launcher macOS memilih Node 24 lewat nvm; uji pemilihan agent **IBM Bob** dari UI masih perlu dilakukan untuk menutup DA-02 sepenuhnya.
+1. DA-02 P1 terverifikasi: menu New tab menampilkan **IBM Bob** dengan glyph B; pemilihan dari UI membuka Terminal 2 dan Bob Shell 2.0.5 otomatis. Pesan `halo` dijawab normal dengan tim `ibm-coding-challenge-uat`. Screenshot lokal `/tmp/bob_app_picker_response.png` (tidak di-commit karena menampilkan identitas akun).
 2. LANGKAH MANUAL: mock server fase 02 belum tersedia di checkout ini (`dev:mock` masih `echo`). Sesudah fase 02 masuk main, ganti `TODO(sync:alief)` pada tipe/adaptor/keepalive; jalankan `pnpm -C radar dev:mock` lalu uji skenario demo dan keputusan MC lewat UI.
 3. Lengkapi checklist Settings, branding About, pohon file dan status notifikasi; lakukan screenshot app (`ORCA_BACKGROUND_LAUNCH=1`) dan review visual/security. Skill `better-interface` tidak tersedia pada daftar skill sesi Codex ini; lakukan inspeksi visual setara dan catat temuan.
 4. Setelah gerbang UI lulus, buat snapshot lokal `snap/app-f09a|b|c`, dorong `lane/app-f09a|b|c`, lalu PR sesuai PROMPT langkah 11. Jangan push branch sekarang sebelum review dan prasyaratnya selesai. Commit Bob C2/C3 sudah memiliki `Co-authored-by: IBM Bob <bob@ibm.com>`; email GitHub Bob masih perlu konfirmasi bila avatar coauthor diinginkan.
@@ -90,6 +90,7 @@ Aturan yang tetap berlaku: `CLAUDE.md`, `plan/PROMPT.md` (LANE Aarief, FASE auto
 - Tangkapan layar pengguna setelah login browser memperlihatkan `IBM License Agreement` dengan pilihan membuka dokumen memakai Enter dan menerima/menolak memakai `y`/`n`. Penerimaan lisensi menjadi langkah manual pengguna; agent tidak memilih atas nama pengguna.
 - Sesudah pengguna menyelesaikan lisensi, Bob Shell menampilkan composer siap pakai. Uji pesan `halo` lewat terminal Electron/CDP diterima oleh UI, lalu layanan Bob mengembalikan `TrialExpiredError` dengan keterangan masa free trial berakhir dan meminta upgrade paket. Ini batas akun eksternal, bukan kegagalan launcher/Node/app. Agent tidak mengubah akun, login, atau langganan. Tidak ada respons Bob terhadap `halo`; verifikasi P1 DA-02 tetap tertunda.
 - Uji lanjutan 26 Sep 2026: Bob IDE menunjukkan tim aktif `ibm-coding-challenge-uat`. Picker `/team` Bob Shell menunjukkan `bob-001` sebagai tim trial yang aktif dan `ibm-coding-challenge-uat` sebagai tim enterprise. Tim enterprise dipilih dengan ArrowDown + Enter lewat CDP 9339; picker dibuka ulang dan menandai tim challenge aktif. Pesan `halo` berikutnya dijawab Bob Shell: “Halo! Ada yang bisa saya bantu?”. Tidak ada login, token, atau perubahan langganan oleh agent. Respons Shell terverifikasi; pemilihan agent dari UI masih perlu diuji untuk DoD DA-02.
+- Uji DA-02 dari UI app: klik New tab → menu menampilkan `B IBM Bob` → klik pilihan itu. Terminal 2 terbuka otomatis pada workspace uji, Bob Shell 2.0.5 siap tanpa galat Node atau login tambahan, dan `halo` dibalas “Halo! Ada yang bisa saya bantu?”. Screenshot `/tmp/bob_app_picker_response.png` disimpan lokal saja karena memuat identitas akun. DoD P1 DA-02 lulus.
 
 ### Review visual branding (screenshot lokal, tidak di-commit)
 
@@ -109,7 +110,7 @@ Skill `better-interface` tidak tersedia pada sesi ini; inspeksi visual langsung 
 
 ## LANGKAH MANUAL
 
-1. Bob Shell telah dijalankan dengan tim `ibm-coding-challenge-uat` dan membalas `halo`. Untuk menutup DA-02 sepenuhnya, buat/buka worktree, pilih agent **IBM Bob** dari pemilih agent, lalu pastikan launcher otomatis membuka Shell dengan Node 24 dan respons normal.
+1. DA-02 sudah lulus dari pemilih agent UI; tidak ada langkah akun Bob tersisa.
 2. Gerbang screenshot UI dan uji skenario demo memerlukan mock server fase 02: saat ini `pnpm -C radar dev:mock` hanya mencetak placeholder. Setelah fase 02 masuk main, lanjutkan screenshot dan uji data live.
 3. Jika ingin GitHub menampilkan akun/avatar IBM Bob sebagai co-author, konfirmasi alamat email GitHub IBM Bob untuk mengganti default `bob@ibm.com` (plan/TODO.md B6) sebelum snapshot 09a didorong. Trailer co-author sudah ada di commit C2; identitas pendorong branch tidak menentukan co-author commit.
 
