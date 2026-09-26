@@ -1,7 +1,7 @@
 // Integration: real Worker + Durable Object (phase 03) and three SyncAgents in temp folders (fase 04 step 11).
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it, onTestFailed } from 'vitest';
 import { SyncAgent, type SyncAgentOptions } from '../src/agent.js';
 import { cleanupDirs, FAST, read, seedTestWorkspace, sleep, startServer, tempDir, waitFor, type TestServer } from './helpers.js';
 
@@ -27,8 +27,12 @@ afterEach(async () => {
 
 async function agent(token: string, member: string, opts: Partial<SyncAgentOptions> = {}): Promise<{ a: SyncAgent; root: string }> {
   const root = opts.root ?? tempDir();
-  const a = new SyncAgent({ root, server: server.url, token, member, log: () => {}, notify: () => {}, ...FAST, ...opts });
+  const lines: string[] = [];
+  const a = new SyncAgent({ root, server: server.url, token, member, log: (l) => lines.push(l), notify: () => {}, ...FAST, ...opts });
   agents.push(a);
+  // SYNC_DEBUG_FILE=<path>: append each agent's sync.log when a test fails (flake hunting).
+  const debugFile = process.env.SYNC_DEBUG_FILE;
+  if (debugFile) onTestFailed(({ task }) => appendFileSync(debugFile, `\n=== ${task.name} · ${member}\n${lines.join('\n')}`));
   await a.start();
   return { a, root };
 }

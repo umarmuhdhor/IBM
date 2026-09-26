@@ -16,7 +16,7 @@ function start(root: string, mode: 'watch' | 'poll-1s' = 'watch', pollMs?: numbe
   const changed: string[] = [];
   const unlinked: string[] = [];
   const matcher = createIgnoreMatcherFromText('');
-  const w = createWatcher({ root, mode, debounceMs: 60, pollMs, ignores: (rel) => matcher.ignores(rel), onChange: (p) => changed.push(p), onUnlink: (p) => unlinked.push(p) });
+  const w = createWatcher({ root, mode, debounceMs: 100, pollMs, ignores: (rel) => matcher.ignores(rel), onChange: (p) => changed.push(p), onUnlink: (p) => unlinked.push(p) });
   watchers.push(w);
   return { w, changed, unlinked };
 }
@@ -26,10 +26,8 @@ describe('watcher (chokidar)', () => {
     const root = tempDir();
     const { w, changed } = start(root);
     await w.ready;
-    for (let i = 0; i < 10; i++) {
-      writeFileSync(join(root, 'a.ts'), `v${i}`);
-      await sleep(5);
-    }
+    // One synchronous burst: gaps stay far below the debounce even on a loaded CI machine.
+    for (let i = 0; i < 10; i++) writeFileSync(join(root, 'a.ts'), `v${i}`);
     writeFileSync(join(root, 'b.ts'), 'b');
     await waitFor(() => changed.includes('a.ts') && changed.includes('b.ts'), 3000, 'both paths');
     await sleep(200);
