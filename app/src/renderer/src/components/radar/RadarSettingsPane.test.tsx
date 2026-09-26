@@ -20,6 +20,20 @@ afterEach(() => {
 
 const summary = { server: 'http://127.0.0.1:8787', workspace: 'demo', member: 'A', role: 'coder' as const }
 
+it('offers PM Lead separately from Mission Control', () => {
+  render(<RadarSettingsPane connection={summary} connected={false} workspacePath={null} onConnectionChange={vi.fn()} />)
+  const roleSelect = screen.getByLabelText('Role')
+  fireEvent.change(roleSelect, { target: { value: 'pm' } })
+  expect(roleSelect instanceof HTMLSelectElement && roleSelect.value).toBe('pm')
+  expect(screen.getByRole('option', { name: 'Mission Control' })).toBeTruthy()
+})
+
+it('explains an access rejection without showing the old waiting message', () => {
+  render(<RadarSettingsPane connection={summary} connected={false} connectionFailure="access-rejected" workspacePath={null} onConnectionChange={vi.fn()} />)
+  expect(screen.getByText(/Access rejected/)).toBeTruthy()
+  expect(screen.queryByText('Saved, waiting for server')).toBeNull()
+})
+
 it('runs the connection checklist for the active workspace', async () => {
   runChecks.mockResolvedValue({ bobVersion: 'bob 2.0.5', bobSettings: true })
   render(<RadarSettingsPane connection={summary} connected workspacePath="/work/toko-demo" onConnectionChange={vi.fn()} />)

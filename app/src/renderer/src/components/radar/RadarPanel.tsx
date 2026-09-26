@@ -25,6 +25,7 @@ type Props = {
 export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }: Props) {
   const state = useRadarStore((store) => store.state)
   const connected = useRadarStore((store) => store.connected)
+  const connectionFailure = useRadarStore((store) => store.connectionFailure)
   const now = useRadarStore((store) => store.now)
   const activeWorktreeId = useAppStore((store) => store.activeWorktreeId)
   const getKnownWorktreeById = useAppStore((store) => store.getKnownWorktreeById)
@@ -52,7 +53,7 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
         {tabs.map((item) => <button key={item} type="button" onClick={() => onTabChange(item)} aria-current={tab === item ? 'page' : undefined} className={cn('rounded-md px-2 py-1 text-xs', tab === item ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:bg-secondary')}>{LABEL[item]}</button>)}
       </div>
       <div className="scrollbar-sleek min-h-0 flex-1 overflow-y-auto">
-        {tab === 'settings' ? <RadarSettingsPane connection={connection} connected={connected} workspacePath={workspacePath} onConnectionChange={onConnectionChange} /> : !connected || !state ? (
+        {tab === 'settings' ? <RadarSettingsPane connection={connection} connected={connected} connectionFailure={connectionFailure} workspacePath={workspacePath} onConnectionChange={onConnectionChange} /> : !connected || !state ? (
           <div className="m-4 rounded-lg border border-border bg-card p-4 text-sm">
             <p>{connection ? connected ? 'Waiting for workspace state from the server.' : 'Connection lost. Open settings to reconnect.' : 'Connect to a Live Collab workspace.'}</p>
             <button type="button" onClick={() => onTabChange('settings')} className="mt-3 rounded-md border border-border px-3 py-1.5 text-xs">Open settings</button>

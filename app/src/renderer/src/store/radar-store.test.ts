@@ -66,6 +66,14 @@ describe('Radar renderer store', () => {
     expect(useRadarStore.getState().connected).toBe(false)
   })
 
+  it('tracks access rejection until a connection succeeds', () => {
+    const { receive } = useRadarStore.getState().actions
+    receive({ kind: 'status', connected: false, failure: 'access-rejected' })
+    expect(useRadarStore.getState().connectionFailure).toBe('access-rejected')
+    receive({ kind: 'status', connected: true })
+    expect(useRadarStore.getState().connectionFailure).toBeNull()
+  })
+
   it('accepts array collections from the state endpoint', () => {
     useRadarStore.getState().actions.receive({
       kind: 'state',

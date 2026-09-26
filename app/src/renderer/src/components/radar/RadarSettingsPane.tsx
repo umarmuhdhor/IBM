@@ -3,10 +3,12 @@ import { cn } from '@/lib/utils'
 import { Switch } from '@/components/ui/switch'
 import type { RadarChecks } from '../../../../shared/radar-checks'
 import type { RadarConnection, RadarConnectionSummary } from '../../../../shared/radar-connection'
+import type { RadarConnectionFailure } from '../../../../shared/radar-update'
 
 type Props = {
   connection: RadarConnectionSummary | null
   connected: boolean
+  connectionFailure?: RadarConnectionFailure | null
   workspacePath: string | null
   onConnectionChange: (connection: RadarConnectionSummary | null) => void
 }
@@ -20,6 +22,19 @@ function settingsCheckValue(found: boolean | null): string {
   return found ? 'Found' : 'Missing. Add the Bob kit to this folder'
 }
 
+function connectionStatus(saved: boolean, connected: boolean, failure: RadarConnectionFailure | null): string {
+  if (connected) {
+    return 'Connected to Live Collab'
+  }
+  if (failure === 'access-rejected') {
+    return 'Access rejected. Check the token for this role or ask the workspace admin for a fresh one.'
+  }
+  if (failure === 'connection-lost') {
+    return 'Server connection lost. Check the URL and network; the app will retry.'
+  }
+  return saved ? 'Saved, waiting for server' : 'Connect to a Live Collab workspace'
+}
+
 function checkRows(connected: boolean, checks: RadarChecks): CheckRow[] {
   return [
     { label: 'WebSocket', ok: connected, value: connected ? 'Connected' : 'Not connected. Check the server URL and access token' },
@@ -28,7 +43,7 @@ function checkRows(connected: boolean, checks: RadarChecks): CheckRow[] {
   ]
 }
 
-export function RadarSettingsPane({ connection, connected, workspacePath, onConnectionChange }: Props) {
+export function RadarSettingsPane({ connection, connected, connectionFailure = null, workspacePath, onConnectionChange }: Props) {
   const [server, setServer] = useState(connection?.server ?? '')
   const [workspace, setWorkspace] = useState(connection?.workspace ?? '')
   const [member, setMember] = useState(connection?.member ?? '')
@@ -80,7 +95,7 @@ export function RadarSettingsPane({ connection, connected, workspacePath, onConn
       const saved = await window.api.radar.setConnection({ server, workspace, member, role, token })
       setToken('')
       onConnectionChange(saved)
-      setMessage('Connection saved. Waiting for workspace state.')
+      setMessage(null)
     } catch {
       setMessage('Connection could not be saved. Check the fields and OS encryption.')
     } finally {
@@ -132,11 +147,15 @@ export function RadarSettingsPane({ connection, connected, workspacePath, onConn
     <>
     <form aria-label="Live Collab settings" className="max-w-lg space-y-3 p-4" onSubmit={(event) => { event.preventDefault(); void connect() }}>
       <h3 className="text-sm font-semibold">Connection</h3>
-      <p className="text-xs text-muted-foreground">{connected ? 'Connected to Live Collab' : connection ? 'Saved, waiting for server' : 'Connect to a Live Collab workspace'}</p>
+      <p role="status" className="text-xs text-muted-foreground">{connectionStatus(connection !== null, connected, connectionFailure)}</p>
       <label className="block text-xs">Server URL<input required type="url" value={server} onChange={(event) => setServer(event.target.value)} placeholder="http://localhost:8787" className="mt-1 w-full rounded-md border border-border bg-card p-2" /></label>
       <label className="block text-xs">Workspace<input required value={workspace} onChange={(event) => setWorkspace(event.target.value)} className="mt-1 w-full rounded-md border border-border bg-card p-2" /></label>
       <label className="block text-xs">Member<input required value={member} onChange={(event) => setMember(event.target.value)} className="mt-1 w-full rounded-md border border-border bg-card p-2" /></label>
-      <label className="block text-xs">Role<select value={role} onChange={(event) => setRole(event.target.value === 'mc' ? 'mc' : 'coder')} className="mt-1 w-full rounded-md border border-border bg-card p-2"><option value="coder">Coder</option><option value="mc">Mission Control</option></select></label>
+      <label className="block text-xs">Role<select value={role} onChange={(event) => {
+        const value = event.target.value
+        setRole(value === 'pm' || value === 'mc' ? value : 'coder')
+      }} className="mt-1 w-full rounded-md border border-border bg-card p-2"><option value="coder">Coder</option><option value="pm">PM Lead</option><option value="mc">Mission Control</option></select></label>
+      <p className="text-xs text-muted-foreground">PM Lead uses a PM member code in Bob IDE. Mission Control uses a separate code to approve decisions.</p>
       <label className="block text-xs">Access token<input required type="password" value={token} onChange={(event) => setToken(event.target.value)} autoComplete="off" className="mt-1 w-full rounded-md border border-border bg-card p-2" /></label>
       <div className="flex gap-2">
         <button type="submit" disabled={busy} className="rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground disabled:opacity-50">Connect</button>

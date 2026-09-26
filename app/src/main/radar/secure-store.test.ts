@@ -60,6 +60,18 @@ describe('Radar connection storage', () => {
     })
   })
 
+  it('accepts a PM Lead member connection', () => {
+    const connection = {
+      server: 'http://127.0.0.1:8787',
+      workspace: 'demo',
+      member: 'C',
+      role: 'pm' as const,
+      token: 'synthetic-value'
+    }
+    saveRadarConnection(connection)
+    expect(getRadarConnectionSummary()?.role).toBe('pm')
+  })
+
   it('refuses to store a connection without OS encryption', () => {
     electronMock.safeStorage.isEncryptionAvailable.mockReturnValue(false)
     expect(() =>

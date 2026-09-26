@@ -61,6 +61,15 @@ describe('Radar WebSocket client', () => {
     client.disconnect()
   })
 
+  it('connects PM Lead with the member app client', () => {
+    const client = new RadarWsClient({ ...connection, role: 'pm' }, vi.fn(), (url) => new FakeSocket(url))
+    client.connect()
+    const socket = FakeSocket.instances[0]!
+    socket.onopen?.()
+    expect(JSON.parse(socket.sent[0]!).d.client).toBe('app')
+    client.disconnect()
+  })
+
   it('forwards only state and event payloads with feed latency', () => {
     const updates = vi.fn()
     const client = new RadarWsClient(connection, updates, (url) => new FakeSocket(url))
@@ -93,10 +102,12 @@ describe('Radar WebSocket client', () => {
   })
 
   it('does not retry a rejected credential', () => {
-    const client = new RadarWsClient(connection, vi.fn(), (url) => new FakeSocket(url))
+    const updates = vi.fn()
+    const client = new RadarWsClient(connection, updates, (url) => new FakeSocket(url))
     client.connect()
     FakeSocket.instances[0]!.onclose?.({ code: 4401 })
     vi.advanceTimersByTime(30_000)
     expect(FakeSocket.instances).toHaveLength(1)
+    expect(updates).toHaveBeenCalledWith({ kind: 'status', connected: false, failure: 'access-rejected' })
   })
 })

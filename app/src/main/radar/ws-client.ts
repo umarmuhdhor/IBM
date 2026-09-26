@@ -114,7 +114,11 @@ export class RadarWsClient {
       }
       this.socket = null
       this.clearTimers()
-      this.onUpdate({ kind: 'status', connected: false })
+      this.onUpdate({
+        kind: 'status',
+        connected: false,
+        failure: event.code === WS_CLOSE_UNAUTHORIZED ? 'access-rejected' : 'connection-lost'
+      })
       if (event.code === WS_CLOSE_UNAUTHORIZED) {
         this.stopped = true
         return
