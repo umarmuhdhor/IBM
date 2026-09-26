@@ -87,19 +87,25 @@ Security-reviewer I2: semua 11 link `target="_blank"` sudah `rel="noopener noref
 
 ## LANGKAH MANUAL (sisa, urutan disarankan)
 
-1. **Deploy Cloudflare Pages** (langkah 19) — INI YANG MENAHAN FASE INI DARI `[x]`. Perlu `TODO B2` (`plan/TODO.md`): nama akun/subdomain `*.workers.dev` + `wrangler login` di mesin manusia (bukan sesi agent ini). Setelah tersedia:
+1. **Buka PR fase 11D1** — `gh` belum login di sesi ini (`gh auth status` → "not logged into any GitHub hosts"), dan aturan keamanan (CLAUDE.md) melarang agent login pakai akun siapa pun selain milik pemakainya sendiri. Branch snapshot sudah di-push: `lane/web-f11D1` (dari `snap/web-f11D1`, HEAD `605aa4f5`). Jalankan salah satu:
+   ```bash
+   gh auth login   # sekali, akun GitHub kamu sendiri
+   gh pr create --base main --head lane/web-f11D1 --title "fase-11D1: replay + landing (Bob slice I1/I2)" --body "Lihat plan/log/fase-11D1.md"
+   ```
+   atau buka langsung: https://github.com/umarmuhdhor/IBM/pull/new/lane/web-f11D1
+2. **Deploy Cloudflare Pages** (langkah 19) — INI YANG MENAHAN FASE INI DARI `[x]`. Perlu `TODO B2` (`plan/TODO.md`): nama akun/subdomain `*.workers.dev` + `wrangler login` di mesin manusia (bukan sesi agent ini). Setelah tersedia:
    ```bash
    pnpm -C radar --filter "@radar/web..." build && pnpm -C radar deploy:web
    ```
    Lalu buka `/` dan `/demo` dari incognito untuk konfirmasi (langkah 19 di fase file), dan update baris PROGRESS.md fase 11D1 ke `[x]` + isi `deploy.web.pages.dev` di `links.deck`/URL kalau relevan.
-2. **Playwright browser install** — sandbox sesi ini bandwidth sangat terbatas (~41 KiB/s terukur saat `pnpm install` awal); unduh Chromium (~300 MB) tidak realistis. Sebelum `pnpm -C radar/packages/web e2e`:
+3. **Playwright browser install** — sandbox sesi ini bandwidth sangat terbatas (~41 KiB/s terukur saat `pnpm install` awal); unduh Chromium (~300 MB) tidak realistis. Sebelum `pnpm -C radar/packages/web e2e`:
    ```bash
    pnpm -C radar/packages/web exec playwright install chromium
    pnpm -C radar/packages/web e2e
    ```
    `e2e/demo.spec.ts` sudah ditulis lengkap (autoplay, near-miss ≤30 detik di 8×, klik event → Bob inside, tanpa request ke domain lain, smoke `/` dan `/gallery`); belum pernah benar-benar dieksekusi, jadi anggap "belum tervalidasi otomatis" sampai ini jalan sekali.
-3. **`eslint.config.js` coverage gap** — hook `config-protection` (plugin ecc) memblokir SEMUA edit ke file itu di sesi agent ini, termasuk penambahan glob yang murni menambah cakupan. Kalau ada manusia dengan akses penuh, tambahkan `'packages/*/scripts/**/*.ts'` dan `'packages/*/e2e/**/*.ts'` ke array `files` di blok `tseslint.config` kedua (baris 24-29 saat ini) supaya `scripts/export-replay.ts` dan `e2e/demo.spec.ts` ikut kena rule type-aware (`no-floating-promises`, `consistent-type-imports`). `tsc --noEmit` sudah mencakup keduanya walau eslint belum.
-4. **MEDIUM yang dicatat, belum diperbaiki** (boleh dikerjakan kapan saja, tidak memblokir): `sanitize.ts` belum menutup bentuk AWS key/JWT; `app/page.tsx:26` `metaRaw.links as SiteLinks` tanpa validasi runtime.
+4. **`eslint.config.js` coverage gap** — hook `config-protection` (plugin ecc) memblokir SEMUA edit ke file itu di sesi agent ini, termasuk penambahan glob yang murni menambah cakupan. Kalau ada manusia dengan akses penuh, tambahkan `'packages/*/scripts/**/*.ts'` dan `'packages/*/e2e/**/*.ts'` ke array `files` di blok `tseslint.config` kedua (baris 24-29 saat ini) supaya `scripts/export-replay.ts` dan `e2e/demo.spec.ts` ikut kena rule type-aware (`no-floating-promises`, `consistent-type-imports`). `tsc --noEmit` sudah mencakup keduanya walau eslint belum.
+5. **MEDIUM yang dicatat, belum diperbaiki** (boleh dikerjakan kapan saja, tidak memblokir): `sanitize.ts` belum menutup bentuk AWS key/JWT; `app/page.tsx:26` `metaRaw.links as SiteLinks` tanpa validasi runtime.
 
 **Catatan untuk sesi Claude Code berikutnya**: `radar/scripts/bob-evidence.sh` gagal total di sesi ini (window-detect: "not found" walau Bob IDE beneran terbuka di layar manusia; `--interactive`: gagal 2x beda alasan, termasuk "Screen Recording permission"). Dugaan kuat: sesi agent ini tidak punya akses layar/Terminal-permission yang sama dengan sesi interaktif manusia. Solusi yang berhasil: user screenshot manual (Cmd+Shift+4) lalu kirim PNG ke chat, Claude Code convert format kalau perlu dan salin ke `bob_sessions/` + tulis baris index manual (format persis di `scripts/bob-evidence.sh`, tim `uaai` dari `plan/team.json`). Pakai cara ini lagi untuk Bob slice I3 (11D2) di sesi serupa; coba `bob-evidence.sh` biasa dulu hanya kalau sesi barunya punya akses layar nyata.
 
