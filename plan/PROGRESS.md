@@ -19,7 +19,7 @@ Waktu dalam WITA. Setiap lane **hanya mengedit baris fasenya sendiri** (supaya m
 | 11a | Tonton Bob rekan (A) + script bukti C4 (E) | Aarief | lane/app | [ ] | | | | log/fase-11a.md |
 | 11b | `.dmg` + Release (C) | Aarief | lane/app | [ ] | | | | log/fase-11b.md |
 | 11c | Uji pasang Mac teman, P1, poles | Aarief | lane/app | [ ] | | | | log/fase-11c.md |
-| 11D1 | Landing + replay dengan fixture (I1, I2) | Imelda | lane/web | [ ] | | | | log/fase-11D1.md |
+| 11D1 | Landing + replay dengan fixture (I1, I2) | Imelda | lane/web | [~] | Sab 26 13:10 | | Infra replay siap (fixture dari skenario mock asli, sanitizer, metrics, chapters, player, export script, 28 test hijau); BERHENTI di BOB SLICE I1+I2 | log/fase-11D1.md |
 | 11D2 | I3 Long Description + replay final dari rekaman | Imelda | lane/web | [ ] | | | | log/fase-11D2.md |
 | 12 | Hardening & P1 | Alief | lane/core | [ ] | | | | log/fase-12.md |
 | 13 | Eksperimen A/B | Umar | lane/bob | [ ] | | | | log/fase-13.md |
