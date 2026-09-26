@@ -193,6 +193,14 @@ export function createApp(deps: WorkspaceDeps): Hono {
     return c.json(await importFiles(deps, req));
   });
 
+  // D-alief-12: the owner stops sharing. Everything on the server is removed and every socket closes, so the
+  // empty server can be claimed again by whoever shares a folder next. Files on everyone's Mac stay.
+  app.post('/v1/workspace/close', async (c) => {
+    requireRole(deps.db, c.req.header('authorization'), ['mc']);
+    await deps.wipe();
+    return c.json({ ok: true as const });
+  });
+
   app.post('/v1/bob/activity', async (c) => {
     const member = requireMember(deps.db, c.req.header('authorization'), ['coder', 'pm']);
     const req = parseWith(BobActivityReq, truncateActivityText(await readJson(c.req.raw)));

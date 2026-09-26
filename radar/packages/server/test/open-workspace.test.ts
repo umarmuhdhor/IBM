@@ -109,6 +109,33 @@ describe('open a folder as the workspace from the app (D-alief-12)', () => {
     expect(state.json.members).toEqual([expect.objectContaining({ id: 'A', role: 'pm' })]);
   });
 
+  it('the owner stops sharing: the server empties and anyone can share the next folder', async () => {
+    const { stub } = freshWorkspace();
+    const first = OpenWorkspaceRes.parse(
+      (await call(stub, 'POST', '/v1/workspace/open', { body: { workspace: 'one', owner: OWNER } }))
+        .json,
+    );
+    const member = decodeInvite(first.invite).token;
+    expect((await call(stub, 'POST', '/v1/workspace/close', { token: member })).status).toBe(403);
+    expect((await call(stub, 'POST', '/v1/workspace/close')).status).toBe(401);
+
+    const socket = await hello(stub, member, 'sync');
+    const closed = await call(stub, 'POST', '/v1/workspace/close', { token: first.mcToken });
+    expect(closed.status).toBe(200);
+    expect(closed.json).toEqual({ ok: true });
+    expect(await socket.closed).toBeGreaterThan(0);
+    expect((await call(stub, 'GET', '/v1/state', { token: first.mcToken })).status).toBe(401);
+
+    // a teammate shares their folder next, without any token
+    const next = await call(stub, 'POST', '/v1/workspace/open', {
+      body: { workspace: 'two', owner: { name: 'Sari', role: 'coder' } },
+    });
+    expect(next.status).toBe(201);
+    const res = OpenWorkspaceRes.parse(next.json);
+    const state = await call(stub, 'GET', '/v1/state', { token: res.mcToken });
+    expect(state.json.members).toEqual([expect.objectContaining({ id: 'A', name: 'Sari' })]);
+  });
+
   it('rejects a missing name or role', async () => {
     const { stub } = freshWorkspace();
     expect(
