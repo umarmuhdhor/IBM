@@ -1,6 +1,12 @@
 import type { RadarConnection } from '../../shared/radar-connection'
-import type { RadarWsUpdate } from '../../shared/radar-update'
-import { WS_CLOSE_UNAUTHORIZED, WS_PING_FRAME, WS_PING_MS } from '@radar/common'
+import type { RadarConnectionFailure, RadarWsUpdate } from '../../shared/radar-update'
+import {
+  WS_CLOSE_REASON_CLOSED,
+  WS_CLOSE_REASON_ROTATED,
+  WS_CLOSE_UNAUTHORIZED,
+  WS_PING_FRAME,
+  WS_PING_MS
+} from '@radar/common'
 
 const INITIAL_RECONNECT_MS = 500
 const MAX_RECONNECT_MS = 8_000
@@ -16,6 +22,17 @@ type SocketLike = {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function closeFailure(event: CloseEvent): RadarConnectionFailure {
+  if (event.code !== WS_CLOSE_UNAUTHORIZED) {
+    return 'connection-lost'
+  }
+  // D-alief-15: the server names why a token stopped working.
+  if (event.reason === WS_CLOSE_REASON_CLOSED) {
+    return 'workspace-closed'
+  }
+  return event.reason === WS_CLOSE_REASON_ROTATED ? 'signed-out' : 'access-rejected'
 }
 
 function websocketUrl(server: string): string {
@@ -117,7 +134,7 @@ export class RadarWsClient {
       this.onUpdate({
         kind: 'status',
         connected: false,
-        failure: event.code === WS_CLOSE_UNAUTHORIZED ? 'access-rejected' : 'connection-lost'
+        failure: closeFailure(event)
       })
       if (event.code === WS_CLOSE_UNAUTHORIZED) {
         this.stopped = true

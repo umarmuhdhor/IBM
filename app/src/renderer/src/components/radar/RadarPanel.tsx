@@ -107,7 +107,11 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
               {connection?.role === 'mc' && <InviteCodesCard />}
             </div>
             {/* Why: teammates join with code + name + role only; server, workspace and tokens are for the owner. */}
-            <details className="px-4 pt-3" open={Boolean(connectionFailure) || undefined}>
+            {/* Why: only a rejected token is fixed here; a closed workspace or a sign-in elsewhere needs a new code. */}
+            <details
+              className="px-4 pt-3"
+              open={connectionFailure === 'access-rejected' || undefined}
+            >
               <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
                 {connection
                   ? 'Connection details'
@@ -143,11 +147,13 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
         ) : !connected || !state ? (
           <div className="m-4 rounded-lg border border-border bg-card p-4 text-sm">
             <p>
-              {connection
-                ? connected
-                  ? 'Waiting for workspace state from the server.'
-                  : 'Connection lost. Open settings to reconnect.'
-                : 'Connect to a Live Collab workspace.'}
+              {connected
+                ? 'Waiting for workspace state from the server.'
+                : connectionFailure === 'workspace-closed'
+                  ? 'The owner stopped sharing this workspace. Join with a new code in settings.'
+                  : connectionFailure === 'signed-out'
+                    ? 'You signed in on another device, so this app was signed out.'
+                    : 'Connection lost. Open settings to reconnect.'}
             </p>
             <button
               type="button"

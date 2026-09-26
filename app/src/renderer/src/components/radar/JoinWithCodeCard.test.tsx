@@ -9,7 +9,8 @@ const status: RadarSyncStatus = {
   folder: '/Users/me/live-collab/old',
   files: null,
   message: 'Workspace reset',
-  conflicts: []
+  conflicts: [],
+  stopReason: null
 }
 
 beforeEach(() => {
@@ -28,6 +29,9 @@ afterEach(() => {
   cleanup()
   vi.unstubAllGlobals()
   status.conflicts = []
+  status.state = 'error'
+  status.message = 'Workspace reset'
+  status.stopReason = null
 })
 
 const member = {
@@ -59,4 +63,24 @@ it('names the files whose local copy was kept as .radar-conflict (D-alief-14)', 
   expect(
     (await screen.findByText(/2 files differed from the server/)).textContent
   ).toContain('notes/a.md, b.md')
+})
+
+it('after the owner stops sharing, says so calmly and offers the join form (D-alief-15)', async () => {
+  status.state = 'stopped'
+  status.message = '\u0007The owner stopped sharing this workspace.'
+  status.stopReason = 'workspace-closed'
+  render(<JoinWithCodeCard connection={member} onConnectionChange={vi.fn()} />)
+  const form = await screen.findByRole('form', { name: 'Join with a code' })
+  expect(form.textContent).toContain(
+    'The owner stopped sharing. Your files stay in /Users/me/live-collab/old. Join with a new code.'
+  )
+  expect(form.textContent).not.toContain('\u0007')
+  expect(screen.queryByText(/Access rejected/)).toBeNull()
+})
+
+it('shows the joined view for a PM too', async () => {
+  status.state = 'syncing'
+  status.message = null
+  render(<JoinWithCodeCard connection={{ ...member, role: 'pm' }} onConnectionChange={vi.fn()} />)
+  expect(await screen.findByRole('region', { name: 'Your workspace' })).toBeTruthy()
 })

@@ -4,8 +4,9 @@ import { Input } from '@/components/ui/input'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import type { RadarConnectionSummary } from '../../../../shared/radar-connection'
 import { DEFAULT_RADAR_SERVER, type RadarJoinRole } from '../../../../shared/radar-join'
+import { useRadarStore } from '@/store/radar-store'
 import { SyncConflictsNote } from './SyncConflictsNote'
-import { ipcErrorText, syncLine, useRadarSyncStatus } from './use-radar-sync-status'
+import { endedNotice, ipcErrorText, syncLine, useRadarSyncStatus } from './use-radar-sync-status'
 
 type Props = {
   connection: RadarConnectionSummary | null
@@ -33,6 +34,9 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
     setNote(text === null ? null : { text, key })
   const [invalid, setInvalid] = useState(false)
   const sync = useRadarSyncStatus()
+  const connectionFailure = useRadarStore((store) => store.connectionFailure)
+  // Why: once the owner stops sharing, the old seat cannot come back; offer the join form instead.
+  const ended = connection && connection.role !== 'mc' ? endedNotice(sync, connectionFailure) : null
 
   const join = async () => {
     setBusy(true)
@@ -73,7 +77,7 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
   }
 
   const joined =
-    !another && connection !== null && connection.role === 'coder' && sync.folder !== null
+    !another && !ended && connection !== null && connection.role !== 'mc' && sync.folder !== null
 
   if (joined) {
     return (
@@ -129,6 +133,9 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
         <h3 className="text-sm font-semibold">
           {owner ? 'Connect as workspace owner' : 'Join a workspace'}
         </h3>
+        {ended && !owner && (
+          <p className="text-xs text-foreground [overflow-wrap:anywhere]">{ended}</p>
+        )}
         <p className="text-xs text-muted-foreground">
           {owner
             ? 'Enter the owner code printed by admin init. This app becomes Mission Control and can invite teammates.'

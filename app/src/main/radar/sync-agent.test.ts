@@ -7,14 +7,15 @@ vi.mock('electron', () => ({
 }))
 vi.mock('../../shared/child-process/run-process', () => ({ spawnProcess: vi.fn() }))
 
-const { applySyncLine } = await import('./sync-agent')
+const { applySyncLine, cliErrorText } = await import('./sync-agent')
 
 const BASE: RadarSyncStatus = {
   state: 'starting',
   folder: '/f',
   files: null,
   message: null,
-  conflicts: []
+  conflicts: [],
+  stopReason: null
 }
 
 describe('applySyncLine', () => {
@@ -36,5 +37,27 @@ describe('applySyncLine', () => {
     const once = applySyncLine(BASE, line)
     expect(once?.conflicts).toEqual(['notes/a.md'])
     expect(applySyncLine(once!, line)).toBeNull()
+  })
+
+  it('keeps why sync stopped, so the app can show a friendly state (D-alief-15)', () => {
+    const line =
+      '{"type":"stopped","reason":"workspace-closed","message":"The owner stopped sharing this workspace."}'
+    expect(applySyncLine({ ...BASE, state: 'syncing' }, line)).toMatchObject({
+      state: 'stopped',
+      stopReason: 'workspace-closed',
+      message: 'The owner stopped sharing this workspace.'
+    })
+    expect(applySyncLine(BASE, '{"type":"stopped","reason":"other"}')).toMatchObject({
+      state: 'error',
+      stopReason: null
+    })
+  })
+})
+
+describe('cliErrorText', () => {
+  it('drops the terminal bell, colors and the cross mark', () => {
+    expect(cliErrorText('\u0007\u001b[31m✖ Sync stopped: token rejected\u001b[39m')).toBe(
+      'Sync stopped: token rejected'
+    )
   })
 })

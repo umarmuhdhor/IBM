@@ -12,7 +12,8 @@ const status: RadarSyncStatus = {
   folder: null,
   files: 3,
   message: null,
-  conflicts: []
+  conflicts: [],
+  stopReason: null
 }
 
 beforeEach(() => {
