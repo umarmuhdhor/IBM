@@ -6,18 +6,22 @@ import {
   type BlockVia,
   type LockCheckResult,
   type LockHolder,
+  type AllocationSource,
   type TaskStatus,
 } from '@radar/common';
-import { headOf, insertAllocation, queueOf } from '../db/repo/allocation';
+import { deleteAllocation, getAllocation, headOf, insertAllocation, nextPos, pathsOf, queueOf, renumberQueue, setFront, type QueueEntry } from '../db/repo/allocation';
 import { insertBlock } from '../db/repo/block';
 import { getFile } from '../db/repo/file';
-import { getLock, insertLock, setLockState, setTaskLocksState, type LockRow } from '../db/repo/lock';
+import { deleteLock, getLock, insertLock, setLockState, setTaskLocksState, updateLock, type LockRow } from '../db/repo/lock';
 import { getMember, setActiveTask, type MemberRow } from '../db/repo/member';
 import { expirePendingReviews } from '../db/repo/proposal';
 import { createRequest } from '../db/repo/request';
 import { firstOpenTask, getTask, insertTask, latestWorkingTask, setTaskStatus, type TaskRow } from '../db/repo/task';
+import { moveTouch } from '../db/repo/touch';
 import type { Db } from '../db/sql';
+import { RadarError } from '../http/errors';
 import { appendEvent } from './events';
+import { addNotification } from './notifications';
 import type { UnitOfWork } from './uow';
 
 /** What every lock function needs: the transaction's db, its outbox, and one clock reading. */
@@ -70,9 +74,29 @@ export function holderOf(ctx: LockCtx, lock: LockRow): LockHolder {
   };
 }
 
-/** Changes a task's status and records `task.status` (no-op when it already has `to`). */
+/** R4 §2: the only task status changes the server makes. Anything else is a 409. */
+const TRANSITIONS: Readonly<Record<TaskStatus, readonly TaskStatus[]>> = {
+  draf: ['terbuka', 'batal'],
+  terbuka: ['dikerjakan', 'review', 'batal'],
+  dikerjakan: ['review', 'batal'],
+  review: ['dikerjakan', 'selesai'],
+  selesai: [],
+  batal: [],
+};
+
+export function canTransition(from: TaskStatus, to: TaskStatus): boolean {
+  return TRANSITIONS[from].includes(to);
+}
+
+/**
+ * `transitionTask` of fase 05 step 4: changes a task's status after checking R4 §2 and records `task.status`.
+ * No-op when the task already has `to`; an illegal change throws 409 CONFLICT.
+ */
 export function setStatus(ctx: LockCtx, task: TaskRow, to: TaskStatus, by: string): void {
   if (task.status === to) return;
+  if (!canTransition(task.status, to)) {
+    throw new RadarError(409, 'CONFLICT', `Task ${task.id} tidak bisa pindah dari ${task.status} ke ${to}.`);
+  }
   setTaskStatus(ctx.db, task.id, to, ctx.now);
   appendEvent(ctx.db, ctx.uow, { ts: ctx.now, actor: by, type: 'task.status', payload: { taskId: task.id, from: task.status, to, by } });
 }
@@ -178,9 +202,8 @@ export function checkWrite(ctx: LockCtx, memberId: string, path: string, via: Bl
     // Row 3: file is free — but defensively promote a stale queue head if one exists (R4 §3, I4).
     const head = headOf(ctx.db, path);
     if (head !== null && head.owner_id !== memberId) {
-      // Promote queue head to dipesan and then block the requesting member.
-      insertLock(ctx.db, { path, taskId: head.task_id, memberId: head.owner_id, state: 'dipesan', now: ctx.now });
-      lockChanged(ctx, path);
+      // Promote the queue head (lock.transferred, cause queue), then block the requesting member.
+      advanceQueue(ctx, path, null);
       return blockFor(ctx, memberId, path, via);
     }
 
@@ -309,3 +332,111 @@ function blockFor(ctx: LockCtx, memberId: string, path: string, via: BlockVia): 
     taskId: reqTask.id,
   };
 }
+
+// ---- R4 §5–6.1: queues, release, transfer, revoke --------------------------------------------------------------
+
+/**
+ * R4 §6.1 `enqueue`: gives `task` the next queue position on `path`. Position 0 on a free path reserves it
+ * (`lock.reserved`); otherwise the task waits (`lock.queued`). A task already allocated keeps its place.
+ */
+export function enqueue(ctx: LockCtx, path: string, task: TaskRow, source: AllocationSource): number {
+  const existing = getAllocation(ctx.db, task.id, path);
+  if (existing) return existing.queue_pos;
+  const lock = getLock(ctx.db, path);
+  // I4 repair: a lock without its position-0 allocation (must not happen) gets it back before we queue.
+  if (lock && !getAllocation(ctx.db, lock.task_id, path)) setFront(ctx.db, path, lock.task_id, 'auto', ctx.now);
+  const pos = nextPos(ctx.db, path);
+  insertAllocation(ctx.db, { taskId: task.id, path, pos, source, now: ctx.now });
+  if (pos === 0 && !lock) {
+    insertLock(ctx.db, { path, taskId: task.id, memberId: task.owner_id, state: 'dipesan', now: ctx.now });
+    appendEvent(ctx.db, ctx.uow, { ts: ctx.now, actor: 'server', type: 'lock.reserved', payload: { path, taskId: task.id, memberId: task.owner_id, source } });
+  } else {
+    appendEvent(ctx.db, ctx.uow, { ts: ctx.now, actor: 'server', type: 'lock.queued', payload: { path, taskId: task.id, memberId: task.owner_id, pos } });
+  }
+  lockChanged(ctx, path);
+  return pos;
+}
+
+/**
+ * R4 §5 `advanceQueue`: the queue head of a path without a lock gets it as `dipesan` (`lock.transferred`) and a
+ * "Giliranmu" notification. An empty queue leaves the path free. Returns the new holder, if any.
+ */
+export function advanceQueue(ctx: LockCtx, path: string, fromTaskId: string | null): QueueEntry | null {
+  const head = headOf(ctx.db, path);
+  if (!head) {
+    lockChanged(ctx, path);
+    return null;
+  }
+  insertLock(ctx.db, { path, taskId: head.task_id, memberId: head.owner_id, state: 'dipesan', now: ctx.now });
+  appendEvent(ctx.db, ctx.uow, {
+    ts: ctx.now,
+    actor: 'server',
+    type: 'lock.transferred',
+    payload: { path, fromTaskId, toTaskId: head.task_id, toMemberId: head.owner_id, cause: 'queue' },
+  });
+  lockChanged(ctx, path);
+  addNotification(ctx, { memberId: head.owner_id, kind: 'lock', message: `Giliranmu: ${path} kini dipesan untuk ${head.task_id}.`, ref: head.task_id });
+  return head;
+}
+
+/**
+ * R4 §5 `releaseTaskLocks`: drops every allocation of a finished or cancelled task (I9). Paths it held go to the
+ * next task in their queue; paths it only waited for just lose one queue entry.
+ */
+export function releaseTaskLocks(ctx: LockCtx, taskId: string): void {
+  for (const path of pathsOf(ctx.db, taskId)) {
+    deleteAllocation(ctx.db, taskId, path);
+    renumberQueue(ctx.db, path);
+    if (getLock(ctx.db, path)?.task_id === taskId) {
+      deleteLock(ctx.db, path);
+      appendEvent(ctx.db, ctx.uow, { ts: ctx.now, actor: 'server', type: 'lock.released', payload: { path, taskId } });
+      advanceQueue(ctx, path, taskId);
+    } else {
+      lockChanged(ctx, path);
+    }
+  }
+}
+
+/**
+ * R4 §5 `transferNow` (decision `pindahkan`): `toTask` takes the lock as `dipesan` right away and the old holder
+ * queues right behind it. Uncommitted edits of the old holder on this path move with it (task_touch).
+ */
+export function transferNow(ctx: LockCtx, path: string, toTask: TaskRow): void {
+  const lock = getLock(ctx.db, path);
+  if (!lock) {
+    enqueue(ctx, path, toTask, 'decision');
+    return;
+  }
+  if (lock.task_id === toTask.id) return;
+  const fromTask = requireTask(ctx.db, lock.task_id);
+  setFront(ctx.db, path, toTask.id, 'decision', ctx.now);
+  updateLock(ctx.db, path, { taskId: toTask.id, memberId: toTask.owner_id, state: 'dipesan' }, ctx.now);
+  moveTouch(ctx.db, fromTask.id, toTask.id, path);
+  appendEvent(ctx.db, ctx.uow, {
+    ts: ctx.now,
+    actor: 'server',
+    type: 'lock.transferred',
+    payload: { path, fromTaskId: fromTask.id, toTaskId: toTask.id, toMemberId: toTask.owner_id, cause: 'decision' },
+  });
+  lockChanged(ctx, path);
+  const toName = getMember(ctx.db, toTask.owner_id)?.name ?? toTask.owner_id;
+  addNotification(ctx, {
+    memberId: fromTask.owner_id,
+    kind: 'lock',
+    message: `${path} dipindahkan ke ${toName} (${toTask.id}) oleh keputusan PM. Kamu antre berikutnya.`,
+    ref: fromTask.id,
+  });
+}
+
+/** R4 §5 revoke (SV-09): frees `path` from its holder, who loses the allocation, and advances the queue. */
+export function revoke(ctx: LockCtx, path: string, reason: string, by: string): QueueEntry | null {
+  const lock = getLock(ctx.db, path);
+  if (!lock) throw new RadarError(404, 'NOT_FOUND', `${path} tidak sedang dikunci.`);
+  deleteLock(ctx.db, path);
+  deleteAllocation(ctx.db, lock.task_id, path);
+  renumberQueue(ctx.db, path);
+  appendEvent(ctx.db, ctx.uow, { ts: ctx.now, actor: by, type: 'lock.revoked', payload: { path, taskId: lock.task_id, memberId: lock.member_id, reason } });
+  addNotification(ctx, { memberId: lock.member_id, kind: 'lock', message: `Kunci ${path} dicabut PM: ${reason}`, ref: lock.task_id });
+  return advanceQueue(ctx, path, lock.task_id);
+}
+

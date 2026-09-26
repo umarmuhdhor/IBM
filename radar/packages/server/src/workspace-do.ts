@@ -9,7 +9,7 @@ import { getMeta } from './db/repo/meta';
 import { createDb, type Db } from './db/sql';
 import { createApp } from './http/routes';
 import { ActivityLimiter } from './services/activity';
-import { authorizeWriteBasic, type AuthorizeWrite } from './services/files';
+import { authorizeWriteLocks, type AuthorizeWrite } from './services/files';
 import { UnitOfWork } from './services/uow';
 import { Hub } from './ws/hub';
 import { expireHellos, handleClose, handleMessage, helloDeadline, WS_CLOSE_RESET } from './ws/protocol';
@@ -20,7 +20,7 @@ export class WorkspaceDO extends DurableObject<Env> implements WorkspaceDeps {
   readonly hub: Hub;
   readonly scheduler: AlarmScheduler;
   readonly limiter = new ActivityLimiter();
-  readonly authorizeWrite: AuthorizeWrite = authorizeWriteBasic;
+  readonly authorizeWrite: AuthorizeWrite = authorizeWriteLocks;
   private readonly app: Hono;
   // Re-declared public so the DO itself can serve as WorkspaceDeps.
   declare readonly ctx: DurableObjectState<Record<string, never>>;
