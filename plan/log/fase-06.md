@@ -27,3 +27,10 @@
 - LANGKAH MANUAL: (1) uji GitHub asli fase 06 langkah 6 (Worker deploy + `curl` + screenshot `docs/img/commit-github.png`); (2) `deploy:server` produksi (butuh konfirmasi); (3) TODO B6: konfirmasi email `BOB_COAUTHOR` (default `IBM Bob <bob@ibm.com>` dipakai).
 - Catatan handoff: P1 `term.*` → fase 12 · temuan A4 #2/#4 (enqueue/promote) → fase 12 · B6 → sebelum submit.
 - PR: [#16](https://github.com/umarmuhdhor/IBM/pull/16) dari `lane/core-f06` (snapshot `snap/core-f06`); commit A3 terpisah + trailer, commit fase terpisah. Merge menunggu CI hijau (pemilik lane). Status awal: `CONFLICTING` vs main (squash #10/#13 mendarat setelah lane divergen) — sinkron `rebase --onto` ikut langkah 13 saat mulai fase berikut.
+
+## Bukti push GitHub asli (Sab 26 Sep 17:30–17:50 WITA, user setuju deploy+push)
+- Deploy produksi OK (`live-collab.afindo-mi01.workers.dev`, `GITHUB_COMMIT=true`, `GITHUB_REPO=aliefauzan/toko-demo`); `wrangler.jsonc` ikut di-flip (commit fase ini).
+- Skenario live: plan T-1 → edit via WS (ack) → submit → review P-4 → approve. Gagal dengan `push_failed`, terdiagnosis lewat `wrangler tail`.
+- Temuan 1 (diperbaiki + redeploy): `fetch` global yang disimpan lalu dipanggil detached melempar `Illegal invocation` di workerd → default committer sekarang closure `(...args) => fetch(...args)` + test regresi.
+- Temuan 2 (BLOKIR, butuh manusia): `POST /git/trees` → 403 `Resource not accessible by personal access token` (GET commit lolos). PAT di produksi tidak punya Contents write untuk `aliefauzan/toko-demo` (kemungkinan dibuat untuk repo lain sebelum pindah B3, atau read-only). Alief: buat PAT fine-grained baru (hanya repo ini, Contents read & write, tanpa Workflows) lalu `npx wrangler secret put GITHUB_TOKEN` (diketik sendiri, jangan di chat), kemudian approve ulang P-4 (`POST /v1/proposals/P-4/decision {approve:true}` token mc) → commit T-1 ter-push → screenshot halaman commit ke `radar/docs/img/commit-github.png`.
+- State produksi saat ini (aman, tidak rusak): T-1 `review` (touch checkout v1→v2 berisi baris proof), T-2 `terbuka` kosong, P-4 `menunggu`, head `ed9e4b2` belum bergerak, `GITHUB_COMMIT=true` tetap ON untuk fase 10.
