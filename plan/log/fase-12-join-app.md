@@ -91,3 +91,7 @@ Scope: `InviteCodesCard.tsx` (dirender, screenshot app dev 3024 px, koneksi mc k
 | LOW | Writing | `InviteCodesCard.tsx` daftar kode | kode yang sudah dipakai tetap tampil tanpa status | dicatat, tidak diubah | server tidak mengirim kode mana yang dipakai siapa; nama muncul di Joined |
 
 Verdict: **Approve** (tanpa HIGH). Workspace live masih berisi A–D hasil seed sampai server di-deploy dan `admin init --force` dijalankan tanpa `--member`.
+
+### Tambahan: gaya Google Docs (26 Sep)
+
+Teman hanya mengisi kode, nama, peran. Kartu Join tidak lagi punya "Use another server" (selalu `DEFAULT_RADAR_SERVER`). Form Connection manual (Server URL, Workspace, Member, token) dilipat dalam `<details>`: "Connection details" bila sudah terhubung, "Workspace owner? Connect Mission Control with a token" bila belum; terbuka otomatis saat ada `connectionFailure`. Kode baru langsung disalin ke clipboard. UI gate: screenshot Settings (mc) setelah perubahan, disclosure native (keyboard + fokus bawaan browser), tanpa temuan HIGH.

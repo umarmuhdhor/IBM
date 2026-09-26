@@ -39,8 +39,6 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
   const [code, setCode] = useState('')
   const [name, setName] = useState('')
   const [role, setRole] = useState<RadarJoinRole>('coder')
-  const [server, setServer] = useState(DEFAULT_RADAR_SERVER)
-  const [showServer, setShowServer] = useState(false)
   const [busy, setBusy] = useState(false)
   // A message belongs to the connection it was written for, so it disappears when that connection changes.
   const connectionKey = connection ? `${connection.workspace}/${connection.member}` : ''
@@ -61,7 +59,7 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
     setMessage(null)
     setInvalid(false)
     try {
-      const result = await window.api.radar.joinWithCode(code, server, name, role)
+      const result = await window.api.radar.joinWithCode(code, DEFAULT_RADAR_SERVER, name, role)
       setCode('')
       onConnectionChange(result.connection)
       setMessage(
@@ -188,22 +186,9 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
           </ToggleGroupItem>
         </ToggleGroup>
       </div>
-      {showServer && (
-        <label className="block max-w-md space-y-1 text-xs">
-          <span>Server</span>
-          <Input type="url" value={server} onChange={(event) => setServer(event.target.value)} />
-        </label>
-      )}
-      <div className="flex flex-wrap items-center gap-3">
-        <Button type="submit" size="sm" disabled={busy}>
-          {busy ? 'Joining…' : 'Join'}
-        </Button>
-        {!showServer && (
-          <Button type="button" variant="link" size="xs" onClick={() => setShowServer(true)}>
-            Use another server
-          </Button>
-        )}
-      </div>
+      <Button type="submit" size="sm" disabled={busy}>
+        {busy ? 'Joining…' : 'Join'}
+      </Button>
       <p
         id="radar-join-message"
         role="status"
