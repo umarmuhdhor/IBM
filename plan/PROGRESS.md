@@ -15,7 +15,7 @@ Waktu dalam WITA. Setiap lane **hanya mengedit baris fasenya sendiri** (supaya m
 | 07 | Kit `.bob/` coder | Umar | lane/bob | [x] | Sab 26 00:45 | Sab 26 01:10 | Kit coder (5 hook, radar-mcp 5 tool, mode + rules), 57 test hijau, uji Bob IDE jalur blokir 3/3 melawan fake server; uji di toko-demo asli = fase 10 | log/fase-07.md |
 | 08 | Main agent `pm-lead` | Umar | lane/bob | [x] | Sab 26 01:12 | Sab 26 01:30 | 8 tool PM (tanpa approve), kit PM, uji Bob IDE MA-01/02/03/04 (3/3)/05/07 melawan fake server; uji server asli = fase 10 | log/fase-08.md |
 | 09 | App desktop (Orca di `app/`) + `@radar/ui` | Aarief | lane/app | [x] | Sab 26 00:12 | Sab 26 11:30 | Agent IBM Bob di Orca (C2, DA-02), koneksi aman di main + WS/Approve live lulus melawan mock, panel Live Collab + `@radar/ui` (C3), gerbang UI + security PASS; uji server asli = fase 10 | log/fase-09.md |
-| 10 | Integrasi E2E | Semua | lane masing-masing | [ ] | | | | log/fase-10.md |
+| 10 | Integrasi E2E | Semua | lane masing-masing | [x] | Sab 26 16:18 | Min 27 01:25 | Ditutup atas keputusan Umar: sim-3pc lokal hijau 3× (#20), kit Bob + review vs Worker asli (#15, #17), app offline/4401/PM Lead (#26); milestone 4 Mac tidak tercatat → dijalankan sebagai gladi fase 14 | log/fase-10.md, log/fase-10-bob.md |
 | 11a | Tonton Bob rekan (A) + script bukti C4 (E) | Aarief | lane/app | [~] | Sab 26 <12:00 | | PR #21 merged (Watch Bob + C4). App fase 10 PR #26 merged: status offline, "Access rejected" (4401), role PM Lead di Settings. Menunggu uji 2 laptop dan p95 < 1 s; wiring `evidence:check` di luar folder Aarief. | log/fase-11a.md |
 | 11b | `.dmg` + Release (C) | Aarief | lane/app | [ ] | | | | log/fase-11b.md |
 | 11c | Uji pasang Mac teman, P1, poles | Aarief | lane/app | [ ] | | | | log/fase-11c.md |
@@ -34,7 +34,7 @@ Waktu dalam WITA. Setiap lane **hanya mengedit baris fasenya sendiri** (supaya m
 | GATE 1 — hasil spike | Sab 26 Sep 04:00 | [x] | D-umar-01: `ENFORCEMENT = hook+server`, `SYNC = watch`, fixture di `radar/docs/spike-payloads/`; build app (uji 13) di lane App |
 | Sinkron 1 — semua lane punya PR ter-merge | Sab 26 Sep 16:00 | [ ] | App konek ke server staging |
 | Fase 10 mulai (interupsi wajib) | Sab 26 Sep 21:00 | [ ] | PR keempat lane ter-merge ≤ 21:00 |
-| Milestone — alur penuh di 4 Mac | Sab 26 Sep 23:00 | [ ] | rencana → live → blokir → keputusan + tonton Bob rekan; PC D ikut |
+| Milestone — alur penuh di 4 Mac | Sab 26 Sep 23:00 | [ ] | rencana → live → blokir → keputusan + tonton Bob rekan; PC D ikut. Tidak tercatat per Min 01:25; fase 10 ditutup tanpa ini, alur 4 Mac jadi gladi fase 14 |
 | GATE 2 — feature freeze | Min 27 Sep 11:00 | [ ] | Setelah ini hanya bugfix, dokumen, video |
 | Rekaman final (gladi + 2 take) | Min 27 Sep 11:00–14:00 | [ ] | Setelah freeze; server & toko-demo di-reset |
 | Submit | Min 27 Sep 19:00–21:00 | [ ] | Batas lablab 23:00 WITA |
