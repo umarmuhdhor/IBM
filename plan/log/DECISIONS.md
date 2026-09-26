@@ -429,3 +429,14 @@ Format:
 - Alternatif yang ditolak: publish ke npm (butuh akun npm dan rilis publik); GET `/j/<kode>` yang langsung menukar kode (pratinjau tautan di chat akan merotasi token).
 - Dampak: Aarief (app bisa memakai `/v1/join` untuk kolom "masukkan kode" dan `/v1/join-codes` untuk tombol "buat kode" di Mission Control), Imelda (langkah gabung di README/video jadi satu baris).
 - Tambahan (26 Sep, IN-03 app): atas permintaan user ("user hanya perlu download app lalu masukkan kode"), Alief mengerjakan bagian app di lane Core (lintas lane `app/**`, hanya penambahan): app membawa CLI radar sebagai bundle esbuild (`resources/radar-cli`, dijalankan dengan Electron sendiri via `ELECTRON_RUN_AS_NODE`), kartu **Join a workspace** (kode → hubung, sinkron `~/live-collab/<ws>`, kit Bob, tombol Open in IBM Bob), kartu **Invite teammates** untuk Mission Control (Make code), shim `~/.radar/bin/{radar,node}` agar hook dan radar-mcp Bob jalan tanpa Node terpasang, dan sinkron otomatis lanjut saat app dibuka ulang. Detail + UI gate: `plan/log/fase-12-join-app.md`. Aarief: rebase PR #21 di atasnya; `RadarPanel.tsx` hanya mendapat baris render tambahan.
+
+## D-alief-10 · 26 Sep 2026 · pasca fase 12 · Kode gabung terbuka: teman mengisi nama dan peran sendiri
+
+- Keputusan:
+  1. **Kontrak (milik Core):** `AdminJoinCodeReq.member` opsional; tanpa itu kode *terbuka* (`AdminJoinCodeRes.member = null`). `JoinReq` mendapat `name?` (1–100) dan `role?` (`coder`/`pm`). `join_code.member_id` boleh NULL (skema v2; migrasi v1→v2 menghapus tabel kode, kode berumur maks 30 hari).
+  2. Penukaran pertama kode terbuka membuat member di id kosong pertama `JOIN_MEMBER_IDS` (A–H), warna dari `MEMBER_COLORS`/palet, event `member.created {memberId, name, role}`, lalu kode terikat ke member itu. Penukaran berikutnya masuk sebagai member yang sama (perangkat terbaru menang, seperti D-alief-09). Tanpa nama/peran = 422; workspace penuh = 409.
+  3. `AdminInitReq.members` boleh kosong (default `[]`): workspace bisa dimulai tanpa data demo. Kode yang terikat ke member (`admin code --member X`) tetap berfungsi.
+- Alasan: user tidak mau data demo (A · Alice, B · Budi, …) di Mission Control; pemilik cukup membuat kode, dan nama + peran muncul setelah teman bergabung.
+- Alternatif yang ditolak: satu kode untuk seluruh tim (satu orang yang menukar dua kali akan jadi dua member); id member dari nama (bentrok dengan warna A–D dan kontrak lain yang memakai id pendek).
+- Dampak: Aarief (kartu Join punya kolom nama + peran; kartu Invite tanpa daftar member seed), Imelda (langkah gabung: masukkan kode, nama, peran). Deploy server + `admin init --force` tanpa `--member` diperlukan agar workspace live kosong dari A–D.
+

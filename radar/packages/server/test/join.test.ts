@@ -68,6 +68,46 @@ describe('short join code (IN-03, D-alief-09)', () => {
     expect((await call(stub, 'POST', '/v1/join', { body: { code } })).status).toBe(404);
   });
 
+  it('an open code adds a new member with the name and role they enter, then signs that member in again (D-alief-10)', async () => {
+    const { stub } = freshWorkspace();
+    const t = await seedTestWorkspace(stub);
+    const mc = await hello(stub, t.mc!, 'mc');
+    const r = await call(stub, 'POST', '/v1/join-codes', { token: t.mc!, body: {} });
+    expect(r.status).toBe(201);
+    const made = AdminJoinCodeRes.parse(r.json);
+    expect(made.member).toBeNull();
+
+    expect((await call(stub, 'POST', '/v1/join', { body: { code: made.code } })).status).toBe(422);
+    const joined = await call(stub, 'POST', '/v1/join', { body: { code: made.code, name: '  Sari ', role: 'pm' } });
+    expect(joined.status).toBe(200);
+    const res = JoinRes.parse(joined.json);
+    expect(res.member).toBe('D'); // A–C are seeded; the first free id
+    expect(res.role).toBe('pm');
+    const created = await mc.next((m) => m.t === 'event' && m.d?.type === 'member.created');
+    expect(created.d.payload).toMatchObject({ memberId: res.member, name: 'Sari', role: 'pm' });
+    const token = decodeInvite(res.invite).token;
+    const state = (await call(stub, 'GET', '/v1/state', { token })).json;
+    expect(state.members).toContainEqual(expect.objectContaining({ id: res.member, name: 'Sari', role: 'pm' }));
+
+    // second use: same member, name and role ignored
+    const again = JoinRes.parse((await call(stub, 'POST', '/v1/join', { body: { code: made.code, name: 'Other', role: 'coder' } })).json);
+    expect(again).toMatchObject({ member: res.member, role: 'pm' });
+    expect((await call(stub, 'GET', '/v1/state', { token })).status).toBe(401);
+  });
+
+  it('open codes fill the ids A–H in order and stop at 8 members', async () => {
+    const { stub } = freshWorkspace();
+    expect((await admin(stub, 'POST', '/admin/init', { workspace: 'kosong', members: [] })).status).toBe(201);
+    const ids: string[] = [];
+    for (let i = 0; i < 9; i++) {
+      const { code } = AdminJoinCodeRes.parse((await admin(stub, 'POST', '/admin/join-code', {})).json);
+      const r = await call(stub, 'POST', '/v1/join', { body: { code, name: `P${i}`, role: 'coder' }, headers: { 'cf-connecting-ip': `198.51.100.${i}` } });
+      if (i < 8) ids.push(JoinRes.parse(r.json).member);
+      else expect(r.status).toBe(409);
+    }
+    expect(ids).toEqual(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']);
+  });
+
   it('Mission Control makes join codes with its mc token; members cannot', async () => {
     const { stub } = freshWorkspace();
     const t = await seedTestWorkspace(stub);

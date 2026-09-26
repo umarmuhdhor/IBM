@@ -1,6 +1,6 @@
 // R2 §2, copied verbatim. Kept as a TS string (not schema.sql) because workerd and the vitest pool cannot
 // import a .sql file the same way (D-alief-03). Runs on every DO start; every statement is IF NOT EXISTS.
-export const SCHEMA_VERSION = '1';
+export const SCHEMA_VERSION = '2';
 
 export const SCHEMA_SQL = `
 -- Tanpa PRAGMA journal/transaksi: Durable Object mengatur sendiri. FK sudah ON secara default (§1).
@@ -172,7 +172,7 @@ CREATE TABLE IF NOT EXISTS review (
 
 CREATE TABLE IF NOT EXISTS notification (
   id         INTEGER PRIMARY KEY AUTOINCREMENT,
-  member_id  TEXT NOT NULL REFERENCES member(id),
+  member_id  TEXT REFERENCES member(id),                 -- NULL = kode terbuka, diisi saat pertama dipakai (D-alief-10)
   kind       TEXT NOT NULL CHECK (kind IN ('pm_note','decision','lock','review','system')),
   message    TEXT NOT NULL,
   ref        TEXT,
@@ -201,7 +201,7 @@ CREATE INDEX IF NOT EXISTS metric_name ON metric(name, ts);
 
 CREATE TABLE IF NOT EXISTS join_code (                   -- IN-03 (D-alief-09): kode gabung pendek, hanya hash
   hash       TEXT PRIMARY KEY,                           -- sha256 hex dari kode 'K7QM-3XPA'
-  member_id  TEXT NOT NULL REFERENCES member(id),
+  member_id  TEXT REFERENCES member(id),                 -- NULL = kode terbuka, diisi saat pertama dipakai (D-alief-10)
   created_at INTEGER NOT NULL,
   expires_at INTEGER NOT NULL
 );

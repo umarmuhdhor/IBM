@@ -18,4 +18,7 @@ export type RadarJoinResult = {
   folder: string
 }
 
-export type RadarJoinCode = { member: string; code: string; expiresAt: number }
+/** `member` is null for an open code: whoever uses it first joins with their own name and role. */
+export type RadarJoinCode = { member: string | null; code: string; expiresAt: number }
+
+export type RadarJoinRole = 'coder' | 'pm'

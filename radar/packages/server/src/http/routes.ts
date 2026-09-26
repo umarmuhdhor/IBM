@@ -4,13 +4,13 @@ import { Hono, type MiddlewareHandler } from 'hono';
 import { createJoinCode, registerAdminRoutes } from '../admin';
 import { sha256Hex } from '../crypto';
 import type { WorkspaceDeps } from '../deps';
-import { memberForJoinCode } from '../db/repo/join-code';
+import { findJoinCode } from '../db/repo/join-code';
 import { getMember } from '../db/repo/member';
 import { insertMetric } from '../db/repo/metric';
 import { appendEvent } from '../services/events';
 import { exportEvents } from '../services/export';
 import { truncateActivityText } from '../services/activity';
-import { rotateToken } from '../services/join';
+import { addMemberForCode, rotateToken } from '../services/join';
 import { buildState } from '../services/state';
 import { principalFromHeader, requireMember, requireRole } from './auth';
 import { errorJson, parseWith, RadarError, readJson, toErrorResponse } from './errors';
@@ -58,10 +58,20 @@ export function createApp(deps: WorkspaceDeps): Hono {
       res.headers.set('retry-after', String(retry));
       return res;
     }
-    const code = normalizeJoinCode(parseWith(JoinReq, await readJson(c.req.raw)).code);
-    const memberId = code === null ? null : memberForJoinCode(deps.db, sha256Hex(code), deps.now());
-    const member = memberId === null ? null : getMember(deps.db, memberId);
-    if (!member) throw new RadarError(404, 'NOT_FOUND', 'This join code is wrong or has expired. Ask the workspace owner for a new code.');
+    const req = parseWith(JoinReq, await readJson(c.req.raw));
+    const code = normalizeJoinCode(req.code);
+    const hash = code === null ? null : sha256Hex(code);
+    const found = hash === null ? null : findJoinCode(deps.db, hash, deps.now());
+    const notFound = new RadarError(404, 'NOT_FOUND', 'This join code is wrong or has expired. Ask the workspace owner for a new code.');
+    if (!found || hash === null) throw notFound;
+    // D-alief-10: an open code creates the member on first use; after that it signs the same member in again.
+    let memberId = found.memberId;
+    if (memberId === null) {
+      if (!req.name || !req.role) throw new RadarError(422, 'VALIDATION', 'Enter your name and pick a role to join.');
+      memberId = addMemberForCode(deps, hash, req.name, req.role);
+    }
+    const member = getMember(deps.db, memberId);
+    if (!member) throw notFound;
     const workspace = deps.workspaceId();
     const token = rotateToken(deps, member.id);
     const res: JoinRes = { workspace, member: member.id, role: member.role, invite: encodeInvite({ server: new URL(c.req.url).origin, workspace, member: member.id, token }) };

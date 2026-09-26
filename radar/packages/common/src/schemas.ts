@@ -854,12 +854,13 @@ export const AdminInitReq = z.object({
     .regex(/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/)
     .optional(),
   branch: z.string().min(1).max(255).default('main'),
+  /** Empty is fine: teammates then join with open codes and pick their own name and role (D-alief-10). */
   members: z
     .array(AdminMember)
-    .min(1)
     .max(8)
     .refine((ms) => new Set(ms.map((m) => m.id)).size === ms.length, 'member ids must be unique')
-    .refine((ms) => ms.every((m) => m.id !== 'mc'), 'member id "mc" is reserved'),
+    .refine((ms) => ms.every((m) => m.id !== 'mc'), 'member id "mc" is reserved')
+    .default([]),
   /** Wipe an existing workspace first. Without it a second init is 409. */
   force: z.boolean().optional(),
 });

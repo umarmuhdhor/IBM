@@ -1,8 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import type { RadarConnectionSummary } from '../../../../shared/radar-connection'
-import { DEFAULT_RADAR_SERVER, type RadarSyncStatus } from '../../../../shared/radar-join'
+import {
+  DEFAULT_RADAR_SERVER,
+  type RadarJoinRole,
+  type RadarSyncStatus
+} from '../../../../shared/radar-join'
 
 type Props = {
   connection: RadarConnectionSummary | null
@@ -32,8 +37,8 @@ function syncLine(status: RadarSyncStatus): string {
 /** IN-03: paste a join code, and the app connects, syncs ~/live-collab/<workspace> and installs the Bob kit. */
 export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
   const [code, setCode] = useState('')
-  const [server, setServer] = useState(DEFAULT_RADAR_SERVER)
-  const [showServer, setShowServer] = useState(false)
+  const [name, setName] = useState('')
+  const [role, setRole] = useState<RadarJoinRole>('coder')
   const [busy, setBusy] = useState(false)
   // A message belongs to the connection it was written for, so it disappears when that connection changes.
   const connectionKey = connection ? `${connection.workspace}/${connection.member}` : ''
@@ -54,11 +59,11 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
     setMessage(null)
     setInvalid(false)
     try {
-      const result = await window.api.radar.joinWithCode(code, server)
+      const result = await window.api.radar.joinWithCode(code, DEFAULT_RADAR_SERVER, name, role)
       setCode('')
       onConnectionChange(result.connection)
       setMessage(
-        `Joined ${result.connection.workspace} as ${result.connection.member} (${result.role === 'pm' ? 'PM' : 'coder'}).`,
+        `Joined ${result.connection.workspace} as ${name.trim() || result.connection.member} (${result.role === 'pm' ? 'PM' : 'coder'}).`,
         `${result.connection.workspace}/${result.connection.member}`
       )
     } catch (error) {
@@ -130,8 +135,8 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
       <div className="space-y-1">
         <h3 className="text-sm font-semibold">Join a workspace</h3>
         <p className="text-xs text-muted-foreground">
-          Enter the code from your workspace owner. The files sync to your Mac and open in IBM Bob
-          IDE.
+          Enter the code from your workspace owner, your name and your role. The files sync to your
+          Mac and open in IBM Bob IDE.
         </p>
       </div>
       <label className="block max-w-xs space-y-1 text-xs">
@@ -148,22 +153,42 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
           maxLength={12}
         />
       </label>
-      {showServer && (
-        <label className="block max-w-md space-y-1 text-xs">
-          <span>Server</span>
-          <Input type="url" value={server} onChange={(event) => setServer(event.target.value)} />
-        </label>
-      )}
-      <div className="flex flex-wrap items-center gap-3">
-        <Button type="submit" size="sm" disabled={busy}>
-          {busy ? 'Joining…' : 'Join'}
-        </Button>
-        {!showServer && (
-          <Button type="button" variant="link" size="xs" onClick={() => setShowServer(true)}>
-            Use another server
-          </Button>
-        )}
+      <label className="block max-w-xs space-y-1 text-xs">
+        <span>Your name</span>
+        <Input
+          required
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          placeholder="How your team sees you"
+          autoComplete="name"
+          maxLength={100}
+        />
+      </label>
+      <div className="space-y-1 text-xs">
+        <span id="radar-join-role">Your role</span>
+        <ToggleGroup
+          type="single"
+          aria-labelledby="radar-join-role"
+          value={role}
+          onValueChange={(value) => {
+            if (value === 'coder' || value === 'pm') {
+              setRole(value)
+            }
+          }}
+          variant="outline"
+          size="sm"
+        >
+          <ToggleGroupItem value="coder" className="px-3 text-xs">
+            Coder
+          </ToggleGroupItem>
+          <ToggleGroupItem value="pm" className="px-3 text-xs">
+            PM
+          </ToggleGroupItem>
+        </ToggleGroup>
       </div>
+      <Button type="submit" size="sm" disabled={busy}>
+        {busy ? 'Joining…' : 'Join'}
+      </Button>
       <p
         id="radar-join-message"
         role="status"

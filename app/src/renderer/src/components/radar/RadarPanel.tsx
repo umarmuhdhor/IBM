@@ -95,13 +95,21 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
                 <JoinWithCodeCard connection={connection} onConnectionChange={onConnectionChange} />
               )}
             </div>
-            <RadarSettingsPane
-              connection={connection}
-              connected={connected}
-              connectionFailure={connectionFailure}
-              workspacePath={workspacePath}
-              onConnectionChange={onConnectionChange}
-            />
+            {/* Why: teammates join with code + name + role only; server, workspace and tokens are for the owner. */}
+            <details className="px-4 pt-3" open={Boolean(connectionFailure) || undefined}>
+              <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
+                {connection
+                  ? 'Connection details'
+                  : 'Workspace owner? Connect Mission Control with a token'}
+              </summary>
+              <RadarSettingsPane
+                connection={connection}
+                connected={connected}
+                connectionFailure={connectionFailure}
+                workspacePath={workspacePath}
+                onConnectionChange={onConnectionChange}
+              />
+            </details>
           </>
         ) : !connection ? (
           <div className="m-4 space-y-3">

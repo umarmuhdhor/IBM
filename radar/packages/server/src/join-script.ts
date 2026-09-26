@@ -92,9 +92,18 @@ main() {
   add_path
   export PATH="$BASE/bin:$NODE_BIN:$PATH"
 
+  # Kode terbuka (D-alief-10) butuh nama dan peran; kode yang sudah milik member mengabaikannya.
+  name="$(printenv RADAR_NAME || true)"
+  role="$(printenv RADAR_ROLE || true)"
+  if [ -z "$name" ] && [ -r /dev/tty ]; then printf 'Nama kamu: ' >/dev/tty; read -r name </dev/tty || name=''; fi
+  if [ -z "$role" ] && [ -r /dev/tty ]; then printf 'Peran (coder/pm) [coder]: ' >/dev/tty; read -r role </dev/tty || role=''; fi
+  case "$role" in pm|PM) role=pm ;; *) role=coder ;; esac
+
   say "Menukar kode $code..."
-  info="$(RADAR_SERVER="$SERVER" RADAR_CODE="$code" "$NODE_BIN/node" --input-type=module -e '
-    const r = await fetch(process.env.RADAR_SERVER + "/v1/join", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ code: process.env.RADAR_CODE }) }).catch((e) => { console.error("Server tidak bisa dihubungi: " + e.message); process.exit(1); });
+  info="$(RADAR_SERVER="$SERVER" RADAR_CODE="$code" RADAR_NAME="$name" RADAR_ROLE="$role" "$NODE_BIN/node" --input-type=module -e '
+    const body = { code: process.env.RADAR_CODE, role: process.env.RADAR_ROLE };
+    if (process.env.RADAR_NAME) body.name = process.env.RADAR_NAME;
+    const r = await fetch(process.env.RADAR_SERVER + "/v1/join", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }).catch((e) => { console.error("Server tidak bisa dihubungi: " + e.message); process.exit(1); });
     const j = await r.json().catch(() => ({}));
     if (!r.ok) { console.error(j?.error?.message ?? ("HTTP " + r.status)); process.exit(1); }
     console.log([j.workspace, j.member, j.role, j.invite].join("\t"));

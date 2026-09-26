@@ -34,22 +34,29 @@ async function errorMessage(response: Response): Promise<string> {
     : `Live Collab request failed (${response.status})`
 }
 
-/** Redeems a join code, stores the member connection, starts the WebSocket client and the sync agent. */
+/**
+ * Redeems a join code, stores the member connection, starts the WebSocket client and the sync agent.
+ * `name` and `role` make the new member for an open code; a code that already belongs to a member ignores them.
+ */
 export async function joinWithCode(
   codeInput: unknown,
-  serverInput: unknown
+  serverInput: unknown,
+  nameInput?: unknown,
+  roleInput?: unknown
 ): Promise<RadarJoinResult> {
   const code = typeof codeInput === 'string' ? normalizeJoinCode(codeInput) : null
   if (!code) {
     throw new Error('A join code looks like K7QM-3XPA.')
   }
+  const name = typeof nameInput === 'string' ? nameInput.trim().slice(0, 100) : ''
+  const role = roleInput === 'pm' ? 'pm' : 'coder'
   const server = serverOrigin(serverInput)
   // Why: redeeming rotates the member's token, so fail before that if the new one cannot be stored.
   requireOsEncryption()
   const response = await fetch(`${server}/v1/join`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ code }),
+    body: JSON.stringify(name ? { code, name, role } : { code }),
     signal: AbortSignal.timeout(15_000)
   })
   if (!response.ok) {
@@ -80,14 +87,14 @@ export async function joinWithCode(
   }
 }
 
-/** Mission Control only: a code a teammate types into their app (or `curl <server>/j/<code> | sh`). */
-export async function createJoinCode(memberInput: unknown): Promise<RadarJoinCode> {
+/**
+ * Mission Control only: an open code a teammate types into their app (or `curl <server>/j/<code> | sh`).
+ * The first person to use it joins with their own name and role (D-alief-10).
+ */
+export async function createJoinCode(): Promise<RadarJoinCode> {
   const connection = readRadarConnection()
   if (!connection || connection.role !== 'mc') {
     throw new Error('Connect as Mission Control to make join codes.')
-  }
-  if (typeof memberInput !== 'string' || !memberInput.trim()) {
-    throw new Error('Pick a member first.')
   }
   const response = await fetch(new URL('/v1/join-codes', connection.server).toString(), {
     method: 'POST',
@@ -95,7 +102,7 @@ export async function createJoinCode(memberInput: unknown): Promise<RadarJoinCod
       Authorization: `Bearer ${connection.token}`,
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ member: memberInput.trim() }),
+    body: JSON.stringify({}),
     signal: AbortSignal.timeout(10_000)
   })
   if (!response.ok) {
@@ -141,12 +148,13 @@ export function registerRadarJoinIpc(): void {
   })
   app.on('before-quit', () => stopSyncAgent())
   ipcMain.handle('radar:join-with-code', (_event, value: unknown) => {
-    const code = typeof value === 'object' && value !== null && 'code' in value ? value.code : null
-    const server =
-      typeof value === 'object' && value !== null && 'server' in value ? value.server : null
-    return joinWithCode(code, server)
+    const field = (key: string): unknown =>
+      typeof value === 'object' && value !== null && key in value
+        ? (value as Record<string, unknown>)[key]
+        : null
+    return joinWithCode(field('code'), field('server'), field('name'), field('role'))
   })
-  ipcMain.handle('radar:create-join-code', (_event, member: unknown) => createJoinCode(member))
+  ipcMain.handle('radar:create-join-code', () => createJoinCode())
   ipcMain.handle('radar:sync-status', () => getSyncStatus())
   ipcMain.handle('radar:open-in-bob', () => openInBob())
   ipcMain.handle('radar:show-folder', () => {

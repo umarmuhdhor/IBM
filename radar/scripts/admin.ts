@@ -177,13 +177,16 @@ export function formatTokenTable(tokens: Record<string, string>): string {
   return [`${'member'.padEnd(w)}  token`, ...rows.map(([k, v]) => `${k.padEnd(w)}  ${v}`)].join('\n');
 }
 
-/** IN-03 (D-alief-09): one short code per member plus the command a teammate pastes in a terminal. */
+/**
+ * IN-03 (D-alief-09): one short code per member plus the command a teammate pastes in a terminal.
+ * No members: one open code; whoever redeems it first joins with their own name and role (D-alief-10).
+ */
 export async function makeJoinCodes(c: AdminClient, members: string[], ttlHours?: number): Promise<string[]> {
   const server = c.server.replace(/\/+$/, '');
   const lines: string[] = [];
-  for (const member of members) {
-    const r = await adminCall(c, 'POST', '/admin/join-code', { member, ...(ttlHours ? { ttlHours } : {}) }, AdminJoinCodeRes);
-    lines.push(`${r.member}  ${r.code}  curl -fsSL ${server}/j/${r.code} | sh`);
+  for (const member of members.length ? members : [undefined]) {
+    const r = await adminCall(c, 'POST', '/admin/join-code', { ...(member ? { member } : {}), ...(ttlHours ? { ttlHours } : {}) }, AdminJoinCodeRes);
+    lines.push(`${r.member ?? 'open'}  ${r.code}  curl -fsSL ${server}/j/${r.code} | sh`);
   }
   const until = new Date(Date.now() + (ttlHours ?? 72) * 3_600_000).toISOString().slice(0, 16).replace('T', ' ');
   return [`Join codes (valid until ${until} UTC; each use signs that member in on the new device):`, ...lines];
@@ -191,8 +194,9 @@ export async function makeJoinCodes(c: AdminClient, members: string[], ttlHours?
 
 const USAGE = `usage (ADMIN_SECRET must be set in the environment):
   admin init   --server <url> --workspace <name> [--repo owner/name] [--branch main] [--repo-dir <clone>]
-               --member ID:role:Name[:email] ... [--force]
-  admin code   --server <url> --member <ID> ... [--ttl-hours 72]   (short join code + one-line install command)
+               [--member ID:role:Name[:email] ...] [--force]   (no --member: teammates join with open codes)
+  admin code   --server <url> [--member <ID> ...] [--ttl-hours 72]   (short join code + one-line install command;
+               without --member one open code: the first person to use it joins with their own name and role)
   admin token  --server <url> --member <ID|mc>
   admin invite --server <url> --member <ID>   (rotates the token; prints an rdr_inv_ code for radar join --invite)
   admin export --server <url> [--out <file>] [--from <id>] [--to <id>]
@@ -229,11 +233,11 @@ export async function main(argv: string[], env: NodeJS.ProcessEnv = process.env,
   const c: AdminClient = { server: values.server, secret };
 
   if (command === 'init') {
-    if (!values.workspace || !values.member?.length) {
+    if (!values.workspace) {
       out(USAGE);
       return 2;
     }
-    const members = values.member.map(parseMemberSpec);
+    const members = (values.member ?? []).map(parseMemberSpec);
     let files: RepoFile[] = [];
     let headCommit: string | null = null;
     if (values['repo-dir']) {
@@ -258,11 +262,11 @@ export async function main(argv: string[], env: NodeJS.ProcessEnv = process.env,
   }
   if (command === 'code') {
     const ttl = values['ttl-hours'] === undefined ? undefined : Number(values['ttl-hours']);
-    if (!values.member?.length || (ttl !== undefined && !(Number.isInteger(ttl) && ttl >= 1 && ttl <= 720))) {
+    if ((ttl !== undefined && !(Number.isInteger(ttl) && ttl >= 1 && ttl <= 720))) {
       out(USAGE);
       return 2;
     }
-    for (const l of await makeJoinCodes(c, values.member, ttl)) out(l);
+    for (const l of await makeJoinCodes(c, values.member ?? [], ttl)) out(l);
     return 0;
   }
   if (command === 'token') {

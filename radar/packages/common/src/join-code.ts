@@ -23,20 +23,30 @@ export function newJoinCode(): string {
   return `${s.slice(0, 4)}-${s.slice(4)}`;
 }
 
+/** Member ids a code-joined teammate gets, in order: the first free one wins. */
+export const JOIN_MEMBER_IDS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'] as const;
+
+/** Without `member` the code is open: the first person to redeem it becomes a new member with their own name and role. */
 export const AdminJoinCodeReq = z.object({
-  member: z.string().min(1).max(64),
+  member: z.string().min(1).max(64).optional(),
   ttlHours: z.number().int().min(1).max(JOIN_CODE_TTL_HOURS_MAX).optional(),
 });
 export type AdminJoinCodeReq = z.infer<typeof AdminJoinCodeReq>;
 
 export const AdminJoinCodeRes = z.object({
-  member: z.string(),
+  /** null for an open code. */
+  member: z.string().nullable(),
   code: z.string(),
   expiresAt: z.number().int(),
 });
 export type AdminJoinCodeRes = z.infer<typeof AdminJoinCodeRes>;
 
-export const JoinReq = z.object({ code: z.string().min(1).max(32) });
+/** `name` and `role` are required for an open code and ignored for a code that already belongs to a member. */
+export const JoinReq = z.object({
+  code: z.string().min(1).max(32),
+  name: z.string().trim().min(1).max(100).optional(),
+  role: z.enum(['coder', 'pm']).optional(),
+});
 export type JoinReq = z.infer<typeof JoinReq>;
 
 /** `invite` is an rdr_inv_ code with a token minted by this call (the member's older tokens are revoked). */
