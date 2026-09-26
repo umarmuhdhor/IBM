@@ -85,3 +85,16 @@ it('shows the joined view for a PM too', async () => {
   render(<JoinWithCodeCard connection={{ ...member, role: 'pm' }} onConnectionChange={vi.fn()} />)
   expect(await screen.findByRole('region', { name: 'Your workspace' })).toBeTruthy()
 })
+
+it('Join with a different code can be cancelled', async () => {
+  status.state = 'syncing'
+  render(<JoinWithCodeCard connection={member} onConnectionChange={vi.fn()} />)
+  fireEvent.click(await screen.findByRole('button', { name: 'Join with a different code' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+  expect(screen.getByRole('region', { name: 'Your workspace' })).toBeTruthy()
+})
+
+it('a first join has no Cancel', () => {
+  render(<JoinWithCodeCard connection={null} onConnectionChange={vi.fn()} />)
+  expect(screen.queryByRole('button', { name: 'Cancel' })).toBeNull()
+})

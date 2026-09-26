@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import type { RadarState } from '@radar/ui'
 import type { RadarSyncStatus } from '../../../../shared/radar-join'
 import { useRadarStore } from '@/store/radar-store'
 import { ShareFolderCard } from './ShareFolderCard'
@@ -95,7 +96,7 @@ it('opens the folder picker when no folder is open', async () => {
 it("shows the server's sentence when the server already has another owner", async () => {
   shareFolder.mockRejectedValue(
     new Error(
-      "Error invoking remote method 'radar:share-folder': Error: This server already has the workspace toko-demo. Ask its owner for a join code, or use your own server to share a folder."
+      "Error invoking remote method 'radar:share-folder': Error: Andi is sharing toko-demo. Ask them to stop sharing first, or ask them for a join code."
     )
   )
   render(
@@ -110,7 +111,7 @@ it("shows the server's sentence when the server already has another owner", asyn
   fireEvent.click(screen.getByRole('button', { name: 'Share app' }))
   expect(
     await screen.findByText(
-      'This server already has the workspace toko-demo. Ask its owner for a join code, or use your own server to share a folder.'
+      'Andi is sharing toko-demo. Ask them to stop sharing first, or ask them for a join code.'
     )
   ).toBeTruthy()
 })
@@ -194,4 +195,29 @@ it('drops the "Sharing stopped" note once this app joins another workspace', asy
     />
   )
   expect(screen.queryByText(/Sharing stopped/)).toBeNull()
+})
+
+it("a teammate sees who is sharing instead of a Share button that always fails", async () => {
+  const state = {
+    workspace: { id: 'w', name: 'my-app', headCommit: null, repoUrl: null },
+    members: {
+      A: { id: 'A', name: 'Alief', role: 'coder', color: null, online: true, stale: false, activeTaskId: null, blocked: false, writingUntil: 0 }
+    },
+    tasks: {}, locks: {}, files: {}, requests: {}, proposals: {}, feed: [], bobActivity: {}, cursor: 0
+  } satisfies RadarState
+  useRadarStore.setState({ state })
+  render(
+    <ShareFolderCard
+      connection={{ server: owner.server, workspace: 'my-app', member: 'B', role: 'coder' }}
+      folder="/Users/me/other"
+      sharedCode={null}
+      onConnectionChange={vi.fn()}
+      onShared={vi.fn()}
+    />
+  )
+  expect(
+    await screen.findByText('Alief is sharing my-app. Ask them to stop sharing first, then you can share your own folder.')
+  ).toBeTruthy()
+  expect(screen.queryByRole('button', { name: /Share/ })).toBeNull()
+  useRadarStore.setState({ state: null })
 })

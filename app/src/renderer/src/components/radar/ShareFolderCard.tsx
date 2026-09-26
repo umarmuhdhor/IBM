@@ -4,7 +4,12 @@ import { useRadarStore } from '@/store/radar-store'
 import type { RadarConnectionSummary } from '../../../../shared/radar-connection'
 import { DEFAULT_RADAR_SERVER, type RadarJoinCode } from '../../../../shared/radar-join'
 import { SyncConflictsNote } from './SyncConflictsNote'
-import { ipcErrorText, syncLine, useRadarSyncStatus } from './use-radar-sync-status'
+import {
+  endedNotice,
+  ipcErrorText,
+  syncLine,
+  useRadarSyncStatus
+} from './use-radar-sync-status'
 
 type Props = {
   connection: RadarConnectionSummary | null
@@ -38,6 +43,7 @@ export function ShareFolderCard({
 }: Props) {
   const sync = useRadarSyncStatus()
   const connectionFailure = useRadarStore((store) => store.connectionFailure)
+  const ownerName = useRadarStore((store) => store.state?.members['A']?.name ?? null)
   const [busy, setBusy] = useState(false)
   const [replacing, setReplacing] = useState(false)
   const [stopping, setStopping] = useState(false)
@@ -311,6 +317,22 @@ export function ShareFolderCard({
           </Button>
         </div>
         {status}
+      </section>
+    )
+  }
+
+  // Why: the server has one workspace; a teammate can share only after the owner stops.
+  if (connection && connection.role !== 'mc' && !endedNotice(sync, connectionFailure)) {
+    return (
+      <section
+        aria-label="Multiplayer"
+        className="space-y-1 rounded-lg border border-border bg-card p-4"
+      >
+        <h3 className="text-sm font-semibold">Multiplayer</h3>
+        <p className="text-xs text-muted-foreground">
+          {ownerName ?? 'The owner'} is sharing {connection.workspace}. Ask them to stop sharing
+          first, then you can share your own folder.
+        </p>
       </section>
     )
   }

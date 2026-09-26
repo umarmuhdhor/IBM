@@ -200,6 +200,11 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
         <Button type="submit" size="sm" disabled={busy}>
           {busy ? (owner ? 'Connecting…' : 'Joining…') : owner ? 'Connect' : 'Join'}
         </Button>
+        {another && (
+          <Button type="button" size="sm" variant="outline" onClick={() => setAnother(false)}>
+            Cancel
+          </Button>
+        )}
         <Button
           type="button"
           variant="link"

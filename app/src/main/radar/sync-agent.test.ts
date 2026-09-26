@@ -7,7 +7,8 @@ vi.mock('electron', () => ({
 }))
 vi.mock('../../shared/child-process/run-process', () => ({ spawnProcess: vi.fn() }))
 
-const { applySyncLine, cliErrorText } = await import('./sync-agent')
+const { applySyncLine, cliErrorText, getSyncStatus, startSyncAgent, stopSyncAgent } =
+  await import('./sync-agent')
 
 const BASE: RadarSyncStatus = {
   state: 'starting',
@@ -59,5 +60,15 @@ describe('cliErrorText', () => {
     expect(cliErrorText('\u0007\u001b[31m✖ Sync stopped: token rejected\u001b[39m')).toBe(
       'Sync stopped: token rejected'
     )
+  })
+})
+
+describe('stopSyncAgent', () => {
+  it('forgets the folder, so the old owner is offered Share again', () => {
+    // No bundled CLI under /app in tests, so this only records the folder.
+    startSyncAgent('my-app', null, '/Users/me/my-app')
+    expect(getSyncStatus().folder).toBe('/Users/me/my-app')
+    stopSyncAgent()
+    expect(getSyncStatus()).toMatchObject({ state: 'stopped', folder: null })
   })
 })

@@ -119,7 +119,7 @@ export function stopSyncAgent(): void {
   if (running && running.exitCode === null) {
     running.kill('SIGTERM')
   }
-  publish({ state: 'stopped', files: null, message: null, stopReason: null })
+  publish({ state: 'stopped', folder: null, files: null, message: null, stopReason: null })
 }
 
 /**
