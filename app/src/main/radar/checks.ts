@@ -16,7 +16,11 @@ async function readBobVersion(): Promise<string | null> {
       timeoutMs: BOB_VERSION_TIMEOUT_MS,
       maxOutputBytes: 4096
     })
-    const version = result.stdout.trim().split('\n').at(-1)?.trim()
+    // nvm prints "Running node vX" first; Bob follows the version with a "commit:" line.
+    const version = result.stdout
+      .split('\n')
+      .map((line) => line.trim())
+      .find((line) => !line.startsWith('Running node') && /\d+\.\d+\.\d+/.test(line))
     return result.code === 0 && !result.timedOut && version ? version : null
   } catch {
     return null

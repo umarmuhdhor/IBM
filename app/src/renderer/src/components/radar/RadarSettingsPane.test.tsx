@@ -35,9 +35,9 @@ it('explains failed checks without hiding the form', async () => {
 
   fireEvent.click(screen.getByRole('button', { name: 'Test' }))
 
-  expect(await screen.findByText('Not found on PATH')).toBeTruthy()
-  expect(screen.getByText('Not connected')).toBeTruthy()
-  expect(screen.getByText('Missing in this folder')).toBeTruthy()
+  expect(await screen.findByText('Not found. Install Bob Shell')).toBeTruthy()
+  expect(screen.getByText('Not connected. Check the server URL and access token')).toBeTruthy()
+  expect(screen.getByText('Missing. Add the Bob kit to this folder')).toBeTruthy()
   expect(screen.getByLabelText('Access token')).toBeTruthy()
 })
 

@@ -32,6 +32,13 @@ describe('Live Collab settings checks', () => {
     )
   })
 
+  it('picks the version line from the real nvm + Bob Shell output', async () => {
+    processResult(0, 'Running node v24.21.0 (npm v11.19.0)\n2.0.5\ncommit: 2dc180906\n')
+    fs.access.mockResolvedValue(undefined)
+
+    expect((await runRadarChecks('/work/toko-demo')).bobVersion).toBe('2.0.5')
+  })
+
   it('returns null when Bob Shell is missing, fails, or hangs', async () => {
     fs.access.mockResolvedValue(undefined)
     processResult(127)
