@@ -59,25 +59,40 @@ body {
   top: 12px;
 }
 
-/* Nav: floating pill */
+/* Nav: full-width bar at the top, morphs into a floating pill on scroll (src/landing-nav.tsx) */
 .lp-nav {
   position: fixed;
-  top: 14px;
+  top: 0;
   left: 50%;
   z-index: 50;
   transform: translateX(-50%);
-  width: min(1040px, calc(100% - 32px));
-  height: 60px;
+  width: min(1320px, calc(100% - 48px));
+  height: 80px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  padding: 0 4px;
+  background: rgba(14, 14, 16, 0);
+  border: 1px solid transparent;
+  border-radius: 14px;
+  transition:
+    top 420ms var(--lp-ease),
+    width 420ms var(--lp-ease),
+    height 420ms var(--lp-ease),
+    padding 420ms var(--lp-ease),
+    background-color 420ms ease,
+    border-color 420ms ease;
+}
+.lp-nav[data-scrolled='true'] {
+  top: 14px;
+  width: min(1040px, calc(100% - 32px));
+  height: 60px;
   padding: 0 12px 0 18px;
-  background: rgba(14, 14, 16, 0.78);
+  background: rgba(14, 14, 16, 0.8);
+  border-color: var(--lc-border);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--lc-border);
-  border-radius: 14px;
 }
 .lp-wordmark {
   display: inline-flex;
@@ -142,11 +157,11 @@ body {
   border-radius: 12px;
 }
 .lp-btn-primary {
-  background: var(--lc-accent);
-  color: #fff;
+  background: var(--lc-text);
+  color: var(--lc-bg);
 }
 .lp-btn-primary:hover {
-  background: #0353e9;
+  background: #ffffff;
 }
 .lp-btn-outline {
   color: var(--lc-text);
@@ -162,8 +177,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: max(640px, calc(100svh - 32px));
-  margin: 16px;
+  min-height: max(620px, calc(100svh - 96px));
+  margin: 80px 16px 16px;
   overflow: hidden;
   border: 1px solid var(--lc-border);
   border-radius: 24px;
@@ -176,12 +191,12 @@ body {
   background: url('/brand/bob-crew-halftone.svg') no-repeat 50% 64% / min(80vh, 780px);
   -webkit-mask-image: radial-gradient(ellipse at 50% 60%, #000 35%, transparent 72%);
   mask-image: radial-gradient(ellipse at 50% 60%, #000 35%, transparent 72%);
-  opacity: 0.34;
+  opacity: 0.18;
   animation: lp-fade 1200ms ease-out both;
 }
 .lp-hero {
   position: relative;
-  padding: 120px 24px 80px;
+  padding: 72px 24px 72px;
   text-align: center;
 }
 .lp-hero > * {
@@ -248,6 +263,24 @@ body {
 @keyframes lp-fade {
   from {
     opacity: 0;
+  }
+}
+
+@supports (animation-timeline: view()) {
+  .lp-reveal {
+    animation: lp-reveal linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 60%;
+  }
+}
+@keyframes lp-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -762,12 +795,17 @@ body {
 
 @media (max-width: 640px) {
   .lp-nav {
+    width: calc(100% - 24px);
+    height: 64px;
+  }
+  .lp-nav[data-scrolled='true'] {
     top: 10px;
     width: calc(100% - 20px);
+    height: 56px;
     padding: 0 8px 0 12px;
   }
   .lp-stage {
-    margin: 8px;
+    margin: 64px 8px 8px;
     border-radius: 18px;
   }
   .lp-halftone {
@@ -781,7 +819,7 @@ body {
     padding: 0 16px;
   }
   .lp-hero {
-    padding: 104px 16px 56px;
+    padding: 56px 16px 56px;
   }
   .lp-product {
     padding-top: 64px;
@@ -815,6 +853,10 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .lp-nav {
+    transition: none;
+  }
+  .lp-reveal,
   .lp-halftone,
   .lp-hero > *,
   .lp-window-body,
