@@ -107,10 +107,17 @@ describe('collectFolderFiles', () => {
     write('secret-notes.txt', 'x')
     write('node_modules/x/index.js', 'x')
     write('.radar/local.json', '{}')
+    write('.env', 'KEY=value\n')
+    write('.env.example', 'KEY=\n')
     write('logo.png', Buffer.from([0x89, 0x50, 0x4e, 0x47, 0, 0, 0, 0]))
     write('big.txt', 'a'.repeat(1_048_577))
     const { files, skipped } = collectFolderFiles(root)
-    expect(files.map((file) => file.path)).toEqual(['.gitignore', 'README.md', 'src/a.ts'])
+    expect(files.map((file) => file.path)).toEqual([
+      '.env.example',
+      '.gitignore',
+      'README.md',
+      'src/a.ts'
+    ])
     expect(skipped).toBe(2)
   })
 
