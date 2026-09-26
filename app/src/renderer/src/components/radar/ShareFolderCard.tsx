@@ -16,6 +16,11 @@ type Props = {
   onShared: (code: RadarJoinCode) => void
 }
 
+/** A note belongs to the connection it was written for, so it disappears when that connection changes. */
+function noteKey(connection: RadarConnectionSummary | null): string {
+  return connection ? `${connection.workspace}/${connection.member}/${connection.role}` : ''
+}
+
 function folderName(path: string): string {
   return path.split(/[\\/]/).findLast(Boolean) ?? path
 }
@@ -36,25 +41,27 @@ export function ShareFolderCard({
   const [busy, setBusy] = useState(false)
   const [replacing, setReplacing] = useState(false)
   const [stopping, setStopping] = useState(false)
-  const [message, setMessage] = useState<string | null>(null)
-  const [invalid, setInvalid] = useState(false)
+  const [note, setNote] = useState<{ text: string; key: string; error: boolean } | null>(null)
+  const message = note && note.key === noteKey(connection) ? note.text : null
+  const invalid = message !== null && note?.error === true
+  const setMessage = (text: string | null, error = false, key = noteKey(connection)) =>
+    setNote(text === null ? null : { text, key, error })
   const owner = connection?.role === 'mc'
   // Only offer the open folder when it is not the one already shared.
   const openFolder = folder && folder !== sync.folder ? folder : null
 
-  const copy = async (code: string) => {
+  const copy = async (code: string, key = noteKey(connection)) => {
     try {
       await window.api.radar.copyText(code)
-      setMessage(`Copied ${code}. Send it to your teammate.`)
+      setMessage(`Copied ${code}. Send it to your teammate.`, false, key)
     } catch {
-      setMessage(`Unable to copy. Select ${code} and copy it by hand.`)
+      setMessage(`Unable to copy. Select ${code} and copy it by hand.`, true, key)
     }
   }
 
   const share = async (target: string | null) => {
     setBusy(true)
     setMessage(null)
-    setInvalid(false)
     try {
       const result = await window.api.radar.shareFolder(target, DEFAULT_RADAR_SERVER)
       if (!result) {
@@ -63,12 +70,12 @@ export function ShareFolderCard({
       setReplacing(false)
       onShared(result.code)
       onConnectionChange(result.connection)
-      await copy(result.code.code)
+      await copy(result.code.code, noteKey(result.connection))
     } catch (error) {
       setMessage(
-        ipcErrorText(error) || 'Unable to share the folder. Check your internet connection.'
+        ipcErrorText(error) || 'Unable to share the folder. Check your internet connection.',
+        true
       )
-      setInvalid(true)
     } finally {
       setBusy(false)
     }
@@ -77,15 +84,20 @@ export function ShareFolderCard({
   const stopSharing = async () => {
     setBusy(true)
     setMessage(null)
-    setInvalid(false)
     try {
       await window.api.radar.stopSharing()
       setStopping(false)
       onConnectionChange(null)
-      setMessage('Sharing stopped. The server is empty, so a teammate can share their folder now.')
+      setMessage(
+        'Sharing stopped. The server is empty, so a teammate can share their folder now.',
+        false,
+        noteKey(null)
+      )
     } catch (error) {
-      setMessage(ipcErrorText(error) || 'Unable to stop sharing. Check your internet connection.')
-      setInvalid(true)
+      setMessage(
+        ipcErrorText(error) || 'Unable to stop sharing. Check your internet connection.',
+        true
+      )
     } finally {
       setBusy(false)
     }
@@ -283,7 +295,6 @@ export function ShareFolderCard({
             onClick={() => {
               setReplacing(true)
               setMessage(null)
-              setInvalid(false)
             }}
           >
             Share a different folder…
@@ -294,7 +305,6 @@ export function ShareFolderCard({
             onClick={() => {
               setStopping(true)
               setMessage(null)
-              setInvalid(false)
             }}
           >
             Stop sharing…

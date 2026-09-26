@@ -178,3 +178,20 @@ it('tells the old owner that another device took over, and lets them start over 
   fireEvent.click(screen.getByRole('button', { name: 'Forget this workspace' }))
   await waitFor(() => expect(onConnectionChange).toHaveBeenCalledWith(null))
 })
+
+it('drops the "Sharing stopped" note once this app joins another workspace', async () => {
+  stopSharing.mockResolvedValue(undefined)
+  const props = { folder: null, sharedCode: null, onConnectionChange: vi.fn(), onShared: vi.fn() }
+  const view = render(<ShareFolderCard connection={owner} {...props} />)
+  fireEvent.click(await screen.findByRole('button', { name: 'Stop sharing…' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Stop sharing' }))
+  view.rerender(<ShareFolderCard connection={null} {...props} />)
+  expect(await screen.findByText(/Sharing stopped/)).toBeTruthy()
+  view.rerender(
+    <ShareFolderCard
+      connection={{ server: owner.server, workspace: 'next', member: 'B', role: 'coder' }}
+      {...props}
+    />
+  )
+  expect(screen.queryByText(/Sharing stopped/)).toBeNull()
+})

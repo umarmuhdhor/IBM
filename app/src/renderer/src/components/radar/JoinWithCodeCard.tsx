@@ -26,17 +26,19 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
   const [another, setAnother] = useState(false)
   const codeInput = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
+  const sync = useRadarSyncStatus()
+  const connectionFailure = useRadarStore((store) => store.connectionFailure)
+  // Why: once the owner stops sharing, the old seat cannot come back; offer the join form instead.
+  const ended = connection && connection.role !== 'mc' ? endedNotice(sync, connectionFailure) : null
   // A message belongs to the connection it was written for, so it disappears when that connection changes.
-  const connectionKey = connection ? `${connection.workspace}/${connection.member}` : ''
+  const connectionKey = connection
+    ? `${connection.workspace}/${connection.member}${ended ? '/ended' : ''}`
+    : ''
   const [note, setNote] = useState<{ text: string; key: string } | null>(null)
   const message = note && note.key === connectionKey ? note.text : null
   const setMessage = (text: string | null, key = connectionKey) =>
     setNote(text === null ? null : { text, key })
   const [invalid, setInvalid] = useState(false)
-  const sync = useRadarSyncStatus()
-  const connectionFailure = useRadarStore((store) => store.connectionFailure)
-  // Why: once the owner stops sharing, the old seat cannot come back; offer the join form instead.
-  const ended = connection && connection.role !== 'mc' ? endedNotice(sync, connectionFailure) : null
 
   const join = async () => {
     setBusy(true)

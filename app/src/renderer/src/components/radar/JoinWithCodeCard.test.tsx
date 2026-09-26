@@ -75,6 +75,7 @@ it('after the owner stops sharing, says so calmly and offers the join form (D-al
     'The owner stopped sharing. Your files stay in /Users/me/live-collab/old. Join with a new code.'
   )
   expect(form.textContent).not.toContain('\u0007')
+  expect(form.textContent).not.toContain('Joined')
   expect(screen.queryByText(/Access rejected/)).toBeNull()
 })
 
