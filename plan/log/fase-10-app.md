@@ -11,6 +11,7 @@
 3. [x] `ORCA_BACKGROUND_LAUNCH=1 pnpm -C app build:desktop` lulus untuk renderer, web client, dan mobile web. Shortcut developer opsional di `/usr/local/bin` gagal dibuat karena izin OS, tanpa menggagalkan build.
 4. [x] Watch Bob dibuka melalui CDP terhadap mock sintetis; 11 aktivitas tampil. Screenshot yang dipotong tanpa informasi pribadi: `app/docs/img/app-watch-bob.png` (draft PR #21).
 5. [ ] Uji alur 4 Mac dan p95 latensi Watch Bob dari peristiwa Bob IDE nyata; jalankan pada milestone bersama tim.
+6. [x] Pra-cek server publik Sab 20:48 WITA tanpa kode akses: `GET /healthz` → HTTP 200 (`ok: true`, workspace `toko-demo`, versi `0.3.0`); `GET /v1/state` tanpa kode → HTTP 401. Ini membuktikan endpoint dan penolakan akses anonim, belum membuktikan reset anggota, koneksi app, atau alur demo.
 
 ## LANGKAH MANUAL — app pada 4 Mac
 
@@ -24,4 +25,6 @@
 ## Batas dan handoff
 
 - Uji dua Mac Watch Bob sekaligus menutup gerbang fisik fase 11a jika p95 dan privasi lulus; catat hasilnya di `fase-11a.md` sebelum merge PR #21.
+- Dua Mac boleh berada di lokasi berbeda selama memakai URL server publik yang sama. Koneksi tersimpan pada app lokal saat pra-cek masih menunjuk server lain; jangan ganti sampai konfigurasi anggota produksi selesai dan pengguna memasukkan kode aksesnya sendiri.
+- Tangkapan layar handoff Alief menyebut temuan HIGH pada jadwal alarm kunci stale untuk jalur WebSocket. Tim Core perlu menuntaskan dan memverifikasi perbaikan itu sebelum menjadikan uji live sebagai bukti final; app tidak mengubah server dari lane ini.
 - Fase 10 belum [x] karena tidak ada bukti uji fisik 4 Mac atau sim remote dari tim. Setelah fase 10, lanjut 11b (`.dmg`).
