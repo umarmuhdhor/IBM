@@ -14,7 +14,7 @@
     "format": "prettier -w .",
     "dev:server": "pnpm --filter \"@radar/server^...\" build && pnpm --filter @radar/server exec wrangler dev",
     "deploy:server": "pnpm --filter \"@radar/server^...\" build && pnpm --filter @radar/server exec wrangler deploy",
-    "admin": "echo \"fase-03: scripts/admin.ts\"",
+    "admin": "tsx scripts/admin.ts",
     "deploy:web": "pnpm --filter \"@radar/web...\" build && wrangler pages deploy packages/web/out --project-name ibm-bob-live-collab",
     "dev:web": "pnpm --filter \"@radar/web^...\" build && pnpm --filter @radar/web dev",
     "dev:mock": "tsx scripts/mock-server.ts",
