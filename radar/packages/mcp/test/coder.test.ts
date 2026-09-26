@@ -115,7 +115,7 @@ describe('radar-mcp coder tools (BC-07, R3 §7)', () => {
   it('my_tasks: active task first, then its files with lock/queue state', async () => {
     const { text, isError } = await call('my_tasks');
     expect(isError).toBe(false);
-    expect(seen[0]?.url).toBe('/v1/tasks?owner=me&status=open');
+    expect(seen[0]?.url).toBe('/v1/tasks?status=open');
     const lines = text.split('\n');
     expect(lines[0]).toMatch(/T-2/);
     expect(lines[0]).toMatch(/Dark mode/);
