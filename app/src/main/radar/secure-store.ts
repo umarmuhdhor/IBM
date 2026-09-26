@@ -12,14 +12,11 @@ function connectionPath(): string {
   return join(app.getPath('userData'), 'radar', 'connection.bin')
 }
 
-function requireOsEncryption(): void {
+export function requireOsEncryption(): void {
   if (!safeStorage.isEncryptionAvailable()) {
     throw new Error('OS encryption is unavailable for Live Collab connection')
   }
-  if (
-    process.platform === 'linux' &&
-    safeStorage.getSelectedStorageBackend?.() === 'basic_text'
-  ) {
+  if (process.platform === 'linux' && safeStorage.getSelectedStorageBackend?.() === 'basic_text') {
     throw new Error('OS encryption is unavailable for Live Collab connection')
   }
 }

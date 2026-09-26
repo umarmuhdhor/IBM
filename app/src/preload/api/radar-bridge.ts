@@ -2,6 +2,7 @@ import { ipcRenderer } from 'electron'
 import type { RadarChecks } from '../../shared/radar-checks'
 import type { RadarConnection, RadarConnectionSummary } from '../../shared/radar-connection'
 import type { RadarWsUpdate } from '../../shared/radar-update'
+import { radarJoinApi, type RadarJoinApi } from './radar-join-bridge'
 
 export type RadarApi = {
   getConnection: () => Promise<RadarConnectionSummary | null>
@@ -15,9 +16,10 @@ export type RadarApi = {
   revoke: (path: string, reason: string) => Promise<void>
   cancelTask: (id: string) => Promise<void>
   onUpdate: (callback: (update: RadarWsUpdate) => void) => () => void
-}
+} & RadarJoinApi
 
 export const radarApi: RadarApi = {
+  ...radarJoinApi,
   getConnection: () => ipcRenderer.invoke('radar:get-connection'),
   refresh: () => ipcRenderer.invoke('radar:refresh'),
   setConnection: (connection) => ipcRenderer.invoke('radar:set-connection', connection),

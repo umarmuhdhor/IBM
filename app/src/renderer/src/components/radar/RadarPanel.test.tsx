@@ -18,16 +18,57 @@ const { RadarStatusItem } = await import('./RadarStatusItem')
 const state = {
   workspace: { id: 'w', name: 'Demo', headCommit: null, repoUrl: null },
   members: {
-    B: { id: 'B', name: 'Budi', role: 'coder', color: null, online: true, stale: false, activeTaskId: null, blocked: false, writingUntil: 0 }
+    B: {
+      id: 'B',
+      name: 'Budi',
+      role: 'coder',
+      color: null,
+      online: true,
+      stale: false,
+      activeTaskId: null,
+      blocked: false,
+      writingUntil: 0
+    }
   },
-  tasks: {}, locks: {}, files: {}, requests: {}, proposals: {}, feed: [],
-  bobActivity: { B: [{ id: 1, ts: 1000, memberId: 'B', kind: 'prompt', sessionId: 's', mode: 'coder', text: 'add dark mode' }] },
+  tasks: {},
+  locks: {},
+  files: {},
+  requests: {},
+  proposals: {},
+  feed: [],
+  bobActivity: {
+    B: [
+      {
+        id: 1,
+        ts: 1000,
+        memberId: 'B',
+        kind: 'prompt',
+        sessionId: 's',
+        mode: 'coder',
+        text: 'add dark mode'
+      }
+    ]
+  },
   cursor: 1
 } satisfies RadarState
 
-function Harness({ initial }: { initial: RadarPanelTab }) {
+const connection = {
+  server: 'https://collab.example.dev/',
+  workspace: 'w',
+  member: 'B',
+  role: 'coder'
+} as const
+
+function Harness({ initial, joined = true }: { initial: RadarPanelTab; joined?: boolean }) {
   const [tab, setTab] = useState<RadarPanelTab>(initial)
-  return <RadarPanel tab={tab} connection={null} onConnectionChange={vi.fn()} onTabChange={setTab} />
+  return (
+    <RadarPanel
+      tab={tab}
+      connection={joined ? connection : null}
+      onConnectionChange={vi.fn()}
+      onTabChange={setTab}
+    />
+  )
 }
 
 beforeEach(() => {
@@ -46,7 +87,9 @@ describe('RadarPanel watch tab', () => {
     fireEvent.click(screen.getByRole('button', { name: "Watch Budi's Bob" }))
     expect(screen.getByRole('region', { name: "Watching Budi's Bob · coder" })).toBeTruthy()
     expect(screen.getByText('“add dark mode”')).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Watch Bob' }).getAttribute('aria-current')).toBe('page')
+    expect(screen.getByRole('button', { name: 'Watch Bob' }).getAttribute('aria-current')).toBe(
+      'page'
+    )
 
     fireEvent.click(screen.getByRole('button', { name: 'Stop watching' }))
     expect(screen.getByRole('region', { name: 'Team' })).toBeTruthy()
@@ -61,10 +104,36 @@ describe('RadarPanel watch tab', () => {
   })
 })
 
+describe('RadarPanel without a connection', () => {
+  it('offers the join code form instead of the team views', () => {
+    const stopListening = vi.fn()
+    vi.stubGlobal('api', {
+      radar: {
+        getSyncStatus: vi.fn(async () => ({
+          state: 'stopped',
+          folder: null,
+          files: null,
+          message: null
+        })),
+        onSyncStatus: vi.fn(() => stopListening)
+      }
+    })
+    render(<Harness initial="team" joined={false} />)
+    expect(screen.getByRole('form', { name: 'Join with a code' })).toBeTruthy()
+    expect(screen.queryByRole('region', { name: 'Team' })).toBeNull()
+    vi.unstubAllGlobals()
+  })
+})
+
 describe('Live Collab connection labels', () => {
   it('does not present cached members as online after disconnect', () => {
     useRadarStore.setState({ state, connected: false })
-    render(<><RadarStatusItem /><Harness initial="team" /></>)
+    render(
+      <>
+        <RadarStatusItem />
+        <Harness initial="team" />
+      </>
+    )
 
     expect(screen.getByLabelText('Live Collab status').textContent).toContain('offline')
     expect(screen.queryByText('1 online')).toBeNull()
