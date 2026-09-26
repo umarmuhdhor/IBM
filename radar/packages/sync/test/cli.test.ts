@@ -4,7 +4,8 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { loadLocalConfig } from '@radar/common/node';
 import { encodeInvite } from '@radar/common';
-import { resolveJoin, writeJoinFiles } from '../src/cli.js';
+import { EventEmitter } from 'node:events';
+import { resolveJoin, wireJsonStatus, writeJoinFiles } from '../src/cli.js';
 import { findKitDir, installKit } from '../src/kit.js';
 import { cleanupDirs, read, tempDir } from './helpers.js';
 
@@ -123,5 +124,19 @@ describe('resolveJoin (IN-02 invite)', () => {
     expect(bad).toMatchObject({ error: expect.any(String) });
     expect(JSON.stringify(bad)).not.toContain(code.slice(8, 12));
     expect(resolveJoin('https://o.example', { workspace: 'w', as: 'A' }, {})).toMatchObject({ error: expect.stringContaining('RADAR_TOKEN') });
+  });
+});
+
+describe('--json-status lines', () => {
+  it('reports status and every file kept as .radar-conflict', () => {
+    const agent = new EventEmitter();
+    const lines: string[] = [];
+    wireJsonStatus(agent, (l) => lines.push(l));
+    agent.emit('status', { connected: true, files: 2 });
+    agent.emit('conflict', { path: 'notes/a.md', sidecar: 'notes/a.md.radar-conflict' });
+    expect(lines.map((l) => JSON.parse(l))).toEqual([
+      expect.objectContaining({ type: 'status', connected: true, files: 2 }),
+      expect.objectContaining({ type: 'conflict', path: 'notes/a.md', sidecar: 'notes/a.md.radar-conflict' }),
+    ]);
   });
 });

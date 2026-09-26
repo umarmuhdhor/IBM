@@ -477,3 +477,11 @@ Format:
 - Alasan: e2e 27 Sep: "Eve" (pm) menukar kode yang sudah dipakai B dan diam-diam mendapat kursi B (coder), lalu B ditendang dengan 4401. Kode hidup 72 jam, jadi siapa pun yang melihat kode bisa mengambil kursi teman.
 - Alternatif yang ditolak: kode terbuka sekali pakai (member yang pindah Mac butuh kode baru); membuat member baru untuk nama lain (satu kode jadi undangan untuk banyak orang tanpa sepengetahuan owner).
 - Dampak: Aarief (pesan 409 tampil apa adanya di kartu Join). Skrip join mengirim `RADAR_NAME`, jadi pemakaian ulang lewat skrip tetap jalan.
+
+## D-alief-14 · 27 Sep 2026 · pasca fase 12 · Gabung selalu ke folder kosong, konflik ditampilkan
+
+- Keputusan:
+  1. App: sebelum `radar join`, folder `~/live-collab/<ws>` yang sudah berisi file dipindah ke `<ws>.old-<waktu UTC>` (tidak ada yang dihapus). Kartu Join menyebut lokasi salinan lama itu.
+  2. `radar join/start --json-status` juga mencetak baris `{"type":"conflict","path","sidecar"}` untuk setiap file lokal yang berbeda dengan server dan disimpan sebagai `<file>.radar-conflict`. `RadarSyncStatus.conflicts` (daftar path) dan kartu Multiplayer menampilkan jumlah serta nama file.
+- Alasan: e2e 27 Sep: folder sisa sesi lama mengunggah `stale-only.md` ke project pemilik, dan edit offline yang bentrok diganti tanpa pemberitahuan.
+- Alternatif yang ditolak: menghapus folder lama (edit yang belum terkirim hilang); agent menolak folder tidak kosong (teman harus membereskan sendiri).

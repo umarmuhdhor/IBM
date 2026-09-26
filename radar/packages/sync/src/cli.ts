@@ -77,6 +77,15 @@ interface RunFlags {
   afterStart?: (agent: SyncAgent) => void;
 }
 
+/**
+ * `--json-status` lines for the desktop app: `status` on every change, and `conflict` when a local copy that
+ * differed from the server was kept as `<file>.radar-conflict` (D-alief-14), so the app can list those files.
+ */
+export function wireJsonStatus(agent: Pick<SyncAgent, 'on'>, out: (line: string) => void): void {
+  agent.on('status', (s: object) => out(JSON.stringify({ type: 'status', ts: Date.now(), ...s })));
+  agent.on('conflict', (c: { path: string; sidecar: string }) => out(JSON.stringify({ type: 'conflict', ts: Date.now(), path: c.path, sidecar: c.sidecar })));
+}
+
 /** Runs the agent in the foreground until Ctrl-C or a fatal close (4401/4000). Returns the exit code. */
 export async function runAgent(cfg: LocalConfig, flags: RunFlags = {}): Promise<number> {
   const out = (s: string) => process.stdout.write(`${s}\n`);
@@ -89,7 +98,7 @@ export async function runAgent(cfg: LocalConfig, flags: RunFlags = {}): Promise<
     notify: terminalNotifier(),
     ...(flags.verbose ? { log: (l: string) => out(pc.dim(l)) } : {}),
   });
-  if (flags.jsonStatus) agent.on('status', (s) => out(JSON.stringify({ type: 'status', ts: Date.now(), ...s })));
+  if (flags.jsonStatus) wireJsonStatus(agent, out);
   let resolveDone: (code: number) => void = () => undefined;
   const done = new Promise<number>((r) => {
     resolveDone = r;
