@@ -127,6 +127,19 @@ Motion: dua animasi saja (panel/kartu masuk 180 ms `translateY(4px)`, tombol `sc
 
 `pnpm -C radar/packages/web typecheck` bersih · `test` 48/48 · `eslint packages/web` bersih · `build` static export bersih · Playwright 18/18 (1440 + 390; lewat config sementara `channel: 'chrome'` karena browser Playwright belum terpasang di Mac ini — CI tetap pakai config asli). `pnpm -C radar lint` penuh merah karena `radar/docs/video/eslint.config.mjs` (proyek Remotion lokal, untracked, butuh `@remotion/eslint-config-flat`) — bukan bagian diff ini.
 
+## Sesi 26 Sep 18:15 · hero disederhanakan ala Amoeba (D-imelda-11)
+
+Pemicu user: "kurang clean … pas awal masuk udah penuh banget tulisannya … bikin lebih simpel kayak amoeba, logo di app/resources/icon.png".
+
+- Nav: pill mengambang `position: fixed`, logo app 28px + "IBM Bob Live Collab", link Replay · bob_sessions · GitHub (disembunyikan < 640px), tombol outline Download.
+- Hero: stage berbingkai radius 24 setinggi layar, judul 2 baris Inter 500 (`clamp(40px, 8.4vw, 104px)`), satu baris sub, satu tombol biru, caption + link download. Eyebrow, pill, dan tombol ghost dihapus.
+- Siluet 3 robot: halftone SVG 64×64 titik (radius ∝ luminans × alpha) dari logo app, opasitas 0.34, fade radial. Mask CSS luminance dicoba dulu tapi titik cuma bisa on/off → gumpalan; diganti SVG hasil `scripts/halftone-logo.py`.
+- Scrim radial di belakang sub + caption supaya teks kecil tetap terbaca di atas titik.
+- Motion: judul/sub/tombol naik 8px 700ms bertahap, siluet fade 1.2s; mati di `prefers-reduced-motion`.
+- Di bawah fold: judul "Three people, three Bobs, one repo" + lede, lalu window produk dst. (tidak berubah).
+
+Verifikasi: typecheck bersih · test 48/48 · eslint web bersih · build bersih · Playwright 18/18 (1440 + 390) · `scrollWidth` 1440/390 · 0 error console. Screenshot: `plan/log/ui-11D1/landing-{1440,390}.png`.
+
 ## Deviasi (lihat `plan/log/DECISIONS.md`)
 
 - **D-imelda-01**: fixture diambil dari `radar/scripts/mock-scenarios/demo.json` (skenario Alief, hanya dibaca) via capture `GET /v1/events/export`, di-*re-timestamp* dari `delayMs` kumulatifnya sendiri, ditambah satu `commit.created` sintetis di akhir untuk chapter "Commit". **TODO(sync:alief)**: ganti dengan `GET /v1/events/export` server asli setelah fase 05/06, dan dengan rekaman nyata setelah milestone fase 10 (di 11D2).
