@@ -295,12 +295,12 @@ function Sidebar({
           />
         </React.Suspense>
       ) : null}
-      <Sheet open={sidebarOpen && radarTab !== null} onOpenChange={(open) => { if (!open) setRadarTab(null) }} modal={false}>
+      <Sheet open={sidebarOpen && radarTab !== null} onOpenChange={(open) => { if (!open) { setRadarTab(null) } }} modal={false}>
         <SheetContent
           side="left"
           showCloseButton
           aria-describedby={undefined}
-          className="bg-worktree-sidebar p-0 sm:max-w-none"
+          className="sm:max-w-none"
           overlayStyle={{ top: WORKSPACE_TOP_CHROME_HEIGHT, left: sidebarWidth, bottom: statusBarVisible ? STATUS_BAR_RESERVE_HEIGHT : 0, pointerEvents: 'none' }}
           style={{ ...leftSidebarStyle, left: `var(--workspace-sidebar-live-width, ${sidebarWidth}px)`, top: WORKSPACE_TOP_CHROME_HEIGHT, bottom: statusBarVisible ? STATUS_BAR_RESERVE_HEIGHT : 0, height: 'auto', width: `min(calc(100vw - ${sidebarWidth}px), 1100px)` }}
         >
