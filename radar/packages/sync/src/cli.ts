@@ -30,11 +30,17 @@ function isDir(p: string): boolean {
   }
 }
 
-const hasRadarLine = (text: string) => text.split(/\r?\n/).some((l) => /^\/?\.radar\/?$/.test(l.trim()));
+/** Local-only paths kept out of git: the token, the Bob kit and the copies sync keeps next to a file. */
+export const LOCAL_ONLY_RULES = ['.radar/', '.bob/', '*.radar-conflict', '*.radar-rejected'] as const;
+
+const hasRule = (text: string, rule: string) => {
+  const bare = rule.replace(/\/$/, '');
+  return text.split(/\r?\n/).some((l) => [bare, `${bare}/`, `/${bare}`, `/${bare}/`].includes(l.trim()));
+};
 
 /**
- * Writes `.radar/local.json` (mode 0600) and keeps `.radar/` out of git. The synced `.gitignore` is never
- * edited (that would send a change to every PC); the rule goes to `.git/info/exclude` instead (D-alief-04).
+ * Writes `.radar/local.json` (mode 0600) and keeps local-only paths out of git. The synced `.gitignore` is never
+ * edited (that would send a change to every PC); the rules go to `.git/info/exclude` instead (D-alief-04).
  */
 export function writeJoinFiles(o: JoinFiles): { configFile: string; excluded: string | null } {
   const dir = join(o.root, '.radar');
@@ -51,7 +57,8 @@ export function writeJoinFiles(o: JoinFiles): { configFile: string; excluded: st
   } catch {
     gitignore = '';
   }
-  if (hasRadarLine(gitignore) || !isDir(join(o.root, '.git'))) return { configFile, excluded: null };
+  const needed = LOCAL_ONLY_RULES.filter((r) => !hasRule(gitignore, r));
+  if (needed.length === 0 || !isDir(join(o.root, '.git'))) return { configFile, excluded: null };
   const exclude = join(o.root, '.git', 'info', 'exclude');
   let current = '';
   try {
@@ -59,7 +66,8 @@ export function writeJoinFiles(o: JoinFiles): { configFile: string; excluded: st
   } catch {
     mkdirSync(join(o.root, '.git', 'info'), { recursive: true });
   }
-  if (!hasRadarLine(current)) appendFileSync(exclude, `${current && !current.endsWith('\n') ? '\n' : ''}# Radar sync agent (token inside)\n.radar/\n`);
+  const missing = needed.filter((r) => !hasRule(current, r));
+  if (missing.length > 0) appendFileSync(exclude, `${current && !current.endsWith('\n') ? '\n' : ''}# Live Collab: local only (token, Bob kit, sync copies)\n${missing.join('\n')}\n`);
   return { configFile, excluded: '.git/info/exclude' };
 }
 
@@ -250,7 +258,7 @@ export function buildProgram(): Command {
       mkdirSync(root, { recursive: true });
       const kitRole = typeof o.kit === 'string' ? (o.kit as KitRole) : undefined;
       const files = writeJoinFiles({ root, server, workspace, member, token, role: kitRole ?? 'coder' });
-      if (!o.jsonStatus) out(pc.dim(`.radar/local.json written (0600)${files.excluded ? `; .radar/ added to ${files.excluded}` : ''}`));
+      if (!o.jsonStatus) out(pc.dim(`.radar/local.json written (0600)${files.excluded ? `; local-only paths added to ${files.excluded}` : ''}`));
       const cfg = loadConfigOrExit(root);
       const code = await runAgent(cfg, {
         ...(o.mode ? { mode: o.mode } : {}),

@@ -34,12 +34,24 @@ describe('writeJoinFiles', () => {
     expect(read(root, '.gitignore')).toBe('node_modules/\n');
   });
 
-  it('skips the exclude when .gitignore already lists .radar/ or there is no git folder', () => {
+  it('also keeps the Bob kit and .radar-conflict / .radar-rejected copies out of git', () => {
+    const root = tempDir();
+    mkdirSync(join(root, '.git/info'), { recursive: true });
+    const opts = { root, server: 'http://x', workspace: 'w', member: 'A', token: 't', role: 'coder' as const };
+    writeJoinFiles(opts);
+    writeJoinFiles(opts);
+    const exclude = read(root, '.git/info/exclude') ?? '';
+    for (const rule of ['.radar/', '.bob/', '*.radar-conflict', '*.radar-rejected']) {
+      expect(exclude.split('\n').filter((l) => l === rule)).toHaveLength(1);
+    }
+  });
+
+  it('skips rules .gitignore already has, and the exclude when there is no git folder', () => {
     const root = tempDir();
     expect(writeJoinFiles({ root, server: 'http://x', workspace: 'w', member: 'A', token: 't', role: 'coder' }).excluded).toBeNull();
     const withIgnore = tempDir();
     mkdirSync(join(withIgnore, '.git/info'), { recursive: true });
-    writeFileSync(join(withIgnore, '.gitignore'), '.radar/\n');
+    writeFileSync(join(withIgnore, '.gitignore'), '.radar/\n.bob/\n*.radar-conflict\n*.radar-rejected\n');
     expect(writeJoinFiles({ root: withIgnore, server: 'http://x', workspace: 'w', member: 'A', token: 't', role: 'coder' }).excluded).toBeNull();
     expect(existsSync(join(withIgnore, '.git/info/exclude'))).toBe(false);
   });
