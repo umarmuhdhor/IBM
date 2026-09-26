@@ -15,6 +15,8 @@ export interface DecisionCardProps {
   reason: string;
   /** Current status of the decision card. Defaults to "pending". */
   status?: DecisionStatus;
+  /** Hide the actions, e.g. for coders who cannot decide. */
+  readOnly?: boolean;
   /** Called when the PM clicks Approve. */
   onApprove: () => void;
   /** Called when the PM clicks Deny. */
@@ -27,6 +29,7 @@ export function DecisionCard({
   title,
   reason,
   status = 'pending',
+  readOnly = false,
   onApprove,
   onDeny,
   className,
@@ -96,7 +99,7 @@ export function DecisionCard({
       )}
 
       {/* Action buttons (only when pending or deciding) */}
-      {!isResolved && (
+      {!isResolved && !readOnly && (
         <div style={{ display: 'flex', gap: '6px', marginTop: '2px' }}>
           <button
             type="button"

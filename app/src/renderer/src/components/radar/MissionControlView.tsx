@@ -87,9 +87,9 @@ export function MissionControlView({ state, canDecide }: Props) {
           {model.pending.map((proposal) => {
             const payload = proposalPayload(proposal)
             return proposal.kind === 'review' ? (
-              <ReviewCard key={proposal.id} title={proposalTitle(proposal)} added={Number(payload.added) || 0} removed={Number(payload.removed) || 0} fileCount={Number(payload.fileCount) || 0} verdict={proposal.reason} pending={!canDecide || activeDecisionId === proposal.id} onApprove={() => decide(proposal.id, true)} onSendBack={() => decide(proposal.id, false)} />
+              <ReviewCard key={proposal.id} title={proposalTitle(proposal)} added={Number(payload.added) || 0} removed={Number(payload.removed) || 0} fileCount={Number(payload.fileCount) || 0} verdict={proposal.reason} readOnly={!canDecide} pending={activeDecisionId === proposal.id} onApprove={() => decide(proposal.id, true)} onSendBack={() => decide(proposal.id, false)} />
             ) : (
-              <DecisionCard key={proposal.id} title={proposalTitle(proposal)} reason={proposal.reason} status={!canDecide || activeDecisionId === proposal.id ? 'deciding' : 'pending'} onApprove={() => decide(proposal.id, true)} onDeny={() => decide(proposal.id, false)} />
+              <DecisionCard key={proposal.id} title={proposalTitle(proposal)} reason={proposal.reason} readOnly={!canDecide} status={activeDecisionId === proposal.id ? 'deciding' : 'pending'} onApprove={() => decide(proposal.id, true)} onDeny={() => decide(proposal.id, false)} />
             )
           })}
           {!canDecide && model.needsYou > 0 && <p className="text-xs text-muted-foreground">Only Mission Control can decide.</p>}

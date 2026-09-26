@@ -19,4 +19,18 @@ describe('DecisionCard', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
     expect(onApprove).toHaveBeenCalledOnce();
   });
+
+  it('hides decision actions in read-only mode', () => {
+    render(
+      <DecisionCard
+        title="Budi needs checkout.ts"
+        reason="Queue Budi after T-1"
+        readOnly
+        onApprove={vi.fn()}
+        onDeny={vi.fn()}
+      />,
+    );
+    expect(screen.getByText('Queue Budi after T-1')).toBeTruthy();
+    expect(screen.queryByRole('button')).toBeNull();
+  });
 });

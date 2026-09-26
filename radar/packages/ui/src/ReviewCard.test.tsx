@@ -14,3 +14,9 @@ it('shows the diff and delegates review actions', () => {
   expect(onApprove).toHaveBeenCalledOnce();
   expect(onSendBack).toHaveBeenCalledOnce();
 });
+
+it('hides review actions in read-only mode', () => {
+  render(<ReviewCard title="Checkout review" added={1} removed={0} fileCount={1} verdict="Ready" readOnly onApprove={vi.fn()} onSendBack={vi.fn()} />);
+  expect(screen.getByText('Ready')).toBeTruthy();
+  expect(screen.queryByRole('button')).toBeNull();
+});

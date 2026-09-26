@@ -16,7 +16,8 @@ const state = {
 describe('MissionControlView', () => {
   it('keeps coder decisions read-only', () => {
     render(<MissionControlView state={state} canDecide={false} />)
-    expect(screen.getByRole('button', { name: 'Approve' }).hasAttribute('disabled')).toBe(true)
+    expect(screen.queryByRole('button', { name: 'Approve' })).toBeNull()
+    expect(screen.getByText('Only Mission Control can decide.')).toBeTruthy()
   })
 
   it('waits for a server decision event after the PM approves', () => {
