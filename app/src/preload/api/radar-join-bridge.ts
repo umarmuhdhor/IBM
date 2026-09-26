@@ -1,9 +1,19 @@
 import { ipcRenderer } from 'electron'
-import type { RadarJoinCode, RadarJoinResult, RadarSyncStatus } from '../../shared/radar-join'
+import type {
+  RadarJoinCode,
+  RadarJoinResult,
+  RadarJoinRole,
+  RadarSyncStatus
+} from '../../shared/radar-join'
 
 export type RadarJoinApi = {
-  joinWithCode: (code: string, server?: string) => Promise<RadarJoinResult>
-  createJoinCode: (member: string) => Promise<RadarJoinCode>
+  joinWithCode: (
+    code: string,
+    server?: string,
+    name?: string,
+    role?: RadarJoinRole
+  ) => Promise<RadarJoinResult>
+  createJoinCode: () => Promise<RadarJoinCode>
   getSyncStatus: () => Promise<RadarSyncStatus>
   openInBob: () => Promise<string | null>
   showFolder: () => Promise<string>
@@ -11,8 +21,9 @@ export type RadarJoinApi = {
 }
 
 export const radarJoinApi: RadarJoinApi = {
-  joinWithCode: (code, server) => ipcRenderer.invoke('radar:join-with-code', { code, server }),
-  createJoinCode: (member) => ipcRenderer.invoke('radar:create-join-code', member),
+  joinWithCode: (code, server, name, role) =>
+    ipcRenderer.invoke('radar:join-with-code', { code, server, name, role }),
+  createJoinCode: () => ipcRenderer.invoke('radar:create-join-code'),
   getSyncStatus: () => ipcRenderer.invoke('radar:sync-status'),
   openInBob: () => ipcRenderer.invoke('radar:open-in-bob'),
   showFolder: () => ipcRenderer.invoke('radar:show-folder'),

@@ -66,3 +66,28 @@ Scope: `JoinWithCodeCard.tsx`, `InviteCodesCard.tsx`, render di `RadarPanel.tsx`
 Tercatat, di luar scope (pane Connection milik lane App): dua tombol terisi dalam satu view (Open in IBM Bob + Connect); header "N online" tetap tampil sesaat setelah Forget connection.
 
 Verdict: **Approve** (semua HIGH diperbaiki, dicek ulang dengan screenshot).
+
+## Tambahan 26 Sep: kode terbuka, tanpa data demo (D-alief-10)
+
+Permintaan user: kartu **Invite teammates** tidak lagi menampilkan member hasil seed (A · Alice, B · Budi, …). Awalnya hanya tombol **Make code**; nama dan peran baru muncul setelah teman memakai kode dan mengisi nama + peran sendiri.
+
+- Server: `POST /v1/join-codes` / `/admin/join-code` tanpa `member` membuat kode terbuka (`join_code.member_id` NULL, skema v2, migrasi v1→v2 membuang kode lama). `POST /v1/join {code, name, role}` pada kode terbuka membuat member baru di id kosong pertama A–H (warna dari palet, event `member.created`), lalu kode terikat ke member itu; pemakaian berikutnya masuk sebagai member yang sama (nama/peran diabaikan). Tanpa nama/peran = 422; workspace penuh (8) = 409.
+- `admin init` boleh tanpa `--member`; `admin code` tanpa `--member` mencetak satu kode terbuka. Skrip `curl …/j/<kode> | sh` menanyakan nama dan peran lewat `/dev/tty`.
+- App: kartu Join punya kolom **Your name** dan pilihan **Coder / PM**; kartu Invite = tombol Make code, daftar kode yang dibuat (Copy, masa berlaku), dan daftar **Joined** (nama + peran) dari state server.
+
+### UI gate (better-interface)
+
+Scope: `InviteCodesCard.tsx` (dirender, screenshot app dev 3024 px, koneksi mc ke workspace live), `JoinWithCodeCard.tsx` kolom nama + peran (source saja; state belum-join tidak dirender karena akan memutus koneksi mc: Not verified visual). Konvensi: `app/AGENTS.md`, `app/CLAUDE.md`.
+
+| Domain | Bukti | Hasil |
+|---|---|---|
+| Accessibility | tombol native, `role=status`, label pembungkus untuk nama, `aria-labelledby` untuk ToggleGroup, fokus dari primitive Orca | Clear |
+| Layout | screenshot: tombol, daftar kode, daftar Joined berurutan; tanpa lebar tetap yang memotong | Clear |
+| Writing | deskripsi menyebut nama + peran dan "One code adds one person" | 1 LOW |
+| Typography / Colors / UI | token dan primitive Orca yang sama dengan kartu sebelumnya, tanpa animasi | Clear |
+
+| Severity | Domain | Location | Before | After | Why |
+|---|---|---|---|---|---|
+| LOW | Writing | `InviteCodesCard.tsx` daftar kode | kode yang sudah dipakai tetap tampil tanpa status | dicatat, tidak diubah | server tidak mengirim kode mana yang dipakai siapa; nama muncul di Joined |
+
+Verdict: **Approve** (tanpa HIGH). Workspace live masih berisi A–D hasil seed sampai server di-deploy dan `admin init --force` dijalankan tanpa `--member`.

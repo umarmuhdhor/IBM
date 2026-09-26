@@ -155,16 +155,20 @@ export function registerAdminRoutes(app: Hono, deps: WorkspaceDeps): void {
   });
 }
 
-/** Reusable until it expires; every redeem rotates the member token, so the newest device wins. */
+/**
+ * Reusable until it expires; every redeem rotates the member token, so the newest device wins.
+ * Without `member` the code is open (D-alief-10): its first redeem adds a new member.
+ */
 export function createJoinCode(deps: WorkspaceDeps, req: AdminJoinCodeReq): AdminJoinCodeRes {
   requireInitialised(deps);
-  if (!getMember(deps.db, req.member)) throw new RadarError(404, 'NOT_FOUND', `Member ${req.member} tidak ada.`);
+  const member = req.member ?? null;
+  if (member !== null && !getMember(deps.db, member)) throw new RadarError(404, 'NOT_FOUND', `Member ${member} tidak ada.`);
   const code = newJoinCode();
   const now = deps.now();
   const expiresAt = now + (req.ttlHours ?? JOIN_CODE_TTL_HOURS_DEFAULT) * 3_600_000;
   deps.transact(() => {
     deleteExpiredJoinCodes(deps.db, now);
-    insertJoinCode(deps.db, { hash: sha256Hex(code), memberId: req.member, now, expiresAt });
+    insertJoinCode(deps.db, { hash: sha256Hex(code), memberId: member, now, expiresAt });
   });
-  return { member: req.member, code, expiresAt };
+  return { member, code, expiresAt };
 }

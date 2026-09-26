@@ -1,14 +1,32 @@
 import { runInDurableObject } from 'cloudflare:test';
 import { describe, expect, it } from 'vitest';
+import { migrate } from '../src/db/migrate';
+import { createDb } from '../src/db/sql';
 import { freshWorkspace } from './helpers';
 
 describe('SQLite schema in the Durable Object (R2)', () => {
-  it('migrates on construction and records schema_version = 1', async () => {
+  it('migrates on construction and records schema_version = 2', async () => {
     const { stub } = freshWorkspace();
     const v = await runInDurableObject(stub, (_i, state) =>
       state.storage.sql.exec<{ value: string }>("SELECT value FROM meta WHERE key = 'schema_version'").toArray(),
     );
-    expect(v).toEqual([{ value: '1' }]);
+    expect(v).toEqual([{ value: '2' }]);
+  });
+
+  it('v1 → v2 recreates join_code with a nullable member_id (D-alief-10)', async () => {
+    const { stub } = freshWorkspace();
+    const notNull = await runInDurableObject(stub, (_i, state) => {
+      const sql = state.storage.sql;
+      sql.exec('DROP TABLE join_code');
+      sql.exec('CREATE TABLE join_code (hash TEXT PRIMARY KEY, member_id TEXT NOT NULL, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL)');
+      sql.exec("UPDATE meta SET value = '1' WHERE key = 'schema_version'");
+      migrate(createDb(state.storage));
+      return {
+        version: sql.exec<{ value: string }>("SELECT value FROM meta WHERE key = 'schema_version'").one().value,
+        notnull: sql.exec<{ notnull: number }>("SELECT \"notnull\" FROM pragma_table_info('join_code') WHERE name = 'member_id'").one().notnull,
+      };
+    });
+    expect(notNull).toEqual({ version: '2', notnull: 0 });
   });
 
   it('enforces foreign keys (R2 §1)', async () => {

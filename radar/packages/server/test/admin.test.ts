@@ -62,7 +62,7 @@ describe('/admin/* (fase 03 step 8)', () => {
 
   it('init validates the body (422)', async () => {
     const { stub } = freshWorkspace();
-    expect((await admin(stub, 'POST', '/admin/init', { workspace: 'x', members: [] })).status).toBe(422);
+    expect((await admin(stub, 'POST', '/admin/init', { members: [] })).status).toBe(422);
     expect((await admin(stub, 'POST', '/admin/init', { workspace: 'x', members: [{ id: 'A', role: 'boss', name: 'A' }] })).status).toBe(422);
     const bad = await call(stub, 'POST', '/admin/init', { raw: '{nope', headers: { 'x-admin-secret': 'test' } });
     expect(bad.status).toBe(400);

@@ -99,6 +99,17 @@ describe('joinWithCode', () => {
     })
   })
 
+  it('sends the name and role that an open code needs', async () => {
+    respond(200, { workspace: 'toko-demo', member: 'E', role: 'pm', invite })
+    await joinWithCode('K7QM-3XPA', SERVER, '  Sari  ', 'pm')
+    expect(fetch).toHaveBeenCalledWith(
+      `${SERVER}/v1/join`,
+      expect.objectContaining({
+        body: JSON.stringify({ code: 'K7QM-3XPA', name: 'Sari', role: 'pm' })
+      })
+    )
+  })
+
   it("shows the server's message for a wrong or expired code", async () => {
     respond(404, {
       error: { code: 'NOT_FOUND', message: 'This join code is wrong or has expired.' }
@@ -123,12 +134,12 @@ describe('createJoinCode', () => {
       role: 'coder',
       token: 'rdr_test_member_value'
     })
-    await expect(createJoinCode('B')).rejects.toThrow(/Mission Control/)
+    await expect(createJoinCode()).rejects.toThrow(/Mission Control/)
     expect(fetch).not.toHaveBeenCalled()
   })
 
-  it('asks the server for a code with the Mission Control token', async () => {
-    respond(201, { member: 'B', code: 'K7QM-3XPA', expiresAt: 1 })
+  it('asks the server for an open code with the Mission Control token', async () => {
+    respond(201, { member: null, code: 'K7QM-3XPA', expiresAt: 1 })
     mocks.readRadarConnection.mockReturnValue({
       server: `${SERVER}/`,
       workspace: 'toko-demo',
@@ -136,15 +147,16 @@ describe('createJoinCode', () => {
       role: 'mc',
       token: 'rdr_test_mc_value'
     })
-    await expect(createJoinCode('B')).resolves.toEqual({
-      member: 'B',
+    await expect(createJoinCode()).resolves.toEqual({
+      member: null,
       code: 'K7QM-3XPA',
       expiresAt: 1
     })
     expect(fetch).toHaveBeenCalledWith(
       `${SERVER}/v1/join-codes`,
       expect.objectContaining({
-        headers: expect.objectContaining({ Authorization: 'Bearer rdr_test_mc_value' })
+        headers: expect.objectContaining({ Authorization: 'Bearer rdr_test_mc_value' }),
+        body: JSON.stringify({})
       })
     )
   })

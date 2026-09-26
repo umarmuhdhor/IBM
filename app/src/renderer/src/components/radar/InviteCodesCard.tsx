@@ -11,20 +11,23 @@ function until(expiresAt: number): string {
   })
 }
 
-/** IN-03, Mission Control only: make a join code per teammate to paste into their app. */
+/**
+ * IN-03, Mission Control only (D-alief-10): make an open join code and share it. A teammate who uses it
+ * enters their own name and role, and only then appears in the list below.
+ */
 export function InviteCodesCard() {
   const members = useRadarStore((store) => store.state?.members)
-  const [codes, setCodes] = useState<Record<string, RadarJoinCode>>({})
-  const [busy, setBusy] = useState<string | null>(null)
+  const [codes, setCodes] = useState<RadarJoinCode[]>([])
+  const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
-  const list = Object.values(members ?? {}).sort((a, b) => a.id.localeCompare(b.id))
+  const joined = Object.values(members ?? {}).sort((a, b) => a.id.localeCompare(b.id))
 
-  const make = async (member: string) => {
-    setBusy(member)
+  const make = async () => {
+    setBusy(true)
     setMessage(null)
     try {
-      const code = await window.api.radar.createJoinCode(member)
-      setCodes((current) => ({ ...current, [member]: code }))
+      const code = await window.api.radar.createJoinCode()
+      setCodes((current) => [code, ...current])
     } catch (error) {
       // Why: Electron prefixes IPC errors with the channel name; keep only the server's sentence.
       const text =
@@ -33,7 +36,7 @@ export function InviteCodesCard() {
           : ''
       setMessage(text || 'Unable to make a code. Check your connection and try again.')
     } finally {
-      setBusy(null)
+      setBusy(false)
     }
   }
 
@@ -54,50 +57,42 @@ export function InviteCodesCard() {
       <div className="space-y-1">
         <h3 className="text-sm font-semibold">Invite teammates</h3>
         <p className="text-xs text-muted-foreground">
-          Make a code for a member and send it privately. They paste it into Live Collab → Join.
-          Using a code signs that member in on the new Mac and signs out their previous device.
+          Make a code and send it privately. Your teammate pastes it into Live Collab → Join and
+          enters their name and role. One code adds one person.
         </p>
       </div>
-      {list.length === 0 ? (
-        <p className="text-xs text-muted-foreground">
-          Waiting for the member list from the server.
-        </p>
-      ) : (
-        <ul className="space-y-2">
-          {list.map((member) => {
-            const made = codes[member.id]
-            return (
+      <Button size="sm" variant="outline" disabled={busy} onClick={() => void make()}>
+        {busy ? 'Making…' : 'Make code'}
+      </Button>
+      {codes.length > 0 && (
+        <ul aria-label="Codes you made" className="space-y-2">
+          {codes.map((made) => (
+            <li key={made.code} className="flex flex-wrap items-center gap-2 text-xs">
+              <code className="rounded bg-secondary px-2 py-1 font-mono tracking-widest">
+                {made.code}
+              </code>
+              <Button size="xs" variant="outline" onClick={() => void copy(made.code)}>
+                Copy
+              </Button>
+              <span className="text-muted-foreground">until {until(made.expiresAt)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {joined.length > 0 && (
+        <div className="space-y-2">
+          <h4 className="text-xs font-medium text-muted-foreground">Joined</h4>
+          <ul aria-label="Joined teammates" className="space-y-2">
+            {joined.map((member) => (
               <li key={member.id} className="flex flex-wrap items-center gap-2 text-xs">
-                <span className="min-w-28">
-                  {member.id} · {member.name}
-                </span>
-                <span className="min-w-10 text-muted-foreground">
+                <span className="min-w-28">{member.name}</span>
+                <span className="text-muted-foreground">
                   {member.role === 'pm' ? 'PM' : 'coder'}
                 </span>
-                {made ? (
-                  <>
-                    <code className="rounded bg-secondary px-2 py-1 font-mono tracking-widest">
-                      {made.code}
-                    </code>
-                    <Button size="xs" variant="outline" onClick={() => void copy(made.code)}>
-                      Copy
-                    </Button>
-                    <span className="text-muted-foreground">until {until(made.expiresAt)}</span>
-                  </>
-                ) : (
-                  <Button
-                    size="xs"
-                    variant="outline"
-                    disabled={busy !== null}
-                    onClick={() => void make(member.id)}
-                  >
-                    {busy === member.id ? 'Making…' : 'Make code'}
-                  </Button>
-                )}
               </li>
-            )
-          })}
-        </ul>
+            ))}
+          </ul>
+        </div>
       )}
       <p role="status" className="text-xs text-muted-foreground">
         {message}
