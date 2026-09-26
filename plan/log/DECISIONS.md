@@ -270,62 +270,79 @@ Format:
 - Alternatif yang ditolak: Worker mengambil isi file dari GitHub (batas 50 subrequest plan Free); diff disimpan di setiap event (baris dan byte berlipat); tag `acceptWebSocket` per klien (tidak bisa diubah setelah hello); `heartbeat` menulis SQL tiap 15 s (kuota rows written).
 - Dampak: fase 04 (protokol WS, `seedTestWorkspace`, ukuran snapshot), fase 05 (`authorizeWrite` diganti `locks.checkWrite`, job alarm 30 s), fase 06 (test msw `headCommit`, `term.*`), fase 09/11 (app memakai `client:'app'`), fase 12 (rate limit admin/WS).
 - File ref/ yang diperbarui: – (bentuk admin ada di skema `@radar/common`; R3 tidak berubah).
+## D-imelda-01 · 26 Sep 2026 · fase 11D1 · Sumber fixture replay: skenario mock asli, bukan data sintetis baru
 
-## D-alief-04 · 26 Sep 2026 13:20 · fase 04 · Sync agent: perilaku lokal, rescan watcher, paket CLI, deploy
-- Keputusan:
-  1. **`.radar/` dan file sementara disembunyikan lewat `.git/info/exclude`**, bukan `.gitignore` tim, supaya `.gitignore` di repo tidak berubah hanya karena sync agent. Pola file sementara `atomicWrite` (`.<name>.radar-tmp-<hex>`) masuk `DEFAULT_IGNORE_PATTERNS` di `@radar/common` (commit `c99000c0`), jadi server dan agent sama-sama mengabaikannya.
-  2. **Kit** (`radar kit install <mode>`): hanya file kit yang disalin (subset). File `.bob/` yang sudah ada dan berbeda tidak ditimpa tanpa `--force`; dengan `--force` salinan lama disimpan sebagai `.bob.bak-<ts>`. Urutan pencarian kit: `--kit-dir`, `RADAR_KIT_DIR`, `<pkg>/bob-kit`, lalu `radar/bob-kit`.
-  3. **Watcher mulai setelah snapshot pertama.** Perubahan sebelum itu masuk `dirty` dan dikirim setelah scan pasca-snapshot. Setelah ack, file dibaca ulang sekali (settle-check) karena watcher bisa menggabungkan event terakhir sebuah burst; bila isinya berbeda, file dikirim lagi.
-  4. **Setelah reset workspace (close 1012) atau untuk principal PM**, file yang hanya ada di lokal tidak diunggah otomatis (mencegah workspace baru terisi sisa lama).
-  5. **`radar join` mengambil role dari `welcome`**, bukan dari argumen, supaya kit yang dipasang sesuai role di server.
-  6. **Rescan pengaman 2 s di mode `watch`.** chokidar v4 di macOS berbagi satu stream FSEvents per proses dan membangunnya ulang setiap folder baru di-watch, sehingga event di jendela itu hilang (bench: 3 dari 8 run kehilangan write pertama). Rescan mtime:size membandingkan pohon file, mengirim path yang berubah, dan `add()` folder yang belum di-watch. Bench 8/8 lulus setelahnya.
-  7. **Notifikasi tanpa `--verbose`**: retry verifikasi habis, putus koneksi (sekali per putus), dan tersambung lagi. Hasil review silent-failure.
-  8. **Tidak pernah mengikuti symlink keluar workspace** untuk baca, tulis, atau hapus (`UnsafePathError`). Symlink di dalam workspace ditulis tembus ke targetnya.
-  9. **Bench di `packages/sync/scripts/bench-sync.ts`**, bukan `radar/scripts/`: symlink `wrangler` di root `radar/node_modules` rusak di pnpm 12.
-  10. **CLI dibundel esbuild ke `dist/radar.mjs`.** `@radar/common` di-inline dan pindah ke `devDependencies` karena tidak dipublikasikan ke npm. `radar-cli.tgz` membawa `bob-kit` lewat `prepack`.
-  11. **Deploy**: Worker `https://live-collab.afindo-mi01.workers.dev`, repo demo `aliefauzan/toko-demo` (public, seed `ed9e4b2`), `GITHUB_COMMIT="false"` sampai fase 06. `ADMIN_SECRET` acak 32 byte di Keychain Alief; `GITHUB_TOKEN` PAT fine-grained diketik Alief sendiri. Repo kode tim tetap `umarmuhdhor/IBM`; server milik Alief maka repo demo juga milik Alief (PAT hanya bisa commit ke repo yang dia kelola).
-- Alasan: spesifikasi fase 04, hasil bench, review `ecc:code-reviewer`, `ecc:typescript-reviewer`, `ecc:silent-failure-hunter`, `ecc:pr-test-analyzer`.
-- Alternatif yang ditolak: `usePolling` permanen (CPU dan latensi 1 s); menunggu `ready` per folder baru (tidak menutup jendela rebuild FSEvents); menulis `.radar/` ke `.gitignore` tim; mempublikasikan `@radar/common` ke npm.
-- Dampak: fase 10 (reset + init ulang workspace produksi untuk membersihkan sisa bench), fase 11 (app menjalankan `radar start --json-status`, bin `dist/radar.mjs`), fase 12 (rescan untuk workspace besar, dedupe error scan, `unlinkDir`).
+- Keputusan: `radar/packages/web/fixtures/replay/export.json` dibuat dengan menjalankan `pnpm dev:mock -- --scenario demo --instant` (skrip Alief, hanya dibaca lewat CLI, tidak diimpor saat runtime dan tidak diubah), menangkap `GET /v1/events/export` (61 event, sesuai persis PRD §15: A pegang checkout.ts, B diblokir, PM memutuskan "antre" otomatis), lalu menghitung ulang `ts` tiap event dari `delayMs` kumulatif di `radar/scripts/mock-scenarios/demo.json` sendiri (mode `--instant` membuat semua `ts` sama karena wall-clock). Ditambah satu event `commit.created` sintetis di akhir (skenario aslinya tidak pernah commit) supaya chapter "Commit" (DESIGN §5.8) punya sesuatu untuk ditunjuk. Skrip generator satu-pakai, tidak di-commit.
+- Alasan: memakai data yang sudah disetujui kontrak (bentuk event tervalidasi zod, narasi cocok PRD) lebih aman daripada mengarang dataset paralel; README mengizinkan fixture untuk 11D1.
+- Dampak: `scripts/export-replay.ts` (fase ini) membaca fixture ini sebagai fallback saat `RADAR_EXPORT_URL` tidak diset.
+- File ref/ yang diperbarui: – (tidak ada perubahan kontrak; `TODO(sync:alief)` di `scripts/export-replay.ts` menandai penggantian dengan `GET /v1/events/export` asli setelah fase 05/06, dan dengan rekaman nyata setelah milestone fase 10 / 11D2).
 
-## D-alief-05 · 26 Sep 2026 14:30 · fase 05 · Mesin kunci, task, permintaan, proposal
-- Keputusan:
-  1. **Route per domain di `src/http/routes/`** (`locks`, `tasks`, `requests`, `proposals`, `team`), didaftarkan sebelum admin. Logika bisnis di `src/services/*`; route hanya auth + parse + satu `deps.transact`.
-  2. **Commit dua transaksi (R4 §6.3):** `decideStart` (Tx1: validasi, klaim `commit_started_at`, snapshot), `await committer.commitTask` di luar transaksi, `finishCommit` (Tx2: cek klaim masih milik kita, lalu terapkan). Committer fase 05 = stub (`sha: pending-fase-06`, `pushed: false`) dan **tidak memindahkan `head_commit`**. Klaim basi (> 60 s) dibersihkan saat objek start.
-  3. **Commit gagal → 409 `CONFLICT`** dengan pesan tetap ("Task tetap review; coba lagi"). R3 tidak punya 502; galat mentah hanya di log server dan event `commit.push_failed`.
-  4. **Payload usulan dibaca ulang lewat zod** saat keputusan (`storedPayload`); isi rusak → 500 tanpa menerapkan apa pun.
-  5. **Notifikasi selalu terikat event id** (dibaca brief lewat kursor event). Filter default: `GET /v1/tasks` = task milik pemanggil yang terbuka; coder tidak boleh `?owner=` orang lain (403, hasil security review). `GET /v1/activity` default 20, maks 50, memindai 500 event terakhir.
-  6. **Promote kepala antrean lewat `advanceQueue`** di semua jalur (release, revoke, cancel, `checkWrite` baris 3), supaya event + notifikasi "Giliranmu" hanya ditulis di satu tempat.
-  7. **Batas `POST /v1/locks/check` = 20 path** di route (schema mengizinkan 100) → 422.
-  8. **Task `review` yang mendapat file baru atau kunci baru kembali `dikerjakan`** (review yang menunggu kedaluwarsa), atau diblok `committing` bila commit sedang berjalan. `transferNow`, `revoke`, dan usulan review baru → 409 selama klaim commit aktif. Snapshot commit hanya berisi path yang masih dikunci task.
-  9. **`member`/`task` tidak ada → 404** (`requireMember`/`requireTask` melempar `RadarError`).
-- Alasan: R3/R4, spesifikasi fase 05, review `ecc:code-reviewer`, `ecc:typescript-reviewer`, `ecc:silent-failure-hunter`, `ecc:pr-test-analyzer`, `ecc:security-reviewer`.
-- Batasan yang diketahui (MEDIUM, belum diperbaiki):
-  - Di Workers `Date.now()` beku selama eksekusi sinkron, jadi `serverMs`/`lock_check_ms` ≈ 0. Angka latensi yang dipakai: `hook_rtt_ms` + p95 test 1000 panggilan.
-  - Objek di-evict saat commit berjalan → klaim tertinggal memblokir approve ulang sampai TTL 60 s.
-  - Galat committer belum dibedakan retryable vs terminal (fase 06).
-  - `listRequestItems` memakai `?? ''` untuk nama member/judul task yang hilang; `heldText` jatuh ke "rekan lain" bila holder null.
-  - `pathOf` di feed aktivitas membaca `payload.path` tanpa switch per tipe event.
-  - Tidak ada batas ukuran body eksplisit sebelum zod (bergantung batas Workers).
-  - `closeTask` menutup request terbuka jadi `batal` tanpa event, karena `request.decided.outcome` belum punya `batal` (perlu perubahan kontrak R3 §5). Usulan keputusan yang terkait sudah dikedaluwarsakan lewat event.
-- Alternatif yang ditolak: satu transaksi yang menunggu GitHub (DO memblokir semua request selama push); 502 baru di kontrak (kontrak beku); memindahkan `head_commit` dengan sha palsu.
-- Dampak: fase 06 (committer GitHub asli + `head_commit`, klasifikasi galat, sanitasi `error` di event), fase 10 (deploy + smoke di toko-demo), Umar (`my_tasks` hanya milik sendiri).
+## D-imelda-02 · 26 Sep 2026 · fase 11D1 · `bob-quotes.src.json` tidak ada; pakai `bob-kit/prompts/bob-quotes.json`
 
-## D-umar-04 · 26 Sep 2026 16:40 · fase 10 · Kit Bob melawan server asli: `my_tasks`, penanda sisa, temuan demo
+- Keputusan: fase file menyebut input `bob-quotes.src.json`, tapi file itu tidak pernah dibuat. Panel "Bob inside" memakai `radar/bob-kit/prompts/bob-quotes.json` (milik Umar, fase 07, objek berkunci bukan array) apa adanya, disalin ke `public/demo/bob-quotes.json` saat export.
+- Alasan: itu satu-satunya sumber kutipan Bob nyata (dari sesi Bob IDE asli) yang ada di repo.
+- Dampak: tidak ada — hanya path input yang berbeda dari yang tertulis di fase file.
+- File ref/ yang diperbarui: –
 
-- Keputusan:
-  1. **`my_tasks` tidak lagi mengirim `owner=me`.** Tabel tool R3 §7 menulis `GET /v1/tasks?owner=me&status=open`, tetapi server fase 05 menjawab 403 "Hanya task milikmu sendiri." untuk `owner` selain ID pemanggil (`packages/server/src/http/routes/tasks.ts:15`). R3 §2.4 menyebut `owner` default = pemanggil, jadi tool memanggil `GET /v1/tasks?status=open` (lolos di mock dan server). **Usulan ke Alief:** samakan baris R3 §7 dengan §2.4 (atau server menerima `me` seperti mock). Tidak ada perubahan kontrak dari lane Bob.
-  2. **`mark_ai_edit` → `POST /v1/ai-edits`:** penanda `TODO(sync:alief)` diganti komentar biasa. Kode sisi Bob sudah final (R3 §2.20); route di Worker = fase 12 (BC-05, P1). Sampai itu ada, 404 hanya ditulis ke `.radar/hook.log` (fail-open, tidak memperlambat edit: panggilan paralel dengan `bob/activity`).
-  3. **`spike/fake-radar/server.mjs`:** tidak lagi dipakai untuk uji; uji Bob IDE fase 10 memakai Worker asli (`wrangler dev`). File disimpan hanya untuk mereproduksi bukti fase 07/08.
-  4. Log fase 10 lane Bob = `plan/log/fase-10-bob.md` (fase 10 dikerjakan semua lane; file terpisah supaya PR lane tidak bentrok).
-- Temuan demo (bukan kontrak, untuk naskah PRD §15 / `docs/DEMO_SCRIPT.md`):
-  - Dengan tujuan "Tambah fitur kupon diskon di checkout dan dark mode", Bob PM menaruh kupon di `coupon.ts` + `App.tsx`, **tanpa `checkout.ts`** (di toko-demo `applyCoupon` dipanggil dari `App.tsx`). Adegan blokir naskah butuh `checkout.ts` dipegang A → sebut file di tujuan (lihat LANGKAH MANUAL fase-10-bob).
-  - Brief start B menyebut file yang dipegang A, jadi Bob B memilih `request_file` tanpa mencoba edit (sama dengan handoff fase 07). Kartu permintaan dan keputusan tetap muncul, tetapi notifikasi "Bob B diblokir" hanya muncul kalau Bob benar-benar mencoba edit.
-  - Bob coder kadang menjawab dalam bahasa Inggris walau prompt Indonesia.
-  - (Sab 18:20, setelah fase 06) Menyebut `src/checkout/checkout.ts` di tujuan membuat Bob PM menaruhnya di task A. Review `setujui_beri_tahu` hanya muncul kalau A juga memperbarui pemanggil di file task-nya sendiri; kalau tidak, Bob PM memilih `kembalikan` (benar menurut instruksi mode).
-- Alasan: test integrasi `packages/mcp/test/server.int.test.ts` (RED `ffc816a3` → GREEN `7c759f72`) dan 4 sesi Bob IDE 2.2.0 melawan Worker lokal.
-- Dampak: Alief (R3 §7), Imelda/semua (naskah demo), fase 12 (`/v1/ai-edits`).
-- File ref/ yang diperbarui: – (usulan saja).
+## D-imelda-03 · 26 Sep 2026 · fase 11D1 · Definisi counter replay (`near-misses` · `decisions` · `merge conflicts` · `median decision`)
+
+- Keputusan: R3/DESIGN tidak mendefinisikan rumus counter §5.8 secara presisi. Dipakai: `nearMisses` = jumlah event `lock.blocked`; `decisions` = jumlah `proposal.decided` (semua `kind`); `mergeConflicts` = jumlah `commit.push_failed`; `medianDecisionSeconds` = median (`request.decided.ts` − `request.created.ts`) yang dipasangkan lewat `requestId`, dalam detik. Diimplementasikan di `src/replay/metrics.ts`, diuji lewat 7 kasus (kosong, ganjil, tidak ada pasangan, dll).
+- Alasan: ini satu-satunya pemetaan langsung dari katalog event R3 §5 ke empat angka yang diminta DESIGN §5.8.
+- Dampak: kalau Lane Core menambah event `near_miss` atau `decision` eksplisit di kontrak nanti, `metrics.ts` perlu disesuaikan (bukan breaking, hanya definisi ulang).
+- File ref/ yang diperbarui: –
+
+## D-imelda-04 · 26 Sep 2026 · fase 11D1 · Snapshot replay per 10 detik = waktu event, bukan waktu putar
+
+- Keputusan: "snapshot tiap 10 detik untuk seek cepat" (fase 11D1 langkah 15) diartikan sebagai 10 detik offset `ts` event (`ev.ts − events[0].ts`), bukan 10 detik waktu nyata pemutaran. Diimplementasikan di `src/lib/replay-player.ts` (`buildSnapshots`/`stateAtOffset`), independen dari kecepatan putar (1×/2×/4×/8×).
+- Alasan: snapshot berbasis waktu putar akan berubah tiap kali kecepatan diganti, sehingga cache-nya harus dibangun ulang; snapshot berbasis waktu event dihitung sekali dan dipakai untuk semua kecepatan.
+- Dampak: –
+- File ref/ yang diperbarui: –
+
+## D-imelda-05 · 26 Sep 2026 · fase 11D1 · Lokasi skrip export & fixture: folder lane sendiri, bukan `radar/scripts/`
+
+- Keputusan: fase file menulis output sebagai `scripts/export-replay.ts` (tersirat `radar/scripts/`, folder Lane Core menurut CLAUDE.md). Ditempatkan di `radar/packages/web/scripts/export-replay.ts` dan `radar/packages/web/fixtures/replay/export.json` supaya tetap di dalam folder lane Imelda (`radar/packages/web`).
+- Alasan: `radar/scripts/*` adalah folder Lane Core (CLAUDE.md §Team & lanes); menaruh file di sana melanggar aturan "folder = lane".
+- Dampak: perintah jalan sebagai `pnpm -C radar/packages/web exec tsx scripts/export-replay.ts` (bukan `pnpm -C radar export:replay`).
+- File ref/ yang diperbarui: –
+
+## D-imelda-06 · 26 Sep 2026 · fase 11D1 · Bob slice I1/I2 BELUM dikerjakan Claude Code
+
+- Keputusan: Claude Code menyiapkan seluruh infrastruktur non-Bob fase 11D1 (fixture, `sanitize.ts`, `metrics.ts`, `chapters.ts`, `meta.ts`, `replay-player.ts`, `scripts/export-replay.ts`, 28 test hijau) lalu BERHENTI di BOB SLICE I1 (pemutar replay + `/demo`) dan I2 (landing) sesuai `plan/ref/R7-bukti-bob.md` dan golden rule PLAN.md §5.6 ("Bob slice itu nyata"). Halaman `app/page.tsx` dan `app/demo/page.tsx` TETAP versi placeholder fase 00 sampai manusia menjalankan slice ini di Bob IDE dan membalas "bob selesai".
+- Alasan: I1 dan I2 adalah Bob slice wajib (bukti judging), bukan pekerjaan Claude Code langsung.
+- Dampak: fase 11D1 tidak bisa ditutup (PR, gerbang UI, `/gallery`) sampai kedua slice ini selesai dan direview.
+- File ref/ yang diperbarui: –
+- **Superseded**: I1 dan I2 sekarang selesai (commit `2058da47`, `99d85138`; lihat `plan/log/fase-11D1.md`).
+
+## D-imelda-07 · 26 Sep 2026 · fase 11D1 · Allowlist gitleaks untuk fixture test sensor secret
+
+- Keputusan: `.gitleaks.toml` dapat satu `[[allowlists]]` baru (pola `regexes`, bukan `commits`, supaya tidak melonggarkan seluruh commit): string `ghp_1234567890abcdef1234567890abcdef1234` di `radar/packages/web/src/replay/sanitize.test.ts:21` — fixture sengaja dibuat mirip GitHub PAT asli buat menguji `sanitizeEvents()` (sensor secret export replay, fase 11D1), bukan kredensial nyata. CI `ci / gitleaks` di PR #11 gagal karena ini; dikonfirmasi dengan `gitleaks detect` lokal (1 leak → 0 leak setelah allowlist).
+- Alasan: mengikuti pola yang sudah ada (allowlist commit vendoring Orca, D-alief-00) daripada mengubah/menghapus test yang justru sengaja menguji kasus token bocor.
+- Dampak: tidak ada perubahan kode fungsional, hanya konfigurasi CI. `.gitleaks.toml` di luar folder lane manapun (root repo); dicatat di sini karena tim sepakat kontrak di `radar/packages/common`/`plan/ref` lewat Alief, tapi config CI seperti ini lebih longgar — kalau ada keberatan, revert baris `regexes` ini.
+- File ref/ yang diperbarui: – (bukan `plan/ref`).
+
+## D-imelda-08 · 26 Sep 2026 · fase 11D1 · `trailingSlash: true` supaya `/demo` bukan listing JSON
+
+- Keputusan: `next.config.ts` memakai `trailingSlash: true` dan `SITE.demoPath` = `/demo/`. Next menulis `out/demo/index.html` di samping `public/demo/{events,meta,bob-quotes}.json`. Tanpa ini, `python http.server` dan Cloudflare Pages menyajikan directory listing folder `demo/` (bukan halaman replay).
+- Alasan: e2e langkah 17 merah — `replay-play-toggle` tidak ada karena `/demo` = listing tiga file JSON.
+- Dampak: URL publik jadi `/demo/` dan `/gallery/`. Fetch data tetap `/demo/events.json`.
+- File ref/ yang diperbarui: –
+
+## D-imelda-09 · 26 Sep 2026 · fase 11D1 · Landing gelap Carbon, bukan warm paper
+
+- Keputusan: landing `/` (`radar/packages/web/app/page.tsx`) memakai token gelap `--lc-*` yang sama dengan app/replay. Gaya "warm paper" Notion (`#f6f5f4`, CTA `#0075de`) di DESIGN.md §5.11 **diganti di tempat**, bukan file DESIGN/PLAN kedua.
+- Alasan: juri buka Application URL lalu `/demo` harus satu merek. Referensi produk (Amoeba) juga gelap. Split terang/gelap terasa dua situs.
+- Alternatif yang ditolak: `DESIGN-v2.md` / `PLAN-v2.md` (dobel sumber kebenaran); invert Notion tanpa ganti token IBM.
+- Dampak: `DESIGN.md` §0/§5.11, `UI Inspo & Design/landing-style/README.md`, `prompt_ui.md` #12, `plan/PROMPT.md` gerbang UI, `CLAUDE.md` UI gate. Isi/section landing belum diubah (coba tema dulu).
+- File ref/ yang diperbarui: – (bukan `plan/ref`).
+
+## D-imelda-10 · 26 Sep 2026 · fase 11D1 · Poles landing "ada kehidupan" (langkah 18a), bukan PLAN kedua
+
+- Keputusan: landing `/` dapat window produk + tab klik + motion pendek + 4 mekanisme, mengikuti struktur Amoeba. **Bukan** fase baru dan **bukan** `PLAN-v2.md`. Ditulis di `plan/fase-11-terminal-dmg-replay.md` langkah **18a**, resep urutan di `UI Inspo & Design/landing-style/README.md` (Build order), kontrak visual di DESIGN.md §5.11. Kode belum disentuh sampai 18a dikerjakan.
+- Alasan: tema gelap sudah oke; halaman masih poster. Tanpa checklist, poles `page.tsx` sulit ditelusur ("perubahan apa ini?").
+- Alternatif yang ditolak: file `PLAN-landing.md` / `DESIGN-v2.md`; nulis langsung di `page.tsx` tanpa resep.
+- Dampak: Imelda kerjakan 18a di `radar/packages/web/app/page.tsx` sesuai urutan 1→4. `/demo` tidak diubah. Angka hanya `meta.json`.
+- File ref/ yang diperbarui: – (bukan `plan/ref`).
+
 
 ## D-imelda-11 · 26 Sep 2026 · fase 11D1 · Hero landing disederhanakan ala Amoeba
 
