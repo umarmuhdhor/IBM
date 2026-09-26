@@ -18,6 +18,7 @@
 - `pnpm -C app tc`: lulus.
 - Tujuh suite terfokus Watch Bob, Team, Settings, IPC, dan privasi: **35/35** test lulus.
 - Hasil tetap sama setelah sinkron ke `main` terbaru: typecheck lulus, 35/35 test lulus, `git diff --check` bersih.
+- `ORCA_BACKGROUND_LAUNCH=1 pnpm -C app build:desktop` setelah sinkron: exit 0; renderer, web client, dan mobile web selesai dibangun. Shortcut developer `orca-dev` gagal dibuat di `/usr/local/bin` karena izin OS, tetapi script build tetap sukses dan artefak internal terverifikasi.
 - `bash -n radar/scripts/bob-evidence.sh` dan `pnpm -C radar exec tsc -p scripts/tsconfig.json`: lulus.
 - `pnpm -C radar exec tsx scripts/evidence-check.ts`: script berjalan; setelah sinkron hanya Imelda yang masih 2/3 PNG. Ini data lane Web yang belum lengkap, bukan crash.
 - Bukti Bob C4: `bob_sessions/uaai_aarief_task04_evidence_scripts_summary.png`, **2.06 Bobcoin**. Screenshot menampilkan status semua tugas selesai; tidak menampilkan secret.
