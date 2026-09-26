@@ -4,6 +4,7 @@ import { expect, test } from '@playwright/test';
 // (plan/log/fase-11D1.md) — `/demo` must expose these `data-testid`s.
 test.describe('/demo replay', () => {
   test('autoplay starts on load and the near-miss chapter appears within 30s at 8x', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.goto('/demo');
     await expect(page.getByTestId('replay-play-toggle')).toHaveAttribute('data-playing', 'true');
 
@@ -12,11 +13,21 @@ test.describe('/demo replay', () => {
   });
 
   test('clicking an event fills the Bob inside panel', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.goto('/demo');
-    await page.getByTestId('replay-play-toggle').click(); // pause first, so the row stays put
-    const firstEvent = page.getByTestId('bob-activity-row').first();
-    await firstEvent.click();
+    await expect(page.getByTestId('replay-play-toggle')).toBeVisible();
+    // t=0 has no bob.activity yet — seek to the near-miss chapter, then pause so the row stays put.
+    await page.getByTestId('chapter-near-miss').click();
+    await expect(page.getByTestId('bob-activity-row').first()).toBeVisible();
+    await page.getByTestId('replay-play-toggle').click();
+    await page.getByTestId('bob-activity-row').first().click();
     await expect(page.getByTestId('bob-inside-panel')).toContainText(/hook|mcp|mode/);
+  });
+
+  test('stays paused when the user prefers reduced motion', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/demo');
+    await expect(page.getByTestId('replay-play-toggle')).toHaveAttribute('data-playing', 'false');
   });
 
   test('never calls out to another origin', async ({ page }) => {
@@ -26,6 +37,9 @@ test.describe('/demo replay', () => {
       if (url.hostname !== '127.0.0.1' && url.hostname !== 'localhost') external.push(req.url());
     });
     await page.goto('/demo');
+    // Directory listing of public/demo/*.json also has zero external calls — require the
+    // real replay chrome first so this cannot pass on the wrong document.
+    await expect(page.getByTestId('replay-play-toggle')).toBeVisible();
     await page.waitForTimeout(2_000);
     expect(external).toEqual([]);
   });
@@ -44,6 +58,7 @@ test.describe('/ and /gallery smoke', () => {
       if (msg.type() === 'error') errors.push(msg.text());
     });
     await page.goto('/gallery');
+    await expect(page.getByRole('heading', { name: /@radar\/ui Component Gallery/i })).toBeVisible();
     expect(errors).toEqual([]);
   });
 });

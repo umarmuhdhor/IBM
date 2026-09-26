@@ -319,3 +319,10 @@ Format:
 - Alasan: mengikuti pola yang sudah ada (allowlist commit vendoring Orca, D-alief-00) daripada mengubah/menghapus test yang justru sengaja menguji kasus token bocor.
 - Dampak: tidak ada perubahan kode fungsional, hanya konfigurasi CI. `.gitleaks.toml` di luar folder lane manapun (root repo); dicatat di sini karena tim sepakat kontrak di `radar/packages/common`/`plan/ref` lewat Alief, tapi config CI seperti ini lebih longgar — kalau ada keberatan, revert baris `regexes` ini.
 - File ref/ yang diperbarui: – (bukan `plan/ref`).
+
+## D-imelda-08 · 26 Sep 2026 · fase 11D1 · `trailingSlash: true` supaya `/demo` bukan listing JSON
+
+- Keputusan: `next.config.ts` memakai `trailingSlash: true` dan `SITE.demoPath` = `/demo/`. Next menulis `out/demo/index.html` di samping `public/demo/{events,meta,bob-quotes}.json`. Tanpa ini, `python http.server` dan Cloudflare Pages menyajikan directory listing folder `demo/` (bukan halaman replay).
+- Alasan: e2e langkah 17 merah — `replay-play-toggle` tidak ada karena `/demo` = listing tiga file JSON.
+- Dampak: URL publik jadi `/demo/` dan `/gallery/`. Fetch data tetap `/demo/events.json`.
+- File ref/ yang diperbarui: –

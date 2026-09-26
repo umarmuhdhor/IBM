@@ -1,13 +1,13 @@
 # Fase 11D1 — Landing + replay web (fixture), Bob slice I1/I2
 
-**Lane**: Imelda · Web & media. **Branch**: `lane/web`. **Status**: `[~]` — kode selesai (infra + Bob slice I1 + I2, semua terverifikasi), BERHENTI di LANGKAH MANUAL (deploy Cloudflare Pages butuh akun; Playwright butuh instalasi browser). PR dibuka untuk kode yang sudah ada; baris PROGRESS tetap `[~]` sampai deploy nyata.
+**Lane**: Imelda · Web & media. **Branch**: `lane/web`. **Status**: `[~]` — kode + e2e selesai. BERHENTI di LANGKAH MANUAL: deploy Cloudflare Pages (TODO B2) dan squash-merge PR #14 (`gh` tidak login di sesi ini).
 
 ## Checklist langkah (bagian D, fase-11-terminal-dmg-replay.md)
 
 - [x] Langkah 14 — fixture + `export-replay.ts` (lihat "Deviasi" untuk sumber fixture).
 - [x] Langkah 15 — `src/lib/replay-player.ts` (play/pause/seek/speed, snapshot per 10 detik waktu event).
 - [x] Langkah 16 — `/demo` tiga kolom + counter + panel Bob inside → **BOB SLICE I1 selesai** (bukti `bob_sessions/uaai_imelda_task01_replay_player_demo_summary.png`, 4.30 Bobcoin).
-- [ ] Langkah 17 — static export tanpa network call luar + `e2e/demo.spec.ts` → spec ditulis, build statis hijau, dicek manual di browser bawaan (1440+390). Playwright otomatis BELUM dijalankan (lihat LANGKAH MANUAL).
+- [x] Langkah 17 — static export tanpa network call luar + `e2e/demo.spec.ts` → 12/12 hijau (desktop-1440 + mobile-390) terhadap `out/` via `python3 -m http.server`. `trailingSlash: true` (D-imelda-08) supaya `/demo/` = halaman, bukan listing JSON.
 - [x] Langkah 18 — landing warm paper → **BOB SLICE I2 selesai** (bukti `bob_sessions/uaai_imelda_task02_landing_warm_paper_summary.png`, 0.873 Bobcoin).
 - [ ] Langkah 19 — deploy Cloudflare Pages → LANGKAH MANUAL (butuh akun, TODO B2). Kode SIAP deploy (build + static export sudah dites hijau).
 - [ ] Langkah 19b — Bob slice I3 (Long Description) → ditunda ke sub-fase 11D2 sesuai jadwal.
@@ -43,7 +43,28 @@ pnpm -C radar --filter "@radar/web..." build           → next build + static e
 
 Cek visual manual (browser bawaan Claude Code, bukan Playwright): `/demo`, `/gallery`, `/` di lebar 1440 dan 390 — semua jalan, termasuk autoplay, seek per-chapter, panel Bob inside, dan mobile stacking (setelah fix).
 
-`pnpm -C radar --filter @radar/web e2e` (Playwright otomatis) **BELUM dijalankan** — lihat LANGKAH MANUAL #2.
+`pnpm -C radar --filter @radar/web e2e` → **12 passed (3.6s)** pada 26 Sep 15:26 WITA (Node 24). Termasuk: autoplay, near-miss, Bob inside, nol origin luar, reduced-motion pause, smoke `/` + `/gallery`.
+
+## Sesi LANJUT 26 Sep 15:11 (pra-cek → e2e)
+
+Rencana [planner](3759605f-b01a-470a-b9c1-61c9d2ddbc90): commit allowlist, rebase `--onto origin/main` (konflik `DECISIONS.md` digabung D-alief-03 + D-imelda-*), e2e, gerbang UI, jangan deploy.
+
+- Rebase `lane/web` ke `origin/main` (fase 03 sudah di main). `snap/web-f11D1` ikut `--update-refs`.
+- RED e2e: `/demo` = directory listing `public/demo/*.json`. Fix: `trailingSlash: true` + `SITE.demoPath='/demo/'`.
+- `shouldAutoplayReplay` + chapter `<button>` (HIGH a11y: reduced-motion, keyboard seek, hit 24×24).
+- Gerbang UI: screenshot Playwright `/` `/demo` `/gallery` 1440/390. Landing warm paper + Open Anyway. Demo gelap 3 kolom / stack 390.
+- Review sesi ini: code/ts/security = 0 CRITICAL/HIGH. React HIGH chapter hit-area+focus → diperbaiki. MEDIUM dicatat (scrubber belum keyboard; link meta tanpa allowlist host — residual I2).
+- `launch.json` tidak ada; browser Claude Code tidak dipakai. Playwright = fallback (catat).
+
+**better-interface (screenshot + kode):**
+
+| # | Domain | Severity | Temuan | Perbaikan |
+|---|---|---|---|---|
+| 1 | a11y | HIGH | Autoplay mengabaikan `prefers-reduced-motion` | `shouldAutoplayReplay` + e2e reduce |
+| 2 | a11y | HIGH | Chapter label = `div` onClick, tidak keyboard | `<button type="button">` |
+| 3 | a11y | HIGH | Chapter 10px/padding 0 < 24×24 | min 24×24 + padding |
+| 4 | a11y | MEDIUM | Scrubber bar hanya klik | dicatat; seek lewat chapter button |
+| 5 | writing | — | Landing memakai "Privacy & Security → Open Anyway" | sudah sesuai D-007.13 |
 
 ## Review (langkah 8, paralel: code-reviewer + typescript-reviewer + security-reviewer)
 
@@ -85,27 +106,16 @@ Security-reviewer I2: semua 11 link `target="_blank"` sudah `rel="noopener noref
 
 **I2 (landing warm paper) — SELESAI.** Bob IDE (mode `coder`, task 02, 4/4 todo, 0.873 Bobcoin) menulis ulang penuh `app/page.tsx` + menambah 13 baris hover utility ke `app/globals.css`. Sesuai spek: kanvas `#f6f5f4`, kartu putih, headline 72px dengan pill marigold di kata "working", subhead Source Serif 4, font Inter+Source Serif 4 self-hosted lewat `next/font/google`, 3 langkah pasang dengan wording benar (bukan "klik kanan"), blok near-miss marigold dengan placeholder GIF bertanda `TODO(sync:imelda)`, dark island "Built on IBM Bob primitives", link kondisional Video/Deck, footer disclaimer + Orca MIT, tanpa jejak brand Notion. Bonus (di luar prompt): 3 feature card ringkas — dianggap penghias landing yang wajar, bukan fitur baru di luar PRD. Link diambil langsung dari `public/demo/meta.json` (bukan hardcode). Direview (lihat tabel), 1 LOW diperbaiki, 1 MEDIUM dicatat. Dicek visual 1440+390 — **tidak perlu perbaikan tambahan**, langsung rapi di dua lebar. Commit terpisah `99d85138` dengan trailer `Bob-Assisted`. Bukti: `bob_sessions/uaai_imelda_task02_landing_warm_paper_summary.png`.
 
-## LANGKAH MANUAL (sisa, urutan disarankan)
+## LANGKAH MANUAL (sisa)
 
-1. **Buka PR fase 11D1** — `gh` belum login di sesi ini (`gh auth status` → "not logged into any GitHub hosts"), dan aturan keamanan (CLAUDE.md) melarang agent login pakai akun siapa pun selain milik pemakainya sendiri. Branch snapshot sudah di-push: `lane/web-f11D1` (dari `snap/web-f11D1`, HEAD `605aa4f5`). Jalankan salah satu:
-   ```bash
-   gh auth login   # sekali, akun GitHub kamu sendiri
-   gh pr create --base main --head lane/web-f11D1 --title "fase-11D1: replay + landing (Bob slice I1/I2)" --body "Lihat plan/log/fase-11D1.md"
-   ```
-   atau buka langsung: https://github.com/umarmuhdhor/IBM/pull/new/lane/web-f11D1
-2. **Deploy Cloudflare Pages** (langkah 19) — INI YANG MENAHAN FASE INI DARI `[x]`. Perlu `TODO B2` (`plan/TODO.md`): nama akun/subdomain `*.workers.dev` + `wrangler login` di mesin manusia (bukan sesi agent ini). Setelah tersedia:
+1. **`gh auth login`** (akun GitHub kamu sendiri) lalu squash-merge PR #14 setelah CI hijau: `gh pr merge 14 --squash --delete-branch`. Snapshot akan di-push ulang di commit sesi ini (`lane/web-f11D1`). Jangan force-push `main`.
+2. **Deploy Cloudflare Pages** (langkah 19) — menahan 11D1 dari `[x]` (UI-09). TODO B2. Setelah login wrangler:
    ```bash
    pnpm -C radar --filter "@radar/web..." build && pnpm -C radar deploy:web
    ```
-   Lalu buka `/` dan `/demo` dari incognito untuk konfirmasi (langkah 19 di fase file), dan update baris PROGRESS.md fase 11D1 ke `[x]` + isi `deploy.web.pages.dev` di `links.deck`/URL kalau relevan.
-3. **Playwright browser install** — sandbox sesi ini bandwidth sangat terbatas (~41 KiB/s terukur saat `pnpm install` awal); unduh Chromium (~300 MB) tidak realistis. Sebelum `pnpm -C radar/packages/web e2e`:
-   ```bash
-   pnpm -C radar/packages/web exec playwright install chromium
-   pnpm -C radar/packages/web e2e
-   ```
-   `e2e/demo.spec.ts` sudah ditulis lengkap (autoplay, near-miss ≤30 detik di 8×, klik event → Bob inside, tanpa request ke domain lain, smoke `/` dan `/gallery`); belum pernah benar-benar dieksekusi, jadi anggap "belum tervalidasi otomatis" sampai ini jalan sekali.
-4. **`eslint.config.js` coverage gap** — hook `config-protection` (plugin ecc) memblokir SEMUA edit ke file itu di sesi agent ini, termasuk penambahan glob yang murni menambah cakupan. Kalau ada manusia dengan akses penuh, tambahkan `'packages/*/scripts/**/*.ts'` dan `'packages/*/e2e/**/*.ts'` ke array `files` di blok `tseslint.config` kedua (baris 24-29 saat ini) supaya `scripts/export-replay.ts` dan `e2e/demo.spec.ts` ikut kena rule type-aware (`no-floating-promises`, `consistent-type-imports`). `tsc --noEmit` sudah mencakup keduanya walau eslint belum.
-5. **MEDIUM yang dicatat, belum diperbaiki** (boleh dikerjakan kapan saja, tidak memblokir): `sanitize.ts` belum menutup bentuk AWS key/JWT; `app/page.tsx:26` `metaRaw.links as SiteLinks` tanpa validasi runtime.
+   Cek `/` dan `/demo/` dari incognito. Baru lalu `[x]` baris 11D1.
+3. **`eslint.config.js` coverage gap** — hook config-protection memblokir edit. Tambah glob `packages/*/scripts/**/*.ts` dan `packages/*/e2e/**/*.ts` ke `files` type-aware.
+4. **MEDIUM sisa:** `sanitize.ts` belum AWS/JWT; `meta.json` links tanpa allowlist host; scrubber seek belum keyboard.
 
 **Catatan untuk sesi Claude Code berikutnya**: `radar/scripts/bob-evidence.sh` gagal total di sesi ini (window-detect: "not found" walau Bob IDE beneran terbuka di layar manusia; `--interactive`: gagal 2x beda alasan, termasuk "Screen Recording permission"). Dugaan kuat: sesi agent ini tidak punya akses layar/Terminal-permission yang sama dengan sesi interaktif manusia. Solusi yang berhasil: user screenshot manual (Cmd+Shift+4) lalu kirim PNG ke chat, Claude Code convert format kalau perlu dan salin ke `bob_sessions/` + tulis baris index manual (format persis di `scripts/bob-evidence.sh`, tim `uaai` dari `plan/team.json`). Pakai cara ini lagi untuk Bob slice I3 (11D2) di sesi serupa; coba `bob-evidence.sh` biasa dulu hanya kalau sesi barunya punya akses layar nyata.
 

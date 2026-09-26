@@ -15,6 +15,7 @@ import { bobTimeline, pendingDecisions } from '@radar/common';
 import type { RadarState, BobActivityItem } from '@radar/ui';
 import { createPlayer } from '../../src/lib/replay-player';
 import type { ReplayPlayer, Speed } from '../../src/lib/replay-player';
+import { shouldAutoplayReplay } from '../../src/replay/autoplay';
 import type { ReplayMeta } from '../../src/replay/meta';
 import type { RadarEvent } from '@radar/common';
 
@@ -563,7 +564,7 @@ function TimelineBar({
         <div
           style={{
             position: 'relative',
-            height: '18px',
+            height: '24px',
             marginBottom: '4px',
           }}
         >
@@ -571,9 +572,11 @@ function TimelineBar({
             const chOffset = ch.ts - t0;
             const chPct = durationMs > 0 ? (chOffset / durationMs) * 100 : 0;
             return (
-              <div
+              <button
                 key={ch.id}
+                type="button"
                 data-testid={`chapter-${ch.id}`}
+                onClick={() => onSeek(chOffset)}
                 style={{
                   position: 'absolute',
                   left: `${chPct}%`,
@@ -582,12 +585,16 @@ function TimelineBar({
                   fontSize: '10px',
                   color: 'var(--lc-text-faint)',
                   whiteSpace: 'nowrap',
+                  background: 'none',
+                  border: 'none',
+                  minWidth: 24,
+                  minHeight: 24,
+                  padding: '4px 6px',
                   cursor: 'pointer',
                 }}
-                onClick={() => onSeek(chOffset)}
               >
                 {ch.label}
-              </div>
+              </button>
             );
           })}
         </div>
@@ -789,11 +796,15 @@ export default function DemoPage() {
       setRadarState(player.getState());
     });
 
-    // Autoplay at 2× (DESIGN §5.8)
+    // Autoplay at 2× (DESIGN §5.8) unless the user prefers reduced motion.
     player.setSpeed(2);
     setSpeedState(2);
-    player.play();
-    setIsPlaying(true);
+    const prefersReducedMotion =
+      typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (shouldAutoplayReplay(prefersReducedMotion)) {
+      player.play();
+      setIsPlaying(true);
+    }
 
     return () => {
       unsub();

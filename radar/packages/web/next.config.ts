@@ -5,6 +5,10 @@ import type { NextConfig } from 'next';
 // dist/ at build time, so build dependencies first: `pnpm --filter "@radar/web..." build`.
 const nextConfig: NextConfig = {
   output: 'export',
+  // public/demo/*.json would otherwise win /demo over demo.html (directory listing on
+  // python http.server and Cloudflare Pages). trailingSlash writes out/demo/index.html
+  // next to the JSON so /demo/ is the replay page.
+  trailingSlash: true,
   // radar/ is its own pnpm workspace; pin the root so Next ignores lockfiles further up.
   outputFileTracingRoot: path.resolve(process.cwd(), '../..'),
   transpilePackages: ['@radar/common', '@radar/ui'],
