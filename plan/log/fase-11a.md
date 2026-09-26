@@ -1,6 +1,6 @@
 # Log fase 11a — Watch Bob dan bukti sesi (Lane Aarief)
 
-- **Status:** [~] implementasi lokal selesai; gerbang uji 2 laptop belum dijalankan. Belum ada snapshot atau PR fase 11a.
+- **Status:** [~] implementasi dan gerbang lokal selesai; gerbang uji 2 laptop belum dijalankan. Snapshot `snap/app-f11a` dan draft PR [#21](https://github.com/umarmuhdhor/IBM/pull/21) sudah dibuat; jangan merge sebelum uji fisik lulus.
 - **Branch:** `lane/app`, di atas `origin/main` setelah fase 09a/b/c digabung.
 - **Mulai:** Sab 26 Sep 2026, sebelum 12:00 WITA.
 - **Sinkron 20:25 WITA:** `lane/app` direbase bersih ke `origin/main` `b9fc1c02` setelah Core 03–06/10, Bob 10, dan Web 11D1 bergabung. Tidak ada `TODO(sync:...)` di `app/src` atau `radar/packages/ui`.
@@ -12,12 +12,14 @@
 3. [x] Bob slice C4 via CDP port 9223 dalam mode Agent. Cek merah: `--md` ditolak sebagai opsi tak dikenal dan `evidence-check.ts` belum ada. Bob menulis dua script; hasil asli dan bukti pada commit `e39fc6b3` dengan trailer `Bob-Assisted` serta `Co-authored-by: IBM Bob <bob@ibm.com>`.
 4. [x] Review C4: preflight Markdown sebelum screenshot dan validasi **semua** PNG. Sebelum perbaikan, fixture `junk.png` lolos audit dan sumber Markdown yang hilang tetap menghasilkan screenshot; setelah commit `ccf35645`, audit gagal untuk `junk.png`, exit 3 tidak membuat screenshot, Markdown aman tersalin, pengulangan tanpa `--force` ditolak, dan pola rahasia memberi exit 4 tanpa salinan.
 5. [ ] Uji Watch Bob dan privasi di 2 laptop dengan Bob IDE, termasuk p95 latensi < 1 detik. Perlu dua Mac yang terhubung ke server demo yang sama.
+6. [x] Review tambahan: Watch Bob kini tetap menggulir ke event baru walau jumlah baris tetap setelah buffer penuh (`9d992d35`). Test merah 1/5 sebelum fix, lalu 5/5 hijau.
 
 ## Hasil verifikasi
 
 - `pnpm -C app tc`: lulus.
 - Tujuh suite terfokus Watch Bob, Team, Settings, IPC, dan privasi: **35/35** test lulus.
 - Hasil tetap sama setelah sinkron ke `main` terbaru: typecheck lulus, 35/35 test lulus, `git diff --check` bersih.
+- Setelah perbaikan gulir, tujuh suite terfokus **36/36** lulus dan `pnpm -C app tc` tetap lulus.
 - `ORCA_BACKGROUND_LAUNCH=1 pnpm -C app build:desktop` setelah sinkron: exit 0; renderer, web client, dan mobile web selesai dibangun. Shortcut developer `orca-dev` gagal dibuat di `/usr/local/bin` karena izin OS, tetapi script build tetap sukses dan artefak internal terverifikasi.
 - `bash -n radar/scripts/bob-evidence.sh` dan `pnpm -C radar exec tsc -p scripts/tsconfig.json`: lulus.
 - `pnpm -C radar exec tsx scripts/evidence-check.ts`: script berjalan; setelah sinkron hanya Imelda yang masih 2/3 PNG. Ini data lane Web yang belum lengkap, bukan crash.
@@ -31,12 +33,13 @@
 | Renderer app via CDP 9339, state mock sintetis | Team menampilkan 3 anggota online dan tombol Watch; Watch Andi membuka 11 baris aktivitas Bob (prompt, write, turn end, submit). Screenshot aman: `app/docs/img/app-watch-bob.png`. |
 | Pemeriksaan tampilan | Hierarki, label, status, border anggota, dan baris aktivitas terbaca; tidak ada temuan HIGH. |
 | Pemeriksaan privasi | Toggle default mati; file `.radar/local.json` ditulis atomik dengan mode 0600 oleh main process. Renderer tidak menerima token. Prompt hanya ditampilkan bila event server memuat teks; uji 2 Mac masih diperlukan untuk membuktikan hook menghormati toggle. |
+| Review paralel PR #21 | Tidak ada temuan HIGH. Gulir setelah buffer penuh (MEDIUM) sudah diperbaiki. `tool.pre` yang diizinkan hanya muncul setelah ada `tool.post`; kegagalan tool sebelum post belum tampil di timeline dan dicatat sebagai batas P1 untuk fase 11c. |
 
 ## Batas folder dan handoff
 
 - Bob sempat mengubah `radar/package.json` agar `evidence:check` menjalankan script baru. Perubahan itu **dikembalikan** karena hanya dua file `radar/scripts/{bob-evidence.sh,evidence-check.ts}` yang dikecualikan untuk Aarief di fase 11. Pemilik `radar/package.json` perlu mengganti placeholder `evidence:check` dengan `tsx scripts/evidence-check.ts` sebelum gerbang EV-02 final; sampai itu terjadi, jalankan script langsung seperti perintah verifikasi di atas.
 - Hasil agent `.dmg` pada worktree terpisah baru berupa perubahan nama artefak di `app/config/electron-builder.config.cjs`, belum diuji build dan belum digabung; tinjau lagi di fase 11b setelah fase 10.
-- Fase 11a belum boleh ditandai [x] atau dibuat PR sampai uji 2 laptop selesai. Fase 10 dimulai pada gerbang Sab 21:00 WITA sesuai `plan/PROMPT.md` bila uji belum selesai.
+- Fase 11a belum boleh ditandai [x] atau di-merge sampai uji 2 laptop selesai. Fase 10 dimulai pada gerbang Sab 21:00 WITA sesuai `plan/PROMPT.md` bila uji belum selesai.
 
 ## LANGKAH MANUAL
 

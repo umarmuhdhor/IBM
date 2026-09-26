@@ -16,7 +16,7 @@ Waktu dalam WITA. Setiap lane **hanya mengedit baris fasenya sendiri** (supaya m
 | 08 | Main agent `pm-lead` | Umar | lane/bob | [x] | Sab 26 01:12 | Sab 26 01:30 | 8 tool PM (tanpa approve), kit PM, uji Bob IDE MA-01/02/03/04 (3/3)/05/07 melawan fake server; uji server asli = fase 10 | log/fase-08.md |
 | 09 | App desktop (Orca di `app/`) + `@radar/ui` | Aarief | lane/app | [x] | Sab 26 00:12 | Sab 26 11:30 | Agent IBM Bob di Orca (C2, DA-02), koneksi aman di main + WS/Approve live lulus melawan mock, panel Live Collab + `@radar/ui` (C3), gerbang UI + security PASS; uji server asli = fase 10 | log/fase-09.md |
 | 10 | Integrasi E2E | Semua | lane masing-masing | [ ] | | | | log/fase-10.md |
-| 11a | Tonton Bob rekan (A) + script bukti C4 (E) | Aarief | lane/app | [~] | Sab 26 <12:00 | | Kode dan Bob slice C4 selesai; 35/35 test, typecheck lulus. Menunggu uji 2 laptop dan p95 < 1 s; wiring `evidence:check` di luar folder Aarief. | log/fase-11a.md |
+| 11a | Tonton Bob rekan (A) + script bukti C4 (E) | Aarief | lane/app | [~] | Sab 26 <12:00 | | Draft PR #21; Bob slice C4 selesai, 36/36 test + build lulus. Menunggu uji 2 laptop dan p95 < 1 s; wiring `evidence:check` di luar folder Aarief. | log/fase-11a.md |
 | 11b | `.dmg` + Release (C) | Aarief | lane/app | [ ] | | | | log/fase-11b.md |
 | 11c | Uji pasang Mac teman, P1, poles | Aarief | lane/app | [ ] | | | | log/fase-11c.md |
 | 11D1 | Landing + replay dengan fixture (I1, I2) | Imelda | lane/web | [~] | Sab 26 13:10 | | I1/I2 + e2e 12/12 hijau (1440/390, trailingSlash); BERHENTI di LANGKAH MANUAL deploy Cloudflare Pages (TODO B2) + squash-merge PR #14 | log/fase-11D1.md |
