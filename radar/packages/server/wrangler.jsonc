@@ -12,6 +12,8 @@
   "durable_objects": {
     "bindings": [{ "name": "WORKSPACE", "class_name": "WorkspaceDO" }],
   },
+  // IN-03: public/radar-cli.tgz (built by `pnpm deploy`, git-ignored) is served as a static asset before the Worker.
+  "assets": { "directory": "./public" },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["WorkspaceDO"] }],
   "vars": {
     "WORKSPACE_ID": "toko-demo",

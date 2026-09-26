@@ -8,7 +8,7 @@ root="$(git rev-parse --show-toplevel)"
 cd "$root"
 
 # Build output, dependencies and local-only files are expected to be ignored.
-allowed='(^|/)(node_modules|dist|out|build|coverage|\.next|\.wrangler|\.data|\.radar|\.turbo)/|(^|/)(next-env\.d\.ts|\.dev\.vars(\..*)?|\.env(\..*)?|\.DS_Store)$|\.tsbuildinfo$|\.log$'
+allowed='(^|/)(node_modules|dist|out|build|coverage|\.next|\.wrangler|\.data|\.radar|\.turbo)/|(^|/)(next-env\.d\.ts|\.dev\.vars(\..*)?|\.env(\..*)?|\.DS_Store)$|\.tsbuildinfo$|\.log$|\.tgz$'
 
 ignored="$(git ls-files --others --ignored --exclude-standard --directory -- radar app/src bob_sessions |
   grep -vE "$allowed" || true)"

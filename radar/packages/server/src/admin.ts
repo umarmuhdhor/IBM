@@ -2,6 +2,7 @@
 // Every route needs `x-admin-secret`. Plain tokens appear only in the init/rotate responses, never in storage or logs.
 import {
   ADMIN_FILES_MAX_BATCH_BYTES,
+  AdminJoinCodeReq,
   AdminFilesReq,
   AdminInitReq,
   AdminResetReq,
@@ -9,17 +10,21 @@ import {
   createIgnoreMatcherFromText,
   isProbablyBinary,
   MAX_FILE_BYTES,
+  JOIN_CODE_TTL_HOURS_DEFAULT,
   MEMBER_COLORS,
+  newJoinCode,
   type AdminFilesRes,
+  type AdminJoinCodeRes,
   type AdminInitRes,
   type AdminTokenRes,
 } from '@radar/common';
 import type { Hono } from 'hono';
 import { newToken, sha256Hex } from './crypto';
 import type { WorkspaceDeps } from './deps';
-import { insertToken, revokeTokens } from './db/repo/access';
+import { insertToken } from './db/repo/access';
 import { initCounters } from './db/repo/counter';
 import { getFile, writeFileVersion } from './db/repo/file';
+import { deleteExpiredJoinCodes, insertJoinCode } from './db/repo/join-code';
 import { getMember, insertMember } from './db/repo/member';
 import { getMeta, setMeta } from './db/repo/meta';
 import { verifyHeadCommit } from './github';
@@ -29,6 +34,7 @@ import { ExportQuery } from './http/query';
 import { appendEvent } from './services/events';
 import { exportEvents } from './services/export';
 import { cleanPath } from './services/files';
+import { rotateToken } from './services/join';
 
 const PALETTE = Object.values(MEMBER_COLORS);
 const encoder = new TextEncoder();
@@ -129,20 +135,13 @@ export function registerAdminRoutes(app: Hono, deps: WorkspaceDeps): void {
     requireInitialised(deps);
     const isMc = req.member === 'mc';
     if (!isMc && !getMember(deps.db, req.member)) throw new RadarError(404, 'NOT_FOUND', `Member ${req.member} tidak ada.`);
-    const token = newToken();
-    const now = deps.now();
-    deps.transact(() => {
-      revokeTokens(deps.db, isMc ? null : req.member, now);
-      insertToken(deps.db, { hash: sha256Hex(token), kind: isMc ? 'mc' : 'member', memberId: isMc ? null : req.member, now });
-    });
-    // Sessions opened with the old token end now.
-    for (const { ws, att } of deps.hub.ready()) {
-      const p = att.principal;
-      if (isMc ? p.kind === 'mc' : p.kind === 'member' && p.memberId === req.member) deps.hub.close(ws, 4401, 'token rotated');
-    }
-    const res: AdminTokenRes = { member: req.member, token };
+    const res: AdminTokenRes = { member: req.member, token: rotateToken(deps, isMc ? null : req.member) };
     return c.json(res);
   });
+
+  // IN-03 (D-alief-09): a short code a teammate redeems with `POST /v1/join`. Mission Control makes the same
+  // codes via `POST /v1/join-codes` (http/routes.ts).
+  app.post('/admin/join-code', async (c) => c.json(createJoinCode(deps, parseWith(AdminJoinCodeReq, await readJson(c.req.raw))), 201));
 
   app.get('/admin/export', (c) => {
     const q = parseWith(ExportQuery, c.req.query());
@@ -154,4 +153,18 @@ export function registerAdminRoutes(app: Hono, deps: WorkspaceDeps): void {
     await deps.wipe();
     return c.json({ ok: true as const });
   });
+}
+
+/** Reusable until it expires; every redeem rotates the member token, so the newest device wins. */
+export function createJoinCode(deps: WorkspaceDeps, req: AdminJoinCodeReq): AdminJoinCodeRes {
+  requireInitialised(deps);
+  if (!getMember(deps.db, req.member)) throw new RadarError(404, 'NOT_FOUND', `Member ${req.member} tidak ada.`);
+  const code = newJoinCode();
+  const now = deps.now();
+  const expiresAt = now + (req.ttlHours ?? JOIN_CODE_TTL_HOURS_DEFAULT) * 3_600_000;
+  deps.transact(() => {
+    deleteExpiredJoinCodes(deps.db, now);
+    insertJoinCode(deps.db, { hash: sha256Hex(code), memberId: req.member, now, expiresAt });
+  });
+  return { member: req.member, code, expiresAt };
 }
