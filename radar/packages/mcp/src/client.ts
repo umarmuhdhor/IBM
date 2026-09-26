@@ -64,12 +64,13 @@ export function createRadarClient(config: LocalConfig | null, timeoutMs = MCP_FE
  * Check a server answer against its @radar/common schema (R3). A mismatch becomes a short message for the model
  * instead of a TypeError deep inside the tool; the zod detail goes to stderr for the developer.
  */
-export function expectShape<T>(schema: z.ZodType<T>, data: unknown, what: string): T {
+export function expectShape<S extends z.ZodType>(schema: S, data: unknown, what: string): z.output<S> {
   const parsed = schema.safeParse(data);
   if (parsed.success) return parsed.data;
+  // path + issue code only: zod messages can echo received values (task titles, paths) from the server
   const detail = parsed.error.issues
     .slice(0, 3)
-    .map((i) => `${i.path.join('.') || '(root)'} ${i.message}`)
+    .map((i) => `${i.path.join('.') || '(root)'} ${i.code}`)
     .join('; ');
   process.stderr.write(`radar-mcp: ${what} response does not match R3: ${detail}\n`);
   throw new RadarToolError(`Jawaban server Radar untuk ${what} tidak sesuai kontrak; beri tahu user dan coba lagi nanti.`);
