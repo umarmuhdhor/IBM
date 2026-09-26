@@ -439,3 +439,41 @@ describe('tasks and requests edge cases (R3 §2.5, §2.7, §2.9)', () => {
     expect(act.items[0].summary).not.toMatch(/^\d\d:\d\d /);
   });
 });
+
+describe('edits after submit (code review fase 05)', () => {
+  it('grabbing a free file for a task in review sends it back to dikerjakan and expires the pending review', async () => {
+    const { stub, t } = await setup([P], [Q]);
+    const sync = await hello(stub, t.A!, 'sync');
+    await call(stub, 'POST', '/v1/locks/check', { token: t.A, body: { paths: [P], tool: 'write_file', clientTs: 0 } });
+    sync.send(await update('a1', P, 1, '// a\n'));
+    await sync.byType('file.ack');
+    sync.ws.close();
+    await call(stub, 'POST', '/v1/tasks/T-1/submit', { token: t.A, body: { summary: 'x' } });
+    const review = await call(stub, 'POST', '/v1/proposals', { token: t.C, body: { kind: 'review', reason: 'x', payload: { taskId: 'T-1', verdict: 'setujui' } } });
+
+    const res = await call(stub, 'POST', '/v1/locks/check', { token: t.A, body: { paths: [R], tool: 'write_file', clientTs: 0 } });
+    expect(res.json).toMatchObject({ decision: 'allow', results: [{ reason: 'grabbed' }], activeTaskId: 'T-1' });
+    expect(await sql(stub, "SELECT status FROM task WHERE id = 'T-1'")).toEqual([{ status: 'dikerjakan' }]);
+    expect(await sql(stub, 'SELECT path, state FROM lock WHERE task_id = ? ORDER BY path', 'T-1')).toEqual([
+      { path: P, state: 'dipegang' },
+      { path: R, state: 'dipegang' },
+    ]);
+    expect(await sql(stub, 'SELECT status FROM proposal WHERE id = ?', review.json.proposalId)).toEqual([{ status: 'kedaluwarsa' }]);
+    expect((await call(stub, 'POST', `/v1/proposals/${review.json.proposalId}/decision`, { token: t.mc, body: { approve: true } })).status).toBe(409);
+  });
+
+  it('revoke and a new review wait while the task is committing', async () => {
+    const { stub, t } = await setup([P], [Q]);
+    const sync = await hello(stub, t.A!, 'sync');
+    await call(stub, 'POST', '/v1/locks/check', { token: t.A, body: { paths: [P], tool: 'write_file', clientTs: 0 } });
+    sync.send(await update('a1', P, 1, '// a\n'));
+    await sync.byType('file.ack');
+    sync.ws.close();
+    await call(stub, 'POST', '/v1/tasks/T-1/submit', { token: t.A, body: { summary: 'x' } });
+    await runInDurableObject(stub, (_i: WorkspaceDO, st) => {
+      st.storage.sql.exec("UPDATE task SET commit_started_at = ? WHERE id = 'T-1'", Date.now());
+    });
+    expect((await call(stub, 'POST', '/v1/locks/revoke', { token: t.mc, body: { path: P, reason: 'x' } })).status).toBe(409);
+    expect((await call(stub, 'POST', '/v1/proposals', { token: t.C, body: { kind: 'review', reason: 'x', payload: { taskId: 'T-1', verdict: 'setujui' } } })).status).toBe(409);
+  });
+});

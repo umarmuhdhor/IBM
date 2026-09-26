@@ -64,6 +64,14 @@ export function decideProposal(db: Db, id: string, status: Exclude<ProposalStatu
 }
 
 /** Marks every other `menunggu` review proposal of `taskId` `kedaluwarsa`; returns their ids. */
+/** Expires waiting `decision` proposals of a request that closed without them (its task ended). */
+export function expirePendingDecisions(db: Db, requestId: string): string[] {
+  return db
+    .all<{ id: string }>("UPDATE proposal SET status = 'kedaluwarsa' WHERE kind = 'decision' AND status = 'menunggu' AND ref_id = ? RETURNING id", requestId)
+    .map((r) => r.id)
+    .sort();
+}
+
 export function expirePendingReviews(db: Db, taskId: string, exceptId: string | null = null): string[] {
   return db
     .all<{ id: string }>(

@@ -15,7 +15,7 @@ import type { z } from 'zod';
 import type { CommitResult, CommitSnapshot } from '../committer';
 import { ctxOf, type WorkspaceDeps } from '../deps';
 import { getFileVersion } from '../db/repo/file';
-import { getLock } from '../db/repo/lock';
+import { getLock, locksOfTask } from '../db/repo/lock';
 import { getMember } from '../db/repo/member';
 import { getMeta, setMeta } from '../db/repo/meta';
 import { insertMetric } from '../db/repo/metric';
@@ -109,6 +109,7 @@ export function createProposal(ctx: LockCtx, pmId: string, req: ProposalCreateRe
   const payload = req.payload;
   const task = taskOr404(ctx.db, payload.taskId);
   if (task.status !== 'review') throw new RadarError(409, 'CONFLICT', `Task ${task.id} berstatus ${task.status}, belum di-submit untuk review.`);
+  if (commitClaimActive(task, ctx.now)) throw new RadarError(409, 'CONFLICT', `Task ${task.id} sedang di-commit; coba lagi sebentar.`);
   for (const n of payload.notify) {
     if (!getMember(ctx.db, n.memberId)) throw new RadarError(422, 'VALIDATION', `notify: member ${n.memberId} tidak ada.`);
   }
@@ -267,11 +268,6 @@ function decideNow(ctx: LockCtx, p: ProposalRow, status: 'disetujui' | 'ditolak'
 
 
 /**
- * `POST /v1/proposals/:id/decision`. Plans and decisions apply in one transaction. An approved `setujui*` review
- * commits between two transactions (R4 §6.3): Tx1 claims, the committer runs outside any transaction, Tx2
- * re-validates and finishes, or the claim is dropped and `commit.push_failed` recorded.
- */
-/**
  * Tx1 of a decision, synchronous and inside the caller's transaction: rejects, plans, decisions and `kembalikan`
  * finish here; an approved `setujui*` review returns its commit claim instead.
  */
@@ -354,7 +350,8 @@ function claimCommit(ctx: LockCtx, p: ProposalRow, task: TaskRow, review: Review
   if (busy) throw new RadarError(409, 'CONFLICT', `Commit lain sedang berjalan (${busy.id}); coba lagi sebentar.`);
   setCommitClaim(ctx.db, task.id, ctx.now);
   const owner = getMember(ctx.db, task.owner_id);
-  const files = touchesOf(ctx.db, task.id).map((t) => {
+  const held = new Set(locksOfTask(ctx.db, task.id).map((l) => l.path));
+  const files = touchesOf(ctx.db, task.id).filter((t) => held.has(t.path)).map((t) => {
     const v = getFileVersion(ctx.db, t.path, t.last_version);
     return { path: t.path, content: t.deleted || !v || v.deleted ? null : (v.content ?? '') };
   });

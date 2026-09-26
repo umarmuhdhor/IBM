@@ -60,7 +60,7 @@ describe('lock helpers', () => {
       expect(f.count("SELECT count(*) AS n FROM lock WHERE task_id = ? AND state = 'dipegang'", t.id)).toBe(2);
       expect(getProposal(f.db, p.id)?.status).toBe('kedaluwarsa');
       expect(getTask(f.db, t.id)?.status).toBe('dikerjakan');
-      expect(f.events()).toEqual(['task.status']);
+      expect(f.events()).toEqual(['lock.acquired', 'lock.acquired', 'proposal.decided', 'task.status']);
       expect(f.ctx.uow.toSync.map((m) => m.msg.t)).toEqual(['lock.changed', 'lock.changed']);
     });
   });

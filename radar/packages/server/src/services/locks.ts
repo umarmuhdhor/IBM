@@ -139,8 +139,14 @@ export function markTaskWorking(ctx: LockCtx, taskId: string): void {
  */
 export function returnTaskToWorking(ctx: LockCtx, taskId: string, by: string): void {
   const task = requireTask(ctx.db, taskId);
-  for (const path of setTaskLocksState(ctx.db, task.id, 'dipegang', ctx.now)) lockChanged(ctx, path);
-  expirePendingReviews(ctx.db, task.id);
+  // lock.acquired moves each lock back to dipegang in the reducer; proposal.decided closes the stale reviews.
+  for (const path of setTaskLocksState(ctx.db, task.id, 'dipegang', ctx.now)) {
+    appendEvent(ctx.db, ctx.uow, { ts: ctx.now, actor: by, type: 'lock.acquired', payload: { path, taskId: task.id, memberId: task.owner_id, auto: false } });
+    lockChanged(ctx, path);
+  }
+  for (const id of expirePendingReviews(ctx.db, task.id)) {
+    appendEvent(ctx.db, ctx.uow, { ts: ctx.now, actor: 'server', type: 'proposal.decided', payload: { proposalId: id, kind: 'review', status: 'kedaluwarsa', by: 'server', note: `${task.id} kembali dikerjakan` } });
+  }
   if (task.status === 'review') setStatus(ctx, task, 'dikerjakan', by);
 }
 
@@ -200,15 +206,22 @@ export function checkWrite(ctx: LockCtx, memberId: string, path: string, via: Bl
 
   if (lock === null) {
     // Row 3: file is free — but defensively promote a stale queue head if one exists (R4 §3, I4).
-    const head = headOf(ctx.db, path);
-    if (head !== null && head.owner_id !== memberId) {
-      // Promote the queue head (lock.transferred, cause queue), then block the requesting member.
+    if (headOf(ctx.db, path) !== null) {
+      // Promote the queue head, then decide again against the new lock (own reservation or someone else's).
       advanceQueue(ctx, path, null);
-      return blockFor(ctx, memberId, path, via);
+      if (getLock(ctx.db, path) !== null) return checkWrite(ctx, memberId, path, via);
     }
 
     // No queue: auto-grab for the member's active (or new ad-hoc) task.
     const task = resolveActiveTask(ctx, memberId);
+    // A task in review takes no new file silently: it goes back to dikerjakan, or waits while it is committing.
+    if (task.status === 'review') {
+      if (commitClaimActive(task, ctx.now)) {
+        const holder: LockHolder = { memberId, memberName: member.name, taskId: task.id, taskTitle: task.title, state: 'review', sinceMs: 0 };
+        return { decision: 'block', reason: 'committing', holder, taskId: null };
+      }
+      returnTaskToWorking(ctx, task.id, memberId);
+    }
     insertAllocation(ctx.db, { taskId: task.id, path, pos: 0, source: 'auto', now: ctx.now });
     insertLock(ctx.db, { path, taskId: task.id, memberId, state: 'dipegang', now: ctx.now });
     markTaskWorking(ctx, task.id);
@@ -234,10 +247,11 @@ export function checkWrite(ctx: LockCtx, memberId: string, path: string, via: Bl
         payload: { path, taskId: lock.task_id, memberId, auto: false },
       });
       lockChanged(ctx, path);
-    } else if (lock.state === 'review') {
-      // Row 7: in review by own task — revert task and all its locks back to dikerjakan/dipegang.
+    }
+    if (lock.state === 'review' || getTask(ctx.db, lock.task_id)?.status === 'review') {
+      // Row 7 (and row 4 for a queued file reaching a task in review): the task and all its locks go back to
+      // dikerjakan/dipegang. returnTaskToWorking calls lockChanged for every path of the task.
       returnTaskToWorking(ctx, lock.task_id, memberId);
-      // returnTaskToWorking calls lockChanged for all paths of the task, including this one.
     }
     // Rows 5–7: mark task working and point active_task at it.
     markTaskWorking(ctx, lock.task_id);
@@ -409,6 +423,7 @@ export function transferNow(ctx: LockCtx, path: string, toTask: TaskRow): void {
   }
   if (lock.task_id === toTask.id) return;
   const fromTask = requireTask(ctx.db, lock.task_id);
+  if (commitClaimActive(fromTask, ctx.now)) throw new RadarError(409, 'CONFLICT', `${path} sedang di-commit (${fromTask.id}); coba lagi sebentar.`);
   setFront(ctx.db, path, toTask.id, 'decision', ctx.now);
   updateLock(ctx.db, path, { taskId: toTask.id, memberId: toTask.owner_id, state: 'dipesan' }, ctx.now);
   moveTouch(ctx.db, fromTask.id, toTask.id, path);
@@ -432,6 +447,7 @@ export function transferNow(ctx: LockCtx, path: string, toTask: TaskRow): void {
 export function revoke(ctx: LockCtx, path: string, reason: string, by: string): QueueEntry | null {
   const lock = getLock(ctx.db, path);
   if (!lock) throw new RadarError(404, 'NOT_FOUND', `${path} tidak sedang dikunci.`);
+  if (commitClaimActive(getTask(ctx.db, lock.task_id), ctx.now)) throw new RadarError(409, 'CONFLICT', `${path} sedang di-commit (${lock.task_id}); coba lagi sebentar.`);
   deleteLock(ctx.db, path);
   deleteAllocation(ctx.db, lock.task_id, path);
   renumberQueue(ctx.db, path);

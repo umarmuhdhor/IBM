@@ -9,6 +9,7 @@ import { getTask, listTasks, setSubmitSummary, type TaskRow } from '../db/repo/t
 import { touchesOf } from '../db/repo/touch';
 import type { Db } from '../db/sql';
 import { RadarError } from '../http/errors';
+import { expirePendingDecisions } from '../db/repo/proposal';
 import { appendEvent } from './events';
 import { lockChanged, releaseTaskLocks, setStatus, type LockCtx } from './locks';
 
@@ -88,7 +89,12 @@ export function submitTask(ctx: LockCtx, memberId: string, taskId: string, summa
 export function closeTask(ctx: LockCtx, task: TaskRow, to: 'selesai' | 'batal', by: string): void {
   setStatus(ctx, task, to, by);
   releaseTaskLocks(ctx, task.id);
-  for (const r of openRequestsOfTask(ctx.db, task.id)) setRequestStatus(ctx.db, r.id, 'batal', { decidedAt: ctx.now });
+  for (const r of openRequestsOfTask(ctx.db, task.id)) {
+    setRequestStatus(ctx.db, r.id, 'batal', { decidedAt: ctx.now });
+    for (const id of expirePendingDecisions(ctx.db, r.id)) {
+      appendEvent(ctx.db, ctx.uow, { ts: ctx.now, actor: 'server', type: 'proposal.decided', payload: { proposalId: id, kind: 'decision', status: 'kedaluwarsa', by: 'server', note: `${task.id} ${to}` } });
+    }
+  }
   if (getMember(ctx.db, task.owner_id)?.active_task_id === task.id) setActiveTask(ctx.db, task.owner_id, null);
 }
 

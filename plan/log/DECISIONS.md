@@ -287,3 +287,26 @@ Format:
 - Alasan: spesifikasi fase 04, hasil bench, review `ecc:code-reviewer`, `ecc:typescript-reviewer`, `ecc:silent-failure-hunter`, `ecc:pr-test-analyzer`.
 - Alternatif yang ditolak: `usePolling` permanen (CPU dan latensi 1 s); menunggu `ready` per folder baru (tidak menutup jendela rebuild FSEvents); menulis `.radar/` ke `.gitignore` tim; mempublikasikan `@radar/common` ke npm.
 - Dampak: fase 10 (reset + init ulang workspace produksi untuk membersihkan sisa bench), fase 11 (app menjalankan `radar start --json-status`, bin `dist/radar.mjs`), fase 12 (rescan untuk workspace besar, dedupe error scan, `unlinkDir`).
+
+## D-alief-05 · 26 Sep 2026 14:30 · fase 05 · Mesin kunci, task, permintaan, proposal
+- Keputusan:
+  1. **Route per domain di `src/http/routes/`** (`locks`, `tasks`, `requests`, `proposals`, `team`), didaftarkan sebelum admin. Logika bisnis di `src/services/*`; route hanya auth + parse + satu `deps.transact`.
+  2. **Commit dua transaksi (R4 §6.3):** `decideStart` (Tx1: validasi, klaim `commit_started_at`, snapshot), `await committer.commitTask` di luar transaksi, `finishCommit` (Tx2: cek klaim masih milik kita, lalu terapkan). Committer fase 05 = stub (`sha: pending-fase-06`, `pushed: false`) dan **tidak memindahkan `head_commit`**. Klaim basi (> 60 s) dibersihkan saat objek start.
+  3. **Commit gagal → 409 `CONFLICT`** dengan pesan tetap ("Task tetap review; coba lagi"). R3 tidak punya 502; galat mentah hanya di log server dan event `commit.push_failed`.
+  4. **Payload usulan dibaca ulang lewat zod** saat keputusan (`storedPayload`); isi rusak → 500 tanpa menerapkan apa pun.
+  5. **Notifikasi selalu terikat event id** (dibaca brief lewat kursor event). Filter default: `GET /v1/tasks` = task milik pemanggil yang terbuka; coder tidak boleh `?owner=` orang lain (403, hasil security review). `GET /v1/activity` default 20, maks 50, memindai 500 event terakhir.
+  6. **Promote kepala antrean lewat `advanceQueue`** di semua jalur (release, revoke, cancel, `checkWrite` baris 3), supaya event + notifikasi "Giliranmu" hanya ditulis di satu tempat.
+  7. **Batas `POST /v1/locks/check` = 20 path** di route (schema mengizinkan 100) → 422.
+  8. **Task `review` yang mendapat file baru atau kunci baru kembali `dikerjakan`** (review yang menunggu kedaluwarsa), atau diblok `committing` bila commit sedang berjalan. `transferNow`, `revoke`, dan usulan review baru → 409 selama klaim commit aktif. Snapshot commit hanya berisi path yang masih dikunci task.
+  9. **`member`/`task` tidak ada → 404** (`requireMember`/`requireTask` melempar `RadarError`).
+- Alasan: R3/R4, spesifikasi fase 05, review `ecc:code-reviewer`, `ecc:typescript-reviewer`, `ecc:silent-failure-hunter`, `ecc:pr-test-analyzer`, `ecc:security-reviewer`.
+- Batasan yang diketahui (MEDIUM, belum diperbaiki):
+  - Di Workers `Date.now()` beku selama eksekusi sinkron, jadi `serverMs`/`lock_check_ms` ≈ 0. Angka latensi yang dipakai: `hook_rtt_ms` + p95 test 1000 panggilan.
+  - Objek di-evict saat commit berjalan → klaim tertinggal memblokir approve ulang sampai TTL 60 s.
+  - Galat committer belum dibedakan retryable vs terminal (fase 06).
+  - `listRequestItems` memakai `?? ''` untuk nama member/judul task yang hilang; `heldText` jatuh ke "rekan lain" bila holder null.
+  - `pathOf` di feed aktivitas membaca `payload.path` tanpa switch per tipe event.
+  - Tidak ada batas ukuran body eksplisit sebelum zod (bergantung batas Workers).
+  - `closeTask` menutup request terbuka jadi `batal` tanpa event, karena `request.decided.outcome` belum punya `batal` (perlu perubahan kontrak R3 §5). Usulan keputusan yang terkait sudah dikedaluwarsakan lewat event.
+- Alternatif yang ditolak: satu transaksi yang menunggu GitHub (DO memblokir semua request selama push); 502 baru di kontrak (kontrak beku); memindahkan `head_commit` dengan sha palsu.
+- Dampak: fase 06 (committer GitHub asli + `head_commit`, klasifikasi galat, sanitasi `error` di event), fase 10 (deploy + smoke di toko-demo), Umar (`my_tasks` hanya milik sendiri).
