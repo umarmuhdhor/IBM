@@ -1,0 +1,43 @@
+{
+  "workspace": "toko-demo",
+  "exportedAt": 1790397039350,
+  "chapters": [
+    {
+      "id": "plan",
+      "label": "Plan",
+      "ts": 1790397003500
+    },
+    {
+      "id": "live",
+      "label": "Live",
+      "ts": 1790397011750
+    },
+    {
+      "id": "review",
+      "label": "Review",
+      "ts": 1790397018450
+    },
+    {
+      "id": "near-miss",
+      "label": "Near-miss",
+      "ts": 1790397030350
+    },
+    {
+      "id": "commit",
+      "label": "Commit",
+      "ts": 1790397038850
+    }
+  ],
+  "metrics": {
+    "nearMisses": 1,
+    "decisions": 2,
+    "mergeConflicts": 0,
+    "medianDecisionSeconds": 2.9
+  },
+  "links": {
+    "repoUrl": "https://github.com/umarmuhdhor/IBM",
+    "bobSessions": "https://github.com/umarmuhdhor/IBM/tree/main/bob_sessions",
+    "video": null,
+    "deck": null
+  }
+}

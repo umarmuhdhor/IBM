@@ -270,3 +270,44 @@ Format:
 - Alternatif yang ditolak: Worker mengambil isi file dari GitHub (batas 50 subrequest plan Free); diff disimpan di setiap event (baris dan byte berlipat); tag `acceptWebSocket` per klien (tidak bisa diubah setelah hello); `heartbeat` menulis SQL tiap 15 s (kuota rows written).
 - Dampak: fase 04 (protokol WS, `seedTestWorkspace`, ukuran snapshot), fase 05 (`authorizeWrite` diganti `locks.checkWrite`, job alarm 30 s), fase 06 (test msw `headCommit`, `term.*`), fase 09/11 (app memakai `client:'app'`), fase 12 (rate limit admin/WS).
 - File ref/ yang diperbarui: – (bentuk admin ada di skema `@radar/common`; R3 tidak berubah).
+## D-imelda-01 · 26 Sep 2026 · fase 11D1 · Sumber fixture replay: skenario mock asli, bukan data sintetis baru
+
+- Keputusan: `radar/packages/web/fixtures/replay/export.json` dibuat dengan menjalankan `pnpm dev:mock -- --scenario demo --instant` (skrip Alief, hanya dibaca lewat CLI, tidak diimpor saat runtime dan tidak diubah), menangkap `GET /v1/events/export` (61 event, sesuai persis PRD §15: A pegang checkout.ts, B diblokir, PM memutuskan "antre" otomatis), lalu menghitung ulang `ts` tiap event dari `delayMs` kumulatif di `radar/scripts/mock-scenarios/demo.json` sendiri (mode `--instant` membuat semua `ts` sama karena wall-clock). Ditambah satu event `commit.created` sintetis di akhir (skenario aslinya tidak pernah commit) supaya chapter "Commit" (DESIGN §5.8) punya sesuatu untuk ditunjuk. Skrip generator satu-pakai, tidak di-commit.
+- Alasan: memakai data yang sudah disetujui kontrak (bentuk event tervalidasi zod, narasi cocok PRD) lebih aman daripada mengarang dataset paralel; README mengizinkan fixture untuk 11D1.
+- Dampak: `scripts/export-replay.ts` (fase ini) membaca fixture ini sebagai fallback saat `RADAR_EXPORT_URL` tidak diset.
+- File ref/ yang diperbarui: – (tidak ada perubahan kontrak; `TODO(sync:alief)` di `scripts/export-replay.ts` menandai penggantian dengan `GET /v1/events/export` asli setelah fase 05/06, dan dengan rekaman nyata setelah milestone fase 10 / 11D2).
+
+## D-imelda-02 · 26 Sep 2026 · fase 11D1 · `bob-quotes.src.json` tidak ada; pakai `bob-kit/prompts/bob-quotes.json`
+
+- Keputusan: fase file menyebut input `bob-quotes.src.json`, tapi file itu tidak pernah dibuat. Panel "Bob inside" memakai `radar/bob-kit/prompts/bob-quotes.json` (milik Umar, fase 07, objek berkunci bukan array) apa adanya, disalin ke `public/demo/bob-quotes.json` saat export.
+- Alasan: itu satu-satunya sumber kutipan Bob nyata (dari sesi Bob IDE asli) yang ada di repo.
+- Dampak: tidak ada — hanya path input yang berbeda dari yang tertulis di fase file.
+- File ref/ yang diperbarui: –
+
+## D-imelda-03 · 26 Sep 2026 · fase 11D1 · Definisi counter replay (`near-misses` · `decisions` · `merge conflicts` · `median decision`)
+
+- Keputusan: R3/DESIGN tidak mendefinisikan rumus counter §5.8 secara presisi. Dipakai: `nearMisses` = jumlah event `lock.blocked`; `decisions` = jumlah `proposal.decided` (semua `kind`); `mergeConflicts` = jumlah `commit.push_failed`; `medianDecisionSeconds` = median (`request.decided.ts` − `request.created.ts`) yang dipasangkan lewat `requestId`, dalam detik. Diimplementasikan di `src/replay/metrics.ts`, diuji lewat 7 kasus (kosong, ganjil, tidak ada pasangan, dll).
+- Alasan: ini satu-satunya pemetaan langsung dari katalog event R3 §5 ke empat angka yang diminta DESIGN §5.8.
+- Dampak: kalau Lane Core menambah event `near_miss` atau `decision` eksplisit di kontrak nanti, `metrics.ts` perlu disesuaikan (bukan breaking, hanya definisi ulang).
+- File ref/ yang diperbarui: –
+
+## D-imelda-04 · 26 Sep 2026 · fase 11D1 · Snapshot replay per 10 detik = waktu event, bukan waktu putar
+
+- Keputusan: "snapshot tiap 10 detik untuk seek cepat" (fase 11D1 langkah 15) diartikan sebagai 10 detik offset `ts` event (`ev.ts − events[0].ts`), bukan 10 detik waktu nyata pemutaran. Diimplementasikan di `src/lib/replay-player.ts` (`buildSnapshots`/`stateAtOffset`), independen dari kecepatan putar (1×/2×/4×/8×).
+- Alasan: snapshot berbasis waktu putar akan berubah tiap kali kecepatan diganti, sehingga cache-nya harus dibangun ulang; snapshot berbasis waktu event dihitung sekali dan dipakai untuk semua kecepatan.
+- Dampak: –
+- File ref/ yang diperbarui: –
+
+## D-imelda-05 · 26 Sep 2026 · fase 11D1 · Lokasi skrip export & fixture: folder lane sendiri, bukan `radar/scripts/`
+
+- Keputusan: fase file menulis output sebagai `scripts/export-replay.ts` (tersirat `radar/scripts/`, folder Lane Core menurut CLAUDE.md). Ditempatkan di `radar/packages/web/scripts/export-replay.ts` dan `radar/packages/web/fixtures/replay/export.json` supaya tetap di dalam folder lane Imelda (`radar/packages/web`).
+- Alasan: `radar/scripts/*` adalah folder Lane Core (CLAUDE.md §Team & lanes); menaruh file di sana melanggar aturan "folder = lane".
+- Dampak: perintah jalan sebagai `pnpm -C radar/packages/web exec tsx scripts/export-replay.ts` (bukan `pnpm -C radar export:replay`).
+- File ref/ yang diperbarui: –
+
+## D-imelda-06 · 26 Sep 2026 · fase 11D1 · Bob slice I1/I2 BELUM dikerjakan Claude Code
+
+- Keputusan: Claude Code menyiapkan seluruh infrastruktur non-Bob fase 11D1 (fixture, `sanitize.ts`, `metrics.ts`, `chapters.ts`, `meta.ts`, `replay-player.ts`, `scripts/export-replay.ts`, 28 test hijau) lalu BERHENTI di BOB SLICE I1 (pemutar replay + `/demo`) dan I2 (landing) sesuai `plan/ref/R7-bukti-bob.md` dan golden rule PLAN.md §5.6 ("Bob slice itu nyata"). Halaman `app/page.tsx` dan `app/demo/page.tsx` TETAP versi placeholder fase 00 sampai manusia menjalankan slice ini di Bob IDE dan membalas "bob selesai".
+- Alasan: I1 dan I2 adalah Bob slice wajib (bukti judging), bukan pekerjaan Claude Code langsung.
+- Dampak: fase 11D1 tidak bisa ditutup (PR, gerbang UI, `/gallery`) sampai kedua slice ini selesai dan direview.
+- File ref/ yang diperbarui: –
