@@ -172,23 +172,21 @@ Right: the Mission Control screenshot slightly angled (5 degrees), with the mage
 "Built on IBM Bob · hooks · custom modes · MCP".
 ```
 
-## 12 · Landing web (Application URL), gaya warm paper
+## 12 · Landing web (Application URL), Carbon gelap
 
-> Prompt ini **tidak** memakai blok gaya global (yang gelap). Landing sengaja terang (DESIGN.md §5.11).
+> Sama gelapnya dengan app/replay (DESIGN.md §5.11). Token `--lc-*`, bukan warm paper Notion.
 
 ```text
-Web landing page, 16:10, LIGHT theme in a "warm paper notebook" style. Page canvas warm off-white #f6f5f4,
-white cards with 1px hairline border rgba(0,0,0,0.08), 12px radius, no shadows on cards, flat colors, no gradients.
-Sticky top bar: text wordmark "IBM Bob Live Collab" left, muted links "Repo  bob_sessions  Video  Deck",
-small blue button "Watch replay" right.
-Centered hero: huge Inter headline 72px, tight negative letter-spacing, black:
-"Your team's Bobs, working together." with the word "working" wrapped in a soft peach pill (#f6d5b8, fully rounded).
-Serif subhead (Source Serif) in warm gray #615d59: "Multiplayer for IBM Bob. Every teammate's own Bob, one live workspace."
-Button row: filled blue #0075de "Watch the live replay" and ghost button (bg #e6f3fe, blue text) "Download for macOS"
+Web landing page, 16:10, DARK Carbon theme. Page canvas #0E0E10 with faint 12px white halftone dots,
+cards #1E1E20 with 1px hairline #2A2A2D, 12px radius, no shadows, flat colors, no gradients, no glow.
+Sticky top bar: text wordmark "IBM Bob Live Collab" left, muted gray links "Repo  bob_sessions  Video  Deck",
+small IBM Blue #0F62FE button "Watch replay" right.
+Centered hero: huge Inter headline 72px, tight negative letter-spacing, off-white #F4F4F4:
+"Your team's Bobs, working together." with the word "working" wrapped in a marigold pill (#ffb110, fully rounded).
+Serif subhead (Source Serif) in muted gray #A8A8A8: "Multiplayer for IBM Bob. Every teammate's own Bob, one live workspace."
+Button row: filled IBM Blue #0F62FE "Watch the live replay" and ghost button (soft blue text #A6C8FF) "Download for macOS"
 with tiny caption "unsigned · open via Privacy & Security".
-Below: a large DARK product screenshot of a developer app (Mission Control with a magenta "Needs you" card)
-sitting on the light canvas with a soft shadow 0 4px 12px rgba(0,0,0,.1).
-Next row: three white feature cards: "Live sync", "One file, one Bob", "PM agent proposes, human approves".
+Next row: three dark feature cards: "Live sync", "One file, one Bob", "PM agent proposes, human approves".
 Then a marigold #ffb110 full-width card with a terminal snippet "hook · PreToolUse · lock_guard → blocked".
 Then a deep navy #02093a card with white text "Built on IBM Bob primitives: custom modes · hooks · MCP".
 Footer small text: "Community hackathon project, not an official IBM product · built on Orca (MIT)".

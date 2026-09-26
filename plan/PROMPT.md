@@ -168,8 +168,8 @@ Laporan dalam Bahasa Indonesia. Kode, nama file, komentar: Bahasa Inggris.
    b. Jalankan skill `better-interface` pada screenshot + kode itu. Perbaiki semua temuan HIGH, lalu
       catat tabel temuannya di log fase.
    c. Kalau ada animasi: jalankan `review-animations`.
-   d. Cek arah gaya: app & replay = gelap, mengikuti Orca (DESIGN.md §0). Landing = terang "warm paper"
-      (DESIGN.md §5.11 + "UI Inspo & Design/landing-style/README.md").
+   d. Cek arah gaya: app, replay, dan landing = gelap Carbon, mengikuti Orca
+      (DESIGN.md §0 / §5.11 + "UI Inspo & Design/landing-style/README.md").
 
 9. VERIFIKASI. Pakai skill `verification-loop`: jalankan SEMUA perintah di bagian "Verifikasi" file
    fase. Kalau build atau typecheck merah → agent `build-error-resolver` (padanan /ecc:build-fix).

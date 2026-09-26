@@ -326,3 +326,21 @@ Format:
 - Alasan: e2e langkah 17 merah — `replay-play-toggle` tidak ada karena `/demo` = listing tiga file JSON.
 - Dampak: URL publik jadi `/demo/` dan `/gallery/`. Fetch data tetap `/demo/events.json`.
 - File ref/ yang diperbarui: –
+
+## D-imelda-09 · 26 Sep 2026 · fase 11D1 · Landing gelap Carbon, bukan warm paper
+
+- Keputusan: landing `/` (`radar/packages/web/app/page.tsx`) memakai token gelap `--lc-*` yang sama dengan app/replay. Gaya "warm paper" Notion (`#f6f5f4`, CTA `#0075de`) di DESIGN.md §5.11 **diganti di tempat**, bukan file DESIGN/PLAN kedua.
+- Alasan: juri buka Application URL lalu `/demo` harus satu merek. Referensi produk (Amoeba) juga gelap. Split terang/gelap terasa dua situs.
+- Alternatif yang ditolak: `DESIGN-v2.md` / `PLAN-v2.md` (dobel sumber kebenaran); invert Notion tanpa ganti token IBM.
+- Dampak: `DESIGN.md` §0/§5.11, `UI Inspo & Design/landing-style/README.md`, `prompt_ui.md` #12, `plan/PROMPT.md` gerbang UI, `CLAUDE.md` UI gate. Isi/section landing belum diubah (coba tema dulu).
+- File ref/ yang diperbarui: – (bukan `plan/ref`).
+
+## D-imelda-10 · 26 Sep 2026 · fase 11D1 · Poles landing "ada kehidupan" (langkah 18a), bukan PLAN kedua
+
+- Keputusan: landing `/` dapat window produk + tab klik + motion pendek + 4 mekanisme, mengikuti struktur Amoeba. **Bukan** fase baru dan **bukan** `PLAN-v2.md`. Ditulis di `plan/fase-11-terminal-dmg-replay.md` langkah **18a**, resep urutan di `UI Inspo & Design/landing-style/README.md` (Build order), kontrak visual di DESIGN.md §5.11. Kode belum disentuh sampai 18a dikerjakan.
+- Alasan: tema gelap sudah oke; halaman masih poster. Tanpa checklist, poles `page.tsx` sulit ditelusur ("perubahan apa ini?").
+- Alternatif yang ditolak: file `PLAN-landing.md` / `DESIGN-v2.md`; nulis langsung di `page.tsx` tanpa resep.
+- Dampak: Imelda kerjakan 18a di `radar/packages/web/app/page.tsx` sesuai urutan 1→4. `/demo` tidak diubah. Angka hanya `meta.json`.
+- File ref/ yang diperbarui: – (bukan `plan/ref`).
+
+
