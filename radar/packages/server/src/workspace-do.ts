@@ -3,13 +3,16 @@
 import { WS_PING_FRAME, WS_PONG_FRAME } from '@radar/common';
 import { DurableObject } from 'cloudflare:workers';
 import type { Hono } from 'hono';
+import type { GitHubCommitter } from './committer';
 import type { WorkspaceDeps } from './deps';
 import { migrate } from './db/migrate';
 import { getMeta } from './db/repo/meta';
 import { createDb, type Db } from './db/sql';
 import { createApp } from './http/routes';
 import { ActivityLimiter } from './services/activity';
-import { authorizeWriteBasic, type AuthorizeWrite } from './services/files';
+import { authorizeWriteLocks, type AuthorizeWrite } from './services/files';
+import { createCommitter } from './services/github';
+import { expireCommitClaims } from './services/proposals';
 import { UnitOfWork } from './services/uow';
 import { Hub } from './ws/hub';
 import { expireHellos, handleClose, handleMessage, helloDeadline, WS_CLOSE_RESET } from './ws/protocol';
@@ -20,7 +23,9 @@ export class WorkspaceDO extends DurableObject<Env> implements WorkspaceDeps {
   readonly hub: Hub;
   readonly scheduler: AlarmScheduler;
   readonly limiter = new ActivityLimiter();
-  readonly authorizeWrite: AuthorizeWrite = authorizeWriteBasic;
+  readonly authorizeWrite: AuthorizeWrite = authorizeWriteLocks;
+  // Set in the constructor from env (fase 06 owns the default; tests swap in fakes).
+  committer!: GitHubCommitter;
   private readonly app: Hono;
   // Re-declared public so the DO itself can serve as WorkspaceDeps.
   declare readonly ctx: DurableObjectState<Record<string, never>>;
@@ -28,6 +33,7 @@ export class WorkspaceDO extends DurableObject<Env> implements WorkspaceDeps {
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
+    this.committer = createCommitter(env);
     this.db = createDb(ctx.storage);
     this.hub = new Hub(ctx);
     this.scheduler = new AlarmScheduler(ctx.storage, [() => helloDeadline(this)]);
@@ -37,8 +43,10 @@ export class WorkspaceDO extends DurableObject<Env> implements WorkspaceDeps {
     void ctx.blockConcurrencyWhile(async () => {
       try {
         migrate(this.db);
+        // A commit in flight dies with the old instance; its claim must not block a new approval (R4 §6.3).
+        this.transact((uow) => expireCommitClaims({ db: this.db, uow, now: this.now() }));
       } catch (err) {
-        console.error('radar: schema migration failed', err instanceof Error ? err.message : String(err));
+        console.error('radar: schema migration or claim cleanup failed', err instanceof Error ? (err.stack ?? err.message) : String(err));
         throw err;
       }
     });

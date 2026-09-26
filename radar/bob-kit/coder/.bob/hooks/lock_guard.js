@@ -21172,6 +21172,35 @@ var BobActivityReq = external_exports.discriminatedUnion("kind", [
   }),
   external_exports.object({ kind: external_exports.literal("turn.end"), ...activityBase })
 ]);
+var ADMIN_FILES_MAX_PER_BATCH = 100;
+var ADMIN_FILES_MAX_BATCH_BYTES = 4 * 1024 * 1024;
+var AdminMember = external_exports.object({
+  id: MemberIdSchema,
+  role: RoleSchema,
+  name: external_exports.string().min(1).max(100),
+  /** Git author e-mail for commits; defaults to `<id>@users.noreply.radar` when missing. */
+  email: external_exports.email().optional()
+});
+var AdminInitReq = external_exports.object({
+  workspace: external_exports.string().min(1).max(64),
+  /** GitHub `owner/name`; optional so a local dev workspace can run without a repo. */
+  repo: external_exports.string().regex(/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/).optional(),
+  branch: external_exports.string().min(1).max(255).default("main"),
+  members: external_exports.array(AdminMember).min(1).max(8).refine((ms) => new Set(ms.map((m) => m.id)).size === ms.length, "member ids must be unique").refine((ms) => ms.every((m) => m.id !== "mc"), 'member id "mc" is reserved'),
+  /** Wipe an existing workspace first. Without it a second init is 409. */
+  force: external_exports.boolean().optional()
+});
+var AdminInitRes = external_exports.object({ workspace: external_exports.string(), tokens: external_exports.record(external_exports.string(), external_exports.string()) });
+var AdminFilesReq = external_exports.object({
+  /** `git rev-parse HEAD` of the clone the files come from; null keeps the stored head. */
+  headCommit: external_exports.string().min(1).max(64).nullable(),
+  files: external_exports.array(external_exports.object({ path: PathSchema, content: external_exports.string() })).max(ADMIN_FILES_MAX_PER_BATCH)
+});
+var AdminFilesRes = external_exports.object({ inserted: external_exports.number().int().nonnegative(), headCommit: external_exports.string().nullable() });
+var AdminTokenReq = external_exports.object({ member: external_exports.string().min(1).max(64), rotate: external_exports.literal(true) });
+var AdminTokenRes = external_exports.object({ member: external_exports.string(), token: external_exports.string() });
+var AdminResetReq = external_exports.object({ confirm: external_exports.literal(true) });
+var OkRes = external_exports.object({ ok: external_exports.literal(true) });
 
 // ../common/src/term.ts
 var TermId = external_exports.string().min(1).max(64);
@@ -21614,7 +21643,7 @@ async function sendActivity(cfg, fields) {
 }
 
 // src/lock_guard.ts
-var LOCK_GUARD_BUDGET_MS = 1600;
+var LOCK_GUARD_BUDGET_MS = 1200;
 var MAX_SAVED_MESSAGE = 2e3;
 async function main() {
   const ctx = await loadContext("lock_guard");

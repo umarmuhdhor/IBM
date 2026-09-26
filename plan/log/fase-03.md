@@ -29,7 +29,7 @@
 - [x] 11. Hub WS: hello ≤ 5 s lewat alarm, `sync` → `welcome` + `snapshot` (filter `knownVersions`), `app`/`mc` → `welcome` + `state`, `file.update`/`file.applied`/`heartbeat` (attachment saja), auto-response ping, presence online/reconnected (4000)/offline.
 - [x] 11b. `POST /v1/bob/activity`: `memberId` dari token, teks dipotong 200, 20/s per member + `metric(activity_dropped)`.
 - [x] 12. Test (lihat bawah).
-- [ ] 13. Deploy — **langkah manual** (TODO B2–B5).
+- [x] 13. Deploy 26 Sep 12:40 WITA (dikerjakan di sesi fase 04 atas permintaan Alief): `wrangler deploy` → `https://live-collab.afindo-mi01.workers.dev` (version `b544b7ce`), `ADMIN_SECRET` + `GITHUB_TOKEN` terpasang, `admin init` produksi (repo `aliefauzan/toko-demo`, 18 file, head `ed9e4b2`). `/healthz` 200, `/admin/init` tanpa secret 401. Sync A↔B lewat Worker lulus (log fase 04).
 - [x] 14. Commit fase.
 
 ## Bukti TDD
@@ -84,7 +84,7 @@ Verification loop: `pnpm -C radar build` OK, `typecheck` OK, ESLint bersih, `pnp
 - [x] Semua test integrasi langkah 12 hijau (52/52).
 - [x] SV-01 (test 3) dan SV-08 (test 7).
 - [x] Token hanya hash; log bersih dari token.
-- [ ] Worker ter-deploy, `/healthz` + `wscat` dari luar, tersambung > 5 menit — **langkah manual**.
+- [~] Worker ter-deploy, `/healthz` 200 dari luar, dua sync agent tersambung dan bertukar file (bench 50 write). Uji tersambung > 5 menit menunggu fase 10.
 
 ## Penyimpangan
 

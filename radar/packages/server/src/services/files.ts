@@ -12,9 +12,12 @@ import {
 import type { z } from 'zod';
 import { sha256Hex } from '../crypto';
 import { getFile, writeFileVersion, type FileRow } from '../db/repo/file';
+import { bumpEditCount } from '../db/repo/task';
+import { upsertTouch } from '../db/repo/touch';
 import type { Db } from '../db/sql';
 import type { MemberPrincipal } from '../http/auth';
 import { appendEvent } from './events';
+import { checkWrite, type LockCtx } from './locks';
 import type { UnitOfWork } from './uow';
 
 type RejectReason = z.infer<typeof FileRejectReasonSchema>;
@@ -23,12 +26,20 @@ export type WriteDecision =
   | { allow: true; taskId: string | null }
   | { allow: false; reason: 'held_by_other' | 'committing' | 'pm_readonly'; holder: LockHolder | null };
 
-/** Injection point for the lock engine. Fase 05 replaces it with `locks.checkWrite` (R4 §3). */
-export type AuthorizeWrite = (db: Db, member: MemberPrincipal, path: string, via: BlockVia) => WriteDecision;
+/** Injection point for the write rule (tests may swap it). The Durable Object uses `authorizeWriteLocks`. */
+export type AuthorizeWrite = (ctx: LockCtx, member: MemberPrincipal, path: string, via: BlockVia) => WriteDecision;
 
-/** Fase 03 rule: pm is read-only, every coder may write. */
-export const authorizeWriteBasic: AuthorizeWrite = (_db, member) =>
-  member.role === 'pm' ? { allow: false, reason: 'pm_readonly', holder: null } : { allow: true, taskId: null };
+/**
+ * Second enforcement layer (SY-04 / SV-03): the R4 §3 decision table. The WebSocket reject reasons are coarser
+ * than the check reasons, so `reserved_by_other` and `in_review_by_other` go out as `held_by_other` (the holder
+ * object still carries the lock state).
+ */
+export const authorizeWriteLocks: AuthorizeWrite = (ctx, member, path, via) => {
+  const r = checkWrite(ctx, member.memberId, path, via);
+  if (r.decision === 'allow') return { allow: true, taskId: r.taskId };
+  const reason = r.reason === 'committing' || r.reason === 'pm_readonly' ? r.reason : 'held_by_other';
+  return { allow: false, reason, holder: r.holder ?? null };
+};
 
 export interface ServerFile {
   version: number;
@@ -93,7 +104,7 @@ export function applyUpdate(
   if (path === null) return reject(input.path, 'conflict');
 
   const f = getFile(db, path);
-  const decision = deps.authorizeWrite(db, member, path, 'sync');
+  const decision = deps.authorizeWrite({ db, uow, now: deps.now }, member, path, 'sync');
   if (!decision.allow) {
     appendEvent(db, uow, {
       ts: deps.now,
@@ -113,15 +124,8 @@ export function applyUpdate(
   const taskId = decision.taskId;
   writeFileVersion(db, { path, version, hash, content: input.content, size: bytes.byteLength, by: member.memberId, taskId, now: deps.now });
   if (taskId !== null) {
-    db.run(
-      `INSERT INTO task_touch (task_id, path, first_version, last_version) VALUES (?, ?, ?, ?)
-       ON CONFLICT(task_id, path) DO UPDATE SET last_version = excluded.last_version, deleted = 0`,
-      taskId,
-      path,
-      f?.version ?? 0,
-      version,
-    );
-    db.run('UPDATE task SET edit_count = edit_count + 1, updated_at = ? WHERE id = ?', deps.now, taskId);
+    upsertTouch(db, { taskId, path, firstVersion: f?.version ?? 0, lastVersion: version });
+    bumpEditCount(db, taskId, deps.now);
   }
   appendEvent(db, uow, {
     ts: deps.now,

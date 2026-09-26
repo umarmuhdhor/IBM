@@ -113,7 +113,8 @@ describe('file.update (R4 "Penerimaan file.update", SV-01)', () => {
     const ack = await a.byType('file.ack');
     expect(ack.d).toMatchObject({ id: 'u1', path: 'src/app.ts', version: 2, hash: await sha256Hex(content) });
     const changed = await b.byType('file.changed');
-    expect(changed.d).toMatchObject({ path: 'src/app.ts', version: 2, content, by: 'A', deleted: false, taskId: null });
+    // A had no task: the first write auto-grabs the lock for a new ad-hoc task (R4 §3 row 3).
+    expect(changed.d).toMatchObject({ path: 'src/app.ts', version: 2, content, by: 'A', deleted: false, taskId: 'T-1' });
     expect((await mc.next((m) => m.t === 'event' && m.d?.type === 'file.changed')).d.payload).toMatchObject({ path: 'src/app.ts', version: 2 });
     await sleep(50);
     expect(a.seen.some((m) => m.t === 'file.changed')).toBe(false);
@@ -159,8 +160,35 @@ describe('file.update (R4 "Penerimaan file.update", SV-01)', () => {
     const b = await hello(stub, t.B!, 'sync');
     a.send(await update('u1', 'src/app.ts', 1, 'A2'));
     await a.byType('file.ack');
+    // Free the path again so B passes the lock check and only the version check can refuse it.
+    await runInDurableObject(stub, (_i, st) => {
+      st.storage.sql.exec('DELETE FROM lock');
+      st.storage.sql.exec('DELETE FROM allocation');
+    });
     b.send(await update('u2', 'src/app.ts', 1, 'B2'));
     expect((await b.byType('file.rejected')).d).toMatchObject({ reason: 'conflict', server: { version: 2, content: 'A2' } });
+  });
+
+  it('a write to a file another member holds is rejected with the holder and the server copy (SV-03)', async () => {
+    const { stub } = freshWorkspace();
+    const t = await seedTestWorkspace(stub);
+    const a = await hello(stub, t.A!, 'sync');
+    const b = await hello(stub, t.B!, 'sync');
+    a.send(await update('u1', 'src/app.ts', 1, 'A2'));
+    await a.byType('file.ack');
+    await b.byType('file.changed');
+    b.send(await update('u2', 'src/app.ts', 2, 'B3'));
+    expect((await b.byType('file.rejected')).d).toMatchObject({
+      reason: 'held_by_other',
+      holder: { memberId: 'A', memberName: 'Andi', taskId: 'T-1', state: 'dipegang' },
+      server: { version: 2, content: 'A2' },
+    });
+    const rows = await runInDurableObject(stub, (_i, st) => ({
+      version: st.storage.sql.exec<{ v: number }>("SELECT version AS v FROM file WHERE path = 'src/app.ts'").one().v,
+      requests: st.storage.sql.exec<{ n: number }>("SELECT count(*) AS n FROM request WHERE source = 'sync'").one().n,
+      blocks: st.storage.sql.exec<{ n: number }>("SELECT count(*) AS n FROM block WHERE via = 'sync'").one().n,
+    }));
+    expect(rows).toEqual({ version: 2, requests: 1, blocks: 1 });
   });
 
   it('versions are monotonic over 100 updates', async () => {

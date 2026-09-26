@@ -117,7 +117,7 @@ Dibaca dari `.radar/local.json` (R1 §6). Override untuk test: `RADAR_SERVER`, `
 
 ## 6. Aturan abaikan (sync & import awal)
 
-Selalu diabaikan: `.git/`, `.github/workflows/`, `node_modules/`, `.radar/`, `.bob/`, `bob_sessions/`, `.next/`, `dist/`, `build/`, `coverage/`, `.DS_Store`, `*.radar-rejected`, `*.radar-conflict`, `*.swp`, `*~`, `.#*`, file > 1 MB, file biner (ada byte NUL di 8 KB pertama). Ditambah isi `.gitignore` root workspace (paket `ignore`). Fungsi tunggal: `@radar/common/ignore.ts#createIgnoreMatcher(root)`.
+Selalu diabaikan: `.git/`, `.github/workflows/`, `node_modules/`, `.radar/`, `.bob/`, `bob_sessions/`, `.next/`, `dist/`, `build/`, `coverage/`, `.DS_Store`, `*.radar-rejected`, `*.radar-conflict`, `.*.radar-tmp-*` (file tmp tulis-atomik sync agent, fase 04), `*.swp`, `*~`, `.#*`, file > 1 MB, file biner (ada byte NUL di 8 KB pertama). Ditambah isi `.gitignore` root workspace (paket `ignore`). Fungsi tunggal: `@radar/common/ignore.ts#createIgnoreMatcher(root)`.
 
 ## 7. Definition of Done (berlaku untuk setiap fase)
 
