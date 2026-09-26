@@ -270,3 +270,20 @@ Format:
 - Alternatif yang ditolak: Worker mengambil isi file dari GitHub (batas 50 subrequest plan Free); diff disimpan di setiap event (baris dan byte berlipat); tag `acceptWebSocket` per klien (tidak bisa diubah setelah hello); `heartbeat` menulis SQL tiap 15 s (kuota rows written).
 - Dampak: fase 04 (protokol WS, `seedTestWorkspace`, ukuran snapshot), fase 05 (`authorizeWrite` diganti `locks.checkWrite`, job alarm 30 s), fase 06 (test msw `headCommit`, `term.*`), fase 09/11 (app memakai `client:'app'`), fase 12 (rate limit admin/WS).
 - File ref/ yang diperbarui: – (bentuk admin ada di skema `@radar/common`; R3 tidak berubah).
+
+## D-alief-04 · 26 Sep 2026 13:20 · fase 04 · Sync agent: perilaku lokal, rescan watcher, paket CLI, deploy
+- Keputusan:
+  1. **`.radar/` dan file sementara disembunyikan lewat `.git/info/exclude`**, bukan `.gitignore` tim, supaya `.gitignore` di repo tidak berubah hanya karena sync agent. Pola file sementara `atomicWrite` (`.<name>.radar-tmp-<hex>`) masuk `DEFAULT_IGNORE_PATTERNS` di `@radar/common` (commit `c99000c0`), jadi server dan agent sama-sama mengabaikannya.
+  2. **Kit** (`radar kit install <mode>`): hanya file kit yang disalin (subset). File `.bob/` yang sudah ada dan berbeda tidak ditimpa tanpa `--force`; dengan `--force` salinan lama disimpan sebagai `.bob.bak-<ts>`. Urutan pencarian kit: `--kit-dir`, `RADAR_KIT_DIR`, `<pkg>/bob-kit`, lalu `radar/bob-kit`.
+  3. **Watcher mulai setelah snapshot pertama.** Perubahan sebelum itu masuk `dirty` dan dikirim setelah scan pasca-snapshot. Setelah ack, file dibaca ulang sekali (settle-check) karena watcher bisa menggabungkan event terakhir sebuah burst; bila isinya berbeda, file dikirim lagi.
+  4. **Setelah reset workspace (close 1012) atau untuk principal PM**, file yang hanya ada di lokal tidak diunggah otomatis (mencegah workspace baru terisi sisa lama).
+  5. **`radar join` mengambil role dari `welcome`**, bukan dari argumen, supaya kit yang dipasang sesuai role di server.
+  6. **Rescan pengaman 2 s di mode `watch`.** chokidar v4 di macOS berbagi satu stream FSEvents per proses dan membangunnya ulang setiap folder baru di-watch, sehingga event di jendela itu hilang (bench: 3 dari 8 run kehilangan write pertama). Rescan mtime:size membandingkan pohon file, mengirim path yang berubah, dan `add()` folder yang belum di-watch. Bench 8/8 lulus setelahnya.
+  7. **Notifikasi tanpa `--verbose`**: retry verifikasi habis, putus koneksi (sekali per putus), dan tersambung lagi. Hasil review silent-failure.
+  8. **Tidak pernah mengikuti symlink keluar workspace** untuk baca, tulis, atau hapus (`UnsafePathError`). Symlink di dalam workspace ditulis tembus ke targetnya.
+  9. **Bench di `packages/sync/scripts/bench-sync.ts`**, bukan `radar/scripts/`: symlink `wrangler` di root `radar/node_modules` rusak di pnpm 12.
+  10. **CLI dibundel esbuild ke `dist/radar.mjs`.** `@radar/common` di-inline dan pindah ke `devDependencies` karena tidak dipublikasikan ke npm. `radar-cli.tgz` membawa `bob-kit` lewat `prepack`.
+  11. **Deploy**: Worker `https://live-collab.afindo-mi01.workers.dev`, repo demo `aliefauzan/toko-demo` (public, seed `ed9e4b2`), `GITHUB_COMMIT="false"` sampai fase 06. `ADMIN_SECRET` acak 32 byte di Keychain Alief; `GITHUB_TOKEN` PAT fine-grained diketik Alief sendiri. Repo kode tim tetap `umarmuhdhor/IBM`; server milik Alief maka repo demo juga milik Alief (PAT hanya bisa commit ke repo yang dia kelola).
+- Alasan: spesifikasi fase 04, hasil bench, review `ecc:code-reviewer`, `ecc:typescript-reviewer`, `ecc:silent-failure-hunter`, `ecc:pr-test-analyzer`.
+- Alternatif yang ditolak: `usePolling` permanen (CPU dan latensi 1 s); menunggu `ready` per folder baru (tidak menutup jendela rebuild FSEvents); menulis `.radar/` ke `.gitignore` tim; mempublikasikan `@radar/common` ke npm.
+- Dampak: fase 10 (reset + init ulang workspace produksi untuk membersihkan sisa bench), fase 11 (app menjalankan `radar start --json-status`, bin `dist/radar.mjs`), fase 12 (rescan untuk workspace besar, dedupe error scan, `unlinkDir`).

@@ -8,8 +8,8 @@ Waktu dalam WITA. Setiap lane **hanya mengedit baris fasenya sendiri** (supaya m
 | 00 | Fondasi: fork Orca + `radar/` | Alief | main | [x] | Jum 25 17:20 | Sab 26 01:05 | Workspace `radar/` 7 paket hijau, template IBM, CI, toko-demo oleh Bob (A1), 4 branch lane; sisa langkah manual di log | log/fase-00.md |
 | 01 | Spike & GATE 1 | Umar | lane/bob | [x] | Sab 26 00:10 | Sab 26 00:40 | GATE 1: hook+server, sync watch (p95 212 ms satu Mac), stderr exit 2 sampai ke model; uji 4 dua Mac menunggu Alief (D4) | log/fase-01.md |
 | 02 | Common + mock (kontrak beku) | Alief | lane/core | [x] | Sab 26 03:30 | Sab 26 04:15 | `@radar/common` (zod R3, reducer murni, selector, normalizer hook nyata, subpath `/node`), mock server semua route R3 + WS; 105 test; ref R1/R3/R5 diperbarui (D-alief-02) | log/fase-02.md |
-| 03 | Server inti | Alief | lane/core | [~] | Sab 26 04:20 | Sab 26 09:05 | Worker + DO SQLite (auth, event log, file versi, hub WS hibernasi, alarm, admin API + CLI), 52 test server + 14 CLI, uji `wrangler dev` lokal; deploy menunggu langkah manual B2–B5 | log/fase-03.md |
-| 04 | Sync agent | Alief | lane/core | [ ] | | | | log/fase-04.md |
+| 03 | Server inti | Alief | lane/core | [x] | Sab 26 04:20 | Sab 26 09:05 | Worker + DO SQLite (auth, event log, file versi, hub WS hibernasi, alarm, admin API + CLI), 52 test server + 14 CLI, uji `wrangler dev` lokal; deploy `live-collab.afindo-mi01.workers.dev` Sab 26 12:40 | log/fase-03.md |
+| 04 | Sync agent | Alief | lane/core | [x] | Sab 26 09:15 | Sab 26 13:20 | CLI `radar` (join/start/status/kit), WS + snapshot + watcher (rescan 2 s), sidecar konflik, `--json-status`, `radar-cli.tgz`; 43 test, bench p95 159 ms lokal / 295 ms Cloudflare | log/fase-04.md |
 | 05 | Kunci, task, permintaan, proposal | Alief | lane/core | [ ] | | | | log/fase-05.md |
 | 06 | Commit GitHub, diff (relay terminal P1) | Alief | lane/core | [ ] | | | | log/fase-06.md |
 | 07 | Kit `.bob/` coder | Umar | lane/bob | [x] | Sab 26 00:45 | Sab 26 01:10 | Kit coder (5 hook, radar-mcp 5 tool, mode + rules), 57 test hijau, uji Bob IDE jalur blokir 3/3 melawan fake server; uji di toko-demo asli = fase 10 | log/fase-07.md |
