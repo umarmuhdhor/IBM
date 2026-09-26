@@ -187,3 +187,23 @@ Verifikasi: typecheck · test 48/48 · eslint web · build · Playwright 18/18 �
 - Fase berikutnya untuk lane ini setelah PR fase 11D1 di-merge: **10** (integrasi E2E, interupsi wajib Sab 21:00 WITA) — tapi fase 03/04/05/06 (Core) dan 11a (App) belum `[x]` di PROGRESS.md, jadi fase 10 kemungkinan besar juga akan berhenti menunggu lane lain; cek ulang `plan/PROGRESS.md` sebelum memulai.
 - `@radar/ui` (fase 09, Aarief) SUDAH selesai dan berisi 10 komponen siap pakai (`AgentTag`, `MemberChip`, `LockChip`, `WritingPulse`, `BobTrace`, `DecisionCard`, `TaskCard`, `FeedItem`, `ReviewCard`, `BriefMeter`, `PresenceStack`) — Bob slice I1 memakai komponen ini langsung, tidak ada duplikat lokal.
 - 11D2 (Bob slice I3 + replay final) tinggal: (a) draft Long Description (Sab 23:00-Min 01:00 sesuai jadwal), (b) setelah rekaman fase 10, jalankan ulang `export-replay.ts` dengan `RADAR_EXPORT_URL` mengarah ke server asli / rekaman nyata, lalu deploy ulang.
+
+## Redesign `/demo` — cerita yang bisa diikuti (Min 27 Sep, Claude Code · Opus 5.5)
+
+Alasan: juri tidak bisa mengikuti alur Plan → Live → Review → Near-miss → Commit dari trace mentah. Kontrak data tetap (`public/demo/*.json`, `replay-player`, semua `data-testid` e2e).
+
+- `src/replay/narrate.ts` (+ test 8): satu kalimat bahasa Inggris per event, `major` = headline narrator. Tidak ada angka/teks karangan, semua dari log.
+- `app/demo/page.tsx` ditulis ulang, komponen di `src/replay/ui/{chrome,stage,bob-inside}.tsx`, gaya di `app/demo/demo.css` (Plex via `app/demo/layout.tsx`, self-hosted).
+- Narrator bar + chapter stepper (sticky desktop), lane Andi / Mission Control (shared repo + holder + queue) / Budi, Bob inside ikut live sampai baris diklik, story log bisa diklik untuk seek, transport fixed bawah dengan `<input type=range>` (menutup MEDIUM lama "scrubber seek belum keyboard").
+- Mobile: tab Andi / Citra · PM / Budi mengikuti aktor narrator sampai user memilih tab.
+
+UI gate `better-interface` (1440 + 390 + 320, Chrome sistem karena browser Playwright belum terpasang):
+
+| Severity | Domain | Location | Before | After | Why |
+| --- | --- | --- | --- | --- | --- |
+| HIGH | Colors/Accessibility | `app/demo/demo.css` (15 teks) | `color: var(--lc-text-faint)` #6f6f6f di #161616 = 3.6:1 | `--lc-text-muted` #a8a8a8; hierarki lewat ukuran/weight | Teks kecil gagal AA 4.5:1 |
+| HIGH | Writing | `app/demo/page.tsx` error state | `Could not load the replay: {error}` | "Unable to load the replay. Check your connection, then reload the page." + tombol **Reload replay**, `role="alert"` | Error tanpa jalan pulih |
+| MEDIUM | Accessibility | `app/demo/page.tsx` transport | Dock di akhir DOM, Pause autoplay ±20 Tab | Dock dipindah setelah stepper (tetap `position: fixed`) | Kontrol pause autoplay harus cepat terjangkau keyboard |
+| LOW | Typography | `app/demo/demo.css` mobile stepper | `.rp-step-label` 11px | 12px | Di bawah lantai 12px |
+
+Semua diperbaiki. Verifikasi: vitest 56/56, `tsc` bersih, `next build` ok, e2e `demo.spec.ts` 20/20 (1440+390, termasuk test baru narrator near-miss + no h-scroll), overflow 0 di 320px, fokus ring 2px di semua stop Tab. `review-animations`: skill tidak tersedia di sesi ini, jadi Not reviewed (animasi: `rp-rise` 200–240ms opacity+4px, `rp-pulse` label "writing"; semua mati di `prefers-reduced-motion`).
