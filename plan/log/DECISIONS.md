@@ -374,6 +374,11 @@ Format:
 - Dampak: Alief (R3 §7), Imelda/semua (naskah demo), fase 12 (`/v1/ai-edits`).
 - File ref/ yang diperbarui: – (usulan saja).
 
+## D-alief-06 · 26 Sep 2026 · fase 06 · Aturan authorship commit lane Alief
+- Keputusan: commit di repo tim yang dibuat sesi Alief hanya memakai identitas: author `aliefauzan` (git config tidak diubah), co-author IBM Bob (kode Bob: trailer `Bob-Assisted`, R7) atau Claude (kerja di sesi Claude Code: trailer `Co-authored-by: Claude`). Tidak ada identitas lain. Sesi OpenCode/Muse Spark tidak menambah trailer asisten.
+- Alasan: permintaan Alief (tidak ada nama sintetis seperti Citra di commit repo tim).
+- Dampak: fase 10, 12, 14 (commit berikutnya di lane/core).
+
 ## D-alief-07 · 26 Sep 2026 · fase 10 · Simulator sim-3pc + fix `owner=me`, tanpa ubah kontrak
 
 - Keputusan:
@@ -398,3 +403,18 @@ Format:
 - Alasan: plan fase 13 (output di `scripts/`), PRD §04/§17, protokol ditulis sebelum eksperimen.
 - Dampak: Alief (folder `radar/scripts`, usulan opsional: `metric` di `/admin/export`), fase 14 (tabel metrik).
 - File ref/ yang diperbarui: –.
+
+## D-alief-08 · 26 Sep 2026 · fase 12 · Hardening + P1 server/sync, SV-10 dan BC-06 dipotong
+
+- Keputusan:
+  1. **Kontrak baru (milik Core):** tabel `ai_mark(member_id, path, ts)` (R2) untuk hook PostToolUse yang datang sebelum upload; kode galat `RATE_LIMITED` (429) dan `PAYLOAD_TOO_LARGE` (413) di `ERROR_CODES`; `Invite` + `encodeInvite/decodeInvite` di `@radar/common` (IN-02, format R1 `rdr_inv_<base64url {v, server, workspace, member, token}>`).
+  2. **SV-09:** `member.stale` hanya untuk coder yang memegang kunci; satu event per episode, episode ditutup `member.online` saat heartbeat kembali. Heartbeat dibaca dari attachment socket sync, jatuh ke `member.last_heartbeat` bila socket sudah tutup. Kunci tidak pernah dicabut otomatis. Env `HEARTBEAT_EXPIRE_MS` (≥ 1000) untuk gladi.
+  3. **Aturan scheduler:** alarm hanya dimajukan, tidak pernah dimundurkan (`next < current`); job yang terbangun terlalu awal tidak melakukan apa-apa lalu menjadwalkan ulang. `fetch` DO menjadwalkan ulang setelah tiap request.
+  4. **SY-06:** hapus = versi tombstone (`content null`, hash `''`), otorisasi sama dengan update (`checkWrite`); konflik bila `baseVersion` lama dan file diubah member lain. File yang dibuat lalu dihapus dalam task yang sama tidak masuk commit.
+  5. **Rate limit:** 60 POST/menit per header Authorization untuk `/v1/proposals*`, `/v1/locks/revoke`, `/v1/tasks/:id/cancel`; memori saja (DO tunggal), reset saat DO hibernasi; batas 1000 kunci. Baca (GET) tidak dibatasi.
+  6. **Dipotong ke roadmap:** SV-10 `radar agent --auto` (Bob Shell tidak terpasang di Mac Core; CLI non-interaktif `bob` tidak bisa diverifikasi — fallback spec fase 12) dan BC-06 `bob.turn` (opsional; `turn.end` via `bob.activity` sudah P0).
+  7. **Uji beban:** `pnpm -C radar sim -- --load` (lokal saja; 5 coder × 2 tulis/s × 120 s) — p95 sinkron 219 ms, cek kunci 24 ms, 0 ditolak.
+- Alasan: urutan nilai fase 12 + kriteria DoD "selesai + test atau dipotong + tercatat".
+- Alternatif yang ditolak: rate limit per `memberId` setelah auth (butuh auth dua kali per route); `member.stale` untuk semua member (ramai di feed, tidak bisa ditindaklanjuti tanpa kunci); invite berisi kode sekali pakai di server (butuh tabel + endpoint baru; token biasa cukup untuk demo).
+- Dampak: Aarief (banner stale, label AI, riwayat file, tempel undangan), Umar (`/v1/ai-edits` 204, `session_report`), Imelda (roadmap SV-10/BC-06 di README/deck).
+- File ref/ yang diperbarui: `R2-skema-db.md` (`ai_mark`), `R1-struktur-repo.md` (`join --invite`, SV-10 dipotong).
