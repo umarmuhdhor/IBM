@@ -59,7 +59,7 @@ export async function adminCall<T>(c: AdminClient, method: 'GET' | 'POST', path:
   if (!res.ok) {
     const err = ErrorRes.safeParse(json);
     if (err.success) throw new AdminError(res.status, err.data.error.code, `${method} ${path}: ${res.status} ${err.data.error.code} — ${err.data.error.message}`);
-    throw new AdminError(res.status, 'INTERNAL', `${method} ${path}: HTTP ${res.status}`);
+    throw new AdminError(res.status, 'INTERNAL', `${method} ${path}: HTTP ${res.status}${text ? ` — ${text.slice(0, 200)}` : ''}`);
   }
   const parsed = schema.safeParse(json);
   if (!parsed.success) throw new AdminError(res.status, 'INTERNAL', `${method} ${path}: unexpected response shape`);

@@ -30,6 +30,16 @@ function locksWithQueue(db: Db) {
   return locks.map((l) => ({ path: l.path, taskId: l.task_id, memberId: l.member_id, state: l.state, queue: queues.get(l.path) ?? [] }));
 }
 
+/** A corrupt stored JSON column must not take down /v1/state for the whole workspace. */
+function parseStoredJson(text: string, what: string): unknown {
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    console.error(`radar: ${what} has an unreadable payload`);
+    return null;
+  }
+}
+
 export function workspaceView(db: Db, fallbackId: string) {
   const id = getMeta(db, 'workspace_id') ?? fallbackId;
   return { id, name: getMeta(db, 'workspace_name') ?? id, headCommit: getMeta(db, 'head_commit'), repoUrl: getMeta(db, 'repo_url') };
@@ -129,7 +139,7 @@ export function buildState(db: Db, fallbackId: string): StateRes {
       status: p.status,
       refId: p.ref_id,
       reason: p.reason,
-      payload: JSON.parse(p.payload) as unknown,
+      payload: parseStoredJson(p.payload, `proposal ${p.id}`),
       createdAt: p.created_at,
       decidedBy: p.decided_by,
       note: p.decision_note,

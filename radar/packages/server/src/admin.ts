@@ -94,6 +94,8 @@ export function registerAdminRoutes(app: Hono, deps: WorkspaceDeps): void {
     if (total > ADMIN_FILES_MAX_BATCH_BYTES) throw new RadarError(422, 'VALIDATION', 'Satu batch maksimal 4 MB.');
 
     const repoUrl = getMeta(deps.db, 'repo_url');
+    // created_at identifies this init: a concurrent `init --force` during the await below changes it.
+    const initStamp = getMeta(deps.db, 'created_at');
     if (req.headCommit !== null && deps.env.GITHUB_COMMIT === 'true' && repoUrl) {
       await verifyHeadCommit({
         repo: repoUrl.replace(/^https:\/\/github\.com\//, ''),
@@ -101,7 +103,8 @@ export function registerAdminRoutes(app: Hono, deps: WorkspaceDeps): void {
         headCommit: req.headCommit,
         token: deps.env.GITHUB_TOKEN,
       });
-      requireInitialised(deps); // the await above let other requests run (R2 §1)
+      // fetch() opens no input gate, so other requests may have run meanwhile (R2 §1).
+      if (getMeta(deps.db, 'created_at') !== initStamp) throw new RadarError(409, 'CONFLICT', 'Workspace di-init ulang saat memeriksa headCommit. Kirim ulang batch.');
     }
 
     const now = deps.now();

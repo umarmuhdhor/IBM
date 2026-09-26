@@ -1,7 +1,8 @@
 import { runInDurableObject } from 'cloudflare:test';
 import { describe, expect, it } from 'vitest';
 import { ExportRes, StateRes } from '@radar/common';
-import { call, freshWorkspace, hello, seedTestWorkspace, sha256Hex } from './helpers';
+import { ActivityLimiter } from '../src/services/activity';
+import { call, freshWorkspace, hello, seedTestWorkspace, sha256Hex, sleep } from './helpers';
 
 describe('auth (R3 §1)', () => {
   it('401 for a missing, malformed or unknown token', async () => {
@@ -119,5 +120,35 @@ describe('POST /v1/bob/activity (R3 §2.24, JT-01)', () => {
     );
     expect(n).toBeGreaterThanOrEqual(20);
     expect(n).toBeLessThan(45); // at most 2 windows × 20 even if the burst crosses a second boundary
+  });
+
+  it('reports the dropped count once as metric(activity_dropped) when the next window starts', async () => {
+    const { stub } = freshWorkspace();
+    const t = await seedTestWorkspace(stub);
+    const body = { kind: 'turn.end', sessionId: 's', mode: 'coder' };
+    await Promise.all(Array.from({ length: 45 }, () => call(stub, 'POST', '/v1/bob/activity', { token: t.A, body })));
+    await sleep(1100);
+    expect((await call(stub, 'POST', '/v1/bob/activity', { token: t.A, body })).status).toBe(204);
+    const rows = await runInDurableObject(stub, (_i, st) =>
+      st.storage.sql.exec<{ name: string; value: number; tags: string }>("SELECT name, value, tags FROM metric WHERE name = 'activity_dropped'").toArray(),
+    );
+    const total = rows.reduce((n, r) => n + r.value, 0);
+    const accepted = await runInDurableObject(stub, (_i, st) => st.storage.sql.exec<{ n: number }>("SELECT count(*) AS n FROM event WHERE type = 'bob.activity'").one().n);
+    expect(total + accepted).toBe(46); // every request is either stored or counted
+    expect(rows.every((r) => JSON.parse(r.tags).memberId === 'A')).toBe(true);
+  });
+});
+
+describe('ActivityLimiter', () => {
+  it('allows 20 per member per second and reports drops at the next window', () => {
+    const l = new ActivityLimiter();
+    const results = Array.from({ length: 25 }, () => l.hit('A', 1000));
+    expect(results.filter((r) => r.accepted)).toHaveLength(20);
+    expect(results.every((r) => r.droppedToReport === 0)).toBe(true);
+    expect(l.hit('B', 1500)).toEqual({ accepted: true, droppedToReport: 0 }); // separate budget
+    expect(l.hit('A', 2000)).toEqual({ accepted: true, droppedToReport: 5 });
+    expect(l.hit('A', 2001)).toEqual({ accepted: true, droppedToReport: 0 });
+    l.clear();
+    expect(l.hit('A', 2002)).toEqual({ accepted: true, droppedToReport: 0 });
   });
 });

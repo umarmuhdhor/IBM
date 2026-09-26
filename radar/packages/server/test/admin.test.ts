@@ -1,7 +1,9 @@
 import { runInDurableObject } from 'cloudflare:test';
 import { describe, expect, it } from 'vitest';
 import { ExportRes } from '@radar/common';
-import { admin, call, DEFAULT_MEMBERS, freshWorkspace, seedTestWorkspace } from './helpers';
+import { admin, call, connect, DEFAULT_MEMBERS, freshWorkspace, hello, seedTestWorkspace, sha256Hex, sleep } from './helpers';
+
+const stillOpen = (closed: Promise<number>) => Promise.race([closed, sleep(300).then(() => 'open' as const)]);
 
 const INIT = { workspace: 'toko-demo', repo: 'demo/toko-demo', branch: 'main', members: DEFAULT_MEMBERS };
 
@@ -134,5 +136,59 @@ describe('/admin/* (fase 03 step 8)', () => {
     expect((await admin(stub, 'POST', '/admin/init', INIT)).status).toBe(201);
     const ex2 = await admin(stub, 'GET', '/admin/export');
     expect(ex2.json.events[0].id).toBe(1);
+  });
+
+  it('/admin/token closes the rotated principal\'s sockets with 4401 and leaves others open', async () => {
+    const { stub } = freshWorkspace();
+    const t = await seedTestWorkspace(stub);
+    const a = await hello(stub, t.A!, 'sync');
+    const b = await hello(stub, t.B!, 'sync');
+    const mc = await hello(stub, t.mc!, 'mc');
+    expect((await admin(stub, 'POST', '/admin/token', { member: 'A', rotate: true })).status).toBe(200);
+    expect(await a.closed).toBe(4401);
+    expect(await stillOpen(b.closed)).toBe('open');
+    expect(await stillOpen(mc.closed)).toBe('open');
+    expect((await admin(stub, 'POST', '/admin/token', { member: 'mc', rotate: true })).status).toBe(200);
+    expect(await mc.closed).toBe(4401);
+    expect(await stillOpen(b.closed)).toBe('open');
+  });
+
+  it('/admin/reset closes every socket with 1012 and clears the pending alarm', async () => {
+    const { stub } = freshWorkspace();
+    const t = await seedTestWorkspace(stub);
+    const a = await hello(stub, t.A!, 'sync');
+    const pending = await connect(stub); // no hello: schedules the hello-deadline alarm
+    expect(await runInDurableObject(stub, (_i, st) => st.storage.getAlarm())).not.toBeNull();
+    expect((await admin(stub, 'POST', '/admin/reset', { confirm: true })).status).toBe(200);
+    expect(await a.closed).toBe(1012);
+    expect(await pending.closed).toBe(1012);
+    expect(await runInDurableObject(stub, (_i, st) => st.storage.getAlarm())).toBeNull();
+    // closing during reset must not write member.offline into the fresh database
+    const events = await runInDurableObject(stub, (_i, st) => st.storage.sql.exec<{ n: number }>('SELECT count(*) AS n FROM event').one().n);
+    expect(events).toBe(0);
+  });
+
+  it('/admin/files re-import refreshes v1 files but never overwrites a file the team already edited', async () => {
+    const { stub } = freshWorkspace();
+    const t = await seedTestWorkspace(stub, [
+      { path: 'src/app.ts', content: 'v1\n' },
+      { path: 'src/other.ts', content: 'o1\n' },
+    ]);
+    const a = await hello(stub, t.A!, 'sync');
+    a.send({ t: 'file.update', id: 'u1', d: { path: 'src/app.ts', baseVersion: 1, content: 'edited\n', hash: await sha256Hex('edited\n'), clientTs: 0 } });
+    expect((await a.byType('file.ack')).d.version).toBe(2);
+    const r = await admin(stub, 'POST', '/admin/files', {
+      headCommit: null,
+      files: [
+        { path: 'src/app.ts', content: 'reimport\n' },
+        { path: 'src/other.ts', content: 'o1-new\n' },
+      ],
+    });
+    expect(r.json.inserted).toBe(1);
+    const rows = await runInDurableObject(stub, (_i, st) => st.storage.sql.exec<{ path: string; version: number; content: string }>('SELECT path, version, content FROM file ORDER BY path').toArray());
+    expect(rows).toEqual([
+      { path: 'src/app.ts', version: 2, content: 'edited\n' },
+      { path: 'src/other.ts', version: 1, content: 'o1-new\n' },
+    ]);
   });
 });

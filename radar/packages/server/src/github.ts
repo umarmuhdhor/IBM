@@ -11,6 +11,8 @@ export interface GithubRefCheck {
   fetchImpl?: typeof fetch;
 }
 
+const GITHUB_TIMEOUT_MS = 10_000;
+
 /** Throws 409 when `headCommit` is not the tip of `branch`, 422 when GitHub cannot be asked. */
 export async function verifyHeadCommit(c: GithubRefCheck): Promise<void> {
   const headers: Record<string, string> = { accept: 'application/vnd.github+json', 'user-agent': 'radar-live-collab' };
@@ -18,7 +20,7 @@ export async function verifyHeadCommit(c: GithubRefCheck): Promise<void> {
   const url = `${API}/repos/${c.repo}/git/ref/heads/${encodeURIComponent(c.branch)}`;
   let res: Response;
   try {
-    res = await (c.fetchImpl ?? fetch)(url, { headers });
+    res = await (c.fetchImpl ?? fetch)(url, { headers, signal: AbortSignal.timeout(GITHUB_TIMEOUT_MS) });
   } catch (err) {
     throw new RadarError(422, 'VALIDATION', `GitHub tidak bisa dihubungi untuk memeriksa headCommit (${err instanceof Error ? err.message : 'network error'}).`);
   }

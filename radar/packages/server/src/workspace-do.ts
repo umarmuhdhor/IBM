@@ -33,7 +33,15 @@ export class WorkspaceDO extends DurableObject<Env> implements WorkspaceDeps {
     this.scheduler = new AlarmScheduler(ctx.storage, [() => helloDeadline(this)]);
     // Keepalive answered by the runtime without waking the DO (R3 §3).
     ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair(WS_PING_FRAME, WS_PONG_FRAME));
-    void ctx.blockConcurrencyWhile(async () => migrate(this.db));
+    // A throw here makes the runtime reset the object and fail the waiting requests; log it so it is visible.
+    void ctx.blockConcurrencyWhile(async () => {
+      try {
+        migrate(this.db);
+      } catch (err) {
+        console.error('radar: schema migration failed', err instanceof Error ? err.message : String(err));
+        throw err;
+      }
+    });
     this.app = createApp(this);
   }
 

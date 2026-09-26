@@ -50,12 +50,17 @@ export class Hub {
     return out;
   }
 
-  /** Sends one message. A socket that is already closing is skipped (its close handler does the cleanup). */
+  /**
+   * Sends one message. When the send fails the socket is closed with 1011, so the client reconnects and gets a
+   * fresh snapshot/state instead of drifting silently; its close handler does the presence cleanup.
+   */
   send(ws: WebSocket, msg: WsMessage): void {
     try {
       ws.send(JSON.stringify(msg));
     } catch (err) {
-      console.warn('radar: ws send failed', err instanceof Error ? err.message : String(err));
+      const att = this.attachment(ws);
+      console.error(`radar: ws send failed (${msg.t} to ${att?.state === 'ready' ? att.client : (att?.state ?? 'unknown')}):`, err instanceof Error ? err.message : String(err));
+      this.close(ws, 1011, 'send failed');
     }
   }
 

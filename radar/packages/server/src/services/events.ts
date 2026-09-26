@@ -28,11 +28,11 @@ export function rowToEvent(row: EventRow): RadarEvent | null {
   try {
     payload = JSON.parse(row.payload);
   } catch {
-    console.warn(`radar: event ${row.id} has an unreadable payload`);
+    console.error(`radar: event ${row.id} has an unreadable payload; skipped`);
     return null;
   }
   const ev = parseRadarEvent({ id: row.id, ts: row.ts, actor: row.actor, type: row.type, payload });
-  if (!ev) console.warn(`radar: event ${row.id} (${row.type}) does not match the schema`);
+  if (!ev) console.error(`radar: event ${row.id} (${row.type}) does not match the schema; skipped`);
   return ev;
 }
 

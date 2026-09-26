@@ -89,6 +89,7 @@ export function applyUpdate(
   // A hash mismatch means the client read a half-written file; it re-sends after the next save.
   if (hash !== input.hash) return reject(input.path, 'conflict');
   const path = cleanPath(input.path);
+  // R3 has no invalid-path reason; `conflict` makes the sync agent keep its copy and re-fetch.
   if (path === null) return reject(input.path, 'conflict');
 
   const f = getFile(db, path);

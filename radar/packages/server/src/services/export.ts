@@ -18,8 +18,11 @@ export interface ExportRange {
 function withPatch(db: Db, ev: RadarEvent): RadarEvent {
   if (ev.type !== 'file.changed') return ev;
   const { path, version } = ev.payload;
-  const after = getFileVersion(db, path, version)?.content ?? '';
-  const before = version > 1 ? (getFileVersion(db, path, version - 1)?.content ?? '') : '';
+  const afterRow = getFileVersion(db, path, version);
+  const beforeRow = version > 1 ? getFileVersion(db, path, version - 1) : null;
+  if (!afterRow || (version > 1 && !beforeRow)) console.error(`radar: export event ${ev.id}: file_version rows missing for ${path} v${version}; patch is partial`);
+  const after = afterRow?.content ?? '';
+  const before = beforeRow?.content ?? '';
   return { ...ev, payload: { ...ev.payload, patch: createTwoFilesPatch(`a/${path}`, `b/${path}`, before, after) } };
 }
 
