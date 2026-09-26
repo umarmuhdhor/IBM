@@ -1,6 +1,6 @@
 # Log fase 09 — App desktop (Lane Aarief · `lane/app`)
 
-- **Status:** [~] berjalan (gerbang UI + security lulus 26 Sep 11:05; menunggu uji koneksi live oleh pengguna, lalu snapshot PR 09a/b/c).
+- **Status:** [x] implementasi dan gerbang fase 09 selesai Sab 26 Sep 11:30 WITA. Gerbang UI + security lulus 11:05, uji koneksi live melawan mock lulus 11:19. Snapshot dan PR fase 09 masih perlu dibuat sesuai PROMPT langkah 11.
 - **Mulai:** Sab 26 Sep 2026 00:12 WITA · branch `lane/app` (dibuat dari `origin/main` `ed1f2951`, tanpa upstream).
 - **Model:** Claude Opus 5.5 · high (R6 §2 menyarankan Sonnet 5 high; Opus diizinkan untuk titik sambung Orca).
 
@@ -10,10 +10,9 @@ Aturan yang tetap berlaku: `CLAUDE.md`, `plan/PROMPT.md` (LANE Aarief, FASE auto
 
 **Langkah berikutnya (urut):**
 1. DA-02 P1 terverifikasi: menu New tab menampilkan **IBM Bob** dengan glyph B; pemilihan dari UI membuka Terminal 2 dan Bob Shell 2.0.5 otomatis. Pesan `halo` dijawab normal dengan tim `ibm-coding-challenge-uat`. Screenshot lokal `/tmp/bob_app_picker_response.png` (tidak di-commit karena menampilkan identitas akun).
-2. PR Core #4 sudah di-merge ke `main` sebagai `8dd22e1c`; `lane/app` direbase ke commit itu. Placeholder tipe, reducer, dan keepalive telah diganti dengan `@radar/common`. Mock server `/healthz` hidup. Snapshot demo 61 event diuji tanpa token melalui CDP; Mission Control merender 3 task, 7 lock, dan feed. Uji WebSocket/Approve langsung di UI masih LANGKAH MANUAL karena memerlukan token; agent dilarang mengetik token.
-3. **Selesai 26 Sep 10:35–11:05:** checklist Settings (`c86c479b`, `cbbfd4d4`), gerbang UI `better-interface` lengkap (tabel di "Hasil verifikasi"), lint drawer (`aa625358`), kartu keputusan read-only untuk coder (`13f4c917`), security review PASS. Sisa gerbang: uji koneksi WS live + klik Approve/Deny oleh pengguna (LANGKAH MANUAL 2), lalu screenshot `radar/docs/img/app-*.png` saat status Live.
-3a. Agent paralel (worktree terpisah, belum di-merge ke `lane/app`): fase 11a bagian A (WatchBobView, tombol Watch, toggle Share my prompts) dan fase 11b (build `.dmg` lokal tanpa signing). Hasilnya di-cherry-pick setelah direview.
-4. Setelah gerbang UI lulus, buat snapshot lokal `snap/app-f09a|b|c`, dorong `lane/app-f09a|b|c`, lalu PR sesuai PROMPT langkah 11. Jangan push branch app sebelum review dan prasyaratnya selesai. Commit Bob C2/C3 sudah memiliki `Co-authored-by: IBM Bob <bob@ibm.com>`; email GitHub Bob masih perlu konfirmasi bila avatar coauthor diinginkan.
+2. PR Core #4 sudah di-merge ke `main` sebagai `8dd22e1c`; `lane/app` direbase ke commit itu. Placeholder tipe, reducer, dan keepalive telah diganti dengan `@radar/common`.
+3. Checklist Settings, gerbang UI, security review, koneksi WS live, dan Approve P-2 melawan mock telah lulus. Screenshot aman tanpa informasi pribadi ada di `app/docs/img/app-mission-control.png`.
+4. Buat snapshot fase 09 sesuai PROMPT langkah 11 sebelum commit 11a, dorong branch snapshot, lalu PR. Commit Bob C2/C3 memiliki `Co-authored-by: IBM Bob <bob@ibm.com>`; avatar GitHub Bob bergantung pada alamat email akun yang belum dikonfirmasi.
 
 **Keputusan yang sudah diambil (tulis ke DECISIONS sebagai D-aarief-01 saat commit berikutnya):**
 - Role di Settings = `coder | mc` (R3 §1/§2.14: hanya token `mc` boleh decision; fase 09 langkah 5 menulis `pm`).
@@ -48,7 +47,8 @@ Aturan yang tetap berlaku: `CLAUDE.md`, `plan/PROMPT.md` (LANE Aarief, FASE auto
 - [x] 10. Branding utama — commit `d10f10d7`: nama bundle dev/menu, titlebar, judul web, landing, pilihan ikon default, serta aset ikon macOS/Windows memakai IBM Bob Live Collab dan gambar tiga Bob dari pengguna. Test komponen/ikon/identitas dibuat merah sebelum implementasi. App Electron lokal berhasil dibuka; screenshot landing melalui CDP 9339 diperiksa secara visual.
 - [x] 11. Kondisi kosong/error: belum konek → kartu "Connect to a Live Collab workspace" + tombol Open settings; server putus → badge merah "Disconnected", state terakhir tetap tampil (store hanya mengubah `connected`). Uji tanpa token melawan mock asli: kredensial sintetis salah → mock menutup 4401 → client membuka tepat 1 socket (tanpa reconnect) dan status akhir `connected:false` (probe sementara, dihapus setelah lulus).
 - [x] 12–13. Gerbang UI `better-interface` + security review PASS (lihat "Hasil verifikasi").
-- [~] 14. Snapshot PR menunggu uji koneksi live (LANGKAH MANUAL 2). Branding About selesai. Mock server fase 02 sudah tersedia; respons interaktif Bob Shell berhasil dengan tim challenge.
+- [x] 14a. Uji koneksi live (26 Sep 11:18–11:19): app Dev background + Playwright CDP 9339. Kode demo `mc` dibaca script dari `radar/scripts/mock/hub.ts` langsung di memori dan diisi ke field password; nilainya tidak dicetak ke chat, log, file repo, atau commit. Hasil: header `● Live Collab`, field token kosong lagi setelah Connect, Test → WebSocket Connected / Bob Shell 2.0.5; skenario demo diputar (57 event); kartu keputusan muncul 14.6 s setelah membuka Mission Control; klik Approve pada review P-2 → Needs you 1 → 0, dan `GET /v1/state` mock menunjukkan `P-2=disetujui` + event `proposal.decided P-2` (keputusan benar-benar sampai ke `POST /v1/proposals/:id/decision`). Notifikasi `Bob B diblokir di checkout.ts` tampil. Screenshot `app/docs/img/app-mission-control.png` (1512×982, dark). `app-home`/`app-coder` belum diambil karena terminal workspace uji menampilkan info pribadi mesin; diambil ulang di toko-demo saat fase 10.
+- [~] 14. Snapshot PR fase 09. Branding About, mock server, dan Bob Shell sudah diverifikasi; snapshot dan PR sedang disiapkan.
 - [x] Sinkron fase 02: PR #4 diperiksa (CI hijau, mergeable, review kontrak) lalu squash-merge ke `main` sebagai `8dd22e1c`. `lane/app` direbase ke `origin/main` tanpa menyentuh folder lane lain. Test merah membuktikan snapshot array dan event resmi belum ditangani, kemudian `@radar/common` dipakai untuk tipe/reducer/keepalive. Test merah kedua menangkap duplikasi jam feed lalu diperbaiki. About menambah kredit Orca setelah test merah.
 
 ## File dibuat/diubah
@@ -70,7 +70,7 @@ Aturan yang tetap berlaku: `CLAUDE.md`, `plan/PROMPT.md` (LANE Aarief, FASE auto
 - 09c branding: `app/resources/app-icons/bob-live-collab.png` (cutout transparan dari gambar pengguna), `app/resources/{icon.png,build/icon.png,build/icon.icns,build/icon.ico}`, `app/src/renderer/src/components/radar/LiveCollabMark{,.test}.tsx`, landing/titlebar/judul HTML, dan identitas bundle dev. Aset sumber diunduh pengguna; tidak menyertakan data pribadi.
 - 09c Bob Shell: `app/src/shared/tui-agent-config{,.test}.ts` — launcher macOS memakai `nvm exec 24 bob` bila nvm tersedia; Linux tetap `bob`.
 - Sinkron fase 02: `radar/packages/ui/src/types.ts` menggantikan `types-temp.ts`; `app/src/renderer/src/lib/radar/state-adapter.ts` menggantikan `state-placeholder.ts`; alias main Vite/TS, test dan view terkait diperbarui. `app/src/main/menu/gpu-acceleration-about-panel{,.test}.ts` menambah kredit asal Orca.
-- `plan/PROGRESS.md` (baris 09 `[~]`)
+- `plan/PROGRESS.md` (baris 09 `[x]`)
 
 ## Placeholder aktif
 
@@ -130,6 +130,10 @@ PASS. Token hanya dibaca di `secure-store.ts` dan dipakai di header Bearer (`api
 
 ## Deviasi
 
+- Snapshot fase 09 mengikuti PROMPT langkah 11; commit fase 11a dipisahkan dari snapshot fase 09.
+- DoD "UI-01..04 dengan server asli setelah Sinkron 1": server fase 03 belum di `main` (PR #5 konflik), jadi uji melawan server asli pindah ke fase 10, sama seperti lane Bob.
+- Uji live memakai kode contoh mock yang tercantum di source publik, dibaca di memori saja tanpa menyimpannya di artefak.
+
 - Model Opus 5.5 (lihat atas). Otomasi Bob memakai CDP langsung ke iframe webview karena browser automation biasa tidak masuk frame.
 - Batas koneksi, role, token UI, dan drawer dicatat di D-aarief-01.
 - Review C2: registrasi exhaustive `Record<TuiAgent,...>` lengkap tanpa cast baru, `detectCmd`/`launchCmd`/`expectedProcess` = `bob`, glyph B generik. `stdin-after-start` menghindari argumen prompt CLI tetapi tetap mengirim followup lewat PTY bila ada; Bob Shell kini terverifikasi melalui UI. Tidak ada channel IPC atau `nodeIntegration` baru.
@@ -138,7 +142,7 @@ PASS. Token hanya dibaca di `secure-store.ts` dan dipakai di header Bearer (`api
 ## LANGKAH MANUAL
 
 1. DA-02 sudah lulus dari pemilih agent UI; tidak ada langkah akun Bob tersisa.
-2. Gerbang koneksi UI live: mock server fase 02 sudah masuk `main` dan berjalan. Snapshot demo tampil lewat CDP tanpa token, tetapi uji WebSocket live dan klik Approve/Deny memerlukan token mock yang harus dimasukkan sendiri oleh pengguna di Settings. Agent tidak boleh mengetik/login dengan token sesuai instruksi pengguna. Setelah pengguna menghubungkan workspace, cek event blocked dalam 10 detik dan keputusan mencapai endpoint mock, lalu selesaikan checklist Settings, review keamanan/visual, snapshot dan PR app.
+2. Gerbang koneksi UI live selesai 26 Sep 11:19 (checklist 14a). Pengguna tidak perlu mengisi kode demo lagi untuk verifikasi fase 09.
 3. Jika ingin GitHub menampilkan akun/avatar IBM Bob sebagai co-author, konfirmasi alamat email GitHub IBM Bob untuk mengganti default `bob@ibm.com` (plan/TODO.md B6) sebelum snapshot 09a didorong. Trailer co-author sudah ada di commit C2; identitas pendorong branch tidak menentukan co-author commit.
 
 ## Catatan handoff lintas lane
