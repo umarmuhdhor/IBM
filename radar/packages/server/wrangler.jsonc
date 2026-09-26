@@ -19,7 +19,7 @@
     "PUBLIC_EXPORT": "false",
     "BOB_COAUTHOR": "IBM Bob <bob@ibm.com>",
     "AUTO_APPLY_QUEUE": "true",
-    "GITHUB_REPO": "",
+    "GITHUB_REPO": "aliefauzan/toko-demo",
     "GITHUB_COMMIT": "false",
     "LOG_LEVEL": "info",
   },
