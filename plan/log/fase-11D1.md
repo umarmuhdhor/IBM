@@ -140,6 +140,18 @@ Pemicu user: "kurang clean … pas awal masuk udah penuh banget tulisannya … b
 
 Verifikasi: typecheck bersih · test 48/48 · eslint web bersih · build bersih · Playwright 18/18 (1440 + 390) · `scrollWidth` 1440/390 · 0 error console. Screenshot: `plan/log/ui-11D1/landing-{1440,390}.png`.
 
+## Sesi 26 Sep 18:40 · nav full-width + animasi scroll, tombol putih
+
+Permintaan user: nav full-width seperti Amoeba, animasi saat scroll, tombol "Watch the live replay" putih, opasitas ikon lebih tipis.
+
+- `src/landing-nav.tsx` (baru, client): di atas halaman nav = bar full-width transparan di atas stage; setelah `scrollY > 24` berubah jadi pill mengambang (top/lebar/tinggi/latar transisi 420 ms, ease-out). Listener `scroll` pasif.
+- Section di bawah fold (`.lp-reveal`) muncul naik 24px lewat CSS `animation-timeline: view()` — tanpa JS; browser tanpa dukungan langsung menampilkan konten.
+- `.lp-btn-primary` jadi putih (`--lc-text` di atas, teks `--lc-bg`) — berlaku juga untuk "Watch full replay" di window, supaya satu gaya tombol utama. Menyimpang dari DESIGN §5.11 (IBM Blue), lihat D-imelda-11.
+- Siluet halftone opasitas 0.34 → 0.18.
+- Semua motion mati di `prefers-reduced-motion`.
+
+Verifikasi: typecheck · test 48/48 · eslint web · build · Playwright 18/18 · `scrollWidth` 1440/390 · 0 error console · state `data-scrolled` dicek setelah scroll.
+
 ## Deviasi (lihat `plan/log/DECISIONS.md`)
 
 - **D-imelda-01**: fixture diambil dari `radar/scripts/mock-scenarios/demo.json` (skenario Alief, hanya dibaca) via capture `GET /v1/events/export`, di-*re-timestamp* dari `delayMs` kumulatifnya sendiri, ditambah satu `commit.created` sintetis di akhir untuk chapter "Commit". **TODO(sync:alief)**: ganti dengan `GET /v1/events/export` server asli setelah fase 05/06, dan dengan rekaman nyata setelah milestone fase 10 (di 11D2).

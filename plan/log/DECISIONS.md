@@ -330,6 +330,6 @@ Format:
 
 - Keputusan: layar pertama landing = satu pesan saja: nav pill mengambang (logo app + 3 link + Download), judul besar tanpa pill marigold, satu baris sub, **satu** tombol IBM Blue "Watch the live replay", caption dengan link "Download for macOS (arm64, unsigned)". Latar = siluet halftone logo app (`app/resources/icon.png` → `public/brand/bob-crew-halftone.svg` lewat `scripts/halftone-logo.py`). Semua konten lain (window produk, angka, mekanisme, near-miss, primitif, pasang) turun di bawah fold.
 - Alasan: permintaan user — layar pertama terlalu penuh tulisan. Struktur Amoeba (bukan mereknya).
-- Menyimpang dari DESIGN §5.11: pill marigold di hero dan tombol ghost kedua dihapus; teks "Privacy & Security → Open Anyway" pindah penuh ke bagian pasang (caption hero tetap sebut arm64 + unsigned).
+- Menyimpang dari DESIGN §5.11: pill marigold di hero dan tombol ghost kedua dihapus; tombol utama putih (bukan IBM Blue) atas permintaan user; nav full-width yang berubah jadi pill saat scroll; teks "Privacy & Security → Open Anyway" pindah penuh ke bagian pasang (caption hero tetap sebut arm64 + unsigned).
 - File ref/ yang diperbarui: –
 

@@ -1,4 +1,5 @@
 import { Inter, Source_Serif_4 } from 'next/font/google';
+import { LandingNav } from '../src/landing-nav';
 import { LandingProductWindow } from '../src/landing-product-window';
 import { SITE } from '../src/site';
 import metaRaw from '../public/demo/meta.json';
@@ -100,27 +101,13 @@ export default function HomePage() {
         Skip to content
       </a>
 
-      <header className="lp-nav">
-        <a href="/" className="lp-wordmark">
-          {/* Plain <img>: static export has no image optimizer. */}
-          <img src="/brand/bob-crew.png" alt="" width={28} height={28} />
-          {SITE.title}
-        </a>
-        <nav aria-label="Primary" className="lp-nav-links">
-          <a href={SITE.demoPath} className="lp-nav-link lp-hide-sm">
-            Replay
-          </a>
-          <ExternalLink href={links.bobSessions} className="lp-nav-link lp-hide-sm">
-            bob_sessions
-          </ExternalLink>
-          <ExternalLink href={links.repoUrl} className="lp-nav-link lp-hide-sm">
-            GitHub
-          </ExternalLink>
-          <ExternalLink href={downloadUrl} className="lp-btn lp-btn-outline lp-btn-sm">
-            Download
-          </ExternalLink>
-        </nav>
-      </header>
+      <LandingNav
+        title={SITE.title}
+        demoPath={SITE.demoPath}
+        bobSessionsUrl={links.bobSessions}
+        repoUrl={links.repoUrl}
+        downloadUrl={downloadUrl}
+      />
 
       <main id="main">
         {/* Hero: one screen, one message, one button (Amoeba-like structure, our own brand). */}
@@ -147,7 +134,7 @@ export default function HomePage() {
         </section>
 
         {/* 18a-1..3: product window */}
-        <section className="lp-wrap lp-product" aria-labelledby="lp-see">
+        <section className="lp-wrap lp-product lp-reveal" aria-labelledby="lp-see">
           <h2 id="lp-see" className="lp-h2 lp-h2-center">
             Three people, three Bobs, one repo
           </h2>
@@ -168,7 +155,7 @@ export default function HomePage() {
         </section>
 
         {/* 18a-4: four mechanisms */}
-        <section className="lp-wrap lp-section" aria-labelledby="lp-how">
+        <section className="lp-wrap lp-section lp-reveal" aria-labelledby="lp-how">
           <h2 id="lp-how" className="lp-h2">
             How three Bobs share one repo
           </h2>
@@ -187,7 +174,7 @@ export default function HomePage() {
         </section>
 
         {/* 18a-4: three words */}
-        <section className="lp-wrap lp-words" aria-label="Principles">
+        <section className="lp-wrap lp-words lp-reveal" aria-label="Principles">
           {WORDS.map((w) => (
             <div key={w.word} className="lp-word">
               <h3>{w.word}</h3>
@@ -197,7 +184,7 @@ export default function HomePage() {
         </section>
 
         {/* Near-miss accent block. TODO(sync:imelda): add the near-miss GIF after the fase 10 recording. */}
-        <section className="lp-wrap lp-section" aria-labelledby="lp-nearmiss">
+        <section className="lp-wrap lp-section lp-reveal" aria-labelledby="lp-nearmiss">
           <div className="lp-marigold">
             <div className="lp-marigold-copy">
               <h2 id="lp-nearmiss">Catch the near-miss before it merges.</h2>
@@ -221,7 +208,7 @@ export default function HomePage() {
         </section>
 
         {/* Primitives (navy island) */}
-        <section className="lp-wrap lp-section" aria-labelledby="lp-primitives">
+        <section className="lp-wrap lp-section lp-reveal" aria-labelledby="lp-primitives">
           <div className="lp-navy">
             <h2 id="lp-primitives" className="lp-h2">
               Built on IBM Bob primitives
@@ -241,7 +228,7 @@ export default function HomePage() {
         </section>
 
         {/* Install */}
-        <section className="lp-wrap lp-section" aria-labelledby="lp-install">
+        <section className="lp-wrap lp-section lp-reveal" aria-labelledby="lp-install">
           <div className="lp-install">
             <h2 id="lp-install" className="lp-h2">
               Install in three steps
