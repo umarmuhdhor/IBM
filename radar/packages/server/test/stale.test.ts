@@ -1,6 +1,6 @@
 // SV-09 heartbeat expiry (R4 §7, fase 12 step 2): one `member.stale` per episode for a coder holding a lock,
 // a heartbeat ends the episode, members without locks are never reported, and no alarm stays without holders.
-import { runInDurableObject } from 'cloudflare:test';
+import { runDurableObjectAlarm, runInDurableObject } from 'cloudflare:test';
 import { HEARTBEAT_EXPIRE_MS } from '@radar/common';
 import { describe, expect, it } from 'vitest';
 import { insertLock } from '../src/db/repo/lock';
@@ -112,6 +112,36 @@ describe('heartbeat expiry (SV-09, R4 §7)', () => {
     const alarm = await runInDurableObject(stub, (instance: WorkspaceDO) => instance.scheduler.nextDeadline());
     expect(alarm).not.toBeNull();
     expect(alarm!).toBeGreaterThanOrEqual(before - 1000 + HEARTBEAT_EXPIRE_MS);
+  });
+
+  it('the runtime alarm keeps the next holder expiry scheduled after it fires', async () => {
+    const { stub } = freshWorkspace();
+    const t = await seedTestWorkspace(stub);
+    await hello(stub, t.A!, 'sync');
+    await hello(stub, t.B!, 'sync');
+    await runInDurableObject(stub, async (instance: WorkspaceDO, state) => {
+      instance.db.tx(() => {
+        const ta = insertTask(instance.db, { title: 'Header', ownerId: 'A', status: 'dikerjakan', now: instance.now() });
+        insertLock(instance.db, { path: 'src/app.ts', taskId: ta.id, memberId: 'A', state: 'dipegang', now: instance.now() });
+        const tb = insertTask(instance.db, { title: 'Tema', ownerId: 'B', status: 'dikerjakan', now: instance.now() });
+        insertLock(instance.db, { path: 'src/theme.ts', taskId: tb.id, memberId: 'B', state: 'dipegang', now: instance.now() });
+      });
+      // A is past the expiry; B still has 60 s left.
+      for (const ws of state.getWebSockets()) {
+        const att = ws.deserializeAttachment() as { state: string; lastHeartbeat?: number; principal?: { memberId?: string } };
+        if (att.state !== 'ready') continue;
+        const ago = att.principal?.memberId === 'A' ? HEARTBEAT_EXPIRE_MS + 1000 : HEARTBEAT_EXPIRE_MS - 60_000;
+        ws.serializeAttachment({ ...att, lastHeartbeat: Date.now() - ago });
+      }
+      await state.storage.setAlarm(Date.now());
+    });
+    // The alarm is due now: let the runtime fire it (runDurableObjectAlarm would find it already run).
+    await sleep(300);
+    await runDurableObjectAlarm(stub);
+    expect(await presence(stub, 'A')).toContain('member.stale');
+    const alarm = await runInDurableObject(stub, (_i, state) => state.storage.getAlarm());
+    expect(alarm).not.toBeNull();
+    expect(alarm!).toBeGreaterThan(Date.now() + 30_000);
   });
 
   it('HEARTBEAT_EXPIRE_MS overrides the default; junk and values under 1 s are ignored', () => {
