@@ -3,6 +3,7 @@
 - **Status:** [~] implementasi lokal selesai; gerbang uji 2 laptop belum dijalankan. Belum ada snapshot atau PR fase 11a.
 - **Branch:** `lane/app`, di atas `origin/main` setelah fase 09a/b/c digabung.
 - **Mulai:** Sab 26 Sep 2026, sebelum 12:00 WITA.
+- **Sinkron 20:25 WITA:** `lane/app` direbase bersih ke `origin/main` `b9fc1c02` setelah Core 03–06/10, Bob 10, dan Web 11D1 bergabung. Tidak ada `TODO(sync:...)` di `app/src` atau `radar/packages/ui`.
 
 ## Langkah kerja
 
@@ -16,10 +17,19 @@
 
 - `pnpm -C app tc`: lulus.
 - Tujuh suite terfokus Watch Bob, Team, Settings, IPC, dan privasi: **35/35** test lulus.
+- Hasil tetap sama setelah sinkron ke `main` terbaru: typecheck lulus, 35/35 test lulus, `git diff --check` bersih.
 - `bash -n radar/scripts/bob-evidence.sh` dan `pnpm -C radar exec tsc -p scripts/tsconfig.json`: lulus.
-- `pnpm -C radar exec tsx scripts/evidence-check.ts`: script berjalan dan menemukan 2 kekurangan bukti anggota lain (Alief 1/3, Imelda 0/3). Ini data yang belum lengkap, bukan crash.
+- `pnpm -C radar exec tsx scripts/evidence-check.ts`: script berjalan; setelah sinkron hanya Imelda yang masih 2/3 PNG. Ini data lane Web yang belum lengkap, bukan crash.
 - Bukti Bob C4: `bob_sessions/uaai_aarief_task04_evidence_scripts_summary.png`, **2.06 Bobcoin**. Screenshot menampilkan status semua tugas selesai; tidak menampilkan secret.
 - Belum ada angka latensi 2 laptop atau uji event blokir lintas laptop; DoD JT-01/02/03 masih terbuka.
+
+## Gerbang UI dan keamanan (20:30 WITA)
+
+| Bukti | Hasil |
+|---|---|
+| Renderer app via CDP 9339, state mock sintetis | Team menampilkan 3 anggota online dan tombol Watch; Watch Andi membuka 11 baris aktivitas Bob (prompt, write, turn end, submit). Screenshot aman: `app/docs/img/app-watch-bob.png`. |
+| Pemeriksaan tampilan | Hierarki, label, status, border anggota, dan baris aktivitas terbaca; tidak ada temuan HIGH. |
+| Pemeriksaan privasi | Toggle default mati; file `.radar/local.json` ditulis atomik dengan mode 0600 oleh main process. Renderer tidak menerima token. Prompt hanya ditampilkan bila event server memuat teks; uji 2 Mac masih diperlukan untuk membuktikan hook menghormati toggle. |
 
 ## Batas folder dan handoff
 
