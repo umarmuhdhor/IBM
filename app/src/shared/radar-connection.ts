@@ -2,7 +2,7 @@ export type RadarConnection = {
   server: string
   workspace: string
   member: string
-  role: 'coder' | 'mc'
+  role: 'coder' | 'pm' | 'mc'
   token: string
 }
 
@@ -37,7 +37,7 @@ export function isRadarConnection(value: unknown): value is RadarConnection {
     value.workspace.trim().length > 0 &&
     typeof value.member === 'string' &&
     value.member.trim().length > 0 &&
-    (value.role === 'coder' || value.role === 'mc') &&
+    (value.role === 'coder' || value.role === 'pm' || value.role === 'mc') &&
     typeof value.token === 'string' &&
     value.token.length > 0
   )

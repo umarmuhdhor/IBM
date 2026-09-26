@@ -13,6 +13,7 @@ vi.mock('@/store', () => ({
 vi.mock('@/components/sidebar/WorktreeOpenInMenu', () => ({ openWorktreePath: vi.fn() }))
 
 const { RadarPanel } = await import('./RadarPanel')
+const { RadarStatusItem } = await import('./RadarStatusItem')
 
 const state = {
   workspace: { id: 'w', name: 'Demo', headCommit: null, repoUrl: null },
@@ -57,5 +58,17 @@ describe('RadarPanel watch tab', () => {
     expect(screen.getByText('Pick a teammate in Team to watch their Bob.')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Open Team' }))
     expect(screen.getByRole('region', { name: 'Team' })).toBeTruthy()
+  })
+})
+
+describe('Live Collab connection labels', () => {
+  it('does not present cached members as online after disconnect', () => {
+    useRadarStore.setState({ state, connected: false })
+    render(<><RadarStatusItem /><Harness initial="team" /></>)
+
+    expect(screen.getByLabelText('Live Collab status').textContent).toContain('offline')
+    expect(screen.queryByText('1 online')).toBeNull()
+    expect(screen.queryByRole('button', { name: "Watch Budi's Bob" })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Open settings' })).toBeTruthy()
   })
 })

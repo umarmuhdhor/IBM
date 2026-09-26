@@ -6,6 +6,21 @@
 
 ## HANDOFF (baca ini dulu kalau melanjutkan di sesi/agent lain, mis. Codex)
 
+### Handoff ke Codex — 26 Sep 2026 ~11:40 WITA (Claude limit habis)
+
+State: `lane/app` lokal tip = commit "docs(fase-09): handoff to Codex", **belum di-push, belum ada PR**. Abaikan `.claude/worktrees/` (worktree agent, JANGAN di-commit). Mock server mungkin masih jalan di :8787; app Dev mati. Koneksi Live Collab (role mc, mock) tersimpan terenkripsi di userData app Dev.
+
+Urutan kerja berikutnya:
+1. **Rapikan urutan commit (lokal, aman karena belum di-push):** commit "fase-09: close phase" `4282fc92` + commit handoff ini harus berada sebelum 4 commit 11a (`24ef21e1 ff41c4f1 28173506 b5745ab8`). Cara: buat branch sementara di `7612dca1`, cherry-pick `4282fc92`, commit handoff, lalu 4 commit 11a; pindahkan `lane/app` ke branch itu (`git branch -f`) dan hapus branch sementara. Cek `git log --oneline -8`.
+2. **Snapshot + PR fase 09 (PROMPT langkah 11):** `git branch -f snap/app-f09 <hash handoff baru>`; `git push origin lane/app`; `git push origin snap/app-f09:refs/heads/lane/app-f09`; `gh pr create --base main --head lane/app-f09 --title "fase-09: desktop app (Orca) + @radar/ui"` (isi = ringkasan log ini). Squash-merge sendiri setelah CI hijau.
+3. **Gabung hasil agent .dmg (fase 11b):** branch `worktree-agent-af4c3bfa40d8de18b` commit `35e096c3` (hanya `dmg.artifactName` → `${productName}-${version}-${arch}.${ext}` di `app/config/electron-builder.config.cjs`). `git cherry-pick 35e096c3`. Build lokal terbukti: `pnpm -C app build:desktop && pnpm -C app build:notification-status-macos && pnpm -C app build:keyboard-layout-macos && pnpm -C app run ensure:electron-runtime && env CSC_NAME=- CSC_IDENTITY_AUTO_DISCOVERY=false pnpm -C app exec electron-builder --config config/electron-builder.config.cjs --mac dmg --arm64` → `app/dist/IBM Bob Live Collab-1.4.197-arm64.dmg` (220 MB, unsigned; bundle id `dev.livecollab.app`, ikon Bob OK, launch headless OK). Teman pasang: Privacy & Security → Open Anyway, atau `xattr -dr com.apple.quarantine "/Applications/IBM Bob Live Collab.app"`. Release GitHub + `radar-cli.tgz` BELUM. Tulis `plan/log/fase-11b.md`.
+4. **Fase 11a sisa:** tulis `plan/log/fase-11a.md` (bagian A selesai: WatchBobView/Watch/Share my prompts, 63 test, cek live vs mock). BELUM DIVERIFIKASI: nama tool read (tebakan), blok tampil dua kali (hook + server), toggle membuat `.radar/local.json` baru jika config hanya di folder induk. Sisa: C4 Bob slice (butuh Bob IDE, CDP 9223), uji 2 laptop.
+5. Screenshot `radar/docs/img/app-home.png`/`app-coder.png` di toko-demo (terminal workspace uji memuat info pribadi mesin — jangan commit).
+6. Sebelum PR: `pnpm -C app tc`, test radar app, `pnpm -C radar --filter @radar/ui test`, oxlint manual (`cd app && git diff --name-only --relative origin/main -- 'src/**/*.ts' 'src/**/*.tsx' | xargs pnpm exec oxlint`); `check:code-quality:changed` rusak di monorepo ini (lulus kosong).
+7. CLAUDE.md baru saja berubah: arah gaya sekarang **app + replay + landing = dark Carbon** (DESIGN.md §0/§5.11). Cek ulang tema sebelum screenshot final.
+
+Aturan: jangan force-push main, jangan sentuh lane lain, jangan tulis kode demo mock ke chat/log/file/commit. CDP: Playwright `chromium.connectOverCDP('http://127.0.0.1:9339')` dari `app/` (createRequire); app `ORCA_BACKGROUND_LAUNCH=1 pnpm -C app dev`.
+
 Aturan yang tetap berlaku: `CLAUDE.md`, `plan/PROMPT.md` (LANE Aarief, FASE auto), `plan/fase-09-app-desktop.md`, kontrak `plan/ref/R1–R7`, D-007 + D-alief-01 di `plan/log/DECISIONS.md`. Hanya boleh mengubah `app/**`, `radar/packages/ui`, plus output yang disebut fase 09 (`radar/docs/ORCA_MAP.*`, `bob_sessions/*aarief*`). Toolchain: `export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"; nvm use 24`. Commit kecil per langkah. Jangan force-push main; jangan sentuh folder lane lain.
 
 **Langkah berikutnya (urut):**
