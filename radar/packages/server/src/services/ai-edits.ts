@@ -10,6 +10,8 @@ export const AI_MARK_WINDOW_MS = 10_000;
 
 /** Marks the member's newest version of each path from the last 10 s, else remembers the path. Emits `ai.edit`. */
 export function markAiEdits(db: Db, uow: UnitOfWork, now: number, memberId: string, paths: readonly string[], tool: string): void {
+  // Marks whose save never came (edit cancelled, path not synced) can never apply: drop them so the table stays small.
+  db.run('DELETE FROM ai_mark WHERE ts < ?', now - AI_MARK_WINDOW_MS);
   for (const path of paths) {
     const v = db.one<{ version: number }>(
       'SELECT version FROM file_version WHERE path = ? AND by = ? AND ts >= ? ORDER BY version DESC LIMIT 1',

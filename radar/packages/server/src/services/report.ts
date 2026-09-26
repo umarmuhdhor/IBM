@@ -8,6 +8,8 @@ import { rowsToEvents } from './events';
 
 /** Events read per report; a demo session is a few hundred. */
 export const REPORT_MAX_EVENTS = 10_000;
+/** Samples read per metric: a demo session writes a few thousand lock checks; percentiles over the newest are enough. */
+export const REPORT_MAX_METRIC_SAMPLES = 20_000;
 
 export function percentile(values: readonly number[], p: number): number | null {
   if (values.length === 0) return null;
@@ -16,7 +18,9 @@ export function percentile(values: readonly number[], p: number): number | null 
 }
 
 function metricValues(db: Db, name: string, from: number, to: number): number[] {
-  return db.all<{ value: number }>('SELECT value FROM metric WHERE name = ? AND ts >= ? AND ts <= ?', name, from, to).map((r) => r.value);
+  return db
+    .all<{ value: number }>('SELECT value FROM metric WHERE name = ? AND ts >= ? AND ts <= ? ORDER BY ts DESC LIMIT ?', name, from, to, REPORT_MAX_METRIC_SAMPLES)
+    .map((r) => r.value);
 }
 
 function ofType<T extends RadarEvent['type']>(events: readonly RadarEvent[], type: T): RadarEventOf<T>[] {

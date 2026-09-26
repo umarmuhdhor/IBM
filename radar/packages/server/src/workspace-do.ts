@@ -30,6 +30,8 @@ export class WorkspaceDO extends DurableObject<Env> implements WorkspaceDeps {
   // Set in the constructor from env (fase 06 owns the default; tests swap in fakes).
   committer!: GitHubCommitter;
   private readonly app: Hono;
+  /** Set by every write transaction: a WebSocket frame that changed state reschedules the alarm afterwards. */
+  private wroteSinceSchedule = false;
   // Re-declared public so the DO itself can serve as WorkspaceDeps.
   declare readonly ctx: DurableObjectState<Record<string, never>>;
   declare readonly env: Env;
@@ -67,6 +69,7 @@ export class WorkspaceDO extends DurableObject<Env> implements WorkspaceDeps {
   transact<T>(fn: (uow: UnitOfWork) => T): T {
     const uow = new UnitOfWork();
     const result = this.db.tx(() => fn(uow));
+    this.wroteSinceSchedule = true;
     this.hub.flush(uow);
     return result;
   }
@@ -82,21 +85,33 @@ export class WorkspaceDO extends DurableObject<Env> implements WorkspaceDeps {
 
   override async fetch(request: Request): Promise<Response> {
     const res = await this.app.fetch(request);
-    // A request may create the first lock (plan decision) or a stale episode may end: keep the alarm in step.
-    await this.scheduler.reschedule();
+    // A write may create the first lock (plan decision): keep the alarm in step. Reads change no deadline, and
+    // the WebSocket upgrade (a GET) reschedules for its hello timeout itself.
+    if (request.method !== 'GET') await this.scheduler.reschedule();
     return res;
   }
 
-  override webSocketMessage(ws: WebSocket, message: string | ArrayBuffer): void {
+  // A sync frame can grab the first lock (auto-grab in checkWrite) or end a stale episode; a close drops a hello
+  // deadline. Reschedule after any of them wrote, so SV-09 does not depend on a later HTTP request.
+  private async rescheduleIfWrote(): Promise<void> {
+    if (!this.wroteSinceSchedule) return;
+    this.wroteSinceSchedule = false;
+    await this.scheduler.reschedule();
+  }
+
+  override async webSocketMessage(ws: WebSocket, message: string | ArrayBuffer): Promise<void> {
     handleMessage(this, ws, message);
+    await this.rescheduleIfWrote();
   }
 
-  override webSocketClose(ws: WebSocket): void {
+  override async webSocketClose(ws: WebSocket): Promise<void> {
     handleClose(this, ws);
+    await this.rescheduleIfWrote();
   }
 
-  override webSocketError(ws: WebSocket): void {
+  override async webSocketError(ws: WebSocket): Promise<void> {
     handleClose(this, ws);
+    await this.rescheduleIfWrote();
   }
 
   override async alarm(): Promise<void> {

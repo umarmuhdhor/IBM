@@ -251,9 +251,18 @@ export async function main(argv: string[], env: NodeJS.ProcessEnv = process.env,
       return 2;
     }
     const r = await adminCall(c, 'POST', '/admin/token', { member, rotate: true }, AdminTokenRes);
-    const state = await memberCall(c, r.token, '/v1/state', StateRes);
+    let workspace: string;
+    try {
+      workspace = (await memberCall(c, r.token, '/v1/state', StateRes)).workspace.name;
+    } catch (e) {
+      // The old token is already revoked: never lose the new one because the second call failed.
+      out(`Token rotated, but reading the workspace name failed (${e instanceof Error ? e.message : String(e)}).`);
+      out('New token (shown once; use radar join <server> --workspace <name> --as <ID> with RADAR_TOKEN):');
+      out(formatTokenTable({ [r.member]: r.token }));
+      return 1;
+    }
     out(`Invite for ${r.member} (shown once; the old token no longer works; share it privately, never in the repo or a public chat):`);
-    out(encodeInvite({ server: c.server, workspace: state.workspace.name, member: r.member, token: r.token }));
+    out(encodeInvite({ server: c.server, workspace, member: r.member, token: r.token }));
     return 0;
   }
   if (command === 'export') {

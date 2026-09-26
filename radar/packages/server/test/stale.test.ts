@@ -7,7 +7,7 @@ import { insertLock } from '../src/db/repo/lock';
 import { insertTask } from '../src/db/repo/task';
 import { heartbeatExpireMs } from '../src/services/stale';
 import type { WorkspaceDO } from '../src/workspace-do';
-import { freshWorkspace, hello, seedTestWorkspace, sleep } from './helpers';
+import { freshWorkspace, hello, seedTestWorkspace, sha256Hex, sleep } from './helpers';
 
 type Stub = DurableObjectStub;
 
@@ -142,6 +142,24 @@ describe('heartbeat expiry (SV-09, R4 §7)', () => {
     const alarm = await runInDurableObject(stub, (_i, state) => state.storage.getAlarm());
     expect(alarm).not.toBeNull();
     expect(alarm!).toBeGreaterThan(Date.now() + 30_000);
+  });
+
+  it('a lock grabbed over the sync socket alone (no HTTP request after it) arms the stale alarm', async () => {
+    const { stub } = freshWorkspace();
+    const t = await seedTestWorkspace(stub);
+    const a = await hello(stub, t.A!, 'sync');
+    // Fire the hello-timeout alarm: nobody holds a lock yet, so no alarm is left.
+    await runInDurableObject(stub, (_i, state) => state.storage.setAlarm(Date.now()));
+    await sleep(300);
+    await runDurableObjectAlarm(stub);
+    expect(await runInDurableObject(stub, (_i, state) => state.storage.getAlarm())).toBeNull();
+    const content = 'export const a = 2;\n';
+    a.send({ t: 'file.update', id: 'u1', d: { path: 'src/app.ts', baseVersion: 1, content, hash: await sha256Hex(content), clientTs: 0 } });
+    await a.next((m) => m.t === 'file.ack');
+    await sleep(50);
+    const alarm = await runInDurableObject(stub, (_i, state) => state.storage.getAlarm());
+    expect(alarm).not.toBeNull();
+    expect(alarm!).toBeGreaterThan(Date.now() + HEARTBEAT_EXPIRE_MS - 10_000);
   });
 
   it('HEARTBEAT_EXPIRE_MS overrides the default; junk and values under 1 s are ignored', () => {

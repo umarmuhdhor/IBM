@@ -12,6 +12,23 @@ describe('body size caps', () => {
     expect(r.json.error.code).toBe('PAYLOAD_TOO_LARGE');
   });
 
+  it('a chunked REST body without content-length is cut off at the cap, and a body under it still works', async () => {
+    const { stub } = freshWorkspace();
+    const t = await seedTestWorkspace(stub);
+    const big = new TextEncoder().encode(JSON.stringify({ paths: ['a'], tool: 'x'.repeat(300 * 1024) }));
+    const body = new ReadableStream<Uint8Array>({
+      start(ctrl) {
+        for (let i = 0; i < big.length; i += 16 * 1024) ctrl.enqueue(big.slice(i, i + 16 * 1024));
+        ctrl.close();
+      },
+    });
+    const res = await stub.fetch('http://radar.test/v1/ai-edits', { method: 'POST', headers: { authorization: `Bearer ${t.A}`, 'content-type': 'application/json' }, body });
+    expect(res.status).toBe(413);
+    await res.text();
+    const ok = await call(stub, 'POST', '/v1/ai-edits', { token: t.A, body: { paths: ['src/app.ts'], tool: 'write_file' } });
+    expect(ok.status).toBe(204);
+  });
+
   it('a WS frame over 1.5 MB gets a PAYLOAD_TOO_LARGE error and the socket stays usable', async () => {
     const { stub } = freshWorkspace();
     const t = await seedTestWorkspace(stub);

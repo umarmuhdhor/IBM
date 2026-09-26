@@ -54,10 +54,28 @@ export async function readJson(req: Request, maxBytes = REST_MAX_BODY_BYTES): Pr
   const tooLarge = () => new RadarError(413, 'PAYLOAD_TOO_LARGE', `Body lebih dari ${Math.round(maxBytes / 1024)} KB.`);
   const declared = Number(req.headers.get('content-length'));
   if (Number.isFinite(declared) && declared > maxBytes) throw tooLarge();
-  const text = await req.text();
-  // Header can be absent or wrong (chunked): check the real size too. UTF-16 length ≤ UTF-8 bytes, so this is cheap first.
-  if (text.length > maxBytes || new TextEncoder().encode(text).byteLength > maxBytes) throw tooLarge();
-  return parseJsonText(text);
+  if (!req.body) return parseJsonText('');
+  // The header can be absent or wrong (chunked): count the real bytes and stop reading once over the cap.
+  const reader = req.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > maxBytes) {
+      await reader.cancel().catch(() => undefined);
+      throw tooLarge();
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(size);
+  let at = 0;
+  for (const c of chunks) {
+    bytes.set(c, at);
+    at += c.byteLength;
+  }
+  return parseJsonText(new TextDecoder().decode(bytes));
 }
 
 export function parseWith<S extends z.ZodType>(schema: S, value: unknown): z.infer<S> {

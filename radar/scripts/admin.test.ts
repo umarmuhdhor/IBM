@@ -160,6 +160,15 @@ describe('main', () => {
     expect(decodeInvite(out.at(-1)!)).toEqual({ v: 1, server: 'https://x.example', workspace: 'toko-demo', member: 'B', token: 'rdr_new_b' });
     expect(await main(['invite', '--server', 'https://x.example', '--member', 'mc'], { ADMIN_SECRET: SECRET }, () => undefined)).toBe(2);
   });
+  it('invite still prints the rotated token when the workspace read fails', async () => {
+    vi.stubGlobal('fetch', async (input: string | URL | Request) =>
+      String(input).endsWith('/admin/token') ? Response.json({ member: 'B', token: 'rdr_new_b' }) : new Response('boom', { status: 503 }),
+    );
+    cleanups.push(() => void vi.unstubAllGlobals());
+    const out: string[] = [];
+    expect(await main(['invite', '--server', 'https://x.example', '--member', 'B'], { ADMIN_SECRET: SECRET }, (l) => out.push(l))).toBe(1);
+    expect(out.join('\n')).toMatch(/^B\s+rdr_new_b$/m);
+  });
   it('formats the token table', () => {
     expect(formatTokenTable({ A: 't1', mc: 't2' })).toBe('member  token\nA       t1\nmc      t2');
   });
