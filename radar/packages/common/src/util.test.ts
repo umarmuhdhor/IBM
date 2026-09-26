@@ -52,10 +52,11 @@ describe('ignore rules (R5 §6)', () => {
   const m = createIgnoreMatcherFromText('secret-notes/\n*.log\n');
 
   it('applies the defaults', () => {
-    for (const p of ['node_modules/x/index.js', '.git/HEAD', '.radar/local.json', 'dist/a.js', 'src/.DS_Store', 'a.ts.radar-rejected', 'a.ts~', 'src/.#a.ts']) {
+    for (const p of ['node_modules/x/index.js', '.git/HEAD', '.radar/local.json', 'dist/a.js', 'src/.DS_Store', 'a.ts.radar-rejected', 'a.ts~', 'src/.#a.ts', 'src/.utils.ts.radar-tmp-1a2b', '.README.md.radar-tmp-x']) {
       expect(m.ignores(p), p).toBe(true);
     }
     expect(m.ignores('src/checkout/checkout.ts')).toBe(false);
+    expect(m.ignores('src/radar-tmp-notes.ts')).toBe(false);
   });
 
   it('applies the root .gitignore text', () => {
