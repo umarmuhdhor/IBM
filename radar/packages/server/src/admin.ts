@@ -41,7 +41,7 @@ const encoder = new TextEncoder();
 
 function requireInitialised(deps: WorkspaceDeps): void {
   if (getMeta(deps.db, 'workspace_id') === null)
-    throw new RadarError(409, 'CONFLICT', 'Workspace belum di-init. Jalankan admin init dulu.');
+    throw new RadarError(409, 'CONFLICT', 'This server has no workspace yet. Share a folder from the app, or run admin init.');
 }
 
 export function registerAdminRoutes(app: Hono, deps: WorkspaceDeps): void {
@@ -57,7 +57,7 @@ export function registerAdminRoutes(app: Hono, deps: WorkspaceDeps): void {
         throw new RadarError(
           409,
           'CONFLICT',
-          'Workspace sudah ada. Kirim force:true untuk menghapus dan membuat ulang.',
+          'A workspace already exists. Send force: true to delete it and start again.',
         );
       await deps.wipe();
     }
@@ -77,7 +77,7 @@ export function registerAdminRoutes(app: Hono, deps: WorkspaceDeps): void {
     requireInitialised(deps);
     const isMc = req.member === 'mc';
     if (!isMc && !getMember(deps.db, req.member))
-      throw new RadarError(404, 'NOT_FOUND', `Member ${req.member} tidak ada.`);
+      throw new RadarError(404, 'NOT_FOUND', `There is no member ${req.member}.`);
     const res: AdminTokenRes = {
       member: req.member,
       token: rotateToken(deps, isMc ? null : req.member),
@@ -112,7 +112,7 @@ export function createJoinCode(deps: WorkspaceDeps, req: AdminJoinCodeReq): Admi
   requireInitialised(deps);
   const member = req.member ?? null;
   if (member !== null && !getMember(deps.db, member))
-    throw new RadarError(404, 'NOT_FOUND', `Member ${member} tidak ada.`);
+    throw new RadarError(404, 'NOT_FOUND', `There is no member ${member}.`);
   const code = newJoinCode();
   const now = deps.now();
   const expiresAt = now + (req.ttlHours ?? JOIN_CODE_TTL_HOURS_DEFAULT) * 3_600_000;
@@ -198,7 +198,7 @@ export async function importFiles(deps: WorkspaceDeps, req: AdminFilesReq): Prom
     prepared.push({ path, content: f.content, hash: sha256Hex(bytes), size: bytes.byteLength });
   }
   if (total > ADMIN_FILES_MAX_BATCH_BYTES)
-    throw new RadarError(422, 'VALIDATION', 'Satu batch maksimal 4 MB.');
+    throw new RadarError(422, 'VALIDATION', 'One batch can be at most 4 MB.');
 
   const repoUrl = getMeta(deps.db, 'repo_url');
   // created_at identifies this init: a concurrent `init --force` during the await below changes it.
@@ -215,7 +215,7 @@ export async function importFiles(deps: WorkspaceDeps, req: AdminFilesReq): Prom
       throw new RadarError(
         409,
         'CONFLICT',
-        'Workspace di-init ulang saat memeriksa headCommit. Kirim ulang batch.',
+        'The workspace was set up again while headCommit was checked. Send the batch again.',
       );
   }
 

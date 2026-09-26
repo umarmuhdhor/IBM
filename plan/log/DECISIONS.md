@@ -485,3 +485,14 @@ Format:
   2. `radar join/start --json-status` juga mencetak baris `{"type":"conflict","path","sidecar"}` untuk setiap file lokal yang berbeda dengan server dan disimpan sebagai `<file>.radar-conflict`. `RadarSyncStatus.conflicts` (daftar path) dan kartu Multiplayer menampilkan jumlah serta nama file.
 - Alasan: e2e 27 Sep: folder sisa sesi lama mengunggah `stale-only.md` ke project pemilik, dan edit offline yang bentrok diganti tanpa pemberitahuan.
 - Alternatif yang ditolak: menghapus folder lama (edit yang belum terkirim hilang); agent menolak folder tidak kosong (teman harus membereskan sendiri).
+
+## D-alief-15 · 27 Sep 2026 · pasca fase 12 · Server memberi tahu kenapa token ditolak, pesan jalur Multiplayer dalam bahasa Inggris
+
+- Keputusan:
+  1. **Kontrak (milik Core):** `ErrorRes.error.reason?: 'signed-out' | 'workspace-closed'` (opsional, klien lama mengabaikannya). `WS_CLOSE_REASON_ROTATED = 'token rotated'` dan `WS_CLOSE_REASON_CLOSED = 'workspace closed'` menjadi alasan penutupan 4401.
+  2. Token yang dicabut (diputar oleh kode owner/kode member di Mac lain) memberi 401 `reason: 'signed-out'` dan socket ditutup 4401 `token rotated`. Token yang tidak dikenal lagi (owner menekan Stop sharing atau berganti folder) memberi 401 `reason: 'workspace-closed'` dan 4401 `workspace closed`.
+  3. Pesan server, skrip join, CLI `radar`, dan sync agent yang dilihat pengguna Multiplayer ditulis dalam bahasa Inggris. Pesan domain lain (task, lock, proposal) diterjemahkan belakangan.
+  4. Sync agent dengan `--json-status` mencetak `{"type":"stopped","reason":"workspace-closed"|"signed-out"|"replaced"|"rejected","message"}` saat berhenti; app memakai `reason` untuk keadaan yang ramah ("The owner stopped sharing. Your files stay in …") tanpa karakter bel dan tanpa membuka form token.
+- Alasan: e2e 27 Sep: setelah owner berhenti berbagi, teman melihat `\x07Sync berhenti: token ditolak server` dan form token terbuka otomatis, padahal tidak ada yang salah dengan token mereka.
+- Alternatif yang ditolak: app mencocokkan teks pesan (rapuh, dan teks berganti bahasa); kode close baru selain 4401 (klien lama akan terus mencoba menyambung ulang).
+- Dampak: Aarief (keadaan baru di kartu Join), Umar (hook/radar-mcp tidak berubah, hanya teks error).

@@ -69,7 +69,13 @@ export const ERROR_CODES = [
 export const ErrorCodeSchema = z.enum(ERROR_CODES);
 export type ErrorCode = z.infer<typeof ErrorCodeSchema>;
 
-export const ErrorRes = z.object({ error: z.object({ code: ErrorCodeSchema, message: z.string() }) });
+/** 401 errors say why the token failed (D-alief-15): `signed-out` = replaced by a newer sign-in, `workspace-closed` = unknown token. */
+export const ErrorReasonSchema = z.enum(['signed-out', 'workspace-closed']);
+export type ErrorReason = z.infer<typeof ErrorReasonSchema>;
+
+export const ErrorRes = z.object({
+  error: z.object({ code: ErrorCodeSchema, message: z.string(), reason: ErrorReasonSchema.optional() }),
+});
 export type ErrorRes = z.infer<typeof ErrorRes>;
 
 // ---- 2.1 healthz ---------------------------------------------------------------------------------------------

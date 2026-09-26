@@ -12,6 +12,11 @@ export function revokeTokens(db: Db, memberId: string | null, now: number): void
   else db.run("UPDATE token SET revoked_at = ? WHERE kind = 'member' AND member_id = ? AND revoked_at IS NULL", now, memberId);
 }
 
+/** Whether a token that gives no principal was revoked (a newer sign-in) or never existed here (D-alief-15). */
+export function tokenIsRevoked(db: Db, hash: string): boolean {
+  return db.one<{ n: number }>('SELECT COUNT(*) AS n FROM token WHERE hash = ? AND revoked_at IS NOT NULL', hash)!.n > 0;
+}
+
 /** Looks a token up by its sha256 hex (primary key). Revoked tokens and deleted members give null. */
 export function principalByHash(db: Db, hash: string): Principal | null {
   const row = db.one<{ kind: string; member_id: string | null; role: Role | null }>(

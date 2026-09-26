@@ -1,9 +1,16 @@
 // WebSocket protocol (R3 §3, fase 03 step 11). Every handler is synchronous after parsing, so one message is
 // fully applied before the DO takes the next.
-import { WS_CLOSE_UNAUTHORIZED, WsMessageSchema, type WsMessage, type WsMessageOf } from '@radar/common';
+import {
+  WS_CLOSE_REASON_CLOSED,
+  WS_CLOSE_REASON_ROTATED,
+  WS_CLOSE_UNAUTHORIZED,
+  WsMessageSchema,
+  type WsMessage,
+  type WsMessageOf,
+} from '@radar/common';
 import type { WorkspaceDeps } from '../deps';
 import { setOffline, setOnline } from '../db/repo/member';
-import { principalForToken } from '../http/auth';
+import { principalForToken, unauthorized } from '../http/auth';
 import { appendEvent } from '../services/events';
 import { applyDelete, applyUpdate } from '../services/files';
 import { buildSnapshot, buildState } from '../services/state';
@@ -37,7 +44,7 @@ export function handleMessage(deps: WorkspaceDeps, ws: WebSocket, raw: string | 
   const att = hub.attachment(ws);
   if (!att || att.state === 'replaced' || att.state === 'closed') return;
   if (frameBytes(raw) > WS_MAX_MESSAGE_BYTES) {
-    hub.send(ws, { t: 'error', d: { code: 'PAYLOAD_TOO_LARGE', message: 'Pesan WebSocket lebih dari 1,5 MB.' } });
+    hub.send(ws, { t: 'error', d: { code: 'PAYLOAD_TOO_LARGE', message: 'The WebSocket message is larger than 1.5 MB.' } });
     return;
   }
   const frame = parseFrame(raw);
@@ -54,12 +61,12 @@ export function handleMessage(deps: WorkspaceDeps, ws: WebSocket, raw: string | 
   }
 
   if (!frame.ok) {
-    hub.send(ws, { t: 'error', d: { code: 'BAD_REQUEST', message: 'Pesan bukan JSON yang valid.' } });
+    hub.send(ws, { t: 'error', d: { code: 'BAD_REQUEST', message: 'The message is not valid JSON.' } });
     return;
   }
   const parsed = WsMessageSchema.safeParse(frame.value);
   if (!parsed.success) {
-    hub.send(ws, { t: 'error', d: { code: 'VALIDATION', message: parsed.error.issues[0]?.message ?? 'Pesan tidak sesuai kontrak.' } });
+    hub.send(ws, { t: 'error', d: { code: 'VALIDATION', message: parsed.error.issues[0]?.message ?? 'The message does not match the protocol.' } });
     return;
   }
   const msg = parsed.data;
@@ -78,11 +85,11 @@ export function handleMessage(deps: WorkspaceDeps, ws: WebSocket, raw: string | 
       if (att.client === 'sync' && att.principal.kind === 'member') endStaleEpisode(deps, att.principal.memberId);
       return;
     case 'hello':
-      hub.send(ws, { t: 'error', d: { code: 'BAD_REQUEST', message: 'hello sudah diterima.' } });
+      hub.send(ws, { t: 'error', d: { code: 'BAD_REQUEST', message: 'hello was already received.' } });
       return;
     default:
       // term.* (terminal relay, P1) is not handled yet.
-      hub.send(ws, { t: 'error', d: { code: 'BAD_REQUEST', message: `Pesan ${msg.t} belum didukung server.` } });
+      hub.send(ws, { t: 'error', d: { code: 'BAD_REQUEST', message: `The server does not support ${msg.t} messages yet.` } });
   }
 }
 
@@ -93,9 +100,15 @@ function handleHello(deps: WorkspaceDeps, ws: WebSocket, msg: WsMessageOf<'hello
   // sync needs a member token, mc needs the mc token, app accepts either (R3 §3.9).
   const allowed = principal !== null && (client === 'sync' ? principal.kind === 'member' : client === 'mc' ? principal.kind === 'mc' : true);
   if (!principal || !allowed) {
-    hub.send(ws, { t: 'error', d: { code: 'UNAUTHORIZED', message: 'Token atau jenis klien tidak sah.' } });
+    // D-alief-15: the close reason says why, so the app can show "signed in elsewhere" or "no longer shared".
+    const why = principal ? null : unauthorized(db, token);
+    hub.send(ws, { t: 'error', d: { code: 'UNAUTHORIZED', message: why?.message ?? 'This token cannot open this kind of connection.' } });
     hub.setAttachment(ws, { state: 'closed' });
-    hub.close(ws, WS_CLOSE_UNAUTHORIZED, 'unauthorized');
+    hub.close(
+      ws,
+      WS_CLOSE_UNAUTHORIZED,
+      why?.reason === 'signed-out' ? WS_CLOSE_REASON_ROTATED : why?.reason === 'workspace-closed' ? WS_CLOSE_REASON_CLOSED : 'unauthorized',
+    );
     return;
   }
   const now = deps.now();
@@ -126,7 +139,7 @@ function handleFileUpdate(deps: WorkspaceDeps, ws: WebSocket, att: ReadyAttachme
   const { hub, db } = deps;
   const p = att.principal;
   if (att.client !== 'sync' || p.kind !== 'member') {
-    hub.send(ws, { t: 'error', d: { code: 'FORBIDDEN', message: 'Hanya klien sync yang boleh mengirim file.update.' } });
+    hub.send(ws, { t: 'error', d: { code: 'FORBIDDEN', message: 'Only the sync client can send file.update.' } });
     return;
   }
   const now = deps.now();
@@ -157,7 +170,7 @@ function handleFileDelete(deps: WorkspaceDeps, ws: WebSocket, att: ReadyAttachme
   const { hub, db } = deps;
   const p = att.principal;
   if (att.client !== 'sync' || p.kind !== 'member') {
-    hub.send(ws, { t: 'error', d: { code: 'FORBIDDEN', message: 'Hanya klien sync yang boleh mengirim file.delete.' } });
+    hub.send(ws, { t: 'error', d: { code: 'FORBIDDEN', message: 'Only the sync client can send file.delete.' } });
     return;
   }
   const now = deps.now();

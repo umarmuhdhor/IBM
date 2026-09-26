@@ -1,6 +1,6 @@
 // Member token rotation shared by `/admin/token` and the short join code (IN-03, D-alief-09),
 // and the member an open join code creates (D-alief-10).
-import { JOIN_MEMBER_IDS, MEMBER_COLORS, type Role } from '@radar/common';
+import { JOIN_MEMBER_IDS, MEMBER_COLORS, WS_CLOSE_REASON_ROTATED, WS_CLOSE_UNAUTHORIZED, type Role } from '@radar/common';
 import { newToken, sha256Hex } from '../crypto';
 import type { WorkspaceDeps } from '../deps';
 import { insertToken, revokeTokens } from '../db/repo/access';
@@ -26,7 +26,7 @@ export function rotateToken(deps: WorkspaceDeps, member: string | null): string 
   for (const { ws, att } of deps.hub.ready()) {
     const p = att.principal;
     if (member === null ? p.kind === 'mc' : p.kind === 'member' && p.memberId === member)
-      deps.hub.close(ws, 4401, 'token rotated');
+      deps.hub.close(ws, WS_CLOSE_UNAUTHORIZED, WS_CLOSE_REASON_ROTATED);
   }
   return token;
 }

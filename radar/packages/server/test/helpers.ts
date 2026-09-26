@@ -11,6 +11,8 @@ export interface Ws {
   byType(t: string): Promise<WsIn>;
   send(msg: unknown): void;
   closed: Promise<number>;
+  /** The close reason, once closed. */
+  reason(): Promise<string>;
   /** Messages received and not consumed by `next` yet. */
   seen: WsIn[];
 }
@@ -88,7 +90,13 @@ export async function connect(stub: DurableObjectStub): Promise<Ws> {
     if (i >= 0) waiters.splice(i, 1)[0]!.resolve(msg);
     else seen.push(msg);
   });
-  const closed = new Promise<number>((resolve) => ws.addEventListener('close', (e) => resolve(e.code)));
+  let closeReason = '';
+  const closed = new Promise<number>((resolve) =>
+    ws.addEventListener('close', (e) => {
+      closeReason = e.reason;
+      resolve(e.code);
+    }),
+  );
   const next = (match: (m: WsIn) => boolean) =>
     new Promise<WsIn>((resolve, reject) => {
       const i = seen.findIndex(match);
@@ -102,6 +110,7 @@ export async function connect(stub: DurableObjectStub): Promise<Ws> {
     byType: (t) => next((m) => m.t === t),
     send: (msg) => ws.send(typeof msg === 'string' ? msg : JSON.stringify(msg)),
     closed,
+    reason: () => closed.then(() => closeReason),
     seen,
   };
 }

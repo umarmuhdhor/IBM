@@ -41,11 +41,11 @@ const sameName = (a: string | undefined, b: string) =>
 export function createApp(deps: WorkspaceDeps): Hono {
   const app = new Hono();
   app.onError((err) => toErrorResponse(err));
-  app.notFound(() => errorJson(404, 'NOT_FOUND', 'Endpoint tidak ada.'));
+  app.notFound(() => errorJson(404, 'NOT_FOUND', 'This endpoint does not exist.'));
 
   app.get('/ws', async (c) => {
     if (c.req.header('upgrade')?.toLowerCase() !== 'websocket')
-      return errorJson(426, 'BAD_REQUEST', 'Butuh header Upgrade: websocket.');
+      return errorJson(426, 'BAD_REQUEST', 'Needs the header Upgrade: websocket.');
     const pair = new WebSocketPair();
     const [client, server] = [pair[0], pair[1]];
     // No tags: client kind and member are only known after `hello` (fase 03 step 11).
@@ -81,7 +81,7 @@ export function createApp(deps: WorkspaceDeps): Hono {
       const res = errorJson(
         429,
         'RATE_LIMITED',
-        `Terlalu banyak percobaan. Coba lagi dalam ${retry} detik.`,
+        `Too many attempts. Try again in ${retry} seconds.`,
       );
       res.headers.set('retry-after', String(retry));
       return res;
@@ -251,7 +251,7 @@ export function createApp(deps: WorkspaceDeps): Hono {
     const res = errorJson(
       429,
       'RATE_LIMITED',
-      `Terlalu banyak permintaan. Coba lagi dalam ${retry} detik.`,
+      `Too many requests. Try again in ${retry} seconds.`,
     );
     res.headers.set('retry-after', String(retry));
     return res;
