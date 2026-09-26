@@ -10,7 +10,13 @@ import type { RadarSyncStatus } from '../../shared/radar-join'
 // Electron binary in Node mode, so the sync agent needs nothing else installed.
 
 let child: ReturnType<typeof spawnProcess> | null = null
-let status: RadarSyncStatus = { state: 'stopped', folder: null, files: null, message: null }
+let status: RadarSyncStatus = {
+  state: 'stopped',
+  folder: null,
+  files: null,
+  message: null,
+  conflicts: []
+}
 
 export function radarCliDir(): string {
   return app.isPackaged
@@ -35,32 +41,46 @@ function publish(next: Partial<RadarSyncStatus>): void {
   }
 }
 
-function handleLine(line: string): void {
+/** Folds one `--json-status` line of the radar CLI into the status; null for lines that change nothing. */
+export function applySyncLine(current: RadarSyncStatus, line: string): RadarSyncStatus | null {
   if (!line.startsWith('{')) {
-    return
+    return null
   }
   let parsed: unknown
   try {
     parsed = JSON.parse(line)
   } catch {
     // Non-JSON output (kit install notes) is informational only.
-    return
+    return null
   }
-  if (
-    typeof parsed !== 'object' ||
-    parsed === null ||
-    !('type' in parsed) ||
-    parsed.type !== 'status'
-  ) {
-    return
+  if (typeof parsed !== 'object' || parsed === null || !('type' in parsed)) {
+    return null
+  }
+  if (parsed.type === 'conflict') {
+    // D-alief-14: the server's copy won; the local one is kept next to it as <path>.radar-conflict.
+    const path = 'path' in parsed && typeof parsed.path === 'string' ? parsed.path : null
+    return path && !current.conflicts.includes(path)
+      ? { ...current, conflicts: [...current.conflicts, path] }
+      : null
+  }
+  if (parsed.type !== 'status') {
+    return null
   }
   const connected = 'connected' in parsed && parsed.connected === true
-  const files = 'files' in parsed && typeof parsed.files === 'number' ? parsed.files : status.files
-  publish({
+  const files = 'files' in parsed && typeof parsed.files === 'number' ? parsed.files : current.files
+  return {
+    ...current,
     state: connected ? 'syncing' : 'starting',
     files,
     message: connected ? null : 'Reconnecting to the server'
-  })
+  }
+}
+
+function handleLine(line: string): void {
+  const next = applySyncLine(status, line)
+  if (next) {
+    publish(next)
+  }
 }
 
 export function stopSyncAgent(): void {
@@ -100,7 +120,7 @@ export function startSyncAgent(
   if (invite) {
     env.RADAR_INVITE = invite
   }
-  publish({ state: 'starting', folder, files: null, message: null })
+  publish({ state: 'starting', folder, files: null, message: null, conflicts: [] })
   const proc = spawnProcess({ program: process.execPath, args, env, timeoutMs: null })
   child = proc
   let buffer = ''

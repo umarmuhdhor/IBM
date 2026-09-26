@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import type { RadarConnectionSummary } from '../../../../shared/radar-connection'
 import { DEFAULT_RADAR_SERVER, type RadarJoinRole } from '../../../../shared/radar-join'
+import { SyncConflictsNote } from './SyncConflictsNote'
 import { ipcErrorText, syncLine, useRadarSyncStatus } from './use-radar-sync-status'
 
 type Props = {
@@ -47,8 +48,11 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
       if (result.role === 'mc') {
         return
       }
+      const moved = result.previousFolder
+        ? ` Your earlier copy of this folder was moved to ${result.previousFolder}.`
+        : ''
       setMessage(
-        `Joined ${result.connection.workspace} as ${name.trim() || result.connection.member} (${result.role === 'pm' ? 'PM' : 'coder'}).`,
+        `Joined ${result.connection.workspace} as ${name.trim() || result.connection.member} (${result.role === 'pm' ? 'PM' : 'coder'}).${moved}`,
         `${result.connection.workspace}/${result.connection.member}`
       )
     } catch (error) {
@@ -92,6 +96,7 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
           <p className="font-mono text-xs text-muted-foreground [overflow-wrap:anywhere]">
             {sync.folder}
           </p>
+          <SyncConflictsNote sync={sync} />
         </div>
         <div className="flex flex-wrap gap-2">
           <Button size="sm" onClick={() => void openInBob()}>
@@ -104,7 +109,9 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
             Join with a different code
           </Button>
         </div>
-        {message && <p className="text-xs text-muted-foreground">{message}</p>}
+        {message && (
+          <p className="text-xs text-muted-foreground [overflow-wrap:anywhere]">{message}</p>
+        )}
       </section>
     )
   }

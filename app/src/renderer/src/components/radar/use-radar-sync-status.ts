@@ -5,7 +5,8 @@ const STOPPED: RadarSyncStatus = {
   state: 'stopped',
   folder: null,
   files: null,
-  message: null
+  message: null,
+  conflicts: []
 }
 
 /** Live status of the sync agent in the main process. */

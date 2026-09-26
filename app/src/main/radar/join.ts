@@ -9,6 +9,7 @@ import {
   type RadarJoinResult
 } from '../../shared/radar-join'
 import { startClient } from './connection-ipc'
+import { moveAsideOldFolder } from './join-folder'
 import { ensureNodeForBob } from './node-shim'
 import {
   getRadarConnectionSummary,
@@ -84,6 +85,9 @@ export async function joinWithCode(
   }
   saveRadarConnection(connection)
   startClient(connection)
+  // Why: files left in an old ~/live-collab/<workspace> would upload into the owner's project (D-alief-14).
+  stopSyncAgent()
+  const previousFolder = moveAsideOldFolder(workspaceFolder(invite.workspace))
   startSyncAgent(invite.workspace, res.invite)
   await ensureNodeForBob().catch(() => undefined)
   const summary = getRadarConnectionSummary()
@@ -93,7 +97,8 @@ export async function joinWithCode(
   return {
     connection: summary,
     role: res.role,
-    folder: workspaceFolder(invite.workspace)
+    folder: workspaceFolder(invite.workspace),
+    previousFolder
   }
 }
 
@@ -113,7 +118,7 @@ function connectOwner(server: string, workspace: string, token: string): RadarJo
   if (!summary) {
     throw new Error('Connection could not be saved')
   }
-  return { connection: summary, role: 'mc', folder: null }
+  return { connection: summary, role: 'mc', folder: null, previousFolder: null }
 }
 
 /**

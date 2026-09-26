@@ -113,7 +113,8 @@ describe('RadarPanel without a connection', () => {
           state: 'stopped',
           folder: null,
           files: null,
-          message: null
+          message: null,
+          conflicts: []
         })),
         onSyncStatus: vi.fn(() => stopListening)
       }

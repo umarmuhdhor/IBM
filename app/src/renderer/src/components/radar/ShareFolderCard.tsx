@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import type { RadarConnectionSummary } from '../../../../shared/radar-connection'
 import { DEFAULT_RADAR_SERVER, type RadarJoinCode } from '../../../../shared/radar-join'
+import { SyncConflictsNote } from './SyncConflictsNote'
 import { ipcErrorText, syncLine, useRadarSyncStatus } from './use-radar-sync-status'
 
 type Props = {
@@ -208,6 +209,7 @@ export function ShareFolderCard({
               You are Mission Control for this workspace. Its files are not synced on this Mac.
             </p>
           )}
+          <SyncConflictsNote sync={sync} />
         </div>
         {sharedCode && (
           <div className="flex flex-wrap items-center gap-3">

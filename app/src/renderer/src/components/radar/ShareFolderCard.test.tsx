@@ -7,7 +7,13 @@ import { ShareFolderCard } from './ShareFolderCard'
 const shareFolder = vi.fn()
 const stopSharing = vi.fn()
 const writeText = vi.fn(async () => undefined)
-const status: RadarSyncStatus = { state: 'syncing', folder: null, files: 3, message: null }
+const status: RadarSyncStatus = {
+  state: 'syncing',
+  folder: null,
+  files: 3,
+  message: null,
+  conflicts: []
+}
 
 beforeEach(() => {
   vi.stubGlobal('api', {
