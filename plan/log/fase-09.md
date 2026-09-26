@@ -9,7 +9,7 @@
 Aturan yang tetap berlaku: `CLAUDE.md`, `plan/PROMPT.md` (LANE Aarief, FASE auto), `plan/fase-09-app-desktop.md`, kontrak `plan/ref/R1–R7`, D-007 + D-alief-01 di `plan/log/DECISIONS.md`. Hanya boleh mengubah `app/**`, `radar/packages/ui`, plus output yang disebut fase 09 (`radar/docs/ORCA_MAP.*`, `bob_sessions/*aarief*`). Toolchain: `export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"; nvm use 24`. Commit kecil per langkah. Jangan force-push main; jangan sentuh folder lane lain.
 
 **Langkah berikutnya (urut):**
-1. LANGKAH MANUAL: verifikasi Bob Shell P1 di terminal app dengan Node 24, tanpa agent login/mengetik token (rincian di bawah). Mock server fase 02 belum tersedia di checkout ini.
+1. LANGKAH MANUAL: verifikasi Bob Shell P1 secara interaktif di terminal app. Launcher IBM Bob pada macOS kini memilih Node 24 lewat nvm; perintah `bob` yang diketik langsung di shell Node 20 tetap gagal (rincian di bawah). Tanpa agent login/mengetik token. Mock server fase 02 belum tersedia di checkout ini.
 2. Sesudah fase 02 masuk main, ganti `TODO(sync:alief)` pada tipe/adaptor/keepalive; jalankan `pnpm -C radar dev:mock` lalu uji skenario demo dan keputusan MC lewat UI.
 3. Lengkapi checklist Settings, branding About, pohon file dan status notifikasi; lakukan screenshot app (`ORCA_BACKGROUND_LAUNCH=1`) dan review visual/security. Skill `better-interface` tidak tersedia pada daftar skill sesi Codex ini; lakukan inspeksi visual setara dan catat temuan.
 4. Setelah gerbang UI lulus, buat snapshot lokal `snap/app-f09a|b|c`, dorong `lane/app-f09a|b|c`, lalu PR sesuai PROMPT langkah 11. Jangan push branch sekarang sebelum review dan prasyaratnya selesai. Commit Bob C2/C3 sudah memiliki `Co-authored-by: IBM Bob <bob@ibm.com>`; email GitHub Bob masih perlu konfirmasi bila avatar coauthor diinginkan.
@@ -44,7 +44,8 @@ Aturan yang tetap berlaku: `CLAUDE.md`, `plan/PROMPT.md` (LANE Aarief, FASE auto
 - [~] 8–9. Mission Control menampilkan task, keputusan, feed, ringkasan lock, dan notifikasi blocked/decision; Team dan Files & locks membaca state WS; Settings menyimpan koneksi melalui IPC dan status bar menampilkan ringkasan. Tombol Open in Bob IDE memakai launcher editor Orca pada worktree aktif. Test coder read-only dan keputusan MC menunggu event server lulus. Checklist Settings dan verifikasi mock masih berjalan; `radar dev:mock` saat ini hanya placeholder fase 02.
 - [x] 8a. Renderer yang baru mount meminta `radar:refresh` setelah berlangganan update, agar frame `state` tidak hilang bila WS main tersambung sebelum UI siap. Handler membaca koneksi aman di main dan memulai ulang WS; token tidak dikirim ke renderer. Test IPC merah dahulu, lalu 5/5 lulus dan `app tc` hijau.
 - [x] 8b. Perbaikan startup dari uji manual: `app/vite.web.config.ts` belum memiliki alias `@radar/ui`/`@radar/common`, walau config Electron/Vitest sudah. `pnpm -C app build:web` gagal persis seperti laporan user sebelum patch, lalu hijau setelah alias dan dedupe React/lucide ditambah. `ORCA_BACKGROUND_LAUNCH=1 pnpm -C app dev` mencapai `starting electron app` + CDP 9339; proses dihentikan setelah verifikasi startup.
-- [ ] 10–14. Branding, error/empty state lanjutan, gerbang UI, security review, snapshot PR.
+- [x] 10. Branding utama — commit `d10f10d7`: nama bundle dev/menu, titlebar, judul web, landing, pilihan ikon default, serta aset ikon macOS/Windows memakai IBM Bob Live Collab dan gambar tiga Bob dari pengguna. Test komponen/ikon/identitas dibuat merah sebelum implementasi. App Electron lokal berhasil dibuka; screenshot landing melalui CDP 9339 diperiksa secara visual.
+- [~] 11–14. Branding About, error/empty state lanjutan, gerbang UI lengkap, security review, snapshot PR. Mock server fase 02 dan uji interaktif Bob Shell masih menunggu langkah manual/prasyarat.
 
 ## File dibuat/diubah
 
@@ -62,6 +63,8 @@ Aturan yang tetap berlaku: `CLAUDE.md`, `plan/PROMPT.md` (LANE Aarief, FASE auto
 - 09c refresh state: `app/src/main/radar/connection-ipc{,.test}.ts`, `app/src/preload/api/radar-bridge.ts`, `app/src/renderer/src/components/radar/use-radar-session.ts`.
 - 09c startup: `app/vite.web.config.ts` (alias untuk build pairing web).
 - 09c notifikasi dan Bob IDE: `app/src/renderer/src/components/radar/{NotificationsPanel{,.test},TeamPanel,MissionControlView}.tsx`.
+- 09c branding: `app/resources/app-icons/bob-live-collab.png` (cutout transparan dari gambar pengguna), `app/resources/{icon.png,build/icon.png,build/icon.icns,build/icon.ico}`, `app/src/renderer/src/components/radar/LiveCollabMark{,.test}.tsx`, landing/titlebar/judul HTML, dan identitas bundle dev. Aset sumber diunduh pengguna; tidak menyertakan data pribadi.
+- 09c Bob Shell: `app/src/shared/tui-agent-config{,.test}.ts` — launcher macOS memakai `nvm exec 24 bob` bila nvm tersedia; Linux tetap `bob`.
 - `plan/PROGRESS.md` (baris 09 `[~]`)
 
 ## Placeholder aktif
@@ -82,6 +85,16 @@ Aturan yang tetap berlaku: `CLAUDE.md`, `plan/PROMPT.md` (LANE Aarief, FASE auto
 - 09c langkah 6: `pnpm -C radar --filter @radar/ui test` 6/6 lulus; `pnpm -C radar --filter @radar/ui typecheck` exit 0; Bob menyelesaikan 9 file sumber dalam batas folder yang diminta.
 - 09c panel awal: `pnpm -C app tc`, test radar renderer 3/3, `pnpm -C radar --filter @radar/ui test` 9/9, typecheck UI, dan `check:code-quality:changed` tanpa temuan. `radar-view-model.test.ts` dibuat merah sebelum helper; test keputusan UI membuktikan coder read-only dan MC tidak optimistis.
 - 09c notifikasi: test merah sebelum komponen; test radar renderer 4/4 dan `pnpm -C app tc` hijau. `bob --version` gagal pada Node 20 (`node:sqlite`), berhasil pada Node 24: versi 2.0.5; sesi login/terminal interaktif belum dicoba.
+- 09c branding dan Bob Shell: test merah lebih dahulu untuk gambar landing serta ikon app; 21/21 test terarah hijau, `pnpm -C app tc`, `pnpm -C app build:web`, dan `check:code-quality:changed` lulus. Perintah launcher macOS diuji tanpa login: `sh -c '...' bob --version` menampilkan Node v24.21.0 dan Bob 2.0.5. `pnpm -C app dev` berhasil membuka Electron dengan nama bundle `IBM Bob Live Collab Dev`; `CFBundleDisplayName` diperiksa lewat `plutil`.
+
+### Review visual branding (screenshot lokal, tidak di-commit)
+
+| Tampilan | Temuan | Tingkat | Tindakan |
+|---|---|---|---|
+| Landing Electron 1970×1280 via CDP 9339 | Tiga Bob tampak utuh dan kontras pada latar gelap; judul dan tombol tidak bertabrakan. | Tidak ada HIGH | Lulus pemeriksaan visual; gambar kerja lokal di `/tmp/bob-live-collab-landing.png`. |
+| Titlebar/workspace | Nama IBM Bob Live Collab tampil; workspace lama tetap dapat dibuka. | Tidak ada HIGH | Lulus pemeriksaan visual. |
+
+Skill `better-interface` tidak tersedia pada sesi ini; inspeksi visual langsung dipakai sebagai padanan untuk perubahan branding.
 
 ## Deviasi
 
@@ -92,8 +105,8 @@ Aturan yang tetap berlaku: `CLAUDE.md`, `plan/PROMPT.md` (LANE Aarief, FASE auto
 
 ## LANGKAH MANUAL
 
-1. Bob Shell CLI ditemukan: versi 2.0.5 hanya berjalan dengan Node 24; Node 20 gagal `ERR_UNKNOWN_BUILTIN_MODULE: node:sqlite`. Jalankan `nvm use 24` pada shell yang akan menjalankan Bob. Jangan kirim kredensial ke repo atau chat. Bob IDE tetap jalur P0; ini verifikasi P1 DA-02.
-2. Untuk uji manual yang terlihat, jalankan `pnpm -C app dev` **tanpa** `ORCA_BACKGROUND_LAUNCH=1` (opsi itu menyembunyikan jendela untuk otomasi). Buka UI, buat worktree, pilih **IBM Bob**, lalu cek terminal menjalankan `bob` dan menjawab "halo". Jika CLI meminta login, selesaikan sendiri di aplikasi Bob; agent tidak melakukan login atau mengetik token.
+1. Bob Shell CLI versi 2.0.5 memerlukan Node 24; perintah `bob` di terminal biasa dengan Node 20 menghasilkan `ERR_UNKNOWN_BUILTIN_MODULE: node:sqlite`. Di terminal workspace yang sekarang, tempel `. "$HOME/.nvm/nvm.sh" && nvm exec 24 bob`. Jangan kirim kredensial ke repo atau chat. Bob IDE tetap jalur P0; ini verifikasi P1 DA-02.
+2. App dev sudah dijalankan tanpa `ORCA_BACKGROUND_LAUNCH=1`. Untuk memeriksa launcher otomatis, buat/buka worktree, pilih agent **IBM Bob** dari pemilih agent (bukan mengetik `bob` langsung), lalu pastikan Bob Shell terbuka dan menjawab "halo". Bila CLI meminta login, selesaikan sendiri di aplikasi Bob; agent tidak melakukan login atau mengetik token.
 3. Balas **"manual selesai"** beserta hasil singkat (jalan/gagal dan pesan error tanpa kredensial). Gerbang screenshot UI dan uji skenario demo memerlukan mock server fase 02: saat ini `pnpm -C radar dev:mock` hanya mencetak placeholder. Setelah fase 02 masuk main, lanjutkan screenshot dan uji data live.
 4. Jika ingin GitHub menampilkan akun/avatar IBM Bob sebagai co-author, konfirmasi alamat email GitHub IBM Bob untuk mengganti default `bob@ibm.com` (plan/TODO.md B6) sebelum snapshot 09a didorong. Trailer co-author sudah ada di commit C2; identitas pendorong branch tidak menentukan co-author commit.
 
