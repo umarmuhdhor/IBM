@@ -19,6 +19,7 @@ function clock(ts: number): string {
 export function WatchBobView({ state, memberId, onStopWatching }: Props) {
   const member = state.members[memberId]
   const rows = member ? watchBobTimeline(state, memberId) : []
+  const hasHiddenPrompt = rows.some((row) => row.kind === 'prompt' && row.detail === 'Prompt text not shared')
   const lastRowRef = useRef<HTMLLIElement>(null)
 
   useEffect(() => {
@@ -62,7 +63,7 @@ export function WatchBobView({ state, memberId, onStopWatching }: Props) {
           ))}
         </ol>
       )}
-      <p className="border-t border-border px-3 py-2 text-xs text-muted-foreground">Prompt text shows only when {member.name} turns on Share my prompts.</p>
+      {hasHiddenPrompt && <p className="border-t border-border px-3 py-2 text-xs text-muted-foreground">Prompt text shows only when {member.name} turns on Share my prompts.</p>}
     </section>
   )
 }

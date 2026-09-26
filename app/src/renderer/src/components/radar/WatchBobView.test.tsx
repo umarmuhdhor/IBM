@@ -37,12 +37,14 @@ describe('WatchBobView', () => {
     expect(within(rows[1]).getByText('8 lines')).toBeTruthy()
     expect(within(rows[2]).getByLabelText('Bob trace: hook PreToolUse · lock_guard → blocked')).toBeTruthy()
     expect(within(rows[0]).getByText('Prompt text not shared')).toBeTruthy()
+    expect(screen.getByText(/Prompt text shows only when Budi/)).toBeTruthy()
   })
 
   it('points forward when the member has no Bob activity yet', () => {
     render(<WatchBobView state={{ ...state, feed: [], bobActivity: {} }} memberId="B" onStopWatching={vi.fn()} />)
     expect(screen.getByText(/Budi's prompts, reads, writes and blocks appear here/)).toBeTruthy()
     expect(screen.queryByRole('list', { name: 'Bob activity' })).toBeNull()
+    expect(screen.queryByText(/Prompt text shows only when/)).toBeNull()
   })
 
   it('returns to the team when the member left the workspace', () => {
