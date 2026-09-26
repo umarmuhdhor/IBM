@@ -24,6 +24,20 @@ test.describe('/demo replay', () => {
     await expect(page.getByTestId('bob-inside-panel')).toContainText(/hook|mcp|mode/);
   });
 
+  test('the narrator tells the near-miss story in plain words', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/demo');
+    await page.getByTestId('chapter-near-miss').click();
+    const narrator = page.getByRole('region', { name: 'What is happening now' });
+    await expect(narrator).toContainText(/Near-miss/);
+    await expect(narrator).toContainText(/Blocked before a single byte changed/);
+    await expect(page.getByTestId('chapter-near-miss')).toHaveAttribute('aria-current', 'step');
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    expect(overflow).toBeLessThanOrEqual(0);
+  });
+
   test('stays paused when the user prefers reduced motion', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/demo');
