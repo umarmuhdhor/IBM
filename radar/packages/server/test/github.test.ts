@@ -80,6 +80,13 @@ describe('formatCommitMessage (R5 §3, Bob slice A3)', () => {
 });
 
 describe('GitHubCommitter over the mocked Git Data API', () => {
+  it('commits locally, never to GitHub, when the workspace has no base commit (folder opened from the app, D-alief-12)', async () => {
+    const res = await committer().commitTask(snap({ baseCommit: null }));
+    expect(res).toMatchObject({ pushed: false });
+    expect(res.sha).toMatch(/^local-/);
+    expect(mock.apiCalls()).toBe(0);
+  });
+
   it('commits only the task files with inline content in exactly 4 requests, no blobs', async () => {
     const res = await committer().commitTask(snap());
     expect(res).toMatchObject({ sha: 'c-mock-1', pushed: true, url: 'https://github.com/demo/toko-demo/commit/c-mock-1' });

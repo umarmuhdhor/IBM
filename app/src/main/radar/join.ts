@@ -18,7 +18,7 @@ import {
 } from './secure-store'
 import { getSyncStatus, startSyncAgent, stopSyncAgent, workspaceFolder } from './sync-agent'
 
-function serverOrigin(value: unknown): string {
+export function serverOrigin(value: unknown): string {
   const raw = typeof value === 'string' && value.trim() ? value.trim() : DEFAULT_RADAR_SERVER
   const url = new URL(raw)
   if (url.protocol !== 'http:' && url.protocol !== 'https:') {
@@ -27,7 +27,7 @@ function serverOrigin(value: unknown): string {
   return url.origin
 }
 
-async function errorMessage(response: Response): Promise<string> {
+export async function errorMessage(response: Response): Promise<string> {
   const parsed = ErrorRes.safeParse(await response.json().catch(() => null))
   return parsed.success
     ? parsed.data.error.message

@@ -58,8 +58,8 @@ export function InviteCodesCard() {
       <div className="space-y-1">
         <h3 className="text-sm font-semibold">Invite teammates</h3>
         <p className="text-xs text-muted-foreground">
-          Make a code (it is copied for you) and send it privately. Your teammate pastes it into Live Collab → Join and
-          enters their name and role. One code adds one person.
+          Make a code (it is copied for you) and send it privately. Your teammate pastes it into
+          Live Collab → Join and enters their name and role. One code adds one person.
         </p>
       </div>
       <Button size="sm" variant="outline" disabled={busy} onClick={() => void make()}>

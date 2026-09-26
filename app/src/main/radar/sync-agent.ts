@@ -74,11 +74,15 @@ export function stopSyncAgent(): void {
 
 /**
  * Starts `radar join` (with an invite, first time) or `radar start` (folder already joined) for the
- * folder of `workspace`. The invite travels in the child's environment, never in argv or logs.
+ * folder of `workspace`, or for `folder` when the owner shares their own folder (D-alief-12).
+ * The invite travels in the child's environment, never in argv or logs.
  */
-export function startSyncAgent(workspace: string, invite: string | null): void {
+export function startSyncAgent(
+  workspace: string,
+  invite: string | null,
+  folder = workspaceFolder(workspace)
+): void {
   stopSyncAgent()
-  const folder = workspaceFolder(workspace)
   const cli = join(radarCliDir(), 'dist', 'radar.mjs')
   if (!existsSync(cli)) {
     publish({ state: 'error', folder, message: 'Bundled radar CLI is missing. Reinstall the app.' })

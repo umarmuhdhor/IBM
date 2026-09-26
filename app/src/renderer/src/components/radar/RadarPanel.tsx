@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { RadarConnectionSummary } from '../../../../shared/radar-connection'
+import type { RadarJoinCode } from '../../../../shared/radar-join'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/store'
 import { Button } from '@/components/ui/button'
@@ -10,6 +11,7 @@ import { FilesLocksView } from './FilesLocksView'
 import { InviteCodesCard } from './InviteCodesCard'
 import { JoinWithCodeCard } from './JoinWithCodeCard'
 import { RadarSettingsPane } from './RadarSettingsPane'
+import { ShareFolderCard } from './ShareFolderCard'
 import { WatchBobView } from './WatchBobView'
 import type { RadarPanelTab } from './radar-panel-tab'
 
@@ -40,6 +42,7 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
     ? (getKnownWorktreeById(activeWorktreeId)?.path ?? null)
     : null
   const [watchedMemberId, setWatchedMemberId] = useState<string | null>(null)
+  const [sharedCode, setSharedCode] = useState<RadarJoinCode | null>(null)
   const tabs: RadarPanelTab[] = watchedMemberId ? [...TABS, 'watch'] : TABS
 
   const watch = (memberId: string) => {
@@ -88,12 +91,20 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
       <div className="scrollbar-sleek min-h-0 flex-1 overflow-y-auto">
         {tab === 'settings' ? (
           <>
+            {/* Why: fixed slots keep ShareFolderCard mounted (and its message) when sharing turns this app into Mission Control. */}
             <div className="space-y-3 p-4 pb-0">
-              {connection?.role === 'mc' ? (
-                <InviteCodesCard />
-              ) : (
+              {/* Teammates see it too: once the owner stops sharing, anyone can share the next folder. */}
+              <ShareFolderCard
+                connection={connection}
+                folder={workspacePath}
+                sharedCode={sharedCode}
+                onConnectionChange={onConnectionChange}
+                onShared={setSharedCode}
+              />
+              {connection?.role !== 'mc' && (
                 <JoinWithCodeCard connection={connection} onConnectionChange={onConnectionChange} />
               )}
+              {connection?.role === 'mc' && <InviteCodesCard />}
             </div>
             {/* Why: teammates join with code + name + role only; server, workspace and tokens are for the owner. */}
             <details className="px-4 pt-3" open={Boolean(connectionFailure) || undefined}>
@@ -113,6 +124,17 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
           </>
         ) : !connection ? (
           <div className="m-4 space-y-3">
+            <ShareFolderCard
+              connection={connection}
+              folder={workspacePath}
+              sharedCode={sharedCode}
+              onConnectionChange={onConnectionChange}
+              onShared={(code) => {
+                // Why: this view unmounts once connected; settings shows the copied code again.
+                setSharedCode(code)
+                onTabChange('settings')
+              }}
+            />
             <JoinWithCodeCard connection={connection} onConnectionChange={onConnectionChange} />
             <Button variant="link" size="xs" onClick={() => onTabChange('settings')}>
               Workspace owner? Connect Mission Control in settings

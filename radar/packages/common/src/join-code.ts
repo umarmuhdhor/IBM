@@ -77,3 +77,25 @@ export type JoinOwnerRes = z.infer<typeof JoinOwnerRes>;
 
 export const JoinRes = z.union([JoinMemberRes, JoinOwnerRes]);
 export type JoinRes = z.infer<typeof JoinRes>;
+
+/**
+ * D-alief-12: the owner's app opens a folder as this server's workspace (one workspace per server). Allowed without a
+ * token while the server is empty; afterwards only with the current Mission Control token, and it replaces everything.
+ * The owner becomes member A and syncs the folder like a teammate.
+ */
+export const OpenWorkspaceReq = z.object({
+  workspace: z.string().trim().min(1).max(64),
+  owner: z.object({ name: z.string().trim().min(1).max(100), role: z.enum(['coder', 'pm']) }),
+});
+export type OpenWorkspaceReq = z.infer<typeof OpenWorkspaceReq>;
+
+/** `invite` is the owner's own member invite (for their sync agent); `code` is a first open join code to share. */
+export const OpenWorkspaceRes = z.object({
+  workspace: z.string(),
+  member: z.string(),
+  invite: z.string(),
+  mcToken: z.string(),
+  code: z.string(),
+  expiresAt: z.number().int(),
+});
+export type OpenWorkspaceRes = z.infer<typeof OpenWorkspaceRes>;

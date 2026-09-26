@@ -1,37 +1,14 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import type { RadarConnectionSummary } from '../../../../shared/radar-connection'
-import {
-  DEFAULT_RADAR_SERVER,
-  type RadarJoinRole,
-  type RadarSyncStatus
-} from '../../../../shared/radar-join'
+import { DEFAULT_RADAR_SERVER, type RadarJoinRole } from '../../../../shared/radar-join'
+import { ipcErrorText, syncLine, useRadarSyncStatus } from './use-radar-sync-status'
 
 type Props = {
   connection: RadarConnectionSummary | null
   onConnectionChange: (connection: RadarConnectionSummary | null) => void
-}
-
-const STOPPED: RadarSyncStatus = {
-  state: 'stopped',
-  folder: null,
-  files: null,
-  message: null
-}
-
-function syncLine(status: RadarSyncStatus): string {
-  if (status.state === 'syncing') {
-    return `Syncing ${status.files ?? 0} files`
-  }
-  if (status.state === 'starting') {
-    return status.message ?? 'Connecting and downloading files…'
-  }
-  if (status.state === 'error') {
-    return status.message ?? 'Sync stopped'
-  }
-  return status.message ?? 'Not syncing'
 }
 
 /**
@@ -43,6 +20,8 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
   const [name, setName] = useState('')
   const [role, setRole] = useState<RadarJoinRole>('coder')
   const [owner, setOwner] = useState(false)
+  // Why: after the owner stops sharing, a teammate joins the next workspace from the same card.
+  const [another, setAnother] = useState(false)
   const codeInput = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
   // A message belongs to the connection it was written for, so it disappears when that connection changes.
@@ -52,12 +31,7 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
   const setMessage = (text: string | null, key = connectionKey) =>
     setNote(text === null ? null : { text, key })
   const [invalid, setInvalid] = useState(false)
-  const [sync, setSync] = useState<RadarSyncStatus>(STOPPED)
-
-  useEffect(() => {
-    void window.api.radar.getSyncStatus().then(setSync)
-    return window.api.radar.onSyncStatus(setSync)
-  }, [])
+  const sync = useRadarSyncStatus()
 
   const join = async () => {
     setBusy(true)
@@ -68,6 +42,7 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
         ? await window.api.radar.joinWithCode(code, DEFAULT_RADAR_SERVER)
         : await window.api.radar.joinWithCode(code, DEFAULT_RADAR_SERVER, name, role)
       setCode('')
+      setAnother(false)
       onConnectionChange(result.connection)
       if (result.role === 'mc') {
         return
@@ -77,12 +52,9 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
         `${result.connection.workspace}/${result.connection.member}`
       )
     } catch (error) {
-      // Why: Electron prefixes IPC errors with the channel name; keep only the server's sentence.
-      const text =
-        error instanceof Error
-          ? error.message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '')
-          : ''
-      setMessage(text || 'Unable to join. Check the code and your internet connection.')
+      setMessage(
+        ipcErrorText(error) || 'Unable to join. Check the code and your internet connection.'
+      )
       setInvalid(true)
     } finally {
       setBusy(false)
@@ -96,7 +68,8 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
     )
   }
 
-  const joined = connection !== null && connection.role === 'coder' && sync.folder !== null
+  const joined =
+    !another && connection !== null && connection.role === 'coder' && sync.folder !== null
 
   if (joined) {
     return (
@@ -126,6 +99,9 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
           </Button>
           <Button size="sm" variant="outline" onClick={() => void window.api.radar.showFolder()}>
             Show folder
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setAnother(true)}>
+            Join with a different code
           </Button>
         </div>
         {message && <p className="text-xs text-muted-foreground">{message}</p>}
