@@ -828,3 +828,63 @@ export const BobActivityReq = z.discriminatedUnion('kind', [
 export type BobActivityReq = z.infer<typeof BobActivityReq>;
 /** What a hook builds before validation (defaults such as `paths: []` not applied yet). */
 export type BobActivityInput = z.input<typeof BobActivityReq>;
+
+// ---- /admin/* (fase 03 step 8, D-alief-03) -------------------------------------------------------------------
+// Header `x-admin-secret` on every call. Used by `scripts/admin.ts` and the mock server.
+
+export const ADMIN_FILES_MAX_PER_BATCH = 100;
+export const ADMIN_FILES_MAX_BATCH_BYTES = 4 * 1024 * 1024;
+
+export const AdminMember = z.object({
+  id: MemberIdSchema,
+  role: RoleSchema,
+  name: z.string().min(1).max(100),
+  /** Git author e-mail for commits; defaults to `<id>@users.noreply.radar` when missing. */
+  email: z.email().optional(),
+});
+export type AdminMember = z.infer<typeof AdminMember>;
+
+export const AdminInitReq = z.object({
+  workspace: z.string().min(1).max(64),
+  /** GitHub `owner/name`; optional so a local dev workspace can run without a repo. */
+  repo: z
+    .string()
+    .regex(/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/)
+    .optional(),
+  branch: z.string().min(1).max(255).default('main'),
+  members: z
+    .array(AdminMember)
+    .min(1)
+    .max(8)
+    .refine((ms) => new Set(ms.map((m) => m.id)).size === ms.length, 'member ids must be unique')
+    .refine((ms) => ms.every((m) => m.id !== 'mc'), 'member id "mc" is reserved'),
+  /** Wipe an existing workspace first. Without it a second init is 409. */
+  force: z.boolean().optional(),
+});
+export type AdminInitReq = z.infer<typeof AdminInitReq>;
+
+/** Plain tokens, returned once: one per member id plus `mc`. */
+export const AdminInitRes = z.object({ workspace: z.string(), tokens: z.record(z.string(), z.string()) });
+export type AdminInitRes = z.infer<typeof AdminInitRes>;
+
+export const AdminFilesReq = z.object({
+  /** `git rev-parse HEAD` of the clone the files come from; null keeps the stored head. */
+  headCommit: z.string().min(1).max(64).nullable(),
+  files: z.array(z.object({ path: PathSchema, content: z.string() })).max(ADMIN_FILES_MAX_PER_BATCH),
+});
+export type AdminFilesReq = z.infer<typeof AdminFilesReq>;
+
+export const AdminFilesRes = z.object({ inserted: z.number().int().nonnegative(), headCommit: z.string().nullable() });
+export type AdminFilesRes = z.infer<typeof AdminFilesRes>;
+
+export const AdminTokenReq = z.object({ member: z.string().min(1).max(64), rotate: z.literal(true) });
+export type AdminTokenReq = z.infer<typeof AdminTokenReq>;
+
+export const AdminTokenRes = z.object({ member: z.string(), token: z.string() });
+export type AdminTokenRes = z.infer<typeof AdminTokenRes>;
+
+export const AdminResetReq = z.object({ confirm: z.literal(true) });
+export type AdminResetReq = z.infer<typeof AdminResetReq>;
+
+export const OkRes = z.object({ ok: z.literal(true) });
+export type OkRes = z.infer<typeof OkRes>;

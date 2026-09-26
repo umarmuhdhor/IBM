@@ -1,0 +1,5 @@
+# Copy to .dev.vars (git-ignored) for `wrangler dev`. Names only: never commit values.
+# Production: `npx wrangler secret put ADMIN_SECRET` and `npx wrangler secret put GITHUB_TOKEN`.
+ADMIN_SECRET=
+GITHUB_TOKEN=
+GITHUB_COMMIT=false

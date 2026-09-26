@@ -242,3 +242,31 @@ Format:
 - Keputusan: role Settings mengikuti R3 sebagai `coder | mc`. Token disimpan dan dipakai di main process melalui `safeStorage`; main process menjalankan WebSocket dan REST, renderer hanya menerima state/event melalui IPC. Ini menjaga token keluar dari log dan state renderer. Mission Control memakai drawer/sheet Orca, tanpa jenis tab persisten baru. Token `--lc-*` app mengambil warna/font Orca; UI web memakai `theme-vars.css`. Tambahkan `--lc-person-d` (#08BDBA) untuk member keempat sesuai R5 §4.
 - Alasan: kontrak R3 membatasi decision ke `mc`, DoD fase 09 melarang token di renderer, dan app vendored Orca meminta perubahan aditif.
 - Deviasi: path `lib/radar/ws-client.ts` dan `lib/radar/api.ts` di rencana fase menjadi modul main process.
+
+## D-alief-03 · 26 Sep 2026 09:00 · fase 03 · Server inti di Cloudflare: bentuk admin, aturan WS, dan penyimpangan kecil
+
+- Keputusan:
+  1. **Admin API** (skema baru di `@radar/common` `schemas.ts`, dipakai server dan `scripts/admin.ts`):
+     - `POST /admin/init` `AdminInitReq {workspace, repo?, branch='main', members[1..8], force?}`. `repo` opsional (lokal tanpa GitHub), regex `owner/name`. ID `mc` dilarang untuk member. `email` opsional; default `git_email` = `<id>@users.noreply.radar`. Warna dari `MEMBER_COLORS[id]`, selain itu palet per indeks. Sudah ada data tanpa `force` → 409; `force` = wipe lalu init. Balasan `201 {workspace, tokens:{<id>, mc}}` (sama dengan mock D-alief-02).
+     - `POST /admin/files` `{headCommit|null, files ≤ 100}`, total ≤ 4 MB. 409 sebelum init. Path di luar workspace, diabaikan (R5 §6), > `MAX_FILE_BYTES`, atau biner **dilewati diam-diam** (sama seperti sync agent). Impor ulang hanya menimpa file yang masih v1; file yang sudah diedit tim tidak disentuh. `headCommit: null` mempertahankan `meta.head_commit` lama.
+     - `POST /admin/token {member, rotate:true}` → `{member, token}`. `member: 'mc'` merotasi token mc. Token lama dicabut dan socket principal itu ditutup 4401. Member tak dikenal → 404.
+     - `GET /admin/export` memakai query yang sama dengan `/v1/events/export`. `POST /admin/reset {confirm:true}` → `{ok:true}`: tutup semua socket 1012, hapus alarm, `deleteAll`, migrasi ulang, kosongkan limiter.
+  2. **Verifikasi `headCommit` ke GitHub** hanya bila `GITHUB_COMMIT='true'` dan repo terisi (timeout 10 s, gagal → 422, beda → 409). Test msw ditunda ke fase 06 (fase itu memasang `@msw/cloudflare` untuk Git Data API).
+  3. **Patch hanya di export.** `file.changed` di log tidak menyimpan diff; `/v1/events/export` dan `/admin/export` menghitung `patch` dari `file_version` v-1 → v saat diminta. Batas export 1000 event per panggilan (`limit` dipotong ke 1000).
+  4. **`bob.activity`**: `text` > 200 dipotong (tanpa memecah surrogate pair), bukan 422. `clientTs` dibuang. Rate limit 20/s per member di memori DO; jumlah yang dibuang ditulis satu baris `metric(activity_dropped)` saat jendela berikutnya member itu dimulai (hilang bila DO hibernasi lebih dulu; metrik best-effort).
+  5. **Aturan hello**: `sync` butuh token member, `mc` butuh token mc, `app` menerima keduanya. Gagal → `error UNAUTHORIZED` + close 4401. `file.applied` jadi event `sync.applied {latencyMs}` (tanpa baris metric).
+  6. **State attachment `closed`** (selain `pending`/`ready`/`replaced`). Socket ditandai `closed` sebelum server menutupnya (hello gagal/kedaluwarsa, reset), supaya callback close dan penjadwal alarm mengabaikannya dan reset tidak menulis `member.offline` ke DB baru. Kirim WS yang gagal → log error + tutup 1011, jadi klien reconnect dan dapat snapshot baru.
+  7. **Skema** ada di `src/db/schema.ts` (string SQL R2 §2 verbatim, `SCHEMA_VERSION='1'`), bukan `schema.sql`: wrangler/vitest tidak perlu loader teks. Wrangler `alias` `@radar/common` → `../common/src/index.ts`, jadi `wrangler dev/deploy` tidak butuh build common dulu.
+  8. **Hashing sinkron** (`node:crypto` lewat `nodejs_compat`). Handler `file.update` dan auth tidak pernah `await`, jadi pesan WS tidak bisa saling sisip di tengah transaksi.
+  9. **Belum didukung**: `file.delete` (P1) dan `term.*` (P1 fase 06) dibalas `error BAD_REQUEST` tanpa menutup socket. `snapshot` dikirim sebagai satu pesan (risiko ukuran untuk repo besar; dicek ulang di fase 04 dengan toko-demo, 18 file).
+  10. **`scripts/admin.ts` memakai `node:util` `parseArgs`**, bukan `commander` (spesifikasi langkah 8): fitur yang dipakai cukup, tanpa dependensi baru.
+- Temuan review MEDIUM/LOW yang dicatat (tidak diperbaiki di fase 03):
+  - Security M1: `/admin/*` tanpa rate limit tebakan `x-admin-secret`. Mitigasi: `ADMIN_SECRET` wajib string acak ≥ 32 byte (TODO B5). Rate limit Cloudflare ditinjau di fase 12.
+  - Security M2: `PUBLIC_EXPORT=true` + `CORS_ORIGIN=*` membuka seluruh riwayat diff. Default `false`; hanya dinyalakan untuk replay publik dengan data sintetis (fase 11D).
+  - Security L: `file.update` tanpa rate limit per socket; socket `pending` tanpa batas jumlah (dibatasi waktu 5 s). Fase 12.
+  - Silent-failure M: `hub.close` menelan semua error `ws.close` (hanya kasus sudah tertutup yang diharapkan).
+  - TS M: `delete payload.clientTs` di route `bob/activity` (destrukturisasi ditolak ESLint `no-unused-vars`).
+- Alasan: spesifikasi fase 03 langkah 8–12, D-007, dan review `ecc:code-reviewer`, `ecc:typescript-reviewer`, `ecc:security-reviewer`, `ecc:silent-failure-hunter`, `ecc:pr-test-analyzer`.
+- Alternatif yang ditolak: Worker mengambil isi file dari GitHub (batas 50 subrequest plan Free); diff disimpan di setiap event (baris dan byte berlipat); tag `acceptWebSocket` per klien (tidak bisa diubah setelah hello); `heartbeat` menulis SQL tiap 15 s (kuota rows written).
+- Dampak: fase 04 (protokol WS, `seedTestWorkspace`, ukuran snapshot), fase 05 (`authorizeWrite` diganti `locks.checkWrite`, job alarm 30 s), fase 06 (test msw `headCommit`, `term.*`), fase 09/11 (app memakai `client:'app'`), fase 12 (rate limit admin/WS).
+- File ref/ yang diperbarui: – (bentuk admin ada di skema `@radar/common`; R3 tidak berubah).
