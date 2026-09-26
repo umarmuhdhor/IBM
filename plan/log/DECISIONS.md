@@ -358,6 +358,8 @@ Format:
 - Alternatif ditolak: pin `GITLEAKS_VERSION` di `ci.yml` (file CI bersama); tulis ulang histori untuk menambah `gitleaks:allow`.
 - File ref/ yang diperbarui: –
 
+## D-umar-04 · 26 Sep 2026 16:40 · fase 10 · Kit Bob melawan server asli: `my_tasks`, penanda sisa, temuan demo
+
 - Keputusan:
   1. **`my_tasks` tidak lagi mengirim `owner=me`.** Tabel tool R3 §7 menulis `GET /v1/tasks?owner=me&status=open`, tetapi server fase 05 menjawab 403 "Hanya task milikmu sendiri." untuk `owner` selain ID pemanggil (`packages/server/src/http/routes/tasks.ts:15`). R3 §2.4 menyebut `owner` default = pemanggil, jadi tool memanggil `GET /v1/tasks?status=open` (lolos di mock dan server). **Usulan ke Alief:** samakan baris R3 §7 dengan §2.4 (atau server menerima `me` seperti mock). Tidak ada perubahan kontrak dari lane Bob.
   2. **`mark_ai_edit` → `POST /v1/ai-edits`:** penanda `TODO(sync:alief)` diganti komentar biasa. Kode sisi Bob sudah final (R3 §2.20); route di Worker = fase 12 (BC-05, P1). Sampai itu ada, 404 hanya ditulis ke `.radar/hook.log` (fail-open, tidak memperlambat edit: panggilan paralel dengan `bob/activity`).
@@ -367,6 +369,7 @@ Format:
   - Dengan tujuan "Tambah fitur kupon diskon di checkout dan dark mode", Bob PM menaruh kupon di `coupon.ts` + `App.tsx`, **tanpa `checkout.ts`** (di toko-demo `applyCoupon` dipanggil dari `App.tsx`). Adegan blokir naskah butuh `checkout.ts` dipegang A → sebut file di tujuan (lihat LANGKAH MANUAL fase-10-bob).
   - Brief start B menyebut file yang dipegang A, jadi Bob B memilih `request_file` tanpa mencoba edit (sama dengan handoff fase 07). Kartu permintaan dan keputusan tetap muncul, tetapi notifikasi "Bob B diblokir" hanya muncul kalau Bob benar-benar mencoba edit.
   - Bob coder kadang menjawab dalam bahasa Inggris walau prompt Indonesia.
+  - (Sab 18:20, setelah fase 06) Menyebut `src/checkout/checkout.ts` di tujuan membuat Bob PM menaruhnya di task A. Review `setujui_beri_tahu` hanya muncul kalau A juga memperbarui pemanggil di file task-nya sendiri; kalau tidak, Bob PM memilih `kembalikan` (benar menurut instruksi mode).
 - Alasan: test integrasi `packages/mcp/test/server.int.test.ts` (RED `ffc816a3` → GREEN `7c759f72`) dan 4 sesi Bob IDE 2.2.0 melawan Worker lokal.
 - Dampak: Alief (R3 §7), Imelda/semua (naskah demo), fase 12 (`/v1/ai-edits`).
 - File ref/ yang diperbarui: – (usulan saja).
@@ -384,3 +387,14 @@ Format:
 - Dampak: fase 11D2 (replay cadangan), fase 12 (MEDIUM tercatat di log fase-10), milestone 21:00 (LANGKAH MANUAL di log).
 - File ref/ yang diperbarui: – (tidak ada perubahan kontrak).
 - Selisih vs `origin/main`: D-alief-06 (authorship) ada di worktree `lane/core` lain dan belum di-`main` saat entri ini ditulis; commit fase ini mengikutinya tanpa memodifikasi file itu.
+
+## D-umar-05 · 26 Sep 2026 19:45 · fase 13 (persiapan) · Script eksperimen A/B di `radar/scripts`
+
+- Keputusan:
+  1. Script fase 13 ditaruh sesuai file fase: `radar/scripts/metrics.ts` dan `radar/scripts/ab/*` (bukan paket baru). CLAUDE.md mencatat `radar/scripts/*` sebagai folder server Alief; lane Bob hanya menambah file baru ini dan tidak menyentuh `admin.ts`, `mock-server.ts`, atau `mock/`.
+  2. Persiapan (protokol, prompt, script + test) dikerjakan Sab 19:00–21:00 sebelum fase 10 `[x]`, atas permintaan Umar. Baris 13 di PROGRESS tetap `[ ]`; putaran eksperimen tetap di slot Min 04:30–10:30 setelah fase 10.
+  3. Latensi cek kunci diambil dari `.radar/hook.log` (`lock_guard … ms=<n>`, end-to-end, sesuai PRD §04 "log waktu di hook"). Metric server `lock_check_ms` tidak ikut di export; dipakai hanya bila ada salinan baris metric.
+  4. Konflik putaran B diukur dengan memutar ulang commit task yang ter-push di atas commit awal (worktree sementara), bukan diasumsikan 0. Coder putaran A tidak push: branch dikirim sebagai `git bundle`.
+- Alasan: plan fase 13 (output di `scripts/`), PRD §04/§17, protokol ditulis sebelum eksperimen.
+- Dampak: Alief (folder `radar/scripts`, usulan opsional: `metric` di `/admin/export`), fase 14 (tabel metrik).
+- File ref/ yang diperbarui: –.
