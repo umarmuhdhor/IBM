@@ -28,6 +28,7 @@ export function InviteCodesCard() {
     try {
       const code = await window.api.radar.createJoinCode()
       setCodes((current) => [code, ...current])
+      await copy(code.code)
     } catch (error) {
       // Why: Electron prefixes IPC errors with the channel name; keep only the server's sentence.
       const text =
@@ -43,7 +44,7 @@ export function InviteCodesCard() {
   const copy = async (code: string) => {
     try {
       await navigator.clipboard.writeText(code)
-      setMessage(`Copied ${code}.`)
+      setMessage(`Copied ${code}. Send it to your teammate.`)
     } catch {
       setMessage(`Unable to copy. Select ${code} and copy it by hand.`)
     }
@@ -57,7 +58,7 @@ export function InviteCodesCard() {
       <div className="space-y-1">
         <h3 className="text-sm font-semibold">Invite teammates</h3>
         <p className="text-xs text-muted-foreground">
-          Make a code and send it privately. Your teammate pastes it into Live Collab → Join and
+          Make a code (it is copied for you) and send it privately. Your teammate pastes it into Live Collab → Join and
           enters their name and role. One code adds one person.
         </p>
       </div>
