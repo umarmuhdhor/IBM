@@ -1,1 +1,16 @@
 @import 'tailwindcss';
+@import '@radar/ui/theme-vars.css';
+
+/* /demo's three coder/Mission Control columns (app/demo/page.tsx) are inline-styled as a fixed
+   1fr/1fr/1fr grid; below tablet width that squeezes every column unreadable (UI gate finding,
+   fase 11D1). Stack them instead, letting each column take its natural height. */
+@media (max-width: 900px) {
+  .lc-demo-columns {
+    grid-template-columns: 1fr !important;
+    overflow-y: auto !important;
+  }
+  .lc-demo-columns > div {
+    border-right: none !important;
+    border-bottom: 1px solid var(--lc-border);
+  }
+}
