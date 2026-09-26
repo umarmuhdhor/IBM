@@ -44,7 +44,7 @@ export function ShareFolderCard({
 
   const copy = async (code: string) => {
     try {
-      await navigator.clipboard.writeText(code)
+      await window.api.radar.copyText(code)
       setMessage(`Copied ${code}. Send it to your teammate.`)
     } catch {
       setMessage(`Unable to copy. Select ${code} and copy it by hand.`)

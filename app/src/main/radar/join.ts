@@ -1,4 +1,4 @@
-import { ipcMain, app, shell } from 'electron'
+import { ipcMain, app, clipboard, shell } from 'electron'
 import { existsSync } from 'node:fs'
 import { AdminJoinCodeRes, decodeInvite, ErrorRes, JoinRes, normalizeJoinCode } from '@radar/common'
 import { runProcess } from '../../shared/child-process/run-process'
@@ -192,6 +192,13 @@ export function registerRadarJoinIpc(): void {
   ipcMain.handle('radar:create-join-code', () => createJoinCode())
   ipcMain.handle('radar:sync-status', () => getSyncStatus())
   ipcMain.handle('radar:open-in-bob', () => openInBob())
+  // Why: navigator.clipboard rejects while the window is unfocused, e.g. right after the folder picker.
+  ipcMain.handle('radar:copy-text', (_event, text: unknown) => {
+    if (typeof text !== 'string' || text.length === 0 || text.length > 200) {
+      throw new Error('Nothing to copy.')
+    }
+    clipboard.writeText(text)
+  })
   ipcMain.handle('radar:show-folder', () => {
     const folder = getSyncStatus().folder
     return folder ? shell.openPath(folder) : Promise.resolve('Join a workspace first.')

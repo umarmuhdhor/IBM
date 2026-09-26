@@ -7,7 +7,7 @@ import { ShareFolderCard } from './ShareFolderCard'
 
 const shareFolder = vi.fn()
 const stopSharing = vi.fn()
-const writeText = vi.fn(async () => undefined)
+const copyText = vi.fn(async (_text: string) => undefined)
 const status: RadarSyncStatus = {
   state: 'syncing',
   folder: null,
@@ -23,13 +23,13 @@ beforeEach(() => {
       shareFolder,
       stopSharing,
       clearConnection: vi.fn(async () => undefined),
+      copyText,
       getSyncStatus: vi.fn(async () => status),
       onSyncStatus: vi.fn(() => () => undefined),
       openInBob: vi.fn(),
       showFolder: vi.fn()
     }
   })
-  Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
 })
 
 afterEach(() => {
@@ -72,7 +72,7 @@ it('shares the folder open in the app with one click and copies the code', async
   await waitFor(() => expect(onConnectionChange).toHaveBeenCalledWith(owner))
   expect(shareFolder).toHaveBeenCalledWith('/Users/me/my-app', expect.any(String))
   expect(onShared).toHaveBeenCalledWith(code)
-  await waitFor(() => expect(writeText).toHaveBeenCalledWith('K7QM-3XPA'))
+  await waitFor(() => expect(copyText).toHaveBeenCalledWith('K7QM-3XPA'))
 })
 
 it('opens the folder picker when no folder is open', async () => {
@@ -129,7 +129,7 @@ it('shows the shared folder with its code, and asks before replacing the workspa
   expect(await screen.findByText('my-app is shared')).toBeTruthy()
   expect(screen.getByLabelText('Join code').textContent).toBe('K7QM-3XPA')
   fireEvent.click(screen.getByRole('button', { name: 'Copy code' }))
-  await waitFor(() => expect(writeText).toHaveBeenCalledWith('K7QM-3XPA'))
+  await waitFor(() => expect(copyText).toHaveBeenCalledWith('K7QM-3XPA'))
 
   fireEvent.click(screen.getByRole('button', { name: 'Share a different folder…' }))
   expect(screen.getByText(/This replaces my-app for everyone/)).toBeTruthy()
