@@ -77,6 +77,6 @@ Waktu dalam WITA. Setiap lane **hanya mengedit baris fasenya sendiri** (supaya m
 | C2 agent bob | App | Aarief | | [ ] | |
 | C4 `--md` + `evidence-check` | App | Aarief | | [ ] | |
 | C3 komponen `@radar/ui` | App | Aarief | | [ ] | |
-| I1 pemutar replay + `/demo` | Web | Imelda | | [ ] | |
+| I1 pemutar replay + `/demo` | Web | Imelda | `uaai_imelda_task01_replay_player_demo_summary.png` | [x] | 4.30 |
 | I2 landing | Web | Imelda | | [ ] | |
 | I3 Long Description + outline deck | Web | Imelda | | [ ] | |
