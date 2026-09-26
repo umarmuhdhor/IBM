@@ -72,6 +72,8 @@ Pada 6 task yang sengaja bersinggungan (`examples/toko-demo/EXPERIMENT_TASKS.md`
 - Efek belajar: putaran A dijalankan lebih dulu, jadi coder sudah mengenal task di putaran B.
 - Bob nondeterministik: prompt sama bisa menghasilkan perubahan berbeda.
 - Satu repo kecil (React + TypeScript), satu jaringan.
+- Cara ukur konflik tidak identik: putaran A me-merge dua branch yang berjalan terpisah 45 menit; putaran B memutar ulang commit dari sesi yang sudah disinkronkan live. Angka konflik B yang lebih rendah sebagian berasal dari desain itu sendiri (satu penulis per file, file selalu terbaru), jadi disajikan sebagai "konflik yang tersisa saat merge", bukan perbandingan sebab-akibat murni.
+- "Perubahan tanpa kunci" di audit dua penulis termasuk file yang di-ignore Radar (tidak pernah dikunci); itu bukan pelanggaran.
 
 ### Data
 

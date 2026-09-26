@@ -15,6 +15,19 @@
 
 TDD: RED `5e00432c` (metrics + git-conflicts), `bdc267bd` (collect-round-b), `6ca6ef7b` (merge-check CLI), 2 test `hook.log` merah sebelum `408a596e` → GREEN `f117dfbc`, `950bba27`, `408a596e`.
 
+## Review persiapan
+
+| Reviewer | Temuan | Tindakan |
+|---|---|---|
+| `ecc:typescript-reviewer` | HIGH: respons `/v1/events/export` tidak divalidasi (ada skema `ExportRes`) | diperbaiki: `ExportRes.safeParse`, pesan jelas bila bentuk berubah + test |
+| | HIGH: `sha` commit di-cast tanpa cek sebelum masuk `git cherry-pick` | diperbaiki: narrowing union `commit.created` |
+| | MEDIUM: `JSON.parse` tanpa penanganan di CLI | diperbaiki: pesan satu baris + exit 1 |
+| `ecc:code-reviewer` | APPROVE. Audit dua penulis dan paginasi export benar (dicek ke `services/locks.ts`, `export.ts`) | – |
+| | MEDIUM: cara ukur konflik A (merge) dan B (replay) tidak identik | dicatat di "Keterbatasan" `EXPERIMENT.md` |
+| | LOW: "tanpa kunci" ikut menghitung file yang di-ignore | dicatat di "Keterbatasan" |
+
+Verifikasi: `pnpm -C radar typecheck`, `lint` bersih; `pnpm -C radar test` hijau (suite `scripts` 51 test, 28 baru).
+
 ## Belum (putaran asli)
 
 - [ ] Putaran A (2 coder, 45 menit) → `round-a.json`.
