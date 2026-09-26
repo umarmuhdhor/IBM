@@ -158,6 +158,7 @@ export function registerAdminRoutes(app: Hono, deps: WorkspaceDeps): void {
 /**
  * Reusable until it expires; every redeem rotates the member token, so the newest device wins.
  * Without `member` the code is open (D-alief-10): its first redeem adds a new member.
+ * `owner` makes an owner code (D-alief-11): each redeem rotates the Mission Control token.
  */
 export function createJoinCode(deps: WorkspaceDeps, req: AdminJoinCodeReq): AdminJoinCodeRes {
   requireInitialised(deps);
@@ -168,7 +169,7 @@ export function createJoinCode(deps: WorkspaceDeps, req: AdminJoinCodeReq): Admi
   const expiresAt = now + (req.ttlHours ?? JOIN_CODE_TTL_HOURS_DEFAULT) * 3_600_000;
   deps.transact(() => {
     deleteExpiredJoinCodes(deps.db, now);
-    insertJoinCode(deps.db, { hash: sha256Hex(code), memberId: member, now, expiresAt });
+    insertJoinCode(deps.db, { hash: sha256Hex(code), memberId: member, owner: req.owner === true, now, expiresAt });
   });
-  return { member, code, expiresAt };
+  return { member, ...(req.owner ? { owner: true } : {}), code, expiresAt };
 }

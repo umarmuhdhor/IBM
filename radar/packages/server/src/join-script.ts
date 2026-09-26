@@ -106,6 +106,7 @@ main() {
     const r = await fetch(process.env.RADAR_SERVER + "/v1/join", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }).catch((e) => { console.error("Server tidak bisa dihubungi: " + e.message); process.exit(1); });
     const j = await r.json().catch(() => ({}));
     if (!r.ok) { console.error(j?.error?.message ?? ("HTTP " + r.status)); process.exit(1); }
+    if (j.role === "mc") { console.error("Ini kode owner. Masukkan di app Live Collab, bagian Workspace owner?"); process.exit(1); }
     console.log([j.workspace, j.member, j.role, j.invite].join("\t"));
   ' </dev/null)" || die "Kode tidak bisa dipakai (lihat pesan di atas)."
   ws="$(printf '%s' "$info" | cut -f1)"

@@ -440,3 +440,15 @@ Format:
 - Alternatif yang ditolak: satu kode untuk seluruh tim (satu orang yang menukar dua kali akan jadi dua member); id member dari nama (bentrok dengan warna A–D dan kontrak lain yang memakai id pendek).
 - Dampak: Aarief (kartu Join punya kolom nama + peran; kartu Invite tanpa daftar member seed), Imelda (langkah gabung: masukkan kode, nama, peran). Deploy server + `admin init --force` tanpa `--member` diperlukan agar workspace live kosong dari A–D.
 
+
+## D-alief-11 · 27 Sep 2026 · pasca fase 12 · Kode owner: pemilik juga masuk tanpa token
+
+- Keputusan:
+  1. **Kontrak (milik Core):** `AdminJoinCodeReq.owner?: boolean` (tidak boleh bersama `member`, 422); `AdminJoinCodeRes.owner?`. `JoinRes` jadi gabungan `JoinMemberRes {workspace, member, role: coder|pm, invite}` | `JoinOwnerRes {workspace, member: null, role: 'mc', token}`. Kolom `join_code.owner` (skema v3; migrasi v2→v3 `ALTER TABLE … ADD COLUMN`, kode lama tetap berlaku).
+  2. Menukar kode owner di `POST /v1/join` memutar token `mc` (token dan socket mc lama dicabut, 4401), nama dan peran diabaikan, tidak ada member baru. Kode bisa dipakai ulang sampai kedaluwarsa (72 jam default).
+  3. Kode owner hanya dibuat dengan admin secret: `admin init` mencetaknya otomatis, `admin code --owner` membuat yang baru. `POST /v1/join-codes` (token mc) menolak `owner: true` (403). Skrip `curl …/j/<kode> | sh` menolak kode owner dengan pesan.
+  4. App: kartu Join punya tautan **Workspace owner? Use your owner code** (tanpa nama/peran). Hasil `mc` menyimpan koneksi Mission Control (`member: 'mc'`), menghentikan sync agent, dan tidak membuat folder. Form token lama tetap ada di bagian lipat.
+- Alasan: user ingin alur seperti Google Docs juga untuk pemilik: tidak perlu menempel token 40+ karakter, cukup kode pendek.
+- Alternatif yang ditolak: nilai penanda di `member_id` (melanggar foreign key); kode owner sekali pakai (pemilik pindah Mac butuh kode baru dari admin).
+- Dampak: Aarief (kartu Join punya mode owner), Imelda (langkah demo pemilik: masukkan kode owner). Panduan: `deploy.md`.
+- File ref/ yang diperbarui: – (R2 `join_code.owner` dicatat di sini; R2 diperbarui di fase integrasi).

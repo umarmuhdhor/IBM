@@ -169,6 +169,19 @@ describe('main', () => {
     expect(await main(['invite', '--server', 'https://x.example', '--member', 'B'], { ADMIN_SECRET: SECRET }, (l) => out.push(l))).toBe(1);
     expect(out.join('\n')).toMatch(/^B\s+rdr_new_b$/m);
   });
+  it('code --owner asks for an owner code and refuses --member with it (D-alief-11)', async () => {
+    const bodies: string[] = [];
+    vi.stubGlobal('fetch', async (_input: string | URL | Request, init?: RequestInit) => {
+      bodies.push(String(init?.body));
+      return Response.json({ member: null, owner: true, code: 'K7QM-3XPA', expiresAt: Date.UTC(2026, 8, 30) });
+    });
+    cleanups.push(() => void vi.unstubAllGlobals());
+    const out: string[] = [];
+    expect(await main(['code', '--server', 'https://x.example', '--owner'], { ADMIN_SECRET: SECRET }, (l) => out.push(l))).toBe(0);
+    expect(bodies).toEqual(['{"owner":true}']);
+    expect(out.join('\n')).toMatch(/^mc\s+K7QM-3XPA$/m);
+    expect(await main(['code', '--server', 'https://x.example', '--owner', '--member', 'A'], { ADMIN_SECRET: SECRET }, () => undefined)).toBe(2);
+  });
   it('formats the token table', () => {
     expect(formatTokenTable({ A: 't1', mc: 't2' })).toBe('member  token\nA       t1\nmc      t2');
   });

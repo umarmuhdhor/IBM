@@ -1,7 +1,7 @@
 import { exports } from 'cloudflare:workers';
 import { runInDurableObject } from 'cloudflare:test';
 import { describe, expect, it } from 'vitest';
-import { AdminJoinCodeRes, decodeInvite, JoinRes, normalizeJoinCode } from '@radar/common';
+import { AdminJoinCodeRes, decodeInvite, JoinMemberRes, JoinOwnerRes, normalizeJoinCode } from '@radar/common';
 import { admin, call, freshWorkspace, hello, seedTestWorkspace, sleep } from './helpers';
 
 const stillOpen = (closed: Promise<number>) =>
@@ -34,7 +34,7 @@ describe('short join code (IN-03, D-alief-09)', () => {
       body: { code: code.toLowerCase().replace('-', ' ') },
     });
     expect(r.status).toBe(200);
-    const res = JoinRes.parse(r.json);
+    const res = JoinMemberRes.parse(r.json);
     expect(res).toMatchObject({ workspace: 'toko-demo', member: 'B', role: 'coder' });
     const inv = decodeInvite(res.invite);
     expect(inv).toMatchObject({ server: 'http://radar.test', workspace: 'toko-demo', member: 'B' });
@@ -44,7 +44,7 @@ describe('short join code (IN-03, D-alief-09)', () => {
     expect((await call(stub, 'GET', '/v1/state', { token: t.B! })).status).toBe(401);
 
     // reusable until it expires: a second redeem rotates again
-    const again = JoinRes.parse((await call(stub, 'POST', '/v1/join', { body: { code } })).json);
+    const again = JoinMemberRes.parse((await call(stub, 'POST', '/v1/join', { body: { code } })).json);
     expect((await call(stub, 'GET', '/v1/state', { token: inv.token })).status).toBe(401);
     expect(
       (await call(stub, 'GET', '/v1/state', { token: decodeInvite(again.invite).token })).status,
@@ -80,7 +80,7 @@ describe('short join code (IN-03, D-alief-09)', () => {
     expect((await call(stub, 'POST', '/v1/join', { body: { code: made.code } })).status).toBe(422);
     const joined = await call(stub, 'POST', '/v1/join', { body: { code: made.code, name: '  Sari ', role: 'pm' } });
     expect(joined.status).toBe(200);
-    const res = JoinRes.parse(joined.json);
+    const res = JoinMemberRes.parse(joined.json);
     expect(res.member).toBe('D'); // A–C are seeded; the first free id
     expect(res.role).toBe('pm');
     const created = await mc.next((m) => m.t === 'event' && m.d?.type === 'member.created');
@@ -90,7 +90,7 @@ describe('short join code (IN-03, D-alief-09)', () => {
     expect(state.members).toContainEqual(expect.objectContaining({ id: res.member, name: 'Sari', role: 'pm' }));
 
     // second use: same member, name and role ignored
-    const again = JoinRes.parse((await call(stub, 'POST', '/v1/join', { body: { code: made.code, name: 'Other', role: 'coder' } })).json);
+    const again = JoinMemberRes.parse((await call(stub, 'POST', '/v1/join', { body: { code: made.code, name: 'Other', role: 'coder' } })).json);
     expect(again).toMatchObject({ member: res.member, role: 'pm' });
     expect((await call(stub, 'GET', '/v1/state', { token })).status).toBe(401);
   });
@@ -102,10 +102,34 @@ describe('short join code (IN-03, D-alief-09)', () => {
     for (let i = 0; i < 9; i++) {
       const { code } = AdminJoinCodeRes.parse((await admin(stub, 'POST', '/admin/join-code', {})).json);
       const r = await call(stub, 'POST', '/v1/join', { body: { code, name: `P${i}`, role: 'coder' }, headers: { 'cf-connecting-ip': `198.51.100.${i}` } });
-      if (i < 8) ids.push(JoinRes.parse(r.json).member);
+      if (i < 8) ids.push(JoinMemberRes.parse(r.json).member);
       else expect(r.status).toBe(409);
     }
     expect(ids).toEqual(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']);
+  });
+
+  it('an owner code connects Mission Control and replaces the old mc token; mc cannot make one (D-alief-11)', async () => {
+    const { stub } = freshWorkspace();
+    const t = await seedTestWorkspace(stub);
+    const oldMc = await hello(stub, t.mc!, 'mc');
+    expect((await admin(stub, 'POST', '/admin/join-code', { owner: true, member: 'A' })).status).toBe(422);
+    const made = AdminJoinCodeRes.parse((await admin(stub, 'POST', '/admin/join-code', { owner: true })).json);
+    expect(made).toMatchObject({ member: null, owner: true });
+
+    const r = await call(stub, 'POST', '/v1/join', { body: { code: made.code, name: 'ignored', role: 'coder' } });
+    expect(r.status).toBe(200);
+    const res = JoinOwnerRes.parse(r.json);
+    expect(res).toMatchObject({ workspace: 'toko-demo', member: null, role: 'mc' });
+    expect(await oldMc.closed).toBe(4401);
+    expect((await call(stub, 'GET', '/v1/state', { token: t.mc! })).status).toBe(401);
+    const state = await call(stub, 'GET', '/v1/state', { token: res.token });
+    expect(state.status).toBe(200);
+    expect(state.json.members).toHaveLength(3); // no member was created
+
+    // reusable: a second redeem rotates the mc token again
+    const again = JoinOwnerRes.parse((await call(stub, 'POST', '/v1/join', { body: { code: made.code } })).json);
+    expect((await call(stub, 'GET', '/v1/state', { token: res.token })).status).toBe(401);
+    expect((await call(stub, 'POST', '/v1/join-codes', { token: again.token, body: { owner: true } })).status).toBe(403);
   });
 
   it('Mission Control makes join codes with its mc token; members cannot', async () => {
@@ -115,7 +139,7 @@ describe('short join code (IN-03, D-alief-09)', () => {
     expect(r.status).toBe(201);
     const { code } = AdminJoinCodeRes.parse(r.json);
     expect(
-      JoinRes.parse((await call(stub, 'POST', '/v1/join', { body: { code } })).json),
+      JoinMemberRes.parse((await call(stub, 'POST', '/v1/join', { body: { code } })).json),
     ).toMatchObject({ member: 'C', role: 'pm' });
     expect(
       (await call(stub, 'POST', '/v1/join-codes', { token: t.A!, body: { member: 'B' } })).status,
