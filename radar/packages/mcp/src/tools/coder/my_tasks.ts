@@ -25,7 +25,8 @@ export default defineTool({
   description: 'Panggil di awal setiap sesi. Menampilkan task milikmu, file yang boleh kamu tulis, dan file yang masih antre.',
   inputSchema: {},
   async run(_args, client) {
-    const data = await client.get<TasksResponse>('/v1/tasks?owner=me&status=open');
+    // owner defaults to the caller (R3 §2.4); the real server rejects owner=me (R3 §7 table, D-umar-04)
+    const data = await client.get<TasksResponse>('/v1/tasks?status=open');
     const { tasks, activeTaskId } = data;
     if (!tasks.length) return 'Tidak ada task aktif saat ini.';
 
