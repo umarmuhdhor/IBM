@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Scenario fake of the Radar server for testing the coder kit in Bob IDE before fase 02/03 land (fase 07 step 13).
 // Implements only what the coder hooks and radar-mcp call (R3 §2.2–§2.9, §2.24). No dependencies.
-// TODO(sync:alief): replace with `pnpm -C radar dev:mock` (fase 02) or the real Worker (fase 03) in fase 10.
+// Superseded in fase 10: Bob IDE runs now use the real Worker (plan/log/fase-10-bob.md) and packages/mcp/test/server.int.test.ts.
+// Kept only to reproduce the fase 07/08 evidence (bob_sessions task 05–08).
 //
 // usage: node spike/fake-radar/server.mjs [--port 8787] [--log out/fake-radar.jsonl]
 // Scenario: member B (token tok-b) works on T-2 "Dark mode"; src/checkout/checkout.ts and src/routes.ts are held by

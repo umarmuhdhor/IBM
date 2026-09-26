@@ -7,8 +7,9 @@ import { EDIT_TOOLS_REGEX, HOOK_SERVER_TIMEOUT_MS, type LockCheckRes } from '@ra
 import { saveState } from '@radar/common/node';
 
 // Whole-hook budget from process start (stdin + server call); keeps the hook under the 1.8 s fail-open target
-// even when the host is slow to close stdin.
-export const LOCK_GUARD_BUDGET_MS = 1_600;
+// even when the host is slow to close stdin. Budget is 1.2 s so the measured wall time (spawn + node
+// startup + budget) stays under 1.8 s even on loaded CI runners running parallel suites.
+export const LOCK_GUARD_BUDGET_MS = 1_200;
 const MAX_SAVED_MESSAGE = 2_000;
 
 async function main(): Promise<void> {

@@ -22,12 +22,12 @@ Jangan tempel nilai secret di chat atau di file repo. Agent hanya perlu tahu bah
 | # | Yang dibutuhkan | Cara | Status |
 |---|---|---|---|
 | B1 | Akun Cloudflare tim (plan Free) + `npx wrangler login` di Mac Alief | Login di browser saat diminta wrangler | [x] 26 Sep 00:40: `wrangler whoami` OK (OAuth, izin workers/pages write) |
-| B2 | Nama akun/subdomain `*.workers.dev` | Untuk `NEXT_PUBLIC_RADAR_SERVER` dan `CORS_ORIGIN` (R5 §5) | [ ] |
-| B3 | Repo `toko-demo`: owner, nama, branch default | Dipakai `GITHUB_REPO` dan `admin init --repo` (PROGRESS A1 masih kosong) | [ ] |
-| B4 | GitHub fine-grained PAT untuk `toko-demo` | Hanya repo `toko-demo`, izin **Contents: read & write**, **tanpa** Workflows. Simpan dengan `npx wrangler secret put GITHUB_TOKEN` (diketik di prompt wrangler) | [ ] |
-| B5 | `ADMIN_SECRET` | Buat string acak, simpan di password manager tim, lalu `npx wrangler secret put ADMIN_SECRET` | [ ] |
+| B2 | Nama akun/subdomain `*.workers.dev` | Untuk `NEXT_PUBLIC_RADAR_SERVER` dan `CORS_ORIGIN` (R5 §5) | [x] 26 Sep 12:40: `https://live-collab.afindo-mi01.workers.dev` (akun `afindo-mi01`) |
+| B3 | Repo `toko-demo`: owner, nama, branch default | Dipakai `GITHUB_REPO` dan `admin init --repo` (PROGRESS A1 masih kosong) | [x] 26 Sep 12:38: `aliefauzan/toko-demo` (public), branch `main`, seed `ed9e4b2` dari `radar/examples/toko-demo`. Di akun Alief karena PAT fine-grained Alief tidak bisa mengakses repo personal Umar |
+| B4 | GitHub fine-grained PAT untuk `toko-demo` | Hanya repo `toko-demo`, izin **Contents: read & write**, **tanpa** Workflows. Simpan dengan `npx wrangler secret put GITHUB_TOKEN` (diketik di prompt wrangler) | [x] 26 Sep 12:49: PAT fine-grained dibuat Alief (hanya `toko-demo`, Contents read & write), diketik Alief di prompt `wrangler secret put GITHUB_TOKEN` |
+| B5 | `ADMIN_SECRET` | Buat string acak, simpan di password manager tim, lalu `npx wrangler secret put ADMIN_SECRET` | [x] 26 Sep 12:45: `openssl rand -hex 32` langsung ke `wrangler secret put` + Keychain macOS (`security find-generic-password -s radar-admin-secret -a live-collab -w`); nilai tidak pernah tampil. Salin ke password manager tim |
 | B6 | Email co-author IBM Bob untuk trailer commit | R5 §3: nilai `BOB_COAUTHOR` "dikonfirmasi saat kickoff". Default sekarang `IBM Bob <bob@ibm.com>`; pastikan email ini benar atau ganti | [ ] |
-| B7 | Tempat menyimpan token member (A, B, C, D, mc) hasil `admin init` | Password manager tim, bukan chat publik | [ ] |
+| B7 | Tempat menyimpan token member (A, B, C, D, mc) hasil `admin init` | Password manager tim, bukan chat publik | [~] `admin init` produksi 26 Sep 12:47: token A, B, C, D, mc ada di `~/.live-collab/members-prod-2026-09-26.txt` (0600). Alief memindahkannya ke password manager tim lalu menghapus file itu |
 
 ## C. Koordinasi lane (kabari tim)
 

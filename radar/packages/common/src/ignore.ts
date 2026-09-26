@@ -18,6 +18,8 @@ export const DEFAULT_IGNORE_PATTERNS: readonly string[] = [
   '.DS_Store',
   '*.radar-rejected',
   '*.radar-conflict',
+  // Atomic-write temp files of the sync agent (`.<name>.radar-tmp-<rand>`, fase 04).
+  '.*.radar-tmp-*',
   '*.swp',
   '*~',
   '.#*',
