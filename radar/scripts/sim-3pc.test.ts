@@ -6,6 +6,6 @@ import { runSim } from './sim-3pc.js';
 
 describe('sim-3pc (fase 10)', () => {
   it('runs plan → review with zero dual-writer violations', async () => {
-    await expect(runSim({ server: 'local', until: 'review', writes: 1 })).resolves.toBe(0);
+    await expect(runSim({ server: 'local', until: 'review', writes: 1, writeReplay: false })).resolves.toBe(0);
   }, 180_000);
 });

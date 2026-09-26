@@ -80,6 +80,8 @@ export interface SimOptions {
   writes: number;
   /** Remote mode wipes the target workspace (admin init --force): require explicit consent. */
   allowRemoteWipe?: boolean;
+  /** Write the normalized export to the replay fixture (web lane). Off in tests so they leave the tree clean. */
+  writeReplay?: boolean;
 }
 
 export async function runSim(opts: SimOptions): Promise<number> {
@@ -326,7 +328,7 @@ export async function runSim(opts: SimOptions): Promise<number> {
       if (m.lockCheckCount > 0 && !(m.lockCheckP95Ms < 300)) problems.push(`p95 locks/check ${m.lockCheckP95Ms}ms is not < 300ms`);
       if (m.dualWriterViolations !== 0) problems.push(`${m.dualWriterViolations} file.changed events from a non-holder`);
       if (reached === 'review' && m.reviewsFlagged < 1) problems.push('no flagged review (review.flagged < 1)');
-      if (reached === 'review') {
+      if (reached === 'review' && opts.writeReplay !== false) {
         const out = normalizeExport({ events, exportedAt: exp.json.exportedAt as number | undefined });
         const dest = fileURLToPath(new URL('../../web/public/demo/events.sim.json', import.meta.url));
         mkdirSync(dirname(dest), { recursive: true });
