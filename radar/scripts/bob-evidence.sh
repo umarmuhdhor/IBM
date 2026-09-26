@@ -68,17 +68,25 @@ lane="$(node -e '
 sessions="$root/bob_sessions"
 file="${team}_${name}_task${num}_${slug}_summary.png"
 out="$sessions/$file"
+md_dest=""
+if [[ -n "$md_path" ]]; then
+  [[ -f "$md_path" ]] || die 3 "md source not found: $md_path"
+  if grep -qiE '(rdr_|ghp_|sk-[a-zA-Z0-9]{20,}|apikey|api_key|Bearer )[^[:space:]]{4,}' "$md_path" 2>/dev/null; then
+    die 4 "secret pattern detected in $md_path — refusing to copy"
+  fi
+  md_dest="$sessions/${team}_${name}_task${num}_${slug}.md"
+fi
 # The IBM template .gitignore silently drops names like these (R5 §8); refuse before capturing.
 [[ ! "$file" =~ (token|secret|password|credential|api_?key) ]] ||
   die 1 "'$file' would be git-ignored by the IBM template; pick another slug"
 mkdir -p "$sessions"
 
-if [[ -e "$out" && "$force" != true ]]; then
+if [[ ( -e "$out" || ( -n "$md_dest" && -e "$md_dest" ) ) && "$force" != true ]]; then
   if [[ -t 0 ]]; then
-    read -r -p "$file already exists. Overwrite? [y/N] " answer
-    [[ "$answer" =~ ^[Yy]$ ]] || die 1 "kept existing $file"
+    read -r -p "Task evidence already exists. Overwrite? [y/N] " answer
+    [[ "$answer" =~ ^[Yy]$ ]] || die 1 "kept existing task evidence"
   else
-    die 1 "$file already exists (pass --force to overwrite)"
+    die 1 "task evidence already exists (pass --force to overwrite)"
   fi
 fi
 
@@ -111,16 +119,10 @@ else
 fi
 [[ -s "$out" ]] || die 2 "screenshot is empty: $out"
 
-# --md: copy task Markdown export into bob_sessions/
-if [[ -n "$md_path" ]]; then
-  [[ -f "$md_path" ]] || die 3 "md source not found: $md_path"
-  # Secret filter: reject if the file contains known secret patterns
-  if grep -qiE '(rdr_|ghp_|sk-[a-zA-Z0-9]{20,}|apikey|api_key|Bearer )[^[:space:]]{4,}' "$md_path" 2>/dev/null; then
-    die 4 "secret pattern detected in $md_path — refusing to copy"
-  fi
-  md_dest="$sessions/${team}_${name}_task${num}_${slug}.md"
+# --md: copy the preflighted task Markdown export into bob_sessions/.
+if [[ -n "$md_dest" ]]; then
   cp "$md_path" "$md_dest"
-  echo "bob_sessions/${team}_${name}_task${num}_${slug}.md"
+  echo "bob_sessions/$(basename "$md_dest")"
 fi
 
 mkdir -p "$sessions/index"

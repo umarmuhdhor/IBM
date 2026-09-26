@@ -12,9 +12,6 @@
 import { execSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 // ── locate repo root ────────────────────────────────────────────────────────
 const root = execSync('git rev-parse --show-toplevel', { encoding: 'utf8' }).trim();
@@ -43,7 +40,7 @@ function fail(msg: string) {
 // ── 1. collect PNGs in bob_sessions/ ──────────────────────────────────────
 let allPngs: string[] = [];
 if (existsSync(sessionsDir)) {
-  allPngs = readdirSync(sessionsDir).filter((f) => f.endsWith('_summary.png'));
+  allPngs = readdirSync(sessionsDir).filter((f) => f.toLowerCase().endsWith('.png'));
 }
 
 // §1 pattern: <team>_<nama>_task<NN>_<slug>_summary.png
