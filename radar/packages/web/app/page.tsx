@@ -102,59 +102,59 @@ export default function HomePage() {
 
       <header className="lp-nav">
         <a href="/" className="lp-wordmark">
-          <span className="lp-wordmark-dot" aria-hidden="true" />
+          {/* Plain <img>: static export has no image optimizer. */}
+          <img src="/brand/bob-crew.png" alt="" width={28} height={28} />
           {SITE.title}
         </a>
         <nav aria-label="Primary" className="lp-nav-links">
-          <ExternalLink href={links.repoUrl} className="lp-nav-link lp-hide-sm">
-            Repo
-          </ExternalLink>
+          <a href={SITE.demoPath} className="lp-nav-link lp-hide-sm">
+            Replay
+          </a>
           <ExternalLink href={links.bobSessions} className="lp-nav-link lp-hide-sm">
             bob_sessions
           </ExternalLink>
-          {links.video !== null && (
-            <ExternalLink href={links.video} className="lp-nav-link lp-hide-sm">
-              Video
-            </ExternalLink>
-          )}
-          {links.deck !== null && (
-            <ExternalLink href={links.deck} className="lp-nav-link lp-hide-sm">
-              Deck
-            </ExternalLink>
-          )}
-          <a href={SITE.demoPath} className="lp-btn lp-btn-primary lp-btn-sm">
-            Watch replay
-          </a>
+          <ExternalLink href={links.repoUrl} className="lp-nav-link lp-hide-sm">
+            GitHub
+          </ExternalLink>
+          <ExternalLink href={downloadUrl} className="lp-btn lp-btn-outline lp-btn-sm">
+            Download
+          </ExternalLink>
         </nav>
       </header>
 
       <main id="main">
-        {/* Hero */}
-        <section className="lp-hero lp-wrap">
-          <p className="lp-eyebrow">Multiplayer for IBM Bob</p>
-          <h1 className="lp-h1">
-            Your team&apos;s Bobs, <span className="lp-pill">working</span> together.
-          </h1>
-          <p className="lp-sub">
-            Every teammate keeps their own Bob. Live Collab gives them one shared workspace, one
-            lock per file, and a human in the loop before anything risky lands.
-          </p>
-          <div className="lp-cta-row">
-            <a href={SITE.demoPath} className="lp-btn lp-btn-primary">
+        {/* Hero: one screen, one message, one button (Amoeba-like structure, our own brand). */}
+        <section className="lp-stage">
+          <div className="lp-halftone" aria-hidden="true" />
+          <div className="lp-hero">
+            <h1 className="lp-h1">
+              Your team&apos;s Bobs,
+              <br />
+              working together
+            </h1>
+            <p className="lp-sub">one live workspace for every teammate&apos;s IBM Bob</p>
+            <a href={SITE.demoPath} className="lp-btn lp-btn-primary lp-btn-lg">
               Watch the live replay
             </a>
-            <ExternalLink href={downloadUrl} className="lp-btn lp-btn-ghost">
-              Download for macOS
-            </ExternalLink>
+            <p className="lp-cta-note">
+              Runs in your browser · no login ·{' '}
+              <ExternalLink href={downloadUrl} className="lp-cta-note-link">
+                Download for macOS
+              </ExternalLink>{' '}
+              (arm64, unsigned)
+            </p>
           </div>
-          <p className="lp-cta-note">
-            Replay runs in any browser. The app is macOS arm64 only, unsigned · open via Privacy
-            &amp; Security → Open Anyway.
-          </p>
         </section>
 
         {/* 18a-1..3: product window */}
-        <section className="lp-wrap lp-product" aria-label="Live Collab product preview">
+        <section className="lp-wrap lp-product" aria-labelledby="lp-see">
+          <h2 id="lp-see" className="lp-h2 lp-h2-center">
+            Three people, three Bobs, one repo
+          </h2>
+          <p className="lp-lede">
+            Each teammate keeps their own Bob. Live Collab shares locks, tasks and hook traces, and
+            asks a human before anything risky lands.
+          </p>
           <LandingProductWindow demoPath={SITE.demoPath} />
           <dl className="lp-stats">
             {STATS.map((s) => (
