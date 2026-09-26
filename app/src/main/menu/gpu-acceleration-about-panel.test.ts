@@ -57,4 +57,14 @@ describe('GPU acceleration About panel', () => {
       credits: 'GPU acceleration: Disabled (Safe Graphics Mode)'
     })
   })
+
+  it('credits Orca in the IBM Bob Live Collab About panel', () => {
+    expect(createGpuAccelerationAboutPanelOptions({
+      appName: 'IBM Bob Live Collab',
+      appVersion: '1.0.0',
+      platform: 'darwin',
+      gpuFallbackActive: false,
+      gpuFeatureStatus: { gpu_compositing: 'enabled' }
+    }).credits).toContain('Built on Orca by Stably AI (MIT)')
+  })
 })
