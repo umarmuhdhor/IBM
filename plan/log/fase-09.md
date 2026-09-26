@@ -1,6 +1,6 @@
 # Log fase 09 — App desktop (Lane Aarief · `lane/app`)
 
-- **Status:** [x] implementasi dan gerbang fase 09 selesai Sab 26 Sep 11:30 WITA. Gerbang UI + security lulus 11:05, uji koneksi live melawan mock lulus 11:19. Snapshot dan PR fase 09 masih perlu dibuat sesuai PROMPT langkah 11.
+- **Status:** [x] implementasi dan gerbang fase 09 selesai Sab 26 Sep 11:30 WITA. Gerbang UI + security lulus 11:05, uji koneksi live melawan mock lulus 11:19. Snapshot dan PR: 09a [#6](https://github.com/umarmuhdhor/IBM/pull/6), 09b [#7](https://github.com/umarmuhdhor/IBM/pull/7), 09c [#8](https://github.com/umarmuhdhor/IBM/pull/8).
 - **Mulai:** Sab 26 Sep 2026 00:12 WITA · branch `lane/app` (dibuat dari `origin/main` `ed1f2951`, tanpa upstream).
 - **Model:** Claude Opus 5.5 · high (R6 §2 menyarankan Sonnet 5 high; Opus diizinkan untuk titik sambung Orca).
 
@@ -12,7 +12,7 @@ Aturan yang tetap berlaku: `CLAUDE.md`, `plan/PROMPT.md` (LANE Aarief, FASE auto
 1. DA-02 P1 terverifikasi: menu New tab menampilkan **IBM Bob** dengan glyph B; pemilihan dari UI membuka Terminal 2 dan Bob Shell 2.0.5 otomatis. Pesan `halo` dijawab normal dengan tim `ibm-coding-challenge-uat`. Screenshot lokal `/tmp/bob_app_picker_response.png` (tidak di-commit karena menampilkan identitas akun).
 2. PR Core #4 sudah di-merge ke `main` sebagai `8dd22e1c`; `lane/app` direbase ke commit itu. Placeholder tipe, reducer, dan keepalive telah diganti dengan `@radar/common`.
 3. Checklist Settings, gerbang UI, security review, koneksi WS live, dan Approve P-2 melawan mock telah lulus. Screenshot aman tanpa informasi pribadi ada di `app/docs/img/app-mission-control.png`.
-4. Buat snapshot fase 09 sesuai PROMPT langkah 11 sebelum commit 11a, dorong branch snapshot, lalu PR. Commit Bob C2/C3 memiliki `Co-authored-by: IBM Bob <bob@ibm.com>`; avatar GitHub Bob bergantung pada alamat email akun yang belum dikonfirmasi.
+4. Snapshot 09a/09b/09c sudah dibuat sebelum commit 11a dan PR #6/#7/#8 dibuka. Tunggu CI hijau, lalu merge berurutan sesuai PROMPT langkah 11/13. Commit Bob C2/C3 memiliki `Co-authored-by: IBM Bob <bob@ibm.com>`; avatar GitHub Bob bergantung pada alamat email akun yang belum dikonfirmasi.
 
 **Keputusan yang sudah diambil (tulis ke DECISIONS sebagai D-aarief-01 saat commit berikutnya):**
 - Role di Settings = `coder | mc` (R3 §1/§2.14: hanya token `mc` boleh decision; fase 09 langkah 5 menulis `pm`).
@@ -48,7 +48,7 @@ Aturan yang tetap berlaku: `CLAUDE.md`, `plan/PROMPT.md` (LANE Aarief, FASE auto
 - [x] 11. Kondisi kosong/error: belum konek → kartu "Connect to a Live Collab workspace" + tombol Open settings; server putus → badge merah "Disconnected", state terakhir tetap tampil (store hanya mengubah `connected`). Uji tanpa token melawan mock asli: kredensial sintetis salah → mock menutup 4401 → client membuka tepat 1 socket (tanpa reconnect) dan status akhir `connected:false` (probe sementara, dihapus setelah lulus).
 - [x] 12–13. Gerbang UI `better-interface` + security review PASS (lihat "Hasil verifikasi").
 - [x] 14a. Uji koneksi live (26 Sep 11:18–11:19): app Dev background + Playwright CDP 9339. Kode demo `mc` dibaca script dari `radar/scripts/mock/hub.ts` langsung di memori dan diisi ke field password; nilainya tidak dicetak ke chat, log, file repo, atau commit. Hasil: header `● Live Collab`, field token kosong lagi setelah Connect, Test → WebSocket Connected / Bob Shell 2.0.5; skenario demo diputar (57 event); kartu keputusan muncul 14.6 s setelah membuka Mission Control; klik Approve pada review P-2 → Needs you 1 → 0, dan `GET /v1/state` mock menunjukkan `P-2=disetujui` + event `proposal.decided P-2` (keputusan benar-benar sampai ke `POST /v1/proposals/:id/decision`). Notifikasi `Bob B diblokir di checkout.ts` tampil. Screenshot `app/docs/img/app-mission-control.png` (1512×982, dark). `app-home`/`app-coder` belum diambil karena terminal workspace uji menampilkan info pribadi mesin; diambil ulang di toko-demo saat fase 10.
-- [~] 14. Snapshot PR fase 09. Branding About, mock server, dan Bob Shell sudah diverifikasi; snapshot dan PR sedang disiapkan.
+- [x] 14. Snapshot PR 09a/09b/09c dibuka sebagai #6/#7/#8. Branding About, mock server, dan Bob Shell sudah diverifikasi. PR 09b/09c bertumpuk sampai fase sebelumnya merged.
 - [x] Sinkron fase 02: PR #4 diperiksa (CI hijau, mergeable, review kontrak) lalu squash-merge ke `main` sebagai `8dd22e1c`. `lane/app` direbase ke `origin/main` tanpa menyentuh folder lane lain. Test merah membuktikan snapshot array dan event resmi belum ditangani, kemudian `@radar/common` dipakai untuk tipe/reducer/keepalive. Test merah kedua menangkap duplikasi jam feed lalu diperbaiki. About menambah kredit Orca setelah test merah.
 
 ## File dibuat/diubah
