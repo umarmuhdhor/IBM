@@ -139,6 +139,26 @@ describe('sync agent against the real server', () => {
     expect(notices.join('\n')).toMatch(/tersambung lagi/);
   }, 10_000);
 
+  it('SY-07: offline edits after reconnect — own file is sent, a file changed on the server meanwhile becomes .radar-conflict', async () => {
+    const t = await seedTestWorkspace(server.url, SEED);
+    // A slow first retry keeps A offline while both sides edit.
+    const [A, B] = await Promise.all([agent(t.A!, 'A', { reconnect: { minMs: 1500, maxMs: 1500 } }), agent(t.B!, 'B')]);
+    A.a.dropConnection();
+    await waitFor(() => !A.a.connected, 1000, 'A disconnected');
+    writeFileSync(join(B.root, 'src/checkout/checkout.ts'), '// B online\n');
+    await waitFor(() => B.a.known.get('src/checkout/checkout.ts')?.version === 2, 3000, 'B acked');
+    writeFileSync(join(A.root, 'src/utils.ts'), '// A offline, own file\n');
+    writeFileSync(join(A.root, 'src/checkout/checkout.ts'), '// A offline, B file\n');
+    await waitFor(() => A.a.connected && read(B.root, 'src/utils.ts') === '// A offline, own file\n', 6000, 'own offline edit reaches B');
+    await waitFor(() => read(A.root, 'src/checkout/checkout.ts') === '// B online\n', 3000, 'server copy wins in A');
+    expect(read(A.root, 'src/checkout/checkout.ts.radar-conflict')).toBe('// A offline, B file\n');
+    expect(A.a.stats.conflicts).toBe(1);
+    await sleep(300);
+    // The losing copy is never uploaded.
+    expect(read(B.root, 'src/checkout/checkout.ts')).toBe('// B online\n');
+    expect(existsSync(join(B.root, 'src/checkout/checkout.ts.radar-conflict'))).toBe(false);
+  }, 12_000);
+
   it('a .gitignore edit is honoured at once: newly ignored files stop syncing', async () => {
     const t = await seedTestWorkspace(server.url, SEED);
     const [A, B] = await Promise.all([agent(t.A!, 'A'), agent(t.B!, 'B')]);
