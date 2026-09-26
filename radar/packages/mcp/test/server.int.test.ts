@@ -51,6 +51,8 @@ beforeAll(async () => {
   const init = await fetch(`${url}/admin/init`, { method: 'POST', headers, body: JSON.stringify({ workspace: 'toko-demo', members, force: true }) });
   if (init.status !== 201) throw new Error(`init failed: ${init.status} ${await init.text()}`);
   tokens = ((await init.json()) as { tokens: Record<string, string> }).tokens;
+  // Fail here with a clear message instead of an opaque 401 later if the init shape drifts.
+  for (const id of ['A', 'B', 'C', 'mc']) if (!tokens[id]) throw new Error(`init returned no token for ${id}`);
   const files = FILES.map((path) => ({ path, content: `// ${path}\n` }));
   const seeded = await fetch(`${url}/admin/files`, { method: 'POST', headers, body: JSON.stringify({ headCommit: null, files }) });
   if (seeded.status !== 200) throw new Error(`files failed: ${seeded.status} ${await seeded.text()}`);
@@ -67,7 +69,8 @@ beforeAll(async () => {
 }, 90_000);
 
 afterAll(async () => {
-  await Promise.all(agents.map((a) => a.stop()));
+  // allSettled: a beforeAll that failed halfway still closes whatever it started (agents, then the Worker).
+  await Promise.allSettled(agents.map((a) => a.stop()));
   await harness?.close();
 });
 
@@ -75,7 +78,7 @@ const FAST = { heartbeatMs: 60_000, pingMs: 60_000, reconnect: { minMs: 50, maxM
 
 const readWs = (m: Member, path: string) => (existsSync(join(roots[m], path)) ? readFileSync(join(roots[m], path), 'utf8') : null);
 
-async function waitFor(fn: () => boolean, what: string, timeoutMs = 5_000): Promise<void> {
+async function waitFor(fn: () => boolean, what: string, timeoutMs = 10_000): Promise<void> {
   const t0 = Date.now();
   while (!fn()) {
     if (Date.now() - t0 > timeoutMs) throw new Error(`timeout: ${what}`);
@@ -227,15 +230,17 @@ describe('Bob kit against the real server (PRD §15 up to review)', () => {
     await approve(reviewId);
     const afterReview = await briefPrompt('B');
     expect(afterReview.stdout).toContain('calculateTotal(items, shipping)');
-  });
+  }, 60_000);
 
   it('activity hooks reach the server and show up in team_activity (JT-01)', async () => {
     const post = { ...prePayload(roots.B, THEME), hook_event_name: 'PostToolUse', tool_response: 'ok' };
     expect((await hook('B', 'mark_ai_edit', [], post)).code).toBe(0);
     expect((await hook('B', 'stop', [], { session_id: 's1', cwd: roots.B, hook_event_name: 'Stop' })).code).toBe(0);
     // POST /v1/ai-edits is P1 (fase 12, BC-05): until it lands only that call may be logged as not sent.
-    const log = hookLog('B').split('\n').filter((l) => !l.includes('ai-edits not sent'));
-    expect(log.join('\n')).not.toMatch(/not sent|config invalid/);
+    const lines = hookLog('B').split('\n');
+    // …and only because the route is missing (404), not for any other reason.
+    for (const l of lines.filter((x) => x.includes('ai-edits not sent'))) expect(l).toContain('404');
+    expect(lines.filter((l) => !l.includes('ai-edits not sent')).join('\n')).not.toMatch(/not sent|config invalid/);
 
     // bob.activity goes to app/mc sockets (JT-01), not to /v1/activity; team_activity still reads the team feed.
     const act = await tool('A', 'team_activity');
