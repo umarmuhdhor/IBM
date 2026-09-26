@@ -2,7 +2,7 @@
 import type { ErrorCode } from '@radar/common';
 import { ZodError, type z } from 'zod';
 
-export type ErrorStatus = 400 | 401 | 403 | 404 | 409 | 422 | 426 | 500;
+export type ErrorStatus = 400 | 401 | 403 | 404 | 409 | 413 | 422 | 426 | 429 | 500;
 
 export class RadarError extends Error {
   override readonly name = 'RadarError';
@@ -47,8 +47,17 @@ export function parseJsonText(text: string): unknown {
   }
 }
 
-export async function readJson(req: Request): Promise<unknown> {
-  return parseJsonText(await req.text());
+/** REST body cap (fase 12 step 9). Admin file batches pass a larger cap. */
+export const REST_MAX_BODY_BYTES = 256 * 1024;
+
+export async function readJson(req: Request, maxBytes = REST_MAX_BODY_BYTES): Promise<unknown> {
+  const tooLarge = () => new RadarError(413, 'PAYLOAD_TOO_LARGE', `Body lebih dari ${Math.round(maxBytes / 1024)} KB.`);
+  const declared = Number(req.headers.get('content-length'));
+  if (Number.isFinite(declared) && declared > maxBytes) throw tooLarge();
+  const text = await req.text();
+  // Header can be absent or wrong (chunked): check the real size too. UTF-16 length ≤ UTF-8 bytes, so this is cheap first.
+  if (text.length > maxBytes || new TextEncoder().encode(text).byteLength > maxBytes) throw tooLarge();
+  return parseJsonText(text);
 }
 
 export function parseWith<S extends z.ZodType>(schema: S, value: unknown): z.infer<S> {

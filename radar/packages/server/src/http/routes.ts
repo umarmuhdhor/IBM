@@ -1,6 +1,6 @@
 // Hono app that runs inside the Durable Object (fase 03 step 9). The Worker forwards everything except /healthz.
 import { BobActivityReq, WS_HELLO_TIMEOUT_MS } from '@radar/common';
-import { Hono } from 'hono';
+import { Hono, type MiddlewareHandler } from 'hono';
 import { registerAdminRoutes } from '../admin';
 import type { WorkspaceDeps } from '../deps';
 import { insertMetric } from '../db/repo/metric';
@@ -60,6 +60,20 @@ export function createApp(deps: WorkspaceDeps): Hono {
     deps.transact((uow) => appendEvent(deps.db, uow, { ts: now, actor: member.memberId, type: 'bob.activity', payload }));
     return c.body(null, 204);
   });
+
+  // Rate limit before the routes: mc decisions and proposal writes (fase 12 step 9). Reads are not limited.
+  // One middleware with an explicit path test: Hono's `/x/*` also matches `/x`, so two patterns would count twice.
+  const limitedPath = /^\/v1\/(proposals(\/.*)?|locks\/revoke|tasks\/[^/]+\/cancel)$/;
+  const limited: MiddlewareHandler = async (c, next) => {
+    if (c.req.method !== 'POST' || !limitedPath.test(c.req.path)) return next();
+    // Keyed by the raw header in memory only; never logged. Auth still runs in the route.
+    const retry = deps.rateLimiter.hit(c.req.header('authorization') ?? '', deps.now());
+    if (retry === 0) return next();
+    const res = errorJson(429, 'RATE_LIMITED', `Terlalu banyak permintaan. Coba lagi dalam ${retry} detik.`);
+    res.headers.set('retry-after', String(retry));
+    return res;
+  };
+  app.use('/v1/*', limited);
 
   registerLockRoutes(app, deps);
   registerFileRoutes(app, deps);

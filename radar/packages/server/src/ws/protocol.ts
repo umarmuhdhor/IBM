@@ -17,6 +17,13 @@ export const WS_CLOSE_RESET = 1012;
 
 const decoder = new TextDecoder();
 
+/** WS frame cap (fase 12 step 9): a 1 MB file plus JSON escaping and envelope. */
+export const WS_MAX_MESSAGE_BYTES = 1.5 * 1024 * 1024;
+
+function frameBytes(raw: string | ArrayBuffer): number {
+  return typeof raw === 'string' ? (raw.length * 3 > WS_MAX_MESSAGE_BYTES ? new TextEncoder().encode(raw).byteLength : raw.length) : raw.byteLength;
+}
+
 function parseFrame(raw: string | ArrayBuffer): { ok: true; value: unknown } | { ok: false } {
   try {
     return { ok: true, value: JSON.parse(typeof raw === 'string' ? raw : decoder.decode(raw)) };
@@ -29,6 +36,10 @@ export function handleMessage(deps: WorkspaceDeps, ws: WebSocket, raw: string | 
   const { hub } = deps;
   const att = hub.attachment(ws);
   if (!att || att.state === 'replaced' || att.state === 'closed') return;
+  if (frameBytes(raw) > WS_MAX_MESSAGE_BYTES) {
+    hub.send(ws, { t: 'error', d: { code: 'PAYLOAD_TOO_LARGE', message: 'Pesan WebSocket lebih dari 1,5 MB.' } });
+    return;
+  }
   const frame = parseFrame(raw);
 
   if (att.state === 'pending') {

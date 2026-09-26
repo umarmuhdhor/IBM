@@ -13,6 +13,7 @@ import { ActivityLimiter } from './services/activity';
 import { authorizeWriteLocks, type AuthorizeWrite } from './services/files';
 import { createCommitter } from './services/github';
 import { expireCommitClaims } from './services/proposals';
+import { RateLimiter } from './services/rate-limit';
 import { expireHeartbeats, staleDeadline } from './services/stale';
 import { UnitOfWork } from './services/uow';
 import { Hub } from './ws/hub';
@@ -24,6 +25,7 @@ export class WorkspaceDO extends DurableObject<Env> implements WorkspaceDeps {
   readonly hub: Hub;
   readonly scheduler: AlarmScheduler;
   readonly limiter = new ActivityLimiter();
+  readonly rateLimiter = new RateLimiter();
   readonly authorizeWrite: AuthorizeWrite = authorizeWriteLocks;
   // Set in the constructor from env (fase 06 owns the default; tests swap in fakes).
   committer!: GitHubCommitter;
@@ -75,6 +77,7 @@ export class WorkspaceDO extends DurableObject<Env> implements WorkspaceDeps {
     await this.ctx.storage.deleteAll();
     migrate(this.db);
     this.limiter.clear();
+    this.rateLimiter.clear();
   }
 
   override async fetch(request: Request): Promise<Response> {
