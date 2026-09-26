@@ -91,6 +91,42 @@ Security-reviewer juga mengonfirmasi manual: tidak ada kredensial nyata di `fixt
 
 Security-reviewer I2: semua 11 link `target="_blank"` sudah `rel="noopener noreferrer"`, tidak ada `dangerouslySetInnerHTML`/`eval`, tidak ada kredensial, `next/font/google` benar self-hosted (tanpa request ke fonts.googleapis.com saat runtime).
 
+## Sesi 26 Sep 17:40 · langkah 18a — landing dibangun ulang (Carbon gelap, "ada kehidupan")
+
+Pemicu: user "you can recreate the web". Dasar: D-imelda-09 (landing gelap Carbon) + D-imelda-10 (langkah 18a), resep `UI Inspo & Design/landing-style/README.md`. Ditulis Claude Code (bukan Bob), jadi tanpa trailer `Bob-Assisted`.
+
+File: `radar/packages/web/app/page.tsx` (tulis ulang, inline style → class `lp-*`), `src/landing-product-window.tsx` (tulis ulang), `app/globals.css` (blok landing diganti penuh), `app/icon.svg` (baru, favicon — sebelumnya 404 di console), `e2e/demo.spec.ts` (+2 test, 2 assertion lama diperbarui).
+
+Isi halaman (urutan resep): nav → hero (pill marigold, subhead serif, CTA replay biru + ghost download, caption "macOS arm64 only … Privacy & Security → Open Anyway") → jendela produk (tab Andi / Mission Control / Budi, klik + panah kiri/kanan, pulse Andi, kartu Needs you masuk 180 ms) → baris 4 angka dari `meta.json` → 4 mekanisme (`lock_guard`, `radar.why_blocked`, `pm-lead`, `radar-mcp`) → 3 kata Visible / Locked / Human-approved → blok marigold near-miss → panel navy primitif → 3 langkah pasang → footer disclaimer + Orca MIT.
+
+Koreksi fakta vs draf sebelumnya: `routes.ts` di fixture dipesan **Andi** (T-1), bukan Budi; keputusan near-miss di fixture = antre **otomatis** (`P-3 diterapkan_otomatis`), bukan kartu pending. Window sekarang mengikuti `events.json` id 39–58.
+
+Deviasi kecil dari resep: placeholder GIF bergaris putus diganti **log event near-miss** (teks dari `events.json` id 50–58) — jujur, tidak kosong, tidak mengarang. `TODO(sync:imelda)` tetap: tambah GIF setelah rekaman fase 10.
+
+### Gerbang UI (screenshot `plan/log/ui-11D1/landing-1440.png`, `landing-390.png`, Playwright + Chrome sistem)
+
+| # | Domain | Severity | Temuan | Perbaikan |
+|---|---|---|---|---|
+| 1 | layout | HIGH | 390 px: `scrollWidth` 403 (URL rilis mentah + perintah `xattr` meluber) — scroll horizontal | Link jadi "GitHub Releases", perintah di `<pre>` `overflow-x:auto`; sekarang 390/390 |
+| 2 | colors | HIGH | Teks kecil landing pakai `--lc-text-faint` #6f6f6f di #0e0e10 ≈ 3.9:1 (< 4.5) | Semua teks landing → `--lc-text-muted` (≥ 7:1) |
+| 3 | accessibility | MEDIUM | Tablist tanpa navigasi panah / roving tabindex; panel tidak bisa difokus | Panah kiri/kanan + `tabIndex` roving + `tabIndex=0` di tabpanel; e2e baru |
+| 4 | accessibility | MEDIUM | Tidak ada skip link; fokus tidak seragam | `Skip to content` + `.lp :focus-visible` outline 2 px `--lc-accent-soft` |
+| 5 | layout | MEDIUM | Headline yatim ("together." sendirian), nav wordmark patah 2 baris di 390 | `text-wrap: balance`; link nav sekunder disembunyikan < 640 px (ada di footer) |
+| 6 | ui | LOW | Favicon 404 di console | `app/icon.svg` |
+| 7 | colors | MEDIUM (bukan lane web) | Teks `BobTrace` di `@radar/ui` redup (faint) | Dicatat untuk lane App (Aarief); tidak diubah |
+
+Motion: dua animasi saja (panel/kartu masuk 180 ms `translateY(4px)`, tombol `scale(0.97)` saat ditekan), keduanya mati di `prefers-reduced-motion`; `WritingPulse` bawaan `@radar/ui` sudah menghormatinya.
+
+### Review (paralel)
+
+- `ecc:code-reviewer`: APPROVE, 0 temuan (angka, fidelitas fixture, teks pasang, footer, hierarki CTA dicek terhadap sumber).
+- `ecc:react-reviewer`: 0 CRITICAL. MEDIUM diperbaiki: `!` → guard, `getElementById` → ref, tabpanel `tabIndex=0`. MEDIUM dicatat: `page.tsx` bisa dipecah per section; `key={i}` di array literal statis (aman). **HIGH dicatat, tidak diperbaiki**: `radar/eslint.config.js` belum memuat `eslint-plugin-react-hooks` / `eslint-plugin-jsx-a11y` — config workspace bersama (edit diblokir hook config-protection), lihat LANGKAH MANUAL 5.
+- Agent `ecc:typescript-reviewer` / `ecc:security-reviewer` tidak dijalankan terpisah: tipe dicakup react-reviewer (`tsc` bersih), keamanan dicakup keduanya (semua `_blank` lewat `ExternalLink` dengan `rel="noopener noreferrer"`, tanpa `dangerouslySetInnerHTML`, data hanya `meta.json` statis).
+
+### Verifikasi
+
+`pnpm -C radar/packages/web typecheck` bersih · `test` 48/48 · `eslint packages/web` bersih · `build` static export bersih · Playwright 18/18 (1440 + 390; lewat config sementara `channel: 'chrome'` karena browser Playwright belum terpasang di Mac ini — CI tetap pakai config asli). `pnpm -C radar lint` penuh merah karena `radar/docs/video/eslint.config.mjs` (proyek Remotion lokal, untracked, butuh `@remotion/eslint-config-flat`) — bukan bagian diff ini.
+
 ## Deviasi (lihat `plan/log/DECISIONS.md`)
 
 - **D-imelda-01**: fixture diambil dari `radar/scripts/mock-scenarios/demo.json` (skenario Alief, hanya dibaca) via capture `GET /v1/events/export`, di-*re-timestamp* dari `delayMs` kumulatifnya sendiri, ditambah satu `commit.created` sintetis di akhir untuk chapter "Commit". **TODO(sync:alief)**: ganti dengan `GET /v1/events/export` server asli setelah fase 05/06, dan dengan rekaman nyata setelah milestone fase 10 (di 11D2).
@@ -116,6 +152,8 @@ Security-reviewer I2: semua 11 link `target="_blank"` sudah `rel="noopener noref
    Cek `/` dan `/demo/` dari incognito. Baru lalu `[x]` baris 11D1.
 3. **`eslint.config.js` coverage gap** — hook config-protection memblokir edit. Tambah glob `packages/*/scripts/**/*.ts` dan `packages/*/e2e/**/*.ts` ke `files` type-aware.
 4. **MEDIUM sisa:** `sanitize.ts` belum AWS/JWT; `meta.json` links tanpa allowlist host; scrubber seek belum keyboard.
+5. **ESLint React/a11y (HIGH dari react-reviewer, 18a):** tambahkan `eslint-plugin-react-hooks` + `eslint-plugin-jsx-a11y` ke `radar/eslint.config.js` untuk `packages/web/**` dan `packages/ui/src/**` (butuh edit config yang diproteksi hook).
+6. **`radar/docs/video`** membuat `pnpm -C radar lint` merah (paket `@remotion/eslint-config-flat` tidak terpasang). Tambah ke `ignores` di `radar/eslint.config.js` atau pasang depnya.
 
 **Catatan untuk sesi Claude Code berikutnya**: `radar/scripts/bob-evidence.sh` gagal total di sesi ini (window-detect: "not found" walau Bob IDE beneran terbuka di layar manusia; `--interactive`: gagal 2x beda alasan, termasuk "Screen Recording permission"). Dugaan kuat: sesi agent ini tidak punya akses layar/Terminal-permission yang sama dengan sesi interaktif manusia. Solusi yang berhasil: user screenshot manual (Cmd+Shift+4) lalu kirim PNG ke chat, Claude Code convert format kalau perlu dan salin ke `bob_sessions/` + tulis baris index manual (format persis di `scripts/bob-evidence.sh`, tim `uaai` dari `plan/team.json`). Pakai cara ini lagi untuk Bob slice I3 (11D2) di sesi serupa; coba `bob-evidence.sh` biasa dulu hanya kalau sesi barunya punya akses layar nyata.
 

@@ -1,14 +1,10 @@
 import { Inter, Source_Serif_4 } from 'next/font/google';
+import { LandingProductWindow } from '../src/landing-product-window';
 import { SITE } from '../src/site';
 import metaRaw from '../public/demo/meta.json';
 
-// ── Self-hosted fonts (static export safe – downloaded at build, no runtime network call) ──
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
-  display: 'swap',
-});
-
+// Self-hosted fonts: downloaded at build time, so the static export makes no runtime font request.
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
 const sourceSerif4 = Source_Serif_4({
   subsets: ['latin'],
   weight: ['400', '600'],
@@ -16,7 +12,6 @@ const sourceSerif4 = Source_Serif_4({
   display: 'swap',
 });
 
-// ── Type the links shape ──
 interface SiteLinks {
   repoUrl: string;
   bobSessions: string;
@@ -25,560 +20,279 @@ interface SiteLinks {
 }
 
 const links = metaRaw.links as SiteLinks;
+const metrics = metaRaw.metrics;
+// TODO(sync:aarief): point at the real .dmg asset once fase 11b publishes Release v0.3.0.
+const downloadUrl = `${links.repoUrl}/releases`;
+
+// Numbers come only from public/demo/meta.json (DESIGN §0: never ship invented numbers).
+const STATS = [
+  { value: String(metrics.nearMisses), label: 'near-miss caught by a hook' },
+  { value: String(metrics.decisions), label: 'decisions, each shown to a human' },
+  { value: String(metrics.mergeConflicts), label: 'merge conflicts' },
+  { value: `${metrics.medianDecisionSeconds} s`, label: 'median time to a decision' },
+];
+
+const MECHANISMS = [
+  {
+    tag: 'lock_guard',
+    title: 'One file, one Bob',
+    body: 'A PreToolUse hook checks the shared lock table before any write. Andi holds checkout.ts, so no other Bob can overwrite it.',
+  },
+  {
+    tag: 'radar.why_blocked',
+    title: 'A near-miss explains itself',
+    body: 'The blocked Bob calls an MCP tool and tells its human, in one sentence, who holds the file and what to do next.',
+  },
+  {
+    tag: 'pm-lead',
+    title: 'PM Bob proposes, a human decides',
+    body: 'The pm-lead mode can only read and propose. Plans and conflicts land in Needs you, where a person clicks Approve or Deny.',
+  },
+  {
+    tag: 'radar-mcp',
+    title: 'Every teammate keeps their own Bob',
+    body: 'Each person runs IBM Bob on their own machine. Live Collab syncs locks, tasks and hook traces between them in real time.',
+  },
+];
+
+const WORDS = [
+  { word: 'Visible', body: 'Every Bob shows its owner, file and last hook on one screen.' },
+  { word: 'Locked', body: 'A file has one holder. Others queue or switch files, never merge by accident.' },
+  { word: 'Human-approved', body: 'Agents suggest. A person approves the plan before work starts.' },
+];
+
+// Mirrors the near-miss in public/demo/events.json (ids 50–58).
+const NEAR_MISS_LOG = [
+  { who: 'budi · coder', what: 'apply_diff src/checkout/checkout.ts', tone: 'b' },
+  { who: 'hook', what: 'PreToolUse · lock_guard → blocked', tone: 'danger' },
+  { who: 'held by', what: 'andi · T-1 coupon', tone: 'a' },
+  { who: 'mcp', what: 'radar.why_blocked → "held by Andi for T-1"', tone: 'muted' },
+  { who: 'decision', what: 'queued · position 1', tone: 'muted' },
+  { who: 'budi · coder', what: 'continues src/ui/Header.tsx', tone: 'b' },
+] as const;
+
+const PRIMITIVES = [
+  { name: 'coder · pm-lead', body: 'Two custom modes. coder edits and runs; pm-lead only reads and proposes.' },
+  { name: '5 hooks', body: 'SessionStart, UserPromptSubmit, PreToolUse, PostToolUse, Stop. Locks and briefs run here.' },
+  { name: 'radar-mcp', body: 'MCP tools such as radar.why_blocked, so a Bob can read team state and explain itself.' },
+];
+
+function ExternalLink({
+  href,
+  className,
+  children,
+}: {
+  href: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <a href={href} className={className} target="_blank" rel="noopener noreferrer">
+      {children}
+    </a>
+  );
+}
 
 export default function HomePage() {
-  const fontClasses = `${inter.variable} ${sourceSerif4.variable}`;
-
   return (
-    <div
-      className={fontClasses}
-      style={{
-        fontFamily: 'var(--font-inter), system-ui, sans-serif',
-        background: '#f6f5f4',
-        minHeight: '100vh',
-        color: '#000',
-      }}
-    >
-      {/* ─── TOP NAV ─────────────────────────────────────────────────────────── */}
-      <header
-        style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 50,
-          height: 64,
-          background: 'rgba(246,245,244,0.92)',
-          backdropFilter: 'blur(8px)',
-          WebkitBackdropFilter: 'blur(8px)',
-          borderBottom: '1px solid rgba(0,0,0,0.06)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0 32px',
-        }}
-      >
-        <span style={{ fontWeight: 600, fontSize: 15, letterSpacing: '-0.02em' }}>
-          {SITE.title}
-        </span>
+    <div className={`${inter.variable} ${sourceSerif4.variable} lp`}>
+      <a href="#main" className="lp-skip">
+        Skip to content
+      </a>
 
-        <nav style={{ display: 'flex', alignItems: 'center', gap: 20, fontSize: 13.5 }}>
-          <a
-            href={links.repoUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: '#615d59', textDecoration: 'none' }}
-            className="lp-nav-link"
-          >
+      <header className="lp-nav">
+        <a href="/" className="lp-wordmark">
+          <span className="lp-wordmark-dot" aria-hidden="true" />
+          {SITE.title}
+        </a>
+        <nav aria-label="Primary" className="lp-nav-links">
+          <ExternalLink href={links.repoUrl} className="lp-nav-link lp-hide-sm">
             Repo
-          </a>
-          <a
-            href={links.bobSessions}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: '#615d59', textDecoration: 'none' }}
-            className="lp-nav-link"
-          >
+          </ExternalLink>
+          <ExternalLink href={links.bobSessions} className="lp-nav-link lp-hide-sm">
             bob_sessions
-          </a>
-          {/* Video and Deck hidden when null */}
+          </ExternalLink>
           {links.video !== null && (
-            <a
-              href={links.video}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ color: '#615d59', textDecoration: 'none' }}
-              className="lp-nav-link"
-            >
+            <ExternalLink href={links.video} className="lp-nav-link lp-hide-sm">
               Video
-            </a>
+            </ExternalLink>
           )}
           {links.deck !== null && (
-            <a
-              href={links.deck}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ color: '#615d59', textDecoration: 'none' }}
-              className="lp-nav-link"
-            >
+            <ExternalLink href={links.deck} className="lp-nav-link lp-hide-sm">
               Deck
-            </a>
+            </ExternalLink>
           )}
-          <a
-            href={SITE.demoPath}
-            style={{
-              background: '#0075de',
-              color: '#fff',
-              padding: '6px 14px',
-              borderRadius: 8,
-              textDecoration: 'none',
-              fontWeight: 500,
-              fontSize: 13.5,
-              transition: 'opacity 200ms ease',
-            }}
-            className="lp-cta-primary"
-          >
+          <a href={SITE.demoPath} className="lp-btn lp-btn-primary lp-btn-sm">
             Watch replay
           </a>
         </nav>
       </header>
 
-      <main style={{ maxWidth: 960, margin: '0 auto', padding: '0 24px 80px' }}>
-        {/* ─── HERO ──────────────────────────────────────────────────────────── */}
-        <section
-          style={{
-            paddingTop: 96,
-            paddingBottom: 80,
-            textAlign: 'center',
-          }}
-        >
-          {/* Headline ~72px */}
-          <h1
-            style={{
-              fontSize: 'clamp(48px, 7.5vw, 72px)',
-              fontWeight: 700,
-              lineHeight: 1.21,
-              letterSpacing: '-0.03em',
-              color: '#000',
-              margin: 0,
-            }}
-          >
-            Your team&apos;s Bobs,{' '}
-            {/* Highlight pill – marigold accent */}
-            <span
-              style={{
-                background: '#ffb110',
-                borderRadius: 9999,
-                padding: '0 14px 2px',
-                display: 'inline-block',
-                lineHeight: 1.28,
-              }}
-            >
-              working
-            </span>{' '}
-            together.
+      <main id="main">
+        {/* Hero */}
+        <section className="lp-hero lp-wrap">
+          <p className="lp-eyebrow">Multiplayer for IBM Bob</p>
+          <h1 className="lp-h1">
+            Your team&apos;s Bobs, <span className="lp-pill">working</span> together.
           </h1>
-
-          {/* Source Serif 4 subhead */}
-          <p
-            style={{
-              fontFamily: 'var(--font-source-serif-4), Georgia, serif',
-              fontSize: 'clamp(18px, 2.2vw, 22px)',
-              fontWeight: 400,
-              color: '#615d59',
-              marginTop: 24,
-              marginBottom: 0,
-              lineHeight: 1.55,
-              maxWidth: 560,
-              marginLeft: 'auto',
-              marginRight: 'auto',
-            }}
-          >
-            IBM Bob Live Collab keeps every developer&apos;s AI agent in sync—one file,
-            one Bob, no surprises.
+          <p className="lp-sub">
+            Every teammate keeps their own Bob. Live Collab gives them one shared workspace, one
+            lock per file, and a human in the loop before anything risky lands.
           </p>
-
-          {/* CTA row */}
-          <div
-            style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 12,
-              justifyContent: 'center',
-              marginTop: 40,
-              alignItems: 'flex-start',
-            }}
-          >
-            {/* Primary CTA – blue solid */}
-            <a
-              href={SITE.demoPath}
-              style={{
-                background: '#0075de',
-                color: '#fff',
-                padding: '12px 24px',
-                borderRadius: 8,
-                textDecoration: 'none',
-                fontWeight: 600,
-                fontSize: 15,
-                transition: 'opacity 200ms ease',
-              }}
-              className="lp-cta-primary"
-            >
+          <div className="lp-cta-row">
+            <a href={SITE.demoPath} className="lp-btn lp-btn-primary">
               Watch the live replay
             </a>
-
-            {/* Ghost CTA – download */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-              <a
-                href={`${links.repoUrl}/releases`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  background: '#e6f3fe',
-                  color: '#0075de',
-                  padding: '12px 24px',
-                  borderRadius: 8,
-                  textDecoration: 'none',
-                  fontWeight: 600,
-                  fontSize: 15,
-                  transition: 'opacity 200ms ease',
-                }}
-                className="lp-cta-ghost"
-              >
-                {/* TODO(sync:aarief): ganti ke URL .dmg asli setelah fase 11b Release v0.3.0 */}
-                Download for macOS
-              </a>
-              <span style={{ fontSize: 11.5, color: '#9b9390', textAlign: 'center' }}>
-                macOS arm64 only, unsigned · open via Privacy &amp; Security → Open Anyway
-              </span>
-            </div>
+            <ExternalLink href={downloadUrl} className="lp-btn lp-btn-ghost">
+              Download for macOS
+            </ExternalLink>
           </div>
-        </section>
-
-        {/* ─── FEATURE CARDS ─────────────────────────────────────────────────── */}
-        <section
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-            gap: 16,
-            marginBottom: 80,
-          }}
-        >
-          {/* Card 1 */}
-          <div style={cardStyle}>
-            <div style={cardIconStyle} aria-hidden="true">⚡</div>
-            <h3 style={cardTitleStyle}>Live sync</h3>
-            <p style={cardBodyStyle}>
-              Every CLAUDE.md edit, hook trigger, and Bob decision is broadcast to the team
-              in real time via IBM Bob MCP primitives.
-            </p>
-          </div>
-
-          {/* Card 2 */}
-          <div style={cardStyle}>
-            <div style={cardIconStyle} aria-hidden="true">📄</div>
-            <h3 style={cardTitleStyle}>One file, one Bob</h3>
-            <p style={cardBodyStyle}>
-              The hook-enforced single-file contract means no two developers&apos; agents
-              silently diverge mid-sprint.
-            </p>
-          </div>
-
-          {/* Card 3 */}
-          <div style={cardStyle}>
-            <div style={cardIconStyle} aria-hidden="true">✅</div>
-            <h3 style={cardTitleStyle}>PM proposes, human approves</h3>
-            <p style={cardBodyStyle}>
-              The Bob PM agent surfaces decisions—humans review every recommendation before
-              the agent acts.
-            </p>
-          </div>
-        </section>
-
-        {/* ─── NEAR-MISS ACCENT BLOCK (marigold) ────────────────────────────── */}
-        <section
-          style={{
-            background: '#ffb110',
-            borderRadius: 12,
-            padding: '40px 32px',
-            marginBottom: 80,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 20,
-          }}
-        >
-          <p
-            style={{
-              fontFamily: 'var(--font-source-serif-4), Georgia, serif',
-              fontSize: 'clamp(20px, 2.5vw, 26px)',
-              fontWeight: 600,
-              color: '#1a0f00',
-              textAlign: 'center',
-              margin: 0,
-              lineHeight: 1.35,
-            }}
-          >
-            Catch near-misses before they merge.
-          </p>
-
-          {/* GIF placeholder */}
-          {/* TODO(sync:imelda): ganti GIF asli setelah rekaman fase 10 */}
-          <div
-            style={{
-              width: '100%',
-              maxWidth: 680,
-              aspectRatio: '16/9',
-              background: 'rgba(0,0,0,0.12)',
-              borderRadius: 8,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              border: '1px dashed rgba(0,0,0,0.25)',
-            }}
-          >
-            <span
-              style={{
-                fontSize: 13,
-                color: 'rgba(0,0,0,0.5)',
-                fontFamily: 'var(--font-inter), monospace',
-              }}
-            >
-              near-miss preview
-            </span>
-          </div>
-
-          <p
-            style={{
-              fontSize: 12.5,
-              color: 'rgba(0,0,0,0.6)',
-              margin: 0,
-              fontFamily: 'var(--font-inter), monospace',
-              letterSpacing: '0.01em',
-            }}
-          >
-            hook · PreToolUse → blocked
+          <p className="lp-cta-note">
+            Replay runs in any browser. The app is macOS arm64 only, unsigned · open via Privacy
+            &amp; Security → Open Anyway.
           </p>
         </section>
 
-        {/* ─── INSTALL STEPS ─────────────────────────────────────────────────── */}
-        <section
-          style={{
-            background: '#fff',
-            border: '1px solid rgba(0,0,0,0.08)',
-            borderRadius: 12,
-            padding: '32px 32px',
-            marginBottom: 80,
-          }}
-        >
-          <h2
-            style={{
-              fontSize: 20,
-              fontWeight: 600,
-              margin: '0 0 24px',
-              letterSpacing: '-0.02em',
-            }}
-          >
-            Get started in 3 steps
+        {/* 18a-1..3: product window */}
+        <section className="lp-wrap lp-product" aria-label="Live Collab product preview">
+          <LandingProductWindow demoPath={SITE.demoPath} />
+          <dl className="lp-stats">
+            {STATS.map((s) => (
+              <div key={s.label} className="lp-stat">
+                <dt>{s.label}</dt>
+                <dd>{s.value}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="lp-stats-note">From the recorded toko-demo session shown in the replay.</p>
+        </section>
+
+        {/* 18a-4: four mechanisms */}
+        <section className="lp-wrap lp-section" aria-labelledby="lp-how">
+          <h2 id="lp-how" className="lp-h2">
+            How three Bobs share one repo
           </h2>
-          <ol
-            style={{
-              margin: 0,
-              paddingLeft: 20,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 16,
-            }}
-          >
-            <li style={stepStyle}>
-              <strong>Download</strong> — grab the latest release from{' '}
-              <a
-                href={`${links.repoUrl}/releases`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ color: '#0075de' }}
-              >
-                {links.repoUrl}/releases
-              </a>
-              .
-            </li>
-            <li style={stepStyle}>
-              <strong>Clear the quarantine flag</strong> — the app is unsigned. Either go to{' '}
-              <em>Privacy &amp; Security → Open Anyway</em>, or run:{' '}
-              <code
-                style={{
-                  background: '#f0eeec',
-                  padding: '1px 5px',
-                  borderRadius: 4,
-                  fontFamily: 'ui-monospace, monospace',
-                  fontSize: 13,
-                }}
-              >
-                xattr -dr com.apple.quarantine IBM-Bob-Live-Collab.app
-              </code>
-            </li>
-            <li style={stepStyle}>
-              <strong>Connect</strong> — open the app and point it at your IBM Bob workspace
-              to start syncing your team&apos;s sessions.
-            </li>
+          <ol className="lp-mechanisms">
+            {MECHANISMS.map((m, i) => (
+              <li key={m.tag} className="lp-mechanism">
+                <span className="lp-mechanism-num" aria-hidden="true">
+                  0{i + 1}
+                </span>
+                <h3>{m.title}</h3>
+                <p>{m.body}</p>
+                <code>{m.tag}</code>
+              </li>
+            ))}
           </ol>
         </section>
 
-        {/* ─── DARK ISLAND ───────────────────────────────────────────────────── */}
-        <section
-          style={{
-            background: '#02093a',
-            borderRadius: 12,
-            padding: '48px 40px',
-            marginBottom: 80,
-            textAlign: 'center',
-          }}
-        >
-          <h2
-            style={{
-              fontSize: 'clamp(22px, 3vw, 30px)',
-              fontWeight: 700,
-              color: '#fff',
-              letterSpacing: '-0.02em',
-              margin: '0 0 16px',
-            }}
-          >
-            Built on IBM Bob primitives
-          </h2>
-          <p
-            style={{
-              color: 'rgba(255,255,255,0.65)',
-              fontSize: 15.5,
-              maxWidth: 520,
-              margin: '0 auto 28px',
-              lineHeight: 1.6,
-            }}
-          >
-            Custom modes, lifecycle hooks, and MCP tools—every design decision is logged
-            in our Bob sessions.
-          </p>
-          <div
-            style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 10,
-              justifyContent: 'center',
-              marginBottom: 28,
-            }}
-          >
-            {['custom modes', 'hooks', 'MCP', 'CLAUDE.md'].map((tag) => (
-              <span
-                key={tag}
-                style={{
-                  background: 'rgba(255,255,255,0.1)',
-                  color: 'rgba(255,255,255,0.85)',
-                  padding: '4px 12px',
-                  borderRadius: 9999,
-                  fontSize: 13,
-                  border: '1px solid rgba(255,255,255,0.15)',
-                }}
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-          <a
-            href={links.bobSessions}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              color: '#62aef0',
-              fontSize: 14,
-              textDecoration: 'none',
-              borderBottom: '1px solid rgba(98,174,240,0.4)',
-              paddingBottom: 1,
-              transition: 'border-color 200ms ease',
-            }}
-          >
-            Browse bob_sessions/ evidence →
-          </a>
+        {/* 18a-4: three words */}
+        <section className="lp-wrap lp-words" aria-label="Principles">
+          {WORDS.map((w) => (
+            <div key={w.word} className="lp-word">
+              <h3>{w.word}</h3>
+              <p>{w.body}</p>
+            </div>
+          ))}
         </section>
 
-        {/* ─── LINKS ROW ─────────────────────────────────────────────────────── */}
-        <section
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: 20,
-            justifyContent: 'center',
-            marginBottom: 48,
-            fontSize: 14,
-          }}
-        >
-          <a
-            href={links.repoUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: '#0075de', textDecoration: 'none' }}
-            className="lp-nav-link"
-          >
-            GitHub Repo
-          </a>
-          <a
-            href={links.bobSessions}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: '#0075de', textDecoration: 'none' }}
-            className="lp-nav-link"
-          >
-            bob_sessions
-          </a>
-          {/* Video and Deck hidden when null */}
-          {links.video !== null && (
-            <a
-              href={links.video}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ color: '#0075de', textDecoration: 'none' }}
-              className="lp-nav-link"
-            >
-              Demo Video
-            </a>
-          )}
-          {links.deck !== null && (
-            <a
-              href={links.deck}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ color: '#0075de', textDecoration: 'none' }}
-              className="lp-nav-link"
-            >
-              Slide Deck
-            </a>
-          )}
+        {/* Near-miss accent block. TODO(sync:imelda): add the near-miss GIF after the fase 10 recording. */}
+        <section className="lp-wrap lp-section" aria-labelledby="lp-nearmiss">
+          <div className="lp-marigold">
+            <div className="lp-marigold-copy">
+              <h2 id="lp-nearmiss">Catch the near-miss before it merges.</h2>
+              <p>
+                Two Bobs reach for the same file. The hook stops the second one, the Bob says why,
+                and its human keeps working on something else.
+              </p>
+              <a href={SITE.demoPath} className="lp-marigold-link">
+                See it in the replay →
+              </a>
+            </div>
+            <ol className="lp-log" aria-label="Near-miss event log">
+              {NEAR_MISS_LOG.map((line, i) => (
+                <li key={i} data-tone={line.tone}>
+                  <span className="lp-log-who">{line.who}</span>
+                  <span className="lp-log-what">{line.what}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        {/* Primitives (navy island) */}
+        <section className="lp-wrap lp-section" aria-labelledby="lp-primitives">
+          <div className="lp-navy">
+            <h2 id="lp-primitives" className="lp-h2">
+              Built on IBM Bob primitives
+            </h2>
+            <ul className="lp-primitives">
+              {PRIMITIVES.map((p) => (
+                <li key={p.name}>
+                  <code>{p.name}</code>
+                  <p>{p.body}</p>
+                </li>
+              ))}
+            </ul>
+            <ExternalLink href={links.bobSessions} className="lp-text-link">
+              Browse the bob_sessions/ evidence →
+            </ExternalLink>
+          </div>
+        </section>
+
+        {/* Install */}
+        <section className="lp-wrap lp-section" aria-labelledby="lp-install">
+          <div className="lp-install">
+            <h2 id="lp-install" className="lp-h2">
+              Install in three steps
+            </h2>
+            <ol className="lp-steps">
+              <li>
+                <strong>Download</strong> the latest <code>.dmg</code> from{' '}
+                <ExternalLink href={downloadUrl} className="lp-text-link">
+                  GitHub Releases
+                </ExternalLink>
+                .
+              </li>
+              <li>
+                <strong>Allow the unsigned app</strong> in System Settings → Privacy &amp; Security
+                → Open Anyway, or run:
+                <pre className="lp-cmd">
+                  <code>xattr -dr com.apple.quarantine &quot;/Applications/IBM Bob Live Collab.app&quot;</code>
+                </pre>
+              </li>
+              <li>
+                <strong>Join your team</strong>: paste the invite, choose the folder, then open it
+                in Bob IDE and trust the workspace.
+              </li>
+            </ol>
+          </div>
         </section>
       </main>
 
-      {/* ─── FOOTER ──────────────────────────────────────────────────────────── */}
-      <footer
-        style={{
-          borderTop: '1px solid rgba(0,0,0,0.08)',
-          padding: '24px 32px',
-          textAlign: 'center',
-          fontSize: 12.5,
-          color: '#9b9390',
-          background: '#f6f5f4',
-        }}
-      >
-        {SITE.disclaimer} · built on Orca (MIT)
+      <footer className="lp-footer">
+        <div className="lp-wrap lp-footer-inner">
+          <p>{SITE.disclaimer} · built on Orca (MIT)</p>
+          <nav aria-label="Footer" className="lp-footer-links">
+            <ExternalLink href={links.repoUrl} className="lp-nav-link">
+              GitHub repo
+            </ExternalLink>
+            <ExternalLink href={links.bobSessions} className="lp-nav-link">
+              bob_sessions
+            </ExternalLink>
+            {links.video !== null && (
+              <ExternalLink href={links.video} className="lp-nav-link">
+                Demo video
+              </ExternalLink>
+            )}
+            {links.deck !== null && (
+              <ExternalLink href={links.deck} className="lp-nav-link">
+                Slide deck
+              </ExternalLink>
+            )}
+          </nav>
+        </div>
       </footer>
     </div>
   );
 }
-
-// ── Shared style objects ──────────────────────────────────────────────────────
-
-const cardStyle: React.CSSProperties = {
-  background: '#fff',
-  border: '1px solid rgba(0,0,0,0.08)',
-  borderRadius: 12,
-  padding: 24,
-};
-
-const cardIconStyle: React.CSSProperties = {
-  fontSize: 24,
-  marginBottom: 12,
-};
-
-const cardTitleStyle: React.CSSProperties = {
-  fontSize: 16,
-  fontWeight: 600,
-  margin: '0 0 8px',
-  letterSpacing: '-0.01em',
-};
-
-const cardBodyStyle: React.CSSProperties = {
-  fontSize: 14,
-  color: '#615d59',
-  margin: 0,
-  lineHeight: 1.6,
-};
-
-const stepStyle: React.CSSProperties = {
-  fontSize: 14.5,
-  color: '#333',
-  lineHeight: 1.65,
-};

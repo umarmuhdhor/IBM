@@ -52,6 +52,38 @@ test.describe('/ and /gallery smoke', () => {
     await expect(page.getByRole('link', { name: /download for macos/i })).toBeVisible();
   });
 
+  test('landing product window tabs swap panes', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByRole('tab', { name: 'Mission Control' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    await expect(page.getByText("Budi's Bob asks for checkout.ts")).toBeVisible();
+    await page.getByRole('tab', { name: 'Budi' }).click();
+    await expect(page.getByRole('tab', { name: 'Budi' })).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('tabpanel').getByText(/lock_guard/)).toBeVisible();
+    await expect(page.getByRole('link', { name: /watch full replay/i })).toBeVisible();
+  });
+
+  test('landing product window tabs follow arrow keys', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('tab', { name: 'Mission Control' }).focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(page.getByRole('tab', { name: 'Budi' })).toBeFocused();
+    await expect(page.getByRole('tab', { name: 'Budi' })).toHaveAttribute('aria-selected', 'true');
+    await page.keyboard.press('ArrowRight');
+    await expect(page.getByRole('tab', { name: 'Andi' })).toHaveAttribute('aria-selected', 'true');
+  });
+
+  test('landing numbers come from meta.json and page has no horizontal scroll', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.locator('.lp-stat dd')).toHaveText(['1', '2', '0', '2.9 s']);
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    expect(overflow).toBeLessThanOrEqual(0);
+  });
+
   test('gallery renders without console errors', async ({ page }) => {
     const errors: string[] = [];
     page.on('console', (msg) => {
