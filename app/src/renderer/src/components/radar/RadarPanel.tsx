@@ -1,14 +1,17 @@
+import { useState } from 'react'
 import type { RadarConnectionSummary } from '../../../../shared/radar-connection'
+import { cn } from '@/lib/utils'
 import { useAppStore } from '@/store'
 import { useRadarStore } from '@/store/radar-store'
 import { MissionControlView } from './MissionControlView'
 import { TeamPanel } from './TeamPanel'
 import { FilesLocksView } from './FilesLocksView'
 import { RadarSettingsPane } from './RadarSettingsPane'
+import { WatchBobView } from './WatchBobView'
 import type { RadarPanelTab } from './radar-panel-tab'
 
 const LABEL: Record<RadarPanelTab, string> = {
-  mission: 'Mission Control', team: 'Team', files: 'Files & locks', settings: 'Settings'
+  mission: 'Mission Control', team: 'Team', files: 'Files & locks', settings: 'Settings', watch: 'Watch Bob'
 }
 const TABS: RadarPanelTab[] = ['mission', 'team', 'files', 'settings']
 
@@ -26,6 +29,17 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
   const activeWorktreeId = useAppStore((store) => store.activeWorktreeId)
   const getKnownWorktreeById = useAppStore((store) => store.getKnownWorktreeById)
   const workspacePath = activeWorktreeId ? (getKnownWorktreeById(activeWorktreeId)?.path ?? null) : null
+  const [watchedMemberId, setWatchedMemberId] = useState<string | null>(null)
+  const tabs: RadarPanelTab[] = watchedMemberId ? [...TABS, 'watch'] : TABS
+
+  const watch = (memberId: string) => {
+    setWatchedMemberId(memberId)
+    onTabChange('watch')
+  }
+  const stopWatching = () => {
+    setWatchedMemberId(null)
+    onTabChange('team')
+  }
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background text-foreground">
@@ -35,7 +49,7 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
         {state && <span className="text-xs text-muted-foreground">{Object.values(state.members).filter((member) => member.online).length} online</span>}
       </header>
       <div className="flex gap-1 overflow-x-auto border-b border-border px-3 py-2">
-        {TABS.map((item) => <button key={item} type="button" onClick={() => onTabChange(item)} aria-current={tab === item ? 'page' : undefined} className={`rounded-md px-2 py-1 text-xs ${tab === item ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:bg-secondary'}`}>{LABEL[item]}</button>)}
+        {tabs.map((item) => <button key={item} type="button" onClick={() => onTabChange(item)} aria-current={tab === item ? 'page' : undefined} className={cn('rounded-md px-2 py-1 text-xs', tab === item ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:bg-secondary')}>{LABEL[item]}</button>)}
       </div>
       <div className="scrollbar-sleek min-h-0 flex-1 overflow-y-auto">
         {tab === 'settings' ? <RadarSettingsPane connection={connection} connected={connected} workspacePath={workspacePath} onConnectionChange={onConnectionChange} /> : !state ? (
@@ -43,7 +57,14 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
             <p>{connection ? 'Waiting for workspace state from the server.' : 'Connect to a Live Collab workspace.'}</p>
             <button type="button" onClick={() => onTabChange('settings')} className="mt-3 rounded-md border border-border px-3 py-1.5 text-xs">Open settings</button>
           </div>
-        ) : tab === 'mission' ? <MissionControlView state={state} canDecide={connection?.role === 'mc'} /> : tab === 'team' ? <TeamPanel state={state} /> : <FilesLocksView state={state} now={now} />}
+        ) : tab === 'mission' ? <MissionControlView state={state} canDecide={connection?.role === 'mc'} /> : tab === 'team' ? <TeamPanel state={state} now={now} onWatch={watch} /> : tab === 'watch' ? (
+          watchedMemberId ? <WatchBobView state={state} memberId={watchedMemberId} onStopWatching={stopWatching} /> : (
+            <div className="m-4 rounded-lg border border-border bg-card p-4 text-sm">
+              <p>Pick a teammate in Team to watch their Bob.</p>
+              <button type="button" onClick={() => onTabChange('team')} className="mt-3 rounded-md border border-border px-3 py-1.5 text-xs">Open Team</button>
+            </div>
+          )
+        ) : <FilesLocksView state={state} now={now} />}
       </div>
     </div>
   )
