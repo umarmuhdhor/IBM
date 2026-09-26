@@ -263,7 +263,7 @@ Opsi otomatis penuh (dicoba Umar di spike, poin 16): Bob IDE dibuka dengan `--re
 | C4 | Aarief | Opsi `--md` di `bob-evidence.sh` + `evidence:check` (script dasar sudah ada dari fase 00) | Code | 2 |
 | C3 | Aarief | Komponen `@radar/ui`: `LockChip`, `AgentTag`, `DecisionCard` + test | Code | 4 |
 | I1 | Imelda | Pemutar replay (`replay-player.ts`) + halaman `/demo` | Code | 4 |
-| I2 | Imelda | Landing page `/` (Application URL) | Code | 3 |
+| I2 | Imelda | Landing page `/` (Application URL). Poles kehidupan = fase 11 **langkah 18a** (bukan slice/fase baru): `landing-style/README.md` + `D-imelda-10` | Code | 3 |
 | I3 | Imelda | Draf Long Description + outline deck dari PRD (**document understanding** Bob: baca `PRD.md`, hasilkan `.docx`/HTML) | Ask/Code | 3 |
 
 Setiap orang minimal 3 slice (syarat `evidence:check`). **Total per orang (jadwal §5.2):** Alief 4 slice / ±12 Bobcoin (A1 Jum 23:00, A2 Sab 09:00, A3+A4 Sab 16:00) · Umar 5 slice / ±18 Bobcoin (B1 Sab 00:30, B2+B3+B4a Sab 09:00, B4b Sab 16:00 — lane terberat, wajar karena Umar pemakai Bob paling banyak) · Aarief 4 slice / ±12 Bobcoin (C1 Jum 23:00, C2 fase 09, C4 fase 11a, C3 Sab 09:00) · Imelda 3 slice / ±10 Bobcoin (I2 Sab 00:30, I1 Sab 09:00, I3 **dipindah ke Sab 23:00–Min 01:00**, bukan Min 11:00–19:00).

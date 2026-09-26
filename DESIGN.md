@@ -1,6 +1,6 @@
 # IBM Bob Live Collab — Desain (v0.3)
 
-> Arah visual: **Orca dulu** (§0). App dan replay gelap, tenang, mono, dengan tag agent berwarna. Amoeba dan Mosaic hanya referensi suasana. **DNA IBM** (palet Carbon, IBM Plex di replay/cover/deck) membuat "ini untuk IBM Bob" terasa tanpa memakai logo IBM. Landing memakai gaya terang "warm paper" (§5.11).
+> Arah visual: **Orca dulu** (§0). App dan replay gelap, tenang, mono, dengan tag agent berwarna. Amoeba dan Mosaic hanya referensi suasana. **DNA IBM** (palet Carbon, IBM Plex di replay/cover/deck) membuat "ini untuk IBM Bob" terasa tanpa memakai logo IBM. Landing memakai Carbon gelap yang sama dengan app (§5.11).
 > Dasar: fork Orca (Electron + React + Tailwind/shadcn). Referensi: `UI Design/amoeba ui/*`, `UI Design/orca ui/*`, video Mosaic.
 > Produk: [`PRD.md`](PRD.md) · Plan: [`PLAN.md`](PLAN.md) · Prompt gambar: [`prompt_ui.md`](prompt_ui.md)
 
@@ -9,7 +9,7 @@
 ## 0. Urutan prioritas (baca dulu)
 
 1. **Orca dulu.** Di dalam app (`app/`), pakai komponen, token, spasi, ikon, dan pola layout Orca apa adanya: shadcn/Radix, Tailwind theme Orca, lucide, sidebar, dan panel Agent Dashboard. Panel Live Collab harus terasa seperti fitur bawaan Orca, bukan aplikasi tempelan.
-2. **Aksen Live Collab di atasnya.** Hanya ini yang kita tambahkan: warna orang (A/B/C), aksen "Needs you", warna status, `AgentTag`, `LockChip`, dan `BobTrace` (§2–§3). Font IBM Plex dipakai di replay, cover, dan deck. Landing memakai gaya warm paper (§5.11). Di dalam app, ikuti font Orca.
+2. **Aksen Live Collab di atasnya.** Hanya ini yang kita tambahkan: warna orang (A/B/C), aksen "Needs you", warna status, `AgentTag`, `LockChip`, dan `BobTrace` (§2–§3). Font IBM Plex dipakai di replay, cover, dan deck. Landing memakai Carbon gelap (§5.11). Di dalam app, ikuti font Orca.
 3. **Mockup Stitch** (`UI Inspo & Design/UI Design/stitch_ibm_bob_live_collab_ui/*`) dan gambar Amoeba/Mosaic **hanya pedoman** susunan dan suasana, bukan spesifikasi piksel. Jangan menyalin:
    - angka karangan (mis. "99.4% Safe Handoff", "V2.4", "HD 60FPS", "vs 4.2 min baseline"). Semua angka di UI harus berasal dari data nyata,
    - font serif di render Stitch (itu fallback),
@@ -245,18 +245,21 @@ Langkah di app baru: **Paste invite** → **Choose folder** → checklist live:
 `• open this folder in Bob IDE ≥ 2.1.0 and trust the workspace` · `✓ .bob kit installed (modes: coder)` · `✓ hooks registered (5)` · `✓ radar-mcp reachable` · `✓ synced 42 files` · `✓ you are Budi · coder`.
 Kalau ada item merah, tampilkan satu kalimat perbaikan dan tombol **Retry**.
 
-### 5.11 Landing web (Application URL): gaya "warm paper" ala Notion
+### 5.11 Landing web (Application URL): Carbon gelap, satu merek dengan app
 
-Landing sengaja **terang dan hangat**, berbeda dari app yang gelap. Tujuannya supaya juri yang membuka URL langsung merasa ini produk jadi. Screenshot app yang gelap tampil di dalamnya sebagai mockup produk. Spesifikasi lengkap ada di [`UI Inspo & Design/landing-style/README.md`](UI%20Inspo%20%26%20Design/landing-style/README.md) (turunan style reference Refero untuk notion.com).
+Landing **gelap**, token yang sama dengan app/replay (`--lc-*` di `theme-vars.css`). Juri buka Application URL sudah masuk dunia IBM Bob, bukan brochure Notion. Suasana Amoeba (hitam + titik) boleh, merek Amoeba jangan ditiru. Spec token: [`UI Inspo & Design/landing-style/README.md`](UI%20Inspo%20%26%20Design/landing-style/README.md).
 
-- Kanvas `#f6f5f4`, kartu putih dengan border 1px `rgba(0,0,0,.08)`, tanpa shadow, radius 12.
-- Satu tombol biru `#0075de` (**Watch the live replay**) dan satu tombol ghost (**Download for macOS**, dengan catatan kecil "unsigned · open via Privacy & Security → Open Anyway").
-- Headline 72px dengan tracking negatif dan **pill highlight** di satu kata kerja. Subhead serif (Source Serif 4). Font Inter.
-- Blok aksen marigold untuk GIF near-miss, dan satu "dark island" `#02093a` untuk "Built on IBM Bob primitives".
-- **Jangan** meniru merek Notion: tanpa logo, nama, ilustrasi karakter, atau font proprietary mereka.
+- Kanvas `--lc-bg` `#0E0E10`, kartu `--lc-surface-2` `#1E1E20`, border 1px `--lc-border`, tanpa shadow, radius 12. Pola titik halftone 12px, opasitas ~7% (sama §2.3).
+- Satu tombol IBM Blue `--lc-accent` `#0F62FE` (**Watch the live replay**) dan satu tombol ghost (`--lc-accent-soft` di atas surface transparan). Caption kecil "unsigned · open via Privacy & Security → Open Anyway" + "macOS arm64 only".
+- Headline 72px tracking negatif, **pill highlight** marigold `#ffb110` di satu kata kerja. Subhead Source Serif 4. Font Inter (landing); Plex tetap di replay.
+- **Bukan poster.** Di bawah hero: jendela produk HTML (Andi / Mission Control / Budi, warna orang §2.1). Klik tab ganti pane. Pulse "sedang ditulis" ≤ 3 s, kartu masuk 180 ms. Hormati `prefers-reduced-motion`.
+- Di bawah window: 4 mekanisme (lock, near-miss, human Approve, Bob per orang) + 3 kata Visible / Locked / Human-approved. Angka hanya dari `meta.json`.
+- Blok aksen marigold untuk GIF near-miss (placeholder sampai rekaman ada). Panel navy `#02093a` untuk primitives: `coder`/`pm-lead`, 5 hook, `radar-mcp`.
+- **Jangan** meniru merek Notion atau Amoeba: tanpa logo, nama, ilustrasi karakter, atau font proprietary mereka.
 - Footer "Community hackathon project, not an official IBM product · built on Orca (MIT)".
+- Urutan kerjain + checklist: [`landing-style/README.md`](UI%20Inspo%20%26%20Design/landing-style/README.md) · fase 11 langkah **18a** · `D-imelda-10`.
 
-Replay `/demo` tetap gelap seperti app (§5.8), karena menampilkan produk yang sedang berjalan.
+Replay `/demo` tetap gelap seperti app (§5.8).
 
 ### 5.10 Cover 16:9 / slide 1
 

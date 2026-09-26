@@ -326,3 +326,17 @@ Format:
 - Alasan: test integrasi `packages/mcp/test/server.int.test.ts` (RED `ffc816a3` → GREEN `7c759f72`) dan 4 sesi Bob IDE 2.2.0 melawan Worker lokal.
 - Dampak: Alief (R3 §7), Imelda/semua (naskah demo), fase 12 (`/v1/ai-edits`).
 - File ref/ yang diperbarui: – (usulan saja).
+
+## D-imelda-11 · 26 Sep 2026 · fase 11D1 · Hero landing disederhanakan ala Amoeba
+
+- Keputusan: layar pertama landing = satu pesan saja: nav pill mengambang (logo app + 3 link + Download), judul besar tanpa pill marigold, satu baris sub, **satu** tombol IBM Blue "Watch the live replay", caption dengan link "Download for macOS (arm64, unsigned)". Latar = siluet halftone logo app (`app/resources/icon.png` → `public/brand/bob-crew-halftone.svg` lewat `scripts/halftone-logo.py`). Semua konten lain (window produk, angka, mekanisme, near-miss, primitif, pasang) turun di bawah fold.
+- Alasan: permintaan user — layar pertama terlalu penuh tulisan. Struktur Amoeba (bukan mereknya).
+- Menyimpang dari DESIGN §5.11: pill marigold di hero dan tombol ghost kedua dihapus; tombol utama putih (bukan IBM Blue) atas permintaan user; nav full-width yang berubah jadi pill saat scroll; teks "Privacy & Security → Open Anyway" pindah penuh ke bagian pasang (caption hero tetap sebut arm64 + unsigned).
+- File ref/ yang diperbarui: –
+
+## D-imelda-12 · 26 Sep 2026 · fase 11D1 · `.gitleaks.toml` pakai tabel lama `[allowlist]`
+
+- Keputusan: dua blok `[[allowlists]]` (commit vendoring Orca + fixture PAT palsu D-imelda-07) digabung jadi satu `[allowlist]` dengan `commits` + `regexes`. Arti sama: salah satu cocok → temuan diabaikan.
+- Alasan: `ci / gitleaks` di PR #18 merah. `gitleaks/gitleaks-action@v2` memasang gitleaks 8.24.3, yang diam-diam mengabaikan `[[allowlists]]` level atas; gitleaks lokal 8.30.1 membacanya, jadi scan lokal hijau. `[allowlist]` dibaca kedua versi (dicek lokal: rentang PR 0 leak, commit Orca 0 leak).
+- Alternatif ditolak: pin `GITLEAKS_VERSION` di `ci.yml` (file CI bersama); tulis ulang histori untuk menambah `gitleaks:allow`.
+- File ref/ yang diperbarui: –

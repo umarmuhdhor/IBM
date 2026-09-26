@@ -6,6 +6,9 @@
 [extend]
 useDefault = true
 
-[[allowlists]]
-description = "Upstream Orca vendoring commit (public MIT code, not team secrets)"
+# Single legacy [allowlist] table on purpose: gitleaks-action pins gitleaks 8.24.x, which ignores
+# top-level [[allowlists]]; newer versions still read [allowlist]. Any entry matching allows the finding.
+[allowlist]
+description = "Upstream Orca vendoring commit; fake GitHub-PAT-shaped sanitizer test fixture (fase 11D1, D-imelda-07)"
 commits = ["7c86819ec824e89a7e0a9b80097709e8c6edd7bf"]
+regexes = ["ghp_1234567890abcdef1234567890abcdef1234"]

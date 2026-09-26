@@ -31,4 +31,4 @@ Triggered when the diff touches `app/src/renderer/**`, `radar/packages/ui/**`, o
 1. Screenshot the changed view (app: `electron-automation` skill or Playwright `_electron.launch()`; web: Playwright at 1440 and 390 wide).
 2. Run the `better-interface` skill on it; fix every HIGH finding; paste the findings table into the phase log.
 3. Animations changed → also run `review-animations`. Use `apple-design` / `emil-design-eng` while building motion and polish.
-4. Style direction: **app + replay = dark, Orca look first** (DESIGN.md §0); **landing = light "warm paper"** (DESIGN.md §5.11, `UI Inspo & Design/landing-style/README.md`). Stitch mockups are guidelines only; never ship invented numbers.
+4. Style direction: **app + replay + landing = dark Carbon** (DESIGN.md §0 / §5.11, `UI Inspo & Design/landing-style/README.md`). Stitch mockups are guidelines only; never ship invented numbers.
