@@ -12,6 +12,15 @@
 4. [x] Watch Bob dibuka melalui CDP terhadap mock sintetis; 11 aktivitas tampil. Screenshot yang dipotong tanpa informasi pribadi: `app/docs/img/app-watch-bob.png` (draft PR #21).
 5. [ ] Uji alur 4 Mac dan p95 latensi Watch Bob dari peristiwa Bob IDE nyata; jalankan pada milestone bersama tim.
 6. [x] Pra-cek server publik Sab 20:48 WITA tanpa kode akses: `GET /healthz` → HTTP 200 (`ok: true`, workspace `toko-demo`, versi `0.3.0`); `GET /v1/state` tanpa kode → HTTP 401. Ini membuktikan endpoint dan penolakan akses anonim, belum membuktikan reset anggota, koneksi app, atau alur demo.
+7. [x] Pemeriksaan UI lokal: snapshot lama sengaja dipertahankan saat WS putus, tetapi status bar dan Team masih menyebut anggota online serta menawarkan Watch. Test `RadarPanel.test.tsx` merah 1/3, lalu hijau 3/3 setelah status offline tidak menghitung anggota dan panel menyembunyikan aksi berbasis data usang. `pnpm -C app tc` dan oxlint terfokus lulus. Screenshot panel offline yang dipotong tanpa data pribadi: `app/docs/img/app-offline-state.png`.
+
+## Pemeriksaan tampilan
+
+| Tampilan | Hasil |
+|---|---|
+| Team tersambung | Hierarki, kartu anggota, dan tombol Watch terbaca; tidak ada temuan HIGH pada screenshot CDP lokal. |
+| Team terputus | Label merah dan ajakan buka Settings jelas; kartu online lama tidak terlihat. Screenshot `app/docs/img/app-offline-state.png`. |
+| Batas | Review visual manual dilakukan karena skill `better-interface` tidak tersedia di lingkungan ini. |
 
 ## LANGKAH MANUAL — app pada 4 Mac
 
