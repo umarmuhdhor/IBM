@@ -6,7 +6,7 @@ import { getLock } from '../db/repo/lock';
 import { getMember } from '../db/repo/member';
 import { findOpenRequest } from '../db/repo/request';
 import { getTask } from '../db/repo/task';
-import { NOW, withLocks } from '../../test/lock-fixture';
+import { withLocks } from '../../test/lock-fixture';
 import { checkWrite } from './locks';
 
 // ---------------------------------------------------------------------------

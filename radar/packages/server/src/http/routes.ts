@@ -11,6 +11,11 @@ import { buildState } from '../services/state';
 import { requireMember, requireRole } from './auth';
 import { errorJson, parseWith, readJson, toErrorResponse } from './errors';
 import { ExportQuery } from './query';
+import { registerLockRoutes } from './routes/locks';
+import { registerProposalRoutes } from './routes/proposals';
+import { registerRequestRoutes } from './routes/requests';
+import { registerTaskRoutes } from './routes/tasks';
+import { registerTeamRoutes } from './routes/team';
 
 export function createApp(deps: WorkspaceDeps): Hono {
   const app = new Hono();
@@ -55,6 +60,11 @@ export function createApp(deps: WorkspaceDeps): Hono {
     return c.body(null, 204);
   });
 
+  registerLockRoutes(app, deps);
+  registerTaskRoutes(app, deps);
+  registerRequestRoutes(app, deps);
+  registerProposalRoutes(app, deps);
+  registerTeamRoutes(app, deps);
   registerAdminRoutes(app, deps);
   return app;
 }

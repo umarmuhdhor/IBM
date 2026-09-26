@@ -50,18 +50,18 @@ export function isIgnoredPath(db: Db, path: string): boolean {
 
 export function requireMember(db: Db, id: string): MemberRow {
   const m = getMember(db, id);
-  if (!m) throw new Error(`member ${id} does not exist`);
+  if (!m) throw new RadarError(404, 'NOT_FOUND', `Member ${id} tidak ada.`);
   return m;
 }
 
 export function requireTask(db: Db, id: string): TaskRow {
   const t = getTask(db, id);
-  if (!t) throw new Error(`task ${id} does not exist`);
+  if (!t) throw new RadarError(404, 'NOT_FOUND', `Task ${id} tidak ada.`);
   return t;
 }
 
 /** Holder details shown to a blocked member (R3 §2.2). */
-export function holderOf(ctx: LockCtx, lock: LockRow): LockHolder {
+export function holderOf(ctx: Pick<LockCtx, 'db' | 'now'>, lock: LockRow): LockHolder {
   const member = getMember(ctx.db, lock.member_id);
   const task = getTask(ctx.db, lock.task_id);
   return {
