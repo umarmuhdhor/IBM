@@ -20,12 +20,13 @@ export function WatchBobView({ state, memberId, onStopWatching }: Props) {
   const member = state.members[memberId]
   const rows = member ? watchBobTimeline(state, memberId) : []
   const hasHiddenPrompt = rows.some((row) => row.kind === 'prompt' && row.detail === 'Prompt text not shared')
+  const lastRowId = rows[rows.length - 1]?.id
   const lastRowRef = useRef<HTMLLIElement>(null)
 
   useEffect(() => {
     // Keep the newest row in view while watching live.
     lastRowRef.current?.scrollIntoView?.({ block: 'nearest' })
-  }, [rows.length])
+  }, [memberId, lastRowId])
 
   if (!member) {
     return (

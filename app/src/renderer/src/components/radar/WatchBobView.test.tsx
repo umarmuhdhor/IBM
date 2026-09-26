@@ -61,4 +61,23 @@ describe('WatchBobView', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Stop watching' }))
     expect(onStopWatching).toHaveBeenCalled()
   })
+
+  it('keeps the latest event visible when a capped timeline replaces a row', () => {
+    const scroll = vi.fn()
+    const previous = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollIntoView')
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: scroll })
+    try {
+      const { rerender } = render(<WatchBobView state={state} memberId="B" onStopWatching={vi.fn()} />)
+      expect(scroll).toHaveBeenCalledTimes(1)
+
+      rerender(<WatchBobView state={{ ...state, feed: [{ ...state.feed[0], id: 5, ts: 5000 }] }} memberId="B" onStopWatching={vi.fn()} />)
+      expect(scroll).toHaveBeenCalledTimes(2)
+    } finally {
+      if (previous) {
+        Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', previous)
+      } else {
+        Reflect.deleteProperty(HTMLElement.prototype, 'scrollIntoView')
+      }
+    }
+  })
 })
