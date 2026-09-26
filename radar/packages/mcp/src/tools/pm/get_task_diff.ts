@@ -1,41 +1,7 @@
+import { TaskDiffRes } from '@radar/common';
 import { z } from 'zod';
+import { expectShape } from '../../client.js';
 import { defineTool } from '../types.js';
-
-interface ExportChanged {
-  name: string;
-  kind: string;
-  before: string;
-  after: string;
-}
-
-interface FileDiff {
-  path: string;
-  change: string;
-  fromVersion: number | null;
-  toVersion: number;
-  patch: string;
-  exportsChanged: ExportChanged[];
-}
-
-interface Importer {
-  path: string;
-  imports: string;
-  symbols: string[];
-  lines: number[];
-  holder: { memberId: string; taskId: string; state: string } | null;
-}
-
-interface DiffResponse {
-  taskId: string;
-  title: string;
-  ownerId: string;
-  status: string;
-  baseCommit: string;
-  summary: string;
-  files: FileDiff[];
-  importers: Importer[];
-  truncated: boolean;
-}
 
 const MAX_PATCH_CHARS = 8000;
 
@@ -47,21 +13,20 @@ export default defineTool({
     task_id: z.string().describe('ID task (mis. T-0)'),
   },
   async run(args, client) {
-    const res = await client.get<Partial<DiffResponse>>(`/v1/tasks/${encodeURIComponent(args.task_id)}/diff`);
-    // TODO(sync:alief): validate with the @radar/common TaskDiffRes zod schema once fase 02 lands; until then default the arrays.
-    const data = { ...res, files: res.files ?? [], importers: res.importers ?? [] };
+    const res = await client.get<unknown>(`/v1/tasks/${encodeURIComponent(args.task_id)}/diff`);
+    const data = expectShape(TaskDiffRes, res, 'get_task_diff');
 
     const fileCount = data.files.length;
 
     // Build summary line
-    const changedExports = data.files.flatMap((f) => f.exportsChanged ?? []);
+    const changedExports = data.files.flatMap((f) => f.exportsChanged);
     const exportSummary = changedExports
       .map((e) => `ekspor berubah: ${e.before} → ${e.after}`)
       .join('; ');
 
     const importerSummary = data.importers
       .map((imp) => {
-        const lines = (imp.lines ?? []).length > 0 ? (imp.lines ?? []).map((l) => `${imp.path}:${l}`).join(', ') : imp.path;
+        const lines = imp.lines.length > 0 ? imp.lines.map((l) => `${imp.path}:${l}`).join(', ') : imp.path;
         const holderStr = imp.holder ? ` (dipegang ${imp.holder.memberId}, ${imp.holder.taskId})` : '';
         return `${lines}${holderStr}`;
       })
@@ -83,8 +48,8 @@ export default defineTool({
         break;
       }
       lines.push(header);
-      const patch = (f.patch ?? '').slice(0, Math.max(0, remaining - header.length));
-      if (patch.length < (f.patch ?? '').length) {
+      const patch = f.patch.slice(0, Math.max(0, remaining - header.length));
+      if (patch.length < f.patch.length) {
         wasCut = true;
         lines.push(patch);
         break;

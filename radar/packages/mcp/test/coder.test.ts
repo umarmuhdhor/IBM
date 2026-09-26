@@ -4,11 +4,11 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createRadarClient, MSG_NOT_JOINED, MSG_UNAVAILABLE } from '../src/client.js';
-import type { LocalConfig } from '../src/placeholder/config.js';
+import type { LocalConfig } from '@radar/common/node';
 import { createRadarServer } from '../src/server.js';
 
 // Canned responses copied from R3 §2.4–§2.9.
-// TODO(sync:alief): run against the fase 02 mock server once it is in main.
+// Edge cases use this canned server; mock_contract.test.ts runs the tools against the fase 02 mock server.
 const TASKS = {
   tasks: [
     {
@@ -86,7 +86,7 @@ beforeEach(() => {
   submitConflict = false;
 });
 
-const cfg = (server: string): LocalConfig => ({ root: '/tmp/ws', server, workspace: 'toko-demo', member: 'B', token: 'tok-b', role: 'coder' });
+const cfg = (server: string): LocalConfig => ({ root: '/tmp/ws', server, workspace: 'toko-demo', member: 'B', token: 'tok-b', role: 'coder', shareprompts: false });
 
 async function connect(config: LocalConfig | null) {
   const server = createRadarServer(createRadarClient(config, 1_000), 'coder');

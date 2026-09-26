@@ -1,39 +1,8 @@
+import { TeamRes } from '@radar/common';
+import { expectShape } from '../../client.js';
 import { defineTool } from '../types.js';
 
-interface Member {
-  id: string;
-  name: string;
-  role: string;
-  online: boolean;
-  lastHeartbeatMs: number;
-  activeTaskId: string | null;
-}
-
-interface Task {
-  id: string;
-  title: string;
-  ownerId: string;
-  status: string;
-  files: string[];
-  editCount: number;
-}
-
-interface Lock {
-  path: string;
-  taskId: string;
-  memberId: string;
-  state: string;
-  queue: string[];
-}
-
-interface TeamResponse {
-  members: Member[];
-  tasks: Task[];
-  locks: Lock[];
-  openRequests: number;
-  pendingProposals: number;
-  headCommit: string;
-}
+type Task = TeamRes['tasks'][number];
 
 export default defineTool({
   name: 'team_status',
@@ -41,9 +10,7 @@ export default defineTool({
   description: 'Gunakan untuk melihat status tim: siapa online, task aktif, file yang dikunci, permintaan terbuka, dan proposal tertunda.',
   inputSchema: {},
   async run(_args, client) {
-    const res = await client.get<Partial<TeamResponse>>('/v1/team');
-    // TODO(sync:alief): validate with the @radar/common TeamRes zod schema once fase 02 lands; until then default the arrays.
-    const data: TeamResponse = { members: [], tasks: [], locks: [], openRequests: 0, pendingProposals: 0, headCommit: '', ...res };
+    const data = expectShape(TeamRes, await client.get<unknown>('/v1/team'), 'team_status');
     const lines: string[] = [];
 
     lines.push(`Tim: ${data.members.filter((m) => m.online).length} online, ${data.members.filter((m) => !m.online).length} offline — ${data.openRequests} permintaan terbuka, ${data.pendingProposals} proposal tertunda`);
@@ -57,7 +24,7 @@ export default defineTool({
     if (data.locks.length > 0) {
       lines.push('Kunci file:');
       for (const lock of data.locks) {
-        const queueStr = (lock.queue ?? []).length > 0 ? ` | antre: ${lock.queue.join(', ')}` : '';
+        const queueStr = lock.queue.length > 0 ? ` | antre: ${lock.queue.join(', ')}` : '';
         lines.push(`  ${lock.path} → ${lock.taskId} (${lock.state})${queueStr}`);
       }
     }

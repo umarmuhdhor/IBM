@@ -1,5 +1,6 @@
 // Test helpers: a scriptable fake Radar server (node:http) and a runner that spawns the bundled hooks.
-// TODO(sync:alief): switch to the fase 02 mock server (`pnpm -C radar dev:mock --scenario none`) once it is in main.
+// The fake server covers edge cases (timeouts, 5xx, slow stdin); mock_contract.test.ts runs the same bundles
+// against the fase 02 mock server for the real R3 shapes.
 import { spawn } from 'node:child_process';
 import { existsSync, mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
@@ -81,6 +82,10 @@ export async function bundleHooks(): Promise<Record<HookName, string>> {
     entryPoints: HOOK_NAMES.map((n) => join(pkgRoot, 'src', `${n}.ts`)).filter((f) => existsSync(f)),
     outdir,
     bundle: true,
+    alias: {
+      '@radar/common/node': join(pkgRoot, '../common/src/node.ts'),
+      '@radar/common': join(pkgRoot, '../common/src/index.ts'),
+    },
     platform: 'node',
     format: 'cjs',
     target: 'node20',

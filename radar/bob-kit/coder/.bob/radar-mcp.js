@@ -36,6 +36,813 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
+// ../../node_modules/.pnpm/ignore@7.0.10/node_modules/ignore/index.js
+var require_ignore = __commonJS({
+  "../../node_modules/.pnpm/ignore@7.0.10/node_modules/ignore/index.js"(exports2, module2) {
+    function makeArray(subject) {
+      return Array.isArray(subject) ? subject : [subject];
+    }
+    var UNDEFINED = void 0;
+    var EMPTY = "";
+    var SPACE = " ";
+    var ESCAPE = "\\";
+    var REGEX_LITERAL_SPECIAL = /[.*+?()[\]{}^$|\\/]/;
+    var REGEX_TEST_BLANK_LINE = /^\uFEFF? *$/;
+    var REGEX_INVALID_TRAILING_BACKSLASH = /(?:[^\\]|^)\\$/;
+    var REGEX_REPLACE_LEADING_EXCAPED_EXCLAMATION = /^\\!/;
+    var REGEX_REPLACE_LEADING_EXCAPED_HASH = /^\\#/;
+    var REGEX_SPLITALL_CRLF = /\r?\n/g;
+    var DOUBLE_SLASH = "//";
+    var SLASH_CODE = 47;
+    var DOT_CODE = 46;
+    var SLASH = "/";
+    var TMP_KEY_IGNORE = "node-ignore";
+    if (typeof Symbol !== "undefined") {
+      TMP_KEY_IGNORE = /* @__PURE__ */ Symbol.for("node-ignore");
+    }
+    var KEY_IGNORE = TMP_KEY_IGNORE;
+    var define = (object3, key, value) => {
+      Object.defineProperty(object3, key, { value });
+      return value;
+    };
+    var RETURN_FALSE = () => false;
+    var cleanRangeBackSlash = (slashes) => {
+      const { length } = slashes;
+      return slashes.slice(0, length - length % 2);
+    };
+    var POSIX_CLASSES = {
+      alnum: "0-9A-Za-z",
+      alpha: "A-Za-z",
+      blank: " \\t",
+      cntrl: "\\x00-\\x1f\\x7f",
+      digit: "0-9",
+      graph: "!-.0-~",
+      lower: "a-z",
+      print: " -.0-~",
+      punct: "!-.:-@\\[-`{-~",
+      // git's `sane-ctype.h` classifies \v and \f as control, not space,
+      //   unlike C's `isspace`
+      space: " \\t\\n\\r",
+      upper: "A-Z",
+      xdigit: "0-9A-Fa-f"
+    };
+    var CLASS_MEMBERS_TO_ESCAPE = "\\]^-[";
+    var escapeMember = (char) => CLASS_MEMBERS_TO_ESCAPE.indexOf(char) < 0 ? char : ESCAPE + char;
+    var NON_SLASH = "(?!\\/)";
+    var classSource = (negated, body) => {
+      if (negated) {
+        return `[^\\/${body}]`;
+      }
+      const source = `[${body}]`;
+      return new RegExp(source).test("/") ? NON_SLASH + source : source;
+    };
+    var scanBracket = (pattern, start) => {
+      const { length } = pattern;
+      let index = start + 1;
+      let negated = EMPTY;
+      const lead = pattern[index];
+      if (lead === "!" || lead === "^") {
+        negated = "^";
+        index++;
+      }
+      let body = EMPTY;
+      let prev = EMPTY;
+      for (; ; ) {
+        const char = pattern[index];
+        if (char === UNDEFINED) {
+          return null;
+        }
+        if (char === ESCAPE) {
+          const escaped = pattern[index + 1];
+          if (escaped === UNDEFINED) {
+            return null;
+          }
+          body += escapeMember(escaped);
+          prev = escaped;
+          index++;
+        } else if (char === "-" && prev && index + 1 < length && pattern[index + 1] !== "]") {
+          index++;
+          let to = pattern[index];
+          if (to === ESCAPE) {
+            to = pattern[index += 1];
+          }
+          if (prev <= to) {
+            body += `-${escapeMember(to)}`;
+          }
+          prev = EMPTY;
+        } else if (char === "[" && pattern[index + 1] === ":") {
+          const nameStart = index + 2;
+          let end = nameStart;
+          while (end < length && pattern[end] !== "]") {
+            end++;
+          }
+          if (end === length) {
+            return null;
+          }
+          if (end > nameStart && pattern[end - 1] === ":") {
+            const expanded = POSIX_CLASSES[pattern.slice(nameStart, end - 1)];
+            if (expanded === UNDEFINED) {
+              return null;
+            }
+            body += expanded;
+            prev = EMPTY;
+            index = end;
+          } else {
+            body += escapeMember("[");
+            prev = "[";
+            index = nameStart - 2;
+          }
+        } else {
+          body += escapeMember(char);
+          prev = char;
+        }
+        index++;
+        if (pattern[index] === "]") {
+          return {
+            end: index,
+            source: classSource(negated, body)
+          };
+        }
+      }
+    };
+    var NEVER_MATCH = "[]";
+    var PLACEHOLDER = "\0";
+    var REGEX_RESTORE_PLACEHOLDER = new RegExp(
+      `${PLACEHOLDER}(\\d+)${PLACEHOLDER}`,
+      "g"
+    );
+    var TRAILING_WILDCARD = "\uE000";
+    var extractBrackets = (pattern) => {
+      const sources = [];
+      const hold = (source) => `${PLACEHOLDER}${sources.push(source) - 1}${PLACEHOLDER}`;
+      const { length } = pattern;
+      let out = EMPTY;
+      let index = 0;
+      while (index < length) {
+        const char = pattern[index];
+        if (char === ESCAPE) {
+          const escaped = pattern[index + 1];
+          if (escaped === "*" || escaped === "[" || escaped === SPACE || escaped === ESCAPE) {
+            out += pattern.slice(index, index + 2);
+          } else {
+            out += hold(
+              REGEX_LITERAL_SPECIAL.test(escaped) ? ESCAPE + escaped : escaped
+            );
+          }
+          index += 2;
+        } else if (char === PLACEHOLDER) {
+          out += hold(`[${PLACEHOLDER}]`);
+          index++;
+        } else if (char === "[") {
+          const scanned = scanBracket(pattern, index);
+          if (scanned === null) {
+            out += hold(NEVER_MATCH);
+            index = length;
+          } else {
+            out += hold(scanned.source);
+            index = scanned.end + 1;
+          }
+        } else {
+          out += char;
+          index++;
+        }
+      }
+      return {
+        source: out,
+        sources
+      };
+    };
+    var DIRECT = null;
+    var REGEX_INNER_SLASH = /\/(?!$)/;
+    var REPLACERS = [
+      [
+        // Remove BOM
+        // TODO:
+        // Other similar zero-width characters?
+        /^\uFEFF/,
+        () => EMPTY,
+        "\uFEFF"
+      ],
+      [
+        // A trailing line terminator, left on when a whole file's contents are
+        //   added as one pattern rather than split into lines. git never sees one
+        //   -- it reads a `.gitignore` line by line -- so it is not part of the
+        //   pattern and is dropped here, apart from the trailing-space trimming,
+        //   which follows git in touching spaces and nothing else.
+        /[\r\n]+$/,
+        () => EMPTY
+      ],
+      // > Trailing spaces are ignored unless they are quoted with backslash ("\")
+      [
+        // Only spaces, never tabs or other whitespace: git trims a trailing run
+        //   of `' '` and nothing else (dir.c, `trim_trailing_spaces`, a single
+        //   `case ' '`), so a pattern ending in a tab keeps it as a literal.
+        // (a\ ) -> (a )
+        // (a  ) -> (a)
+        // (a ) -> (a)
+        // (a \ ) -> (a  )
+        /((?:\\\\)*?)(\\? +)$/,
+        (_, m1, m2) => m1 + (m2.indexOf("\\") === 0 ? SPACE : EMPTY)
+      ],
+      // Replace (\ ) with ' '
+      // Only a space: an escaped tab or other whitespace is already a literal by
+      //   the time it reaches here, and a bare tab must be left as one, not turned
+      //   into a space.
+      // (\ ) -> ' '
+      // (\\ ) -> '\\ '
+      // (\\\ ) -> '\\ '
+      [
+        /(\\+?) /g,
+        (_, m1) => {
+          const { length } = m1;
+          return m1.slice(0, length - length % 2) + SPACE;
+        }
+      ],
+      // Escape metacharacters
+      // which is written down by users but means special for regular expressions.
+      // > There are 12 characters with special meanings:
+      // > - the backslash \,
+      // > - the caret ^,
+      // > - the dollar sign $,
+      // > - the period or dot .,
+      // > - the vertical bar or pipe symbol |,
+      // > - the question mark ?,
+      // > - the asterisk or star *,
+      // > - the plus sign +,
+      // > - the opening parenthesis (,
+      // > - the closing parenthesis ),
+      // > - and the opening square bracket [,
+      // > - the opening curly brace {,
+      // > These special characters are often called "metacharacters".
+      [
+        /[\\$.|*+(){^]/g,
+        (match) => `\\${match}`
+      ],
+      [
+        // > a question mark (?) matches a single character
+        /(?!\\)\?/g,
+        () => "[^/]",
+        "?"
+      ],
+      // leading slash
+      [
+        // > A leading slash matches the beginning of the pathname.
+        // > For example, "/*.c" matches "cat-file.c" but not "mozilla-sha1/sha1.c".
+        // A leading slash matches the beginning of the pathname
+        /^\//,
+        () => "^",
+        SLASH
+      ],
+      // replace special metacharacter slash after the leading slash
+      [
+        /\//g,
+        () => "\\/",
+        SLASH
+      ],
+      [
+        // > A leading "**" followed by a slash means match in all directories.
+        // > For example, "**/foo" matches file or directory "foo" anywhere,
+        // > the same as pattern "foo".
+        // > "**/foo/bar" matches file or directory "bar" anywhere that is directly
+        // >   under directory "foo".
+        // Notice that the '*'s have been replaced as '\\*'
+        /^\^*(?:\\\*\\\*\\\/)+/,
+        // '**/foo' <-> 'foo'
+        () => "^(?:.*\\/)?",
+        "*"
+      ],
+      // starting
+      [
+        // there will be no leading '/'
+        //   (which has been replaced by section "leading slash")
+        // If starts with '**', adding a '^' to the regular expression also works
+        DIRECT,
+        (source, pattern) => {
+          if (!source || source[0] === "^") {
+            return source;
+          }
+          const anchor2 = !REGEX_INNER_SLASH.test(pattern) ? "(?:^|\\/)" : "^";
+          return anchor2 + source;
+        }
+      ],
+      // two globstars
+      [
+        // Use lookahead assertions so that we could match more than one `'/**'`
+        /\\\/\\\*\\\*(?=\\\/|$)/g,
+        // Zero, one or several directories
+        // should not use '*', or it will be replaced by the next replacer
+        // Check if it is not the last `'/**'`
+        (_, index, str) => index + 6 < str.length ? str.slice(index + 6) === "\\/" ? "(?:\\/[^\\/]+)+" : "(?:\\/[^\\/]+)*" : "\\/.+",
+        "*"
+      ],
+      // normal intermediate wildcards
+      [
+        // Never replace escaped '*'
+        // ignore rule '\*' will match the path '*'
+        // 'abc.*/' -> go
+        // 'abc.*'  -> skip this rule,
+        //    coz trailing single wildcard will be handed by [trailing wildcard]
+        /(^|[^\\]+)(\\\*)+(?=.+)/g,
+        // '*.js' matches '.js'
+        // '*.js' doesn't match 'abc'
+        (_, p1, p2) => {
+          const unescaped = p2.replace(/\\\*/g, "[^\\/]*");
+          return p1 + unescaped;
+        },
+        "*"
+      ],
+      // trailing wildcard, held apart from a literal star
+      [
+        // The step above leaves a trailing `*` alone, so a single `\*` is all that
+        //   can be left at the end here. Whether it is a wildcard or a literal
+        //   turns on the backslashes the user put in front of it: the escaper has
+        //   since doubled every one, so what stands here is those `2N` doubled
+        //   backslashes and then the star's own escape. An even number of the
+        //   original `N` leaves the star unescaped -- a wildcard -- and an odd
+        //   number escapes it -- a literal. This runs while the two are still
+        //   distinct, before the unescape steps below collapse the literal onto
+        //   the very `\*` a wildcard leaves behind.
+        /(^|[^\\])((?:\\\\)*)\\\*$/,
+        (match, p1, p2) => (
+          // `p2` holds the doubled user backslashes; half of them is `N`.
+          p2.length / 2 % 2 === 0 ? p1 + p2 + TRAILING_WILDCARD : match
+        ),
+        "*"
+      ],
+      [
+        // unescape, revert step 3 except for back slash
+        // For example, if a user escape a '\\*',
+        // after step 3, the result will be '\\\\\\*'
+        /\\\\\\(?=[$.|*+(){^])/g,
+        () => ESCAPE,
+        ESCAPE + ESCAPE
+      ],
+      [
+        // '\\\\' -> '\\'
+        /\\\\/g,
+        () => ESCAPE,
+        ESCAPE + ESCAPE
+      ],
+      [
+        // Every real bracket expression -- POSIX classes included -- has already
+        //   been held aside by `extractBrackets`, so the only `[` left in the
+        //   pattern is an escaped, literal one.
+        // `\` is escaped by step 3
+        /\\\[([^\]/]*?)(\\*)($|\])/g,
+        // '\\[bar]' -> '\\\\[bar\\]'
+        (match, range, endEscape, close) => `\\[${range}${cleanRangeBackSlash(endEscape)}${close}`,
+        "["
+      ],
+      // ending
+      [
+        // 'js' will not match 'js.'
+        // 'ab' will not match 'abc'
+        DIRECT,
+        // WTF!
+        // https://git-scm.com/docs/gitignore
+        // changes in [2.22.1](https://git-scm.com/docs/gitignore/2.22.1)
+        // which re-fixes #24, #38
+        // > If there is a separator at the end of the pattern then the pattern
+        // > will only match directories, otherwise the pattern can match both
+        // > files and directories.
+        // 'js*' will not match 'a.js'
+        // 'js/' will not match 'a.js'
+        // 'js' will match 'a.js' and 'a.js/'
+        (source) => {
+          const last = source[source.length - 1];
+          if (!last || last === TRAILING_WILDCARD) {
+            return source;
+          }
+          return last === SLASH ? `${source}$` : `${source}(?=$|\\/$)`;
+        }
+      ]
+    ];
+    var REGEX_REPLACE_TRAILING_WILDCARD = /(^|\\\/)?\uE000$/;
+    var MODE_IGNORE = "regex";
+    var MODE_CHECK_IGNORE = "checkRegex";
+    var UNDERSCORE = "_";
+    var TRAILING_WILD_CARD_REPLACERS = {
+      [MODE_IGNORE](_, p1) {
+        const prefix = p1 ? `${p1}[^/]+` : "[^/]*";
+        return `${prefix}(?=$|\\/$)`;
+      },
+      [MODE_CHECK_IGNORE](_, p1) {
+        const prefix = p1 ? `${p1}[^/]*` : "[^/]*";
+        return `${prefix}(?=$|\\/$)`;
+      }
+    };
+    var WILDCARD = "[^\\/]*";
+    var separatorAfter = (run, at) => {
+      let separator = EMPTY;
+      for (let index = at + 1; index < run.length && !run[index].wildcard; index++) {
+        separator += run[index].single;
+      }
+      return separator;
+    };
+    var pinWildcards = (source) => {
+      if (source.indexOf(WILDCARD) < 0) {
+        return source;
+      }
+      const tokens = [];
+      const { length } = source;
+      let index = 0;
+      while (index < length) {
+        const char = source[index];
+        if (source.startsWith(WILDCARD, index)) {
+          tokens.push({ wildcard: true });
+          index += WILDCARD.length;
+        } else if (char === "[") {
+          let end = index + 1;
+          if (source[end] === "^") {
+            end++;
+          }
+          if (source[end] === "]") {
+            end++;
+          }
+          while (end < length && source[end] !== "]") {
+            end += source[end] === ESCAPE ? 2 : 1;
+          }
+          end++;
+          tokens.push({ single: source.slice(index, end) });
+          index = end;
+        } else if (char === ESCAPE) {
+          tokens.push({ single: source.slice(index, index + 2) });
+          index += 2;
+        } else if (char === "(") {
+          let depth = 0;
+          let end = index;
+          do {
+            if (source[end] === ESCAPE) {
+              end++;
+            } else if (source[end] === "(") {
+              depth++;
+            } else if (source[end] === ")") {
+              depth--;
+            }
+            end++;
+          } while (end < length && depth > 0);
+          if ("*+?".indexOf(source[end]) >= 0) {
+            end++;
+          }
+          tokens.push({ boundary: source.slice(index, end) });
+          index = end;
+        } else if (char === "^" || char === "$") {
+          tokens.push({ boundary: char });
+          index++;
+        } else {
+          tokens.push({ single: char });
+          index++;
+        }
+      }
+      let out = EMPTY;
+      let run = [];
+      const flush = () => {
+        let lastWildcard;
+        run.forEach((token, at) => {
+          if (token.wildcard) {
+            lastWildcard = at;
+          }
+        });
+        run.forEach((token, at) => {
+          if (!token.wildcard) {
+            out += token.single;
+            return;
+          }
+          out += at === lastWildcard ? WILDCARD : `(?:(?!${separatorAfter(run, at)})[^\\/])*`;
+        });
+        run = [];
+      };
+      tokens.forEach((token) => {
+        if (token.boundary === void 0) {
+          run.push(token);
+          return;
+        }
+        flush();
+        out += token.boundary;
+      });
+      flush();
+      return out;
+    };
+    var makeRegexPrefix = (pattern) => {
+      const { source, sources } = extractBrackets(pattern);
+      const replaced = REPLACERS.reduce(
+        // A pass whose matcher finds nothing hands back the very string it was
+        //   given, so asking first costs a search and saves a rewrite. Ten of the
+        //   fifteen passes never fire for a typical .gitignore line, and between
+        //   them they were 45% of this chain.
+        (prev, [matcher, replacer, required2]) => {
+          if (matcher === DIRECT) {
+            return replacer(prev, pattern);
+          }
+          if (required2 !== UNDEFINED && prev.indexOf(required2) < 0) {
+            return prev;
+          }
+          return matcher.test(prev) ? prev.replace(matcher, replacer.bind(pattern)) : prev;
+        },
+        source
+      );
+      return sources.length ? replaced.replace(
+        REGEX_RESTORE_PLACEHOLDER,
+        (match, index) => sources[index]
+      ) : replaced;
+    };
+    var matchesBasename = (body) => {
+      const index = body.indexOf(SLASH);
+      return index < 0 || index === body.length - 1;
+    };
+    var basenameOf = (path) => {
+      const end = path.length - 1;
+      const index = path.lastIndexOf(
+        SLASH,
+        path[end] === SLASH ? end - 1 : end
+      );
+      return index < 0 ? path : path.slice(index + 1);
+    };
+    var parentOf = (path) => {
+      if (path.charCodeAt(0) === SLASH_CODE || path.indexOf(DOUBLE_SLASH) >= 0) {
+        const slices = path.split(SLASH).filter(Boolean);
+        slices.pop();
+        return slices.length ? slices.join(SLASH) + SLASH : EMPTY;
+      }
+      const end = path.length - 1;
+      const cut = path.lastIndexOf(
+        SLASH,
+        path.charCodeAt(end) === SLASH_CODE ? end - 1 : end
+      );
+      return cut < 0 ? EMPTY : path.slice(0, cut + 1);
+    };
+    var isString = (subject) => typeof subject === "string";
+    var checkPattern = (pattern) => pattern && isString(pattern) && !REGEX_TEST_BLANK_LINE.test(pattern) && !REGEX_INVALID_TRAILING_BACKSLASH.test(pattern) && pattern.indexOf("#") !== 0;
+    var splitPattern = (pattern) => pattern.split(REGEX_SPLITALL_CRLF).filter(Boolean);
+    var IgnoreRule = class {
+      constructor(pattern, mark, body, ignoreCase, negative, prefix) {
+        this.pattern = pattern;
+        this.mark = mark;
+        this.negative = negative;
+        define(this, "body", body);
+        define(this, "ignoreCase", ignoreCase);
+        define(this, "regexPrefix", prefix);
+      }
+      // Worked out on first use and kept behind an own property, the way `regex`
+      //   caches itself in `_regex`. Deciding it in the constructor instead would
+      //   add a fourth `defineProperty` to every rule ever built, which cost 4% of
+      //   every compile -- including the compiles of rules that are never matched
+      //   against anything.
+      get _basenameOnly() {
+        return define(this, "_basenameOnly", matchesBasename(this.body));
+      }
+      get regex() {
+        const key = UNDERSCORE + MODE_IGNORE;
+        if (this[key]) {
+          return this[key];
+        }
+        return this._make(MODE_IGNORE, key);
+      }
+      get checkRegex() {
+        const key = UNDERSCORE + MODE_CHECK_IGNORE;
+        if (this[key]) {
+          return this[key];
+        }
+        return this._make(MODE_CHECK_IGNORE, key);
+      }
+      _make(mode, key) {
+        const str = pinWildcards(this.regexPrefix.replace(
+          REGEX_REPLACE_TRAILING_WILDCARD,
+          // It does not need to bind pattern
+          TRAILING_WILD_CARD_REPLACERS[mode]
+        ));
+        const regex = this.ignoreCase ? new RegExp(str, "i") : new RegExp(str);
+        return define(this, key, regex);
+      }
+    };
+    var createRule = ({
+      pattern,
+      mark
+    }, ignoreCase) => {
+      let negative = false;
+      let body = pattern;
+      if (body.indexOf("!") === 0) {
+        negative = true;
+        body = body.substr(1);
+      }
+      body = body.replace(REGEX_REPLACE_LEADING_EXCAPED_EXCLAMATION, "!").replace(REGEX_REPLACE_LEADING_EXCAPED_HASH, "#");
+      const regexPrefix = makeRegexPrefix(body);
+      return new IgnoreRule(
+        pattern,
+        mark,
+        body,
+        ignoreCase,
+        negative,
+        regexPrefix
+      );
+    };
+    var RuleManager = class {
+      constructor(ignoreCase) {
+        this._ignoreCase = ignoreCase;
+        this._rules = [];
+        this._basenameCount = 0;
+      }
+      _add(pattern) {
+        if (pattern && pattern[KEY_IGNORE]) {
+          this._rules = this._rules.concat(pattern._rules._rules);
+          this._basenameCount += pattern._rules._basenameCount;
+          this._added = true;
+          return;
+        }
+        if (isString(pattern)) {
+          pattern = {
+            pattern
+          };
+        }
+        if (checkPattern(pattern.pattern)) {
+          const rule = createRule(pattern, this._ignoreCase);
+          this._added = true;
+          this._rules.push(rule);
+          if (matchesBasename(rule.body)) {
+            this._basenameCount++;
+          }
+        }
+      }
+      // @param {Array<string> | string | Ignore} pattern
+      add(pattern) {
+        this._added = false;
+        makeArray(
+          isString(pattern) ? splitPattern(pattern) : pattern
+        ).forEach(this._add, this);
+        return this._added;
+      }
+      // Test one single path without recursively checking parent directories
+      //
+      // - checkUnignored `boolean` whether should check if the path is unignored,
+      //   setting `checkUnignored` to `false` could reduce additional
+      //   path matching.
+      // - check `string` either `MODE_IGNORE` or `MODE_CHECK_IGNORE`
+      // @returns {TestResult} true if a file is ignored
+      test(path, checkUnignored, mode) {
+        let ignored = false;
+        let unignored = false;
+        let matchedRule;
+        const rules = this._rules;
+        const { length } = rules;
+        const shortcut = this._basenameCount * 2 >= length;
+        const basename2 = shortcut ? basenameOf(path) : path;
+        for (let index = 0; index < length; index++) {
+          const rule = rules[index];
+          const { negative } = rule;
+          const skip = unignored === negative && ignored !== unignored || negative && !ignored && !unignored && !checkUnignored;
+          if (!skip && rule[mode].test(
+            shortcut && rule._basenameOnly ? basename2 : path
+          )) {
+            ignored = !negative;
+            unignored = negative;
+            matchedRule = negative ? UNDEFINED : rule;
+          }
+        }
+        const ret = {
+          ignored,
+          unignored
+        };
+        if (matchedRule) {
+          ret.rule = matchedRule;
+        }
+        return ret;
+      }
+    };
+    var throwError = (message, Ctor) => {
+      throw new Ctor(message);
+    };
+    var checkPath = (path, originalPath, doThrow) => {
+      if (!isString(path)) {
+        return doThrow(
+          `path must be a string, but got \`${originalPath}\``,
+          TypeError
+        );
+      }
+      if (!path) {
+        return doThrow(`path must not be empty`, TypeError);
+      }
+      if (checkPath.isNotRelative(path)) {
+        const r = "`path.relative()`d";
+        return doThrow(
+          `path should be a ${r} string, but got "${originalPath}"`,
+          RangeError
+        );
+      }
+      return true;
+    };
+    var isNotRelative = (path) => {
+      const first = path.charCodeAt(0);
+      if (first === SLASH_CODE) {
+        return true;
+      }
+      if (first !== DOT_CODE) {
+        return false;
+      }
+      if (path.length === 1) {
+        return true;
+      }
+      const second = path.charCodeAt(1);
+      if (second === SLASH_CODE) {
+        return true;
+      }
+      if (second !== DOT_CODE) {
+        return false;
+      }
+      return path.length === 2 || path.charCodeAt(2) === SLASH_CODE;
+    };
+    checkPath.isNotRelative = isNotRelative;
+    checkPath.convert = (p) => p;
+    var Ignore = class {
+      constructor({
+        ignorecase = true,
+        ignoreCase = ignorecase,
+        allowRelativePaths = false
+      } = {}) {
+        define(this, KEY_IGNORE, true);
+        this._rules = new RuleManager(ignoreCase);
+        this._strictPathCheck = !allowRelativePaths;
+        this._initCache();
+      }
+      _initCache() {
+        this._ignoreCache = /* @__PURE__ */ Object.create(null);
+        this._testCache = /* @__PURE__ */ Object.create(null);
+      }
+      add(pattern) {
+        if (this._rules.add(pattern)) {
+          this._initCache();
+        }
+        return this;
+      }
+      // legacy
+      addPattern(pattern) {
+        return this.add(pattern);
+      }
+      // @returns {TestResult}
+      _test(originalPath, cache, checkUnignored) {
+        const path = originalPath && checkPath.convert(originalPath);
+        checkPath(
+          path,
+          originalPath,
+          this._strictPathCheck ? throwError : RETURN_FALSE
+        );
+        return this._t(path, cache, checkUnignored);
+      }
+      checkIgnore(path) {
+        if (path.charCodeAt(path.length - 1) !== SLASH_CODE) {
+          return this.test(path);
+        }
+        const parentPath = parentOf(path);
+        if (parentPath) {
+          const parent = this._t(parentPath, this._testCache, true);
+          if (parent.ignored) {
+            return parent;
+          }
+        }
+        return this._rules.test(path, false, MODE_CHECK_IGNORE);
+      }
+      _t(path, cache, checkUnignored) {
+        if (path in cache) {
+          return cache[path];
+        }
+        const parentPath = parentOf(path);
+        const parent = parentPath ? this._t(parentPath, cache, checkUnignored) : UNDEFINED;
+        return cache[path] = parent && parent.ignored ? parent : this._rules.test(path, checkUnignored, MODE_IGNORE);
+      }
+      ignores(path) {
+        return this._test(path, this._ignoreCache, false).ignored;
+      }
+      createFilter() {
+        return (path) => !this.ignores(path);
+      }
+      filter(paths) {
+        return makeArray(paths).filter(this.createFilter());
+      }
+      // @returns {TestResult}
+      test(path) {
+        return this._test(path, this._testCache, true);
+      }
+    };
+    var factory = (options) => new Ignore(options);
+    var isPathValid = (path) => checkPath(path && checkPath.convert(path), path, RETURN_FALSE);
+    var setupWindows = () => {
+      const makePosix = (str) => /^\\\\\?\\/.test(str) || /["<>|\u0000-\u001F]+/u.test(str) ? str : str.replace(/\\/g, "/");
+      checkPath.convert = makePosix;
+      const REGEX_TEST_WINDOWS_PATH_ABSOLUTE = /^[a-z]:\//i;
+      checkPath.isNotRelative = (path) => REGEX_TEST_WINDOWS_PATH_ABSOLUTE.test(path) || isNotRelative(path);
+    };
+    if (
+      // Detect `process` so that it can run in browsers.
+      typeof process !== "undefined" && process.platform === "win32"
+    ) {
+      setupWindows();
+    }
+    module2.exports = factory;
+    factory.default = factory;
+    module2.exports.isPathValid = isPathValid;
+    define(module2.exports, /* @__PURE__ */ Symbol.for("setupWindows"), setupWindows);
+  }
+});
+
 // ../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/codegen/code.js
 var require_code = __commonJS({
   "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/compile/codegen/code.js"(exports2) {
@@ -104,7 +911,7 @@ var require_code = __commonJS({
     }
     exports2._ = _;
     var plus = new _Code("+");
-    function str2(strs, ...args) {
+    function str(strs, ...args) {
       const expr = [safeStringify(strs[0])];
       let i = 0;
       while (i < args.length) {
@@ -115,7 +922,7 @@ var require_code = __commonJS({
       optimize(expr);
       return new _Code(expr);
     }
-    exports2.str = str2;
+    exports2.str = str;
     function addCodeArg(code, arg) {
       if (arg instanceof _Code)
         code.push(...arg._items);
@@ -158,7 +965,7 @@ var require_code = __commonJS({
       return;
     }
     function strConcat(c1, c2) {
-      return c2.emptyStr() ? c1 : c1.emptyStr() ? c2 : str2`${c1}${c2}`;
+      return c2.emptyStr() ? c1 : c1.emptyStr() ? c2 : str`${c1}${c2}`;
     }
     exports2.strConcat = strConcat;
     function interpolate(x) {
@@ -1120,22 +1927,22 @@ var require_util = __commonJS({
       return (0, codegen_1._)`${topSchemaRef}${schemaPath}${(0, codegen_1.getProperty)(keyword)}`;
     }
     exports2.schemaRefOrVal = schemaRefOrVal;
-    function unescapeFragment(str2) {
-      return unescapeJsonPointer(decodeURIComponent(str2));
+    function unescapeFragment(str) {
+      return unescapeJsonPointer(decodeURIComponent(str));
     }
     exports2.unescapeFragment = unescapeFragment;
-    function escapeFragment(str2) {
-      return encodeURIComponent(escapeJsonPointer(str2));
+    function escapeFragment(str) {
+      return encodeURIComponent(escapeJsonPointer(str));
     }
     exports2.escapeFragment = escapeFragment;
-    function escapeJsonPointer(str2) {
-      if (typeof str2 == "number")
-        return `${str2}`;
-      return str2.replace(/~/g, "~0").replace(/\//g, "~1");
+    function escapeJsonPointer(str) {
+      if (typeof str == "number")
+        return `${str}`;
+      return str.replace(/~/g, "~0").replace(/\//g, "~1");
     }
     exports2.escapeJsonPointer = escapeJsonPointer;
-    function unescapeJsonPointer(str2) {
-      return str2.replace(/~1/g, "/").replace(/~0/g, "~");
+    function unescapeJsonPointer(str) {
+      return str.replace(/~1/g, "/").replace(/~0/g, "~");
     }
     exports2.unescapeJsonPointer = unescapeJsonPointer;
     function eachItem(xs, f) {
@@ -1210,13 +2017,13 @@ var require_util = __commonJS({
       return jsPropertySyntax ? (0, codegen_1.getProperty)(dataProp).toString() : "/" + escapeJsonPointer(dataProp);
     }
     exports2.getErrorPath = getErrorPath;
-    function checkStrictMode(it, msg, mode = it.opts.strictSchema) {
+    function checkStrictMode(it, msg3, mode = it.opts.strictSchema) {
       if (!mode)
         return;
-      msg = `strict mode: ${msg}`;
+      msg3 = `strict mode: ${msg3}`;
       if (mode === true)
-        throw new Error(msg);
-      it.self.logger.warn(msg);
+        throw new Error(msg3);
+      it.self.logger.warn(msg3);
     }
     exports2.checkStrictMode = checkStrictMode;
   }
@@ -1948,11 +2755,11 @@ var require_keyword = __commonJS({
       if (def.validateSchema) {
         const valid = def.validateSchema(schema[keyword]);
         if (!valid) {
-          const msg = `keyword "${keyword}" value is invalid at path "${errSchemaPath}": ` + self.errorsText(def.validateSchema.errors);
+          const msg3 = `keyword "${keyword}" value is invalid at path "${errSchemaPath}": ` + self.errorsText(def.validateSchema.errors);
           if (opts.validateSchema === "log")
-            self.logger.error(msg);
+            self.logger.error(msg3);
           else
-            throw new Error(msg);
+            throw new Error(msg3);
         }
       }
     }
@@ -2160,8 +2967,8 @@ var require_json_schema_traverse = __commonJS({
         post(schema, jsonPtr, rootSchema, parentJsonPtr, parentKeyword, parentSchema, keyIndex);
       }
     }
-    function escapeJsonPtr(str2) {
-      return str2.replace(/~/g, "~0").replace(/\//g, "~1");
+    function escapeJsonPtr(str) {
+      return str.replace(/~/g, "~0").replace(/\//g, "~1");
     }
   }
 });
@@ -2471,13 +3278,13 @@ var require_validate = __commonJS({
         throw new Error("async schema in sync schema");
     }
     function commentKeyword({ gen, schemaEnv, schema, errSchemaPath, opts }) {
-      const msg = schema.$comment;
+      const msg3 = schema.$comment;
       if (opts.$comment === true) {
-        gen.code((0, codegen_1._)`${names_1.default.self}.logger.log(${msg})`);
+        gen.code((0, codegen_1._)`${names_1.default.self}.logger.log(${msg3})`);
       } else if (typeof opts.$comment == "function") {
         const schemaPath = (0, codegen_1.str)`${errSchemaPath}/$comment`;
         const rootName = gen.scopeValue("root", { ref: schemaEnv.root });
-        gen.code((0, codegen_1._)`${names_1.default.self}.opts.$comment(${msg}, ${schemaPath}, ${rootName}.schema)`);
+        gen.code((0, codegen_1._)`${names_1.default.self}.opts.$comment(${msg3}, ${schemaPath}, ${rootName}.schema)`);
       }
     }
     function returnResults(it) {
@@ -2596,10 +3403,10 @@ var require_validate = __commonJS({
       }
       it.dataTypes = ts;
     }
-    function strictTypesError(it, msg) {
+    function strictTypesError(it, msg3) {
       const schemaPath = it.schemaEnv.baseId + it.errSchemaPath;
-      msg += ` at "${schemaPath}" (strictTypes)`;
-      (0, util_1.checkStrictMode)(it, msg, it.opts.strictTypes);
+      msg3 += ` at "${schemaPath}" (strictTypes)`;
+      (0, util_1.checkStrictMode)(it, msg3, it.opts.strictTypes);
     }
     var KeywordCxt = class {
       constructor(it, def, keyword) {
@@ -2853,8 +3660,8 @@ var require_ref_error = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     var resolve_1 = require_resolve();
     var MissingRefError = class extends Error {
-      constructor(resolver, baseId, ref, msg) {
-        super(msg || `can't resolve reference ${ref} from id ${baseId}`);
+      constructor(resolver, baseId, ref, msg3) {
+        super(msg3 || `can't resolve reference ${ref} from id ${baseId}`);
         this.missingRef = (0, resolve_1.resolveUrl)(resolver, baseId, ref);
         this.missingSchema = (0, resolve_1.normalizeId)((0, resolve_1.getFullPath)(resolver, this.missingRef));
       }
@@ -3258,10 +4065,10 @@ var require_utils = __commonJS({
         isIPV6: true
       };
     }
-    function findToken(str2, token) {
+    function findToken(str, token) {
       let ind = 0;
-      for (let i = 0; i < str2.length; i++) {
-        if (str2[i] === token) ind++;
+      for (let i = 0; i < str.length; i++) {
+        if (str[i] === token) ind++;
       }
       return ind;
     }
@@ -4275,7 +5082,7 @@ var require_core = __commonJS({
     var util_1 = require_util();
     var $dataRefSchema = require_data();
     var uri_1 = require_uri();
-    var defaultRegExp = (str2, flags) => new RegExp(str2, flags);
+    var defaultRegExp = (str, flags) => new RegExp(str, flags);
     defaultRegExp.code = "new RegExp";
     var META_IGNORE_OPTIONS = ["removeAdditional", "useDefaults", "coerceTypes"];
     var EXT_SCOPE_NAMES = /* @__PURE__ */ new Set([
@@ -4628,7 +5435,7 @@ var require_core = __commonJS({
       errorsText(errors = this.errors, { separator = ", ", dataVar = "data" } = {}) {
         if (!errors || errors.length === 0)
           return "No errors";
-        return errors.map((e) => `${dataVar}${e.instancePath} ${e.message}`).reduce((text, msg) => text + separator + msg);
+        return errors.map((e) => `${dataVar}${e.instancePath} ${e.message}`).reduce((text, msg3) => text + separator + msg3);
       }
       $dataMetaSchema(metaSchema, keywordsJsonPointers) {
         const rules = this.RULES.all;
@@ -4717,11 +5524,11 @@ var require_core = __commonJS({
     Ajv2.ValidationError = validation_error_1.default;
     Ajv2.MissingRefError = ref_error_1.default;
     exports2.default = Ajv2;
-    function checkOptions(checkOpts, options, msg, log = "error") {
+    function checkOptions(checkOpts, options, msg3, log = "error") {
       for (const key in checkOpts) {
         const opt = key;
         if (opt in options)
-          this.logger[log](`${msg}: option ${key}. ${checkOpts[opt]}`);
+          this.logger[log](`${msg3}: option ${key}. ${checkOpts[opt]}`);
       }
     }
     function getSchEnv(keyRef) {
@@ -5070,16 +5877,16 @@ var require_ucs2length = __commonJS({
   "../../node_modules/.pnpm/ajv@8.20.0/node_modules/ajv/dist/runtime/ucs2length.js"(exports2) {
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
-    function ucs2length(str2) {
-      const len = str2.length;
+    function ucs2length(str) {
+      const len = str.length;
       let length = 0;
       let pos = 0;
       let value;
       while (pos < len) {
         length++;
-        value = str2.charCodeAt(pos++);
+        value = str.charCodeAt(pos++);
         if (value >= 55296 && value <= 56319 && pos < len) {
-          value = str2.charCodeAt(pos);
+          value = str.charCodeAt(pos);
           if ((value & 64512) === 56320)
             pos++;
         }
@@ -5223,8 +6030,8 @@ var require_required = __commonJS({
           for (const requiredKey of schema) {
             if ((props === null || props === void 0 ? void 0 : props[requiredKey]) === void 0 && !definedProperties.has(requiredKey)) {
               const schemaPath = it.schemaEnv.baseId + it.errSchemaPath;
-              const msg = `required property "${requiredKey}" is not defined at "${schemaPath}" (strictRequired)`;
-              (0, util_1.checkStrictMode)(it, msg, it.opts.strictRequired);
+              const msg3 = `required property "${requiredKey}" is not defined at "${schemaPath}" (strictRequired)`;
+              (0, util_1.checkStrictMode)(it, msg3, it.opts.strictRequired);
             }
           }
         }
@@ -5594,8 +6401,8 @@ var require_items = __commonJS({
         const l = schArr.length;
         const fullTuple = l === sch.minItems && (l === sch.maxItems || sch[extraItems] === false);
         if (opts.strictTuples && !fullTuple) {
-          const msg = `"${keyword}" is ${l}-tuple, but minItems or maxItems/${extraItems} are not specified or different at path "${errSchemaPath}"`;
-          (0, util_1.checkStrictMode)(it, msg, opts.strictTuples);
+          const msg3 = `"${keyword}" is ${l}-tuple, but minItems or maxItems/${extraItems} are not specified or different at path "${errSchemaPath}"`;
+          (0, util_1.checkStrictMode)(it, msg3, opts.strictTuples);
         }
       }
     }
@@ -6962,8 +7769,8 @@ var require_formats = __commonJS({
     }
     var DATE = /^(\d\d\d\d)-(\d\d)-(\d\d)$/;
     var DAYS = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-    function date5(str2) {
-      const matches = DATE.exec(str2);
+    function date5(str) {
+      const matches = DATE.exec(str);
       if (!matches)
         return false;
       const year = +matches[1];
@@ -6982,8 +7789,8 @@ var require_formats = __commonJS({
     }
     var TIME = /^(\d\d):(\d\d):(\d\d(?:\.\d+)?)(z|([+-])(\d\d)(?::?(\d\d))?)?$/i;
     function getTime(strictTimeZone) {
-      return function time3(str2) {
-        const matches = TIME.exec(str2);
+      return function time3(str) {
+        const matches = TIME.exec(str);
         if (!matches)
           return false;
         const hr = +matches[1];
@@ -7029,8 +7836,8 @@ var require_formats = __commonJS({
     var DATE_TIME_SEPARATOR = /t|\s/i;
     function getDateTime(strictTimeZone) {
       const time3 = getTime(strictTimeZone);
-      return function date_time(str2) {
-        const dateTime = str2.split(DATE_TIME_SEPARATOR);
+      return function date_time(str) {
+        const dateTime = str.split(DATE_TIME_SEPARATOR);
         return dateTime.length === 2 && date5(dateTime[0]) && time3(dateTime[1]);
       };
     }
@@ -7055,13 +7862,13 @@ var require_formats = __commonJS({
     }
     var NOT_URI_FRAGMENT = /\/|:/;
     var URI = /^(?:[a-z][a-z0-9+\-.]*:)(?:\/?\/(?:(?:[a-z0-9\-._~!$&'()*+,;=:]|%[0-9a-f]{2})*@)?(?:\[(?:(?:(?:(?:[0-9a-f]{1,4}:){6}|::(?:[0-9a-f]{1,4}:){5}|(?:[0-9a-f]{1,4})?::(?:[0-9a-f]{1,4}:){4}|(?:(?:[0-9a-f]{1,4}:){0,1}[0-9a-f]{1,4})?::(?:[0-9a-f]{1,4}:){3}|(?:(?:[0-9a-f]{1,4}:){0,2}[0-9a-f]{1,4})?::(?:[0-9a-f]{1,4}:){2}|(?:(?:[0-9a-f]{1,4}:){0,3}[0-9a-f]{1,4})?::[0-9a-f]{1,4}:|(?:(?:[0-9a-f]{1,4}:){0,4}[0-9a-f]{1,4})?::)(?:[0-9a-f]{1,4}:[0-9a-f]{1,4}|(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?))|(?:(?:[0-9a-f]{1,4}:){0,5}[0-9a-f]{1,4})?::[0-9a-f]{1,4}|(?:(?:[0-9a-f]{1,4}:){0,6}[0-9a-f]{1,4})?::)|[Vv][0-9a-f]+\.[a-z0-9\-._~!$&'()*+,;=:]+)\]|(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)|(?:[a-z0-9\-._~!$&'()*+,;=]|%[0-9a-f]{2})*)(?::\d*)?(?:\/(?:[a-z0-9\-._~!$&'()*+,;=:@]|%[0-9a-f]{2})*)*|\/(?:(?:[a-z0-9\-._~!$&'()*+,;=:@]|%[0-9a-f]{2})+(?:\/(?:[a-z0-9\-._~!$&'()*+,;=:@]|%[0-9a-f]{2})*)*)?|(?:[a-z0-9\-._~!$&'()*+,;=:@]|%[0-9a-f]{2})+(?:\/(?:[a-z0-9\-._~!$&'()*+,;=:@]|%[0-9a-f]{2})*)*)(?:\?(?:[a-z0-9\-._~!$&'()*+,;=:@/?]|%[0-9a-f]{2})*)?(?:#(?:[a-z0-9\-._~!$&'()*+,;=:@/?]|%[0-9a-f]{2})*)?$/i;
-    function uri(str2) {
-      return NOT_URI_FRAGMENT.test(str2) && URI.test(str2);
+    function uri(str) {
+      return NOT_URI_FRAGMENT.test(str) && URI.test(str);
     }
     var BYTE = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/gm;
-    function byte(str2) {
+    function byte(str) {
       BYTE.lastIndex = 0;
-      return BYTE.test(str2);
+      return BYTE.test(str);
     }
     var MIN_INT32 = -(2 ** 31);
     var MAX_INT32 = 2 ** 31 - 1;
@@ -7075,11 +7882,11 @@ var require_formats = __commonJS({
       return true;
     }
     var Z_ANCHOR = /[^\\]\\Z/;
-    function regex(str2) {
-      if (Z_ANCHOR.test(str2))
+    function regex(str) {
+      if (Z_ANCHOR.test(str))
         return false;
       try {
-        new RegExp(str2);
+        new RegExp(str);
         return true;
       } catch (e) {
         return false;
@@ -8046,14 +8853,14 @@ function promiseAllObject(promisesObj) {
 }
 function randomString(length = 10) {
   const chars = "abcdefghijklmnopqrstuvwxyz";
-  let str2 = "";
+  let str = "";
   for (let i = 0; i < length; i++) {
-    str2 += chars[Math.floor(Math.random() * chars.length)];
+    str += chars[Math.floor(Math.random() * chars.length)];
   }
-  return str2;
+  return str;
 }
-function esc(str2) {
-  return JSON.stringify(str2);
+function esc(str) {
+  return JSON.stringify(str);
 }
 function slugify(input2) {
   return input2.toLowerCase().trim().replace(/[^\w\s-]/g, "").replace(/[\s_-]+/g, "-").replace(/^-+|-+$/g, "");
@@ -8167,8 +8974,8 @@ var primitiveTypes = /* @__PURE__ */ new Set([
   "symbol",
   "undefined"
 ]);
-function escapeRegex(str2) {
-  return str2.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 function clone(inst, def, params) {
   const cl = new inst._zod.constr(def ?? inst._zod.def);
@@ -8422,13 +9229,13 @@ function getSizableOrigin(input2) {
   return "unknown";
 }
 var highSurrogate = /[\uD800-\uDBFF]/;
-function codePointLength(str2) {
-  const units = str2.length;
-  if (!highSurrogate.test(str2))
+function codePointLength(str) {
+  const units = str.length;
+  if (!highSurrogate.test(str))
     return units;
   let count = units;
   for (let i = 0; i < units - 1; i++) {
-    if ((str2.charCodeAt(i) & 64512) === 55296 && (str2.charCodeAt(i + 1) & 64512) === 56320) {
+    if ((str.charCodeAt(i) & 64512) === 55296 && (str.charCodeAt(i + 1) & 64512) === 56320) {
       count--;
       i++;
     }
@@ -28563,40 +29370,735 @@ function createRadarClient(config2, timeoutMs = MCP_FETCH_TIMEOUT_MS) {
     post: (path, body) => call("POST", path, body)
   };
 }
+function expectShape(schema, data, what) {
+  const parsed = schema.safeParse(data);
+  if (parsed.success) return parsed.data;
+  const detail = parsed.error.issues.slice(0, 3).map((i) => `${i.path.join(".") || "(root)"} ${i.code}`).join("; ");
+  process.stderr.write(`radar-mcp: ${what} response does not match R3: ${detail}
+`);
+  throw new RadarToolError(`Jawaban server Radar untuk ${what} tidak sesuai kontrak; beri tahu user dan coba lagi nanti.`);
+}
 
-// src/placeholder/config.ts
+// ../common/src/ignore.ts
+var import_ignore = __toESM(require_ignore(), 1);
+
+// ../common/src/constants.ts
+var TERM_FRAME_MAX_BYTES = 32768;
+var PLAN_MAX_TASKS = 8;
+var PLAN_MAX_FILES_PER_TASK = 20;
+var NOTIFY_MAX_CHARS = 200;
+var ACTIVITY_TEXT_MAX_CHARS = 200;
+var SUBMIT_SUMMARY_MAX_CHARS = 500;
+
+// ../common/src/config.ts
 var import_node_fs = require("node:fs");
 var import_node_path = require("node:path");
-var ConfigMissingError = class extends Error {
+
+// ../common/src/types.ts
+var TASK_STATUSES = ["draf", "terbuka", "dikerjakan", "review", "selesai", "batal"];
+var LOCK_STATES = ["dipesan", "dipegang", "review"];
+var ALLOCATION_SOURCES = ["plan", "auto", "decision"];
+var BLOCK_VIAS = ["hook", "sync"];
+var REQUEST_SOURCES = ["hook", "sync", "mcp"];
+var REQUEST_STATUSES = ["terbuka", "diusulkan", "diputuskan", "ditolak", "batal"];
+var PROPOSAL_KINDS = ["plan", "decision", "review"];
+var PROPOSAL_STATUSES = ["menunggu", "disetujui", "ditolak", "diterapkan_otomatis", "kedaluwarsa"];
+var REVIEW_VERDICTS = ["setujui", "setujui_beri_tahu", "kembalikan"];
+var DECISION_OPTIONS = ["antre", "pindahkan", "pecah"];
+var CHECK_REASONS = [
+  "own",
+  "grabbed",
+  "held_by_other",
+  "reserved_by_other",
+  "in_review_by_other",
+  "committing",
+  "pm_readonly",
+  "ignored_path"
+];
+
+// ../common/src/schemas.ts
+var PathSchema = external_exports.string().min(1).max(1024);
+var MemberIdSchema = external_exports.string().min(1).max(64);
+var TaskIdSchema = external_exports.string().min(1).max(64);
+var EpochMsSchema = external_exports.number().int().nonnegative();
+var RoleSchema2 = external_exports.enum(["coder", "pm"]);
+var TaskStatusSchema2 = external_exports.enum(TASK_STATUSES);
+var LockStateSchema = external_exports.enum(LOCK_STATES);
+var LockStateViewSchema = external_exports.enum([...LOCK_STATES, "bebas"]);
+var AllocationSourceSchema = external_exports.enum(ALLOCATION_SOURCES);
+var BlockViaSchema = external_exports.enum(BLOCK_VIAS);
+var RequestSourceSchema = external_exports.enum(REQUEST_SOURCES);
+var RequestStatusSchema = external_exports.enum(REQUEST_STATUSES);
+var ProposalKindSchema = external_exports.enum(PROPOSAL_KINDS);
+var ProposalStatusSchema = external_exports.enum(PROPOSAL_STATUSES);
+var ReviewVerdictSchema = external_exports.enum(REVIEW_VERDICTS);
+var DecisionOptionSchema = external_exports.enum(DECISION_OPTIONS);
+var CheckReasonSchema = external_exports.enum(CHECK_REASONS);
+var DecisionSchema = external_exports.enum(["allow", "block"]);
+var PrincipalSchema = external_exports.discriminatedUnion("kind", [
+  external_exports.object({ kind: external_exports.literal("member"), memberId: MemberIdSchema, role: RoleSchema2 }),
+  external_exports.object({ kind: external_exports.literal("mc") })
+]);
+var ERROR_CODES = [
+  "BAD_REQUEST",
+  "UNAUTHORIZED",
+  "FORBIDDEN",
+  "NOT_FOUND",
+  "CONFLICT",
+  "VALIDATION",
+  "INTERNAL",
+  "TERM_NOT_FOUND",
+  "TERM_NOT_OWNER",
+  "TERM_NO_GRANT",
+  "TERM_FRAME_TOO_LARGE"
+];
+var ErrorCodeSchema = external_exports.enum(ERROR_CODES);
+var ErrorRes = external_exports.object({ error: external_exports.object({ code: ErrorCodeSchema, message: external_exports.string() }) });
+var HealthRes = external_exports.object({
+  ok: external_exports.boolean(),
+  workspace: external_exports.string(),
+  version: external_exports.string(),
+  uptimeMs: external_exports.number().nonnegative()
+});
+var LockHolder = external_exports.object({
+  memberId: MemberIdSchema,
+  memberName: external_exports.string(),
+  taskId: TaskIdSchema,
+  taskTitle: external_exports.string(),
+  state: LockStateSchema,
+  sinceMs: external_exports.number().nonnegative().optional()
+});
+var LockCheckReq = external_exports.object({
+  paths: external_exports.array(PathSchema).min(1).max(100),
+  tool: external_exports.string().min(1).max(128),
+  sessionId: external_exports.string().max(256).nullable().optional(),
+  clientTs: EpochMsSchema
+});
+var LockCheckResult = external_exports.object({
+  path: PathSchema,
+  decision: DecisionSchema,
+  reason: CheckReasonSchema,
+  holder: LockHolder.nullable().optional(),
+  requestId: external_exports.string().nullable().optional(),
+  queuePos: external_exports.number().int().nonnegative().nullable().optional()
+});
+var LockCheckRes = external_exports.object({
+  decision: DecisionSchema,
+  results: external_exports.array(LockCheckResult),
+  activeTaskId: TaskIdSchema.nullable(),
+  message: external_exports.string(),
+  serverMs: external_exports.number().nonnegative().optional()
+});
+var BriefQuery = external_exports.object({
+  kind: external_exports.enum(["start", "prompt"]),
+  since: external_exports.coerce.number().int().nonnegative().optional(),
+  peek: external_exports.enum(["true", "false"]).optional()
+});
+var BriefRes = external_exports.object({ lines: external_exports.array(external_exports.string()), cursor: external_exports.number().int().nonnegative() });
+var TaskFileEntry = external_exports.object({
+  path: PathSchema,
+  lock: LockStateSchema.nullable(),
+  queuePos: external_exports.number().int().nonnegative().nullable(),
+  waitingFor: TaskIdSchema.nullable().optional()
+});
+var TaskItem = external_exports.object({
+  id: TaskIdSchema,
+  title: external_exports.string(),
+  description: external_exports.string(),
+  ownerId: MemberIdSchema,
+  status: TaskStatusSchema2,
+  adhoc: external_exports.boolean(),
+  baseCommit: external_exports.string().nullable(),
+  editCount: external_exports.number().int().nonnegative(),
+  files: external_exports.array(TaskFileEntry)
+});
+var TasksQuery = external_exports.object({
+  owner: external_exports.string().optional(),
+  status: external_exports.enum(["open", "all"]).optional()
+});
+var TasksRes = external_exports.object({ tasks: external_exports.array(TaskItem), activeTaskId: TaskIdSchema.nullable() });
+var ActivateRes = external_exports.object({ activeTaskId: TaskIdSchema });
+var BlockLastRes = external_exports.object({
+  block: external_exports.object({
+    path: PathSchema,
+    ts: EpochMsSchema,
+    via: BlockViaSchema,
+    holder: LockHolder.nullable(),
+    requestId: external_exports.string().nullable(),
+    requestStatus: RequestStatusSchema.nullable(),
+    queue: external_exports.array(external_exports.object({ taskId: TaskIdSchema, memberId: MemberIdSchema })),
+    suggestion: external_exports.string()
+  }).nullable()
+});
+var RequestFileReq = external_exports.object({ path: PathSchema, reason: external_exports.string().max(500).default("") });
+var RequestFileRes = external_exports.union([
+  external_exports.object({ requestId: external_exports.string(), status: RequestStatusSchema, duplicate: external_exports.boolean() }),
+  external_exports.object({ requestId: external_exports.null(), status: external_exports.literal("bebas"), message: external_exports.string() })
+]);
+var ActivityQuery = external_exports.object({
+  path: external_exports.string().optional(),
+  limit: external_exports.coerce.number().int().min(1).max(50).optional()
+});
+var ActivityRes = external_exports.object({
+  items: external_exports.array(
+    external_exports.object({
+      ts: EpochMsSchema,
+      actor: external_exports.string(),
+      type: external_exports.string(),
+      path: PathSchema.optional(),
+      summary: external_exports.string()
+    })
+  )
+});
+var SubmitReq = external_exports.object({ summary: external_exports.string().min(1).max(SUBMIT_SUMMARY_MAX_CHARS) });
+var SubmitRes = external_exports.object({ taskId: TaskIdSchema, status: external_exports.literal("review"), files: external_exports.array(PathSchema) });
+var TeamRes = external_exports.object({
+  members: external_exports.array(
+    external_exports.object({
+      id: MemberIdSchema,
+      name: external_exports.string(),
+      role: RoleSchema2,
+      online: external_exports.boolean(),
+      lastHeartbeatMs: external_exports.number().nonnegative().nullable(),
+      activeTaskId: TaskIdSchema.nullable()
+    })
+  ),
+  tasks: external_exports.array(
+    external_exports.object({
+      id: TaskIdSchema,
+      title: external_exports.string(),
+      ownerId: MemberIdSchema,
+      status: TaskStatusSchema2,
+      files: external_exports.array(PathSchema),
+      editCount: external_exports.number().int().nonnegative()
+    })
+  ),
+  locks: external_exports.array(
+    external_exports.object({
+      path: PathSchema,
+      taskId: TaskIdSchema,
+      memberId: MemberIdSchema,
+      state: LockStateSchema,
+      queue: external_exports.array(TaskIdSchema)
+    })
+  ),
+  openRequests: external_exports.number().int().nonnegative(),
+  pendingProposals: external_exports.number().int().nonnegative(),
+  headCommit: external_exports.string().nullable()
+});
+var RequestsQuery = external_exports.object({ status: external_exports.enum(["terbuka", "diusulkan", "all"]).optional() });
+var RequestItem = external_exports.object({
+  id: external_exports.string(),
+  path: PathSchema,
+  status: RequestStatusSchema,
+  source: RequestSourceSchema,
+  reason: external_exports.string(),
+  requester: external_exports.object({
+    memberId: MemberIdSchema,
+    taskId: TaskIdSchema.nullable(),
+    taskTitle: external_exports.string(),
+    taskDescription: external_exports.string()
+  }),
+  holder: external_exports.object({
+    memberId: MemberIdSchema,
+    taskId: TaskIdSchema,
+    taskTitle: external_exports.string(),
+    taskDescription: external_exports.string(),
+    state: LockStateSchema,
+    editCount: external_exports.number().int().nonnegative()
+  }).nullable(),
+  fileVersion: external_exports.number().int().nonnegative(),
+  createdAt: EpochMsSchema
+});
+var RequestsRes = external_exports.object({ requests: external_exports.array(RequestItem) });
+var PlanTask = external_exports.object({
+  ref: external_exports.string().min(1).max(32),
+  title: external_exports.string().min(1).max(200),
+  description: external_exports.string().max(2e3).default(""),
+  ownerId: MemberIdSchema,
+  files: external_exports.array(PathSchema).max(PLAN_MAX_FILES_PER_TASK),
+  queuedFiles: external_exports.array(PathSchema).max(PLAN_MAX_FILES_PER_TASK).default([])
+});
+var PlanPayload = external_exports.object({
+  goal: external_exports.string().min(1).max(500),
+  tasks: external_exports.array(PlanTask).min(1).max(PLAN_MAX_TASKS)
+}).superRefine((plan, ctx) => {
+  const owners = /* @__PURE__ */ new Map();
+  plan.tasks.forEach((task, i) => {
+    for (const path of task.files) {
+      const prev = owners.get(path);
+      if (prev !== void 0) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["tasks", i, "files"],
+          message: `${path} is in files of task ${prev} and task ${i}; use queuedFiles for the later task`
+        });
+      } else {
+        owners.set(path, i);
+      }
+    }
+  });
+  plan.tasks.forEach((task, i) => {
+    for (const path of task.queuedFiles) {
+      const owner = owners.get(path);
+      if (owner === void 0) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["tasks", i, "queuedFiles"],
+          message: `${path} is queued but no task has it in files`
+        });
+      } else if (owner === i) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["tasks", i, "queuedFiles"],
+          message: `${path} is both in files and queuedFiles of task ${i}`
+        });
+      }
+    }
+  });
+  const refs = /* @__PURE__ */ new Set();
+  plan.tasks.forEach((task, i) => {
+    if (refs.has(task.ref)) {
+      ctx.addIssue({ code: "custom", path: ["tasks", i, "ref"], message: `duplicate ref ${task.ref}` });
+    }
+    refs.add(task.ref);
+  });
+});
+var NewTask = external_exports.object({
+  title: external_exports.string().min(1).max(200),
+  description: external_exports.string().max(2e3).default(""),
+  ownerId: MemberIdSchema.optional()
+});
+var DecisionPayload = external_exports.object({
+  requestId: external_exports.string().min(1),
+  option: DecisionOptionSchema,
+  newTask: NewTask.optional()
+}).superRefine((d, ctx) => {
+  if (d.option === "pecah" && !d.newTask) {
+    ctx.addIssue({ code: "custom", path: ["newTask"], message: "newTask is required when option is pecah" });
+  }
+});
+var ReviewPayload = external_exports.object({
+  taskId: TaskIdSchema,
+  verdict: ReviewVerdictSchema,
+  notes: external_exports.string().max(2e3).default(""),
+  notify: external_exports.array(external_exports.object({ memberId: MemberIdSchema, message: external_exports.string().min(1).max(NOTIFY_MAX_CHARS) })).default([]),
+  flags: external_exports.array(external_exports.object({ path: PathSchema, issue: external_exports.string().min(1).max(500) })).default([])
+});
+var ProposalReason = external_exports.string().min(1).max(500);
+var ProposalCreateReq = external_exports.discriminatedUnion("kind", [
+  external_exports.object({ kind: external_exports.literal("plan"), payload: PlanPayload, reason: ProposalReason }),
+  external_exports.object({ kind: external_exports.literal("decision"), payload: DecisionPayload, reason: ProposalReason }),
+  external_exports.object({ kind: external_exports.literal("review"), payload: ReviewPayload, reason: ProposalReason })
+]);
+var ProposalCreateRes = external_exports.object({
+  proposalId: external_exports.string(),
+  status: external_exports.enum(["menunggu", "diterapkan_otomatis"])
+});
+var ProposalItem = external_exports.object({
+  id: external_exports.string(),
+  kind: ProposalKindSchema,
+  status: ProposalStatusSchema,
+  payload: external_exports.unknown(),
+  reason: external_exports.string(),
+  refId: external_exports.string().nullable(),
+  createdAt: EpochMsSchema
+});
+var ProposalsQuery = external_exports.object({ status: external_exports.union([ProposalStatusSchema, external_exports.literal("all")]).optional() });
+var ProposalsRes = external_exports.object({ proposals: external_exports.array(ProposalItem) });
+var DecisionReq = external_exports.object({ approve: external_exports.boolean(), note: external_exports.string().max(500).optional() });
+var DecisionRes = external_exports.object({
+  proposalId: external_exports.string(),
+  status: ProposalStatusSchema,
+  applied: external_exports.record(external_exports.string(), external_exports.unknown()).optional()
+});
+var TaskDiffRes = external_exports.object({
+  taskId: TaskIdSchema,
+  title: external_exports.string(),
+  ownerId: MemberIdSchema,
+  status: TaskStatusSchema2,
+  baseCommit: external_exports.string().nullable(),
+  summary: external_exports.string().nullable(),
+  files: external_exports.array(
+    external_exports.object({
+      path: PathSchema,
+      change: external_exports.enum(["added", "modified", "deleted"]),
+      fromVersion: external_exports.number().int().nonnegative(),
+      toVersion: external_exports.number().int().nonnegative(),
+      patch: external_exports.string(),
+      exportsChanged: external_exports.array(external_exports.object({ name: external_exports.string(), kind: external_exports.string(), before: external_exports.string(), after: external_exports.string() })).default([])
+    })
+  ),
+  importers: external_exports.array(
+    external_exports.object({
+      path: PathSchema,
+      imports: PathSchema,
+      symbols: external_exports.array(external_exports.string()),
+      lines: external_exports.array(external_exports.number().int().positive()),
+      holder: external_exports.object({ memberId: MemberIdSchema, taskId: TaskIdSchema, state: LockStateSchema }).nullable()
+    })
+  ).default([]),
+  truncated: external_exports.boolean()
+});
+var NotifyReq = external_exports.object({ memberId: MemberIdSchema, message: external_exports.string().min(1).max(NOTIFY_MAX_CHARS) });
+var NotifyRes = external_exports.object({ notificationId: external_exports.number().int().nonnegative() });
+var SessionReportRes = external_exports.object({
+  markdown: external_exports.string(),
+  stats: external_exports.object({
+    tasks: external_exports.number().int().nonnegative(),
+    commits: external_exports.number().int().nonnegative(),
+    blocks: external_exports.number().int().nonnegative(),
+    decisions: external_exports.number().int().nonnegative(),
+    medianBlockToDecisionMs: external_exports.number().nonnegative().nullable(),
+    syncP95Ms: external_exports.number().nonnegative().nullable(),
+    lockCheckP95Ms: external_exports.number().nonnegative().nullable()
+  })
+});
+var RevokeReq = external_exports.object({ path: PathSchema, reason: external_exports.string().min(1).max(500) });
+var RevokeRes = external_exports.object({
+  path: PathSchema,
+  nextHolder: external_exports.object({ taskId: TaskIdSchema, memberId: MemberIdSchema }).nullable()
+});
+var CancelRes = external_exports.object({ taskId: TaskIdSchema, status: external_exports.literal("batal") });
+var AiEditsReq = external_exports.object({
+  paths: external_exports.array(PathSchema).min(1).max(100),
+  tool: external_exports.string().min(1).max(128),
+  sessionId: external_exports.string().max(256).nullable().optional()
+});
+var WorkspaceViewSchema = external_exports.object({
+  id: external_exports.string(),
+  name: external_exports.string(),
+  headCommit: external_exports.string().nullable(),
+  repoUrl: external_exports.string().nullable()
+});
+var MemberViewSchema = external_exports.object({
+  id: MemberIdSchema,
+  name: external_exports.string(),
+  role: RoleSchema2,
+  color: external_exports.string().nullable().default(null),
+  online: external_exports.boolean(),
+  stale: external_exports.boolean().default(false),
+  activeTaskId: TaskIdSchema.nullable(),
+  blocked: external_exports.boolean().default(false),
+  writingUntil: external_exports.number().nonnegative().default(0)
+});
+var TaskViewSchema = external_exports.object({
+  id: TaskIdSchema,
+  title: external_exports.string(),
+  description: external_exports.string().default(""),
+  ownerId: MemberIdSchema,
+  status: TaskStatusSchema2,
+  files: external_exports.array(PathSchema),
+  queuedFiles: external_exports.array(PathSchema).default([]),
+  adhoc: external_exports.boolean().default(false),
+  parentTaskId: TaskIdSchema.nullable().default(null),
+  editCount: external_exports.number().int().nonnegative(),
+  commitSha: external_exports.string().nullable().default(null),
+  summary: external_exports.string().nullable().default(null)
+});
+var LockViewSchema = external_exports.object({
+  path: PathSchema,
+  taskId: TaskIdSchema,
+  memberId: MemberIdSchema,
+  state: LockStateSchema,
+  queue: external_exports.array(TaskIdSchema)
+});
+var AllocationViewSchema = external_exports.object({
+  taskId: TaskIdSchema,
+  path: PathSchema,
+  queuePos: external_exports.number().int().nonnegative(),
+  source: AllocationSourceSchema
+});
+var FileViewSchema = external_exports.object({
+  path: PathSchema,
+  version: external_exports.number().int().nonnegative(),
+  updatedBy: MemberIdSchema.nullable(),
+  updatedAt: EpochMsSchema,
+  writingUntil: external_exports.number().nonnegative().default(0),
+  deleted: external_exports.boolean().default(false)
+});
+var RequestViewSchema = external_exports.object({
+  id: external_exports.string(),
+  path: PathSchema,
+  status: RequestStatusSchema,
+  source: RequestSourceSchema,
+  requesterMemberId: MemberIdSchema,
+  requesterTaskId: TaskIdSchema.nullable(),
+  holderMemberId: MemberIdSchema.nullable(),
+  holderTaskId: TaskIdSchema.nullable(),
+  createdAt: EpochMsSchema,
+  outcome: external_exports.string().nullable().default(null)
+});
+var ProposalViewSchema = external_exports.object({
+  id: external_exports.string(),
+  kind: ProposalKindSchema,
+  status: ProposalStatusSchema,
+  refId: external_exports.string().nullable(),
+  reason: external_exports.string(),
+  payload: external_exports.unknown(),
+  createdAt: EpochMsSchema,
+  decidedBy: external_exports.string().nullable().default(null),
+  note: external_exports.string().nullable().default(null)
+});
+var event = (type, payload) => external_exports.object({
+  id: external_exports.number().int().nonnegative(),
+  ts: EpochMsSchema,
+  actor: external_exports.string(),
+  type: external_exports.literal(type),
+  payload
+});
+var memberOnly = external_exports.object({ memberId: MemberIdSchema });
+var BobActivityPayload = external_exports.object({
+  memberId: MemberIdSchema,
+  kind: external_exports.enum(["session.start", "prompt", "tool.pre", "tool.post", "turn.end"]),
+  sessionId: external_exports.string().nullable(),
+  mode: external_exports.string(),
+  tool: external_exports.string().optional(),
+  paths: external_exports.array(PathSchema).optional(),
+  decision: DecisionSchema.optional(),
+  linesChanged: external_exports.number().int().nonnegative().optional(),
+  text: external_exports.string().max(ACTIVITY_TEXT_MAX_CHARS).optional()
+});
+var RadarEventSchema = external_exports.discriminatedUnion("type", [
+  event("workspace.created", external_exports.object({ workspaceId: external_exports.string(), headCommit: external_exports.string().nullable(), fileCount: external_exports.number().int().nonnegative() })),
+  event("member.created", memberOnly.extend({ name: external_exports.string().optional(), role: RoleSchema2.optional() })),
+  event("member.online", memberOnly),
+  event("member.offline", memberOnly),
+  event("member.reconnected", memberOnly),
+  event("member.stale", memberOnly.extend({ lastHeartbeat: EpochMsSchema.nullable() })),
+  event(
+    "file.changed",
+    external_exports.object({
+      path: PathSchema,
+      version: external_exports.number().int().nonnegative(),
+      hash: external_exports.string(),
+      by: MemberIdSchema,
+      taskId: TaskIdSchema.nullable(),
+      size: external_exports.number().int().nonnegative(),
+      patch: external_exports.string().optional()
+    })
+  ),
+  event("file.deleted", external_exports.object({ path: PathSchema, version: external_exports.number().int().nonnegative(), by: MemberIdSchema, taskId: TaskIdSchema.nullable() })),
+  event(
+    "file.rejected",
+    external_exports.object({
+      path: PathSchema,
+      by: MemberIdSchema,
+      reason: external_exports.string(),
+      holderMemberId: MemberIdSchema.nullable(),
+      holderTaskId: TaskIdSchema.nullable()
+    })
+  ),
+  event("sync.applied", external_exports.object({ path: PathSchema, version: external_exports.number().int().nonnegative(), memberId: MemberIdSchema, latencyMs: external_exports.number() })),
+  event("lock.reserved", external_exports.object({ path: PathSchema, taskId: TaskIdSchema, memberId: MemberIdSchema, source: AllocationSourceSchema })),
+  event("lock.acquired", external_exports.object({ path: PathSchema, taskId: TaskIdSchema, memberId: MemberIdSchema, auto: external_exports.boolean() })),
+  event("lock.review", external_exports.object({ path: PathSchema, taskId: TaskIdSchema })),
+  event("lock.released", external_exports.object({ path: PathSchema, taskId: TaskIdSchema })),
+  event(
+    "lock.transferred",
+    external_exports.object({
+      path: PathSchema,
+      fromTaskId: TaskIdSchema.nullable().optional(),
+      toTaskId: TaskIdSchema,
+      toMemberId: MemberIdSchema,
+      cause: external_exports.enum(["queue", "decision"])
+    })
+  ),
+  event("lock.queued", external_exports.object({ path: PathSchema, taskId: TaskIdSchema, memberId: MemberIdSchema, pos: external_exports.number().int().nonnegative() })),
+  event("lock.revoked", external_exports.object({ path: PathSchema, taskId: TaskIdSchema, memberId: MemberIdSchema, reason: external_exports.string() })),
+  event(
+    "lock.blocked",
+    external_exports.object({
+      path: PathSchema,
+      memberId: MemberIdSchema,
+      taskId: TaskIdSchema.nullable(),
+      holderMemberId: MemberIdSchema,
+      holderTaskId: TaskIdSchema,
+      via: BlockViaSchema,
+      requestId: external_exports.string().nullable()
+    })
+  ),
+  event("hook.failopen", external_exports.object({ memberId: MemberIdSchema, paths: external_exports.array(PathSchema), errorKind: external_exports.string() })),
+  event(
+    "task.created",
+    external_exports.object({
+      taskId: TaskIdSchema,
+      title: external_exports.string(),
+      description: external_exports.string().optional(),
+      ownerId: MemberIdSchema,
+      status: TaskStatusSchema2,
+      files: external_exports.array(PathSchema),
+      queuedFiles: external_exports.array(PathSchema).default([]),
+      adhoc: external_exports.boolean(),
+      parentTaskId: TaskIdSchema.nullable().optional()
+    })
+  ),
+  event("task.status", external_exports.object({ taskId: TaskIdSchema, from: TaskStatusSchema2, to: TaskStatusSchema2, by: external_exports.string() })),
+  event("task.submitted", external_exports.object({ taskId: TaskIdSchema, summary: external_exports.string(), files: external_exports.array(PathSchema) })),
+  event(
+    "request.created",
+    external_exports.object({
+      requestId: external_exports.string(),
+      path: PathSchema,
+      requesterMemberId: MemberIdSchema,
+      requesterTaskId: TaskIdSchema.nullable(),
+      holderMemberId: MemberIdSchema.nullable(),
+      holderTaskId: TaskIdSchema.nullable(),
+      source: RequestSourceSchema
+    })
+  ),
+  event(
+    "request.decided",
+    external_exports.object({
+      requestId: external_exports.string(),
+      outcome: external_exports.union([DecisionOptionSchema, external_exports.literal("ditolak")]),
+      proposalId: external_exports.string().nullable(),
+      auto: external_exports.boolean()
+    })
+  ),
+  event(
+    "proposal.created",
+    external_exports.object({ proposalId: external_exports.string(), kind: ProposalKindSchema, refId: external_exports.string().nullable(), reason: external_exports.string(), payload: external_exports.unknown() })
+  ),
+  event(
+    "proposal.decided",
+    external_exports.object({ proposalId: external_exports.string(), kind: ProposalKindSchema, status: ProposalStatusSchema, by: external_exports.string(), note: external_exports.string().nullable().optional() })
+  ),
+  event("review.created", external_exports.object({ reviewId: external_exports.union([external_exports.string(), external_exports.number()]), taskId: TaskIdSchema, verdict: ReviewVerdictSchema })),
+  event(
+    "review.flagged",
+    external_exports.object({
+      reviewId: external_exports.union([external_exports.string(), external_exports.number()]),
+      taskId: TaskIdSchema,
+      flags: external_exports.array(external_exports.object({ path: PathSchema, issue: external_exports.string() }))
+    })
+  ),
+  event("notify.sent", external_exports.object({ notificationId: external_exports.number().int().nonnegative(), memberId: MemberIdSchema, message: external_exports.string(), by: external_exports.string() })),
+  event(
+    "commit.created",
+    external_exports.object({ taskId: TaskIdSchema, sha: external_exports.string(), author: external_exports.string(), files: external_exports.array(PathSchema), pushed: external_exports.boolean(), url: external_exports.string().optional() })
+  ),
+  event("commit.push_failed", external_exports.object({ taskId: TaskIdSchema, sha: external_exports.string().nullable(), error: external_exports.string() })),
+  event("bob.activity", BobActivityPayload),
+  event("ai.edit", external_exports.object({ memberId: MemberIdSchema, paths: external_exports.array(PathSchema), tool: external_exports.string() })),
+  event("bob.turn", memberOnly),
+  event("bob.said", memberOnly.extend({ text: external_exports.string() }))
+]);
+var StateRes = external_exports.object({
+  workspace: WorkspaceViewSchema,
+  members: external_exports.array(MemberViewSchema),
+  tasks: external_exports.array(TaskViewSchema),
+  locks: external_exports.array(LockViewSchema),
+  allocations: external_exports.array(AllocationViewSchema).default([]),
+  files: external_exports.array(FileViewSchema),
+  requests: external_exports.array(RequestViewSchema),
+  proposals: external_exports.array(ProposalViewSchema),
+  recentEvents: external_exports.array(external_exports.unknown()).default([]),
+  cursor: external_exports.number().int().nonnegative()
+});
+var FilesHistoryRes = external_exports.object({
+  path: PathSchema,
+  versions: external_exports.array(
+    external_exports.object({
+      version: external_exports.number().int().nonnegative(),
+      by: MemberIdSchema,
+      taskId: TaskIdSchema.nullable(),
+      ai: external_exports.boolean(),
+      ts: EpochMsSchema,
+      patch: external_exports.string()
+    })
+  )
+});
+var ExportRes = external_exports.object({
+  workspace: external_exports.string(),
+  exportedAt: EpochMsSchema,
+  events: external_exports.array(RadarEventSchema)
+});
+var activityBase = {
+  sessionId: external_exports.string().max(256).nullable(),
+  mode: external_exports.string().min(1).max(64),
+  clientTs: EpochMsSchema.optional()
 };
-var str = (v) => typeof v === "string" && v.length > 0 ? v : null;
-function findLocalJson(startDir) {
+var activityPaths = external_exports.array(PathSchema).max(100).default([]);
+var BobActivityReq = external_exports.discriminatedUnion("kind", [
+  external_exports.object({ kind: external_exports.literal("session.start"), ...activityBase }),
+  external_exports.object({ kind: external_exports.literal("prompt"), ...activityBase, text: external_exports.string().max(ACTIVITY_TEXT_MAX_CHARS).optional() }),
+  external_exports.object({ kind: external_exports.literal("tool.pre"), ...activityBase, tool: external_exports.string().min(1).max(128), paths: activityPaths, decision: DecisionSchema }),
+  external_exports.object({
+    kind: external_exports.literal("tool.post"),
+    ...activityBase,
+    tool: external_exports.string().min(1).max(128),
+    paths: activityPaths,
+    linesChanged: external_exports.number().int().nonnegative().optional()
+  }),
+  external_exports.object({ kind: external_exports.literal("turn.end"), ...activityBase })
+]);
+
+// ../common/src/config.ts
+var LocalConfigFile = external_exports.object({
+  server: external_exports.string().min(1).optional(),
+  workspace: external_exports.string().optional(),
+  member: external_exports.string().optional(),
+  token: external_exports.string().min(1).optional(),
+  role: RoleSchema2.optional(),
+  shareprompts: external_exports.boolean().optional()
+});
+var ConfigMissingError = class extends Error {
+  name = "ConfigMissingError";
+};
+var ConfigInvalidError = class extends Error {
+  name = "ConfigInvalidError";
+};
+function findLocalConfigFile(startDir) {
   let dir = (0, import_node_path.resolve)(startDir);
   for (; ; ) {
-    const f = (0, import_node_path.join)(dir, ".radar", "local.json");
-    if ((0, import_node_fs.existsSync)(f)) return f;
+    const file2 = (0, import_node_path.join)(dir, ".radar", "local.json");
+    if ((0, import_node_fs.existsSync)(file2)) return file2;
     const parent = (0, import_node_path.dirname)(dir);
     if (parent === dir) return null;
     dir = parent;
   }
 }
+var envStr = (v) => v === void 0 || v === "" ? void 0 : v;
 function loadLocalConfig(startDir, env = process.env) {
-  const base = env.RADAR_ROOT ? (0, import_node_path.resolve)(env.RADAR_ROOT) : startDir;
-  const file2 = findLocalJson(base);
-  const parsed = file2 ? JSON.parse((0, import_node_fs.readFileSync)(file2, "utf8")) : {};
-  const fromFile = typeof parsed === "object" && parsed !== null ? parsed : {};
-  const server = env.RADAR_SERVER ?? str(fromFile.server);
-  const token = env.RADAR_TOKEN ?? str(fromFile.token);
-  if (!server || !token) throw new ConfigMissingError(`no .radar/local.json (server, token) found from ${base}`);
+  const envRoot = envStr(env.RADAR_ROOT);
+  const base = envRoot ? (0, import_node_path.resolve)(envRoot) : (0, import_node_path.resolve)(startDir);
+  const file2 = findLocalConfigFile(base);
+  let fromFile = {};
+  if (file2) {
+    let json2;
+    try {
+      json2 = JSON.parse((0, import_node_fs.readFileSync)(file2, "utf8"));
+    } catch (err) {
+      throw new ConfigInvalidError(`${file2} is not valid JSON`, { cause: err });
+    }
+    const parsed = LocalConfigFile.safeParse(json2);
+    if (!parsed.success) {
+      throw new ConfigInvalidError(`${file2}: ${parsed.error.issues.map((i) => `${i.path.join(".")} ${i.message}`).join("; ")}`);
+    }
+    fromFile = parsed.data;
+  }
+  const server = envStr(env.RADAR_SERVER) ?? fromFile.server;
+  const token = envStr(env.RADAR_TOKEN) ?? fromFile.token;
+  if (!server || !token) throw new ConfigMissingError(`no Radar server/token found from ${base} (.radar/local.json or RADAR_*)`);
+  const envRole = envStr(env.RADAR_ROLE);
+  const role = envRole === void 0 ? fromFile.role ?? "coder" : RoleSchema2.safeParse(envRole).data;
+  if (!role) throw new ConfigInvalidError(`RADAR_ROLE must be coder or pm, got ${envRole}`);
+  const envShare = envStr(env.RADAR_SHAREPROMPTS);
   return {
-    root: env.RADAR_ROOT ? (0, import_node_path.resolve)(env.RADAR_ROOT) : file2 ? (0, import_node_path.dirname)((0, import_node_path.dirname)(file2)) : (0, import_node_path.resolve)(startDir),
+    root: envRoot ? (0, import_node_path.resolve)(envRoot) : file2 ? (0, import_node_path.dirname)((0, import_node_path.dirname)(file2)) : base,
     server: server.replace(/\/+$/, ""),
-    workspace: str(fromFile.workspace) ?? "",
-    member: env.RADAR_MEMBER ?? str(fromFile.member) ?? "",
+    workspace: fromFile.workspace ?? "",
+    member: envStr(env.RADAR_MEMBER) ?? fromFile.member ?? "",
     token,
-    role: (env.RADAR_ROLE ?? str(fromFile.role)) === "pm" ? "pm" : "coder"
+    role,
+    shareprompts: envShare === void 0 ? fromFile.shareprompts ?? false : envShare === "true"
   };
 }
+var HookStateFile = external_exports.object({
+  briefCursor: external_exports.number().int().nonnegative().optional(),
+  lastBlock: external_exports.object({ path: external_exports.string(), message: external_exports.string(), ts: external_exports.number() }).optional()
+});
 
 // ../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v3/helpers/util.js
 var util;
@@ -36690,6 +38192,118 @@ var submit_task_default = defineTool({
 // src/tools/coder/index.ts
 var CODER_TOOLS = [my_tasks_default, why_blocked_default, request_file_default, team_activity_default, submit_task_default];
 
+// ../common/src/term.ts
+var TermId = external_exports.string().min(1).max(64);
+var FrameData = external_exports.string().max(Math.ceil(TERM_FRAME_MAX_BYTES / 3) * 4);
+var msg = (t, d) => external_exports.object({ t: external_exports.literal(t), id: external_exports.string().optional(), d });
+var TermMessageSchema = external_exports.discriminatedUnion("t", [
+  msg("term.share", external_exports.object({ termId: TermId, title: external_exports.string().max(200), agent: external_exports.string().min(1), cols: external_exports.number().int().positive(), rows: external_exports.number().int().positive() })),
+  msg("term.unshare", external_exports.object({ termId: TermId })),
+  msg(
+    "term.list",
+    external_exports.object({
+      terms: external_exports.array(
+        external_exports.object({
+          termId: TermId,
+          member: MemberIdSchema,
+          title: external_exports.string(),
+          agent: external_exports.string(),
+          viewers: external_exports.array(MemberIdSchema),
+          guest: MemberIdSchema.optional()
+        })
+      )
+    })
+  ),
+  msg("term.subscribe", external_exports.object({ termId: TermId })),
+  msg("term.unsubscribe", external_exports.object({ termId: TermId })),
+  msg("term.need_snapshot", external_exports.object({ termId: TermId })),
+  msg("term.snapshot", external_exports.object({ termId: TermId, seq: external_exports.number().int().nonnegative(), data: external_exports.string().max(262144) })),
+  msg("term.frame", external_exports.object({ termId: TermId, seq: external_exports.number().int().nonnegative(), data: FrameData, ts: external_exports.number() })),
+  msg("term.resize", external_exports.object({ termId: TermId, cols: external_exports.number().int().positive(), rows: external_exports.number().int().positive() })),
+  msg("term.ended", external_exports.object({ termId: TermId, reason: external_exports.enum(["unshared", "host_offline"]) })),
+  msg("term.ack", external_exports.object({ termId: TermId, seq: external_exports.number().int().nonnegative(), viewerTs: external_exports.number() })),
+  msg("term.input.request", external_exports.object({ termId: TermId, guest: MemberIdSchema })),
+  msg("term.input.grant", external_exports.object({ termId: TermId, guest: MemberIdSchema, until: external_exports.number() })),
+  msg("term.input.revoke", external_exports.object({ termId: TermId, guest: MemberIdSchema, until: external_exports.number() })),
+  msg("term.input", external_exports.object({ termId: TermId, guest: MemberIdSchema, data: external_exports.string().max(4096) }))
+]);
+
+// ../common/src/ws.ts
+var msg2 = (t, d) => external_exports.object({ t: external_exports.literal(t), id: external_exports.string().optional(), d });
+var Version = external_exports.number().int().nonnegative();
+var WsClientKindSchema = external_exports.enum(["sync", "mc", "app"]);
+var FileRejectReasonSchema = external_exports.enum(["held_by_other", "committing", "pm_readonly", "conflict", "too_large", "binary"]);
+var ServerFile = external_exports.object({ version: Version, hash: external_exports.string().nullable(), content: external_exports.string().nullable(), deleted: external_exports.boolean() });
+var LockChangedData = external_exports.object({
+  path: PathSchema,
+  state: LockStateViewSchema,
+  taskId: TaskIdSchema.nullable(),
+  memberId: MemberIdSchema.nullable(),
+  queue: external_exports.array(TaskIdSchema)
+});
+var CoreWsMessageSchema = external_exports.discriminatedUnion("t", [
+  msg2(
+    "hello",
+    external_exports.object({
+      token: external_exports.string().min(1),
+      client: WsClientKindSchema,
+      clientVersion: external_exports.string(),
+      knownVersions: external_exports.record(external_exports.string(), Version).optional()
+    })
+  ),
+  msg2("welcome", external_exports.object({ principal: PrincipalSchema, serverTime: EpochMsSchema, workspace: external_exports.string() })),
+  msg2(
+    "snapshot",
+    external_exports.object({
+      files: external_exports.array(external_exports.object({ path: PathSchema, version: Version, hash: external_exports.string().nullable(), content: external_exports.string().nullable(), deleted: external_exports.boolean() })),
+      locks: external_exports.array(external_exports.object({ path: PathSchema, taskId: TaskIdSchema, memberId: MemberIdSchema, state: LockStateSchema, queue: external_exports.array(TaskIdSchema) })),
+      cursor: external_exports.number().int().nonnegative()
+    })
+  ),
+  msg2("state", StateRes),
+  msg2("file.update", external_exports.object({ path: PathSchema, baseVersion: Version, content: external_exports.string(), hash: external_exports.string(), clientTs: EpochMsSchema })),
+  msg2("file.delete", external_exports.object({ path: PathSchema, baseVersion: Version, clientTs: EpochMsSchema })),
+  msg2("file.ack", external_exports.object({ id: external_exports.string().optional(), path: PathSchema, version: Version, hash: external_exports.string() })),
+  msg2(
+    "file.changed",
+    external_exports.object({
+      path: PathSchema,
+      version: Version,
+      content: external_exports.string().nullable(),
+      hash: external_exports.string().nullable(),
+      deleted: external_exports.boolean(),
+      by: MemberIdSchema,
+      taskId: TaskIdSchema.nullable(),
+      serverTs: EpochMsSchema
+    })
+  ),
+  msg2("file.applied", external_exports.object({ path: PathSchema, version: Version, serverTs: EpochMsSchema, appliedTs: EpochMsSchema })),
+  msg2(
+    "file.rejected",
+    external_exports.object({
+      id: external_exports.string().optional(),
+      path: PathSchema,
+      reason: FileRejectReasonSchema,
+      holder: LockHolder.nullable().optional(),
+      server: ServerFile
+    })
+  ),
+  msg2("lock.changed", LockChangedData),
+  msg2("event", RadarEventSchema),
+  msg2("notice", external_exports.object({ level: external_exports.enum(["info", "warn"]), message: external_exports.string() })),
+  msg2("proposal.new", external_exports.object({ proposal: ProposalItem })),
+  msg2("proposal.decided", external_exports.object({ proposal: ProposalItem })),
+  msg2("heartbeat", external_exports.object({ ts: EpochMsSchema })),
+  msg2("error", external_exports.object({ code: external_exports.string(), message: external_exports.string() }))
+]);
+var WsMessageSchema = external_exports.union([CoreWsMessageSchema, TermMessageSchema]);
+
+// ../common/src/events.ts
+var WITA_OFFSET_MS = 8 * 60 * 60 * 1e3;
+
+// ../common/src/hash.ts
+var encoder = new TextEncoder();
+
 // src/tools/pm/team_status.ts
 var team_status_default = defineTool({
   name: "team_status",
@@ -36697,8 +38311,7 @@ var team_status_default = defineTool({
   description: "Gunakan untuk melihat status tim: siapa online, task aktif, file yang dikunci, permintaan terbuka, dan proposal tertunda.",
   inputSchema: {},
   async run(_args, client) {
-    const res = await client.get("/v1/team");
-    const data = { members: [], tasks: [], locks: [], openRequests: 0, pendingProposals: 0, headCommit: "", ...res };
+    const data = expectShape(TeamRes, await client.get("/v1/team"), "team_status");
     const lines = [];
     lines.push(`Tim: ${data.members.filter((m) => m.online).length} online, ${data.members.filter((m) => !m.online).length} offline \u2014 ${data.openRequests} permintaan terbuka, ${data.pendingProposals} proposal tertunda`);
     for (const m of data.members) {
@@ -36709,7 +38322,7 @@ var team_status_default = defineTool({
     if (data.locks.length > 0) {
       lines.push("Kunci file:");
       for (const lock of data.locks) {
-        const queueStr = (lock.queue ?? []).length > 0 ? ` | antre: ${lock.queue.join(", ")}` : "";
+        const queueStr = lock.queue.length > 0 ? ` | antre: ${lock.queue.join(", ")}` : "";
         lines.push(`  ${lock.path} \u2192 ${lock.taskId} (${lock.state})${queueStr}`);
       }
     }
@@ -36846,12 +38459,12 @@ var get_task_diff_default = defineTool({
   },
   async run(args, client) {
     const res = await client.get(`/v1/tasks/${encodeURIComponent(args.task_id)}/diff`);
-    const data = { ...res, files: res.files ?? [], importers: res.importers ?? [] };
+    const data = expectShape(TaskDiffRes, res, "get_task_diff");
     const fileCount = data.files.length;
-    const changedExports = data.files.flatMap((f) => f.exportsChanged ?? []);
+    const changedExports = data.files.flatMap((f) => f.exportsChanged);
     const exportSummary = changedExports.map((e) => `ekspor berubah: ${e.before} \u2192 ${e.after}`).join("; ");
     const importerSummary = data.importers.map((imp) => {
-      const lines2 = (imp.lines ?? []).length > 0 ? (imp.lines ?? []).map((l) => `${imp.path}:${l}`).join(", ") : imp.path;
+      const lines2 = imp.lines.length > 0 ? imp.lines.map((l) => `${imp.path}:${l}`).join(", ") : imp.path;
       const holderStr = imp.holder ? ` (dipegang ${imp.holder.memberId}, ${imp.holder.taskId})` : "";
       return `${lines2}${holderStr}`;
     }).join("; ");
@@ -36868,8 +38481,8 @@ var get_task_diff_default = defineTool({
         break;
       }
       lines.push(header);
-      const patch = (f.patch ?? "").slice(0, Math.max(0, remaining - header.length));
-      if (patch.length < (f.patch ?? "").length) {
+      const patch = f.patch.slice(0, Math.max(0, remaining - header.length));
+      if (patch.length < f.patch.length) {
         wasCut = true;
         lines.push(patch);
         break;
@@ -37004,7 +38617,7 @@ async function main() {
   try {
     config2 = loadLocalConfig(root);
   } catch (err) {
-    if (!(err instanceof ConfigMissingError)) throw err;
+    if (!(err instanceof ConfigMissingError || err instanceof ConfigInvalidError)) throw err;
     process.stderr.write(`radar-mcp: ${err.message}; tools will ask the user to run radar join
 `);
   }

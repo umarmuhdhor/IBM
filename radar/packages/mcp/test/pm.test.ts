@@ -4,11 +4,11 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createRadarClient } from '../src/client.js';
-import type { LocalConfig } from '../src/placeholder/config.js';
+import type { LocalConfig } from '@radar/common/node';
 import { createRadarServer } from '../src/server.js';
 
 // Canned responses from R3 §2.10–§2.17 and §4.
-// TODO(sync:alief): run against the fase 02 mock server once it is in main.
+// Edge cases use this canned server; mock_contract.test.ts runs the tools against the fase 02 mock server.
 const PM_TOOLS = [
   'get_task_diff',
   'list_requests',
@@ -52,7 +52,7 @@ const DIFF = {
       patch: `--- a/src/checkout/checkout.ts\n+++ b/src/checkout/checkout.ts\n@@ -1,3 +1,3 @@\n-export function calculateTotal(items: Item[]) {\n+export function calculateTotal(items: Item[], shipping: number) {\n${'+// filler\n'.repeat(1500)}`,
       exportsChanged: [{ name: 'calculateTotal', kind: 'function', before: 'calculateTotal(items: Item[])', after: 'calculateTotal(items: Item[], shipping: number)' }],
     },
-    { path: 'src/checkout/shipping.ts', change: 'added', fromVersion: null, toVersion: 1, patch: '+export const FLAT = 10000;\n', exportsChanged: [] },
+    { path: 'src/checkout/shipping.ts', change: 'added', fromVersion: 0, toVersion: 1, patch: '+export const FLAT = 10000;\n', exportsChanged: [] },
   ],
   importers: [
     { path: 'src/ui/Header.tsx', imports: 'src/checkout/checkout.ts', symbols: ['calculateTotal'], lines: [14], holder: { memberId: 'B', taskId: 'T-2', state: 'dipegang' } },
@@ -116,7 +116,7 @@ beforeEach(() => {
   reportMissing = true;
 });
 
-const cfg = (role: 'coder' | 'pm'): LocalConfig => ({ root: '/tmp/ws', server: base, workspace: 'toko-demo', member: 'C', token: 'tok-c', role });
+const cfg = (role: 'coder' | 'pm'): LocalConfig => ({ root: '/tmp/ws', server: base, workspace: 'toko-demo', member: 'C', token: 'tok-c', role, shareprompts: false });
 
 async function connect(role: 'coder' | 'pm') {
   const server = createRadarServer(createRadarClient(cfg(role), 1_000), role);
@@ -196,10 +196,35 @@ describe('radar-mcp PM tools (MA-01..05, MA-07, R3 §7)', () => {
     }
   });
 
-  it('get_task_diff: tolerates a server without exportsChanged/lines/importers', async () => {
+  it('team_status: a response that breaks the TeamRes contract is a friendly error, not a crash', async () => {
+    const saved = TEAM.members;
+    (TEAM as { members: unknown }).members = 'not-a-list';
+    try {
+      const { isError, text } = await call('team_status');
+      expect(isError).toBe(true);
+      expect(text).toMatch(/tidak sesuai kontrak/);
+      expect(text).not.toMatch(/TypeError/);
+    } finally {
+      TEAM.members = saved;
+    }
+  });
+
+  it('get_task_diff: a response that breaks the TaskDiffRes contract is a friendly error', async () => {
+    const saved = DIFF.files;
+    (DIFF as { files: unknown }).files = 'not-a-list';
+    try {
+      const { isError, text } = await call('get_task_diff', { task_id: 'T-0' });
+      expect(isError).toBe(true);
+      expect(text).toMatch(/tidak sesuai kontrak/);
+    } finally {
+      DIFF.files = saved;
+    }
+  });
+
+  it('get_task_diff: tolerates a server without the optional exportsChanged/importers (schema defaults)', async () => {
     const saved = JSON.parse(JSON.stringify(DIFF));
     delete (DIFF.files[1] as { exportsChanged?: unknown }).exportsChanged;
-    delete (DIFF.importers[0] as { lines?: unknown }).lines;
+    delete (DIFF as { importers?: unknown }).importers;
     try {
       const { isError, text } = await call('get_task_diff', { task_id: 'T-0' });
       expect(isError).toBe(false);

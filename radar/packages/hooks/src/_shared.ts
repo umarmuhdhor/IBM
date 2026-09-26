@@ -2,13 +2,8 @@
 // only a real `block` decision exits 2. Nothing here ever writes the token to a log.
 import { appendFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
-import {
-  ConfigMissingError,
-  loadLocalConfig,
-  normalizeHookPayload,
-  type LocalConfig,
-  type NormalizedHook,
-} from './placeholder/common.js';
+import { normalizeHookPayload, type NormalizedHook } from '@radar/common';
+import { ConfigInvalidError, ConfigMissingError, loadLocalConfig, type LocalConfig } from '@radar/common/node';
 
 export const STDIN_TIMEOUT_MS = 500;
 
@@ -68,7 +63,13 @@ export async function loadContext(hookName: string): Promise<HookContext | null>
   try {
     cfg = loadLocalConfig(payloadCwd);
   } catch (err) {
-    if (!(err instanceof ConfigMissingError)) logLine(payloadCwd, hookName, `config error: ${String(err)}`);
+    // not joined: stay silent. Joined but broken: still fail open, but say so, so "not joined" and
+    // "joined with a broken local.json" are told apart in hook.log. Config messages never carry the token.
+    if (err instanceof ConfigInvalidError) {
+      logLine(payloadCwd, hookName, `config invalid, Radar checks are off until .radar/local.json is fixed: ${err.message}`);
+    } else if (!(err instanceof ConfigMissingError)) {
+      logLine(payloadCwd, hookName, `config error: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}`);
+    }
     return null;
   }
   return { cfg, hook: normalizeHookPayload(raw, cfg.root), started };

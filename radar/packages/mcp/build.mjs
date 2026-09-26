@@ -3,6 +3,10 @@
 import { build } from 'esbuild';
 import { fileURLToPath } from 'node:url';
 
+// bundle @radar/common from source, so the kit never ships a stale packages/common/dist
+const common = (f) => fileURLToPath(new URL(`../common/src/${f}.ts`, import.meta.url));
+const COMMON_ALIAS = { '@radar/common/node': common('node'), '@radar/common': common('index') };
+
 const outfiles = ['../../bob-kit/coder/.bob/radar-mcp.js', '../../bob-kit/pm/.bob/radar-mcp.js'].map((f) => fileURLToPath(new URL(f, import.meta.url)));
 
 for (const outfile of outfiles) {
@@ -10,6 +14,7 @@ for (const outfile of outfiles) {
     entryPoints: [fileURLToPath(new URL('./src/main.ts', import.meta.url))],
     outfile,
     bundle: true,
+    alias: COMMON_ALIAS,
     platform: 'node',
     format: 'cjs',
     target: 'node20',

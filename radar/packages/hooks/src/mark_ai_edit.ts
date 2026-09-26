@@ -2,7 +2,7 @@
 // shows up in the Bob transcript, fase 01 spike 3) and always exits 0. File content never leaves the machine.
 import { sendActivity } from './activity.js';
 import { loadContext, logLine, radarFetch, settleWithin } from './_shared.js';
-import { ACTIVITY_TIMEOUT_MS, EDIT_TOOLS_REGEX } from './placeholder/common.js';
+import { ACTIVITY_TIMEOUT_MS, EDIT_TOOLS_REGEX } from '@radar/common';
 
 const OWN_MCP_TOOL = /^mcp__radar__/;
 
@@ -41,7 +41,7 @@ async function main(): Promise<void> {
     }),
   ];
   if (EDIT_TOOLS_REGEX.test(tool) && hook.paths.length > 0) {
-    // TODO(sync:alief): POST /v1/ai-edits lands in fase 12 (BC-05, P1); until then the call fails silently.
+    // TODO(sync:alief): the real server route POST /v1/ai-edits lands in fase 12 (BC-05, P1); the fase 02 mock accepts it (mock_contract.test.ts). Until then a failure is only logged.
     sends.push(
       radarFetch(cfg, 'POST', '/v1/ai-edits', { paths: hook.paths, tool, sessionId: hook.sessionId }, ACTIVITY_TIMEOUT_MS).catch(
         (err: unknown) => logLine(cfg.root, 'mark_ai_edit', `ai-edits not sent: ${String(err)}`),

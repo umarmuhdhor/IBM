@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
@@ -181,6 +181,17 @@ describe('lock_guard (PreToolUse, BC-04)', () => {
     const r = await runHook(bundles.lock_guard, [], prePayload(bare, 'src/checkout/checkout.ts'), {}, bare);
     expect(r.code).toBe(0);
     expect(r.stdout + r.stderr).toBe('');
+  });
+
+  it('fails open on a broken .radar/local.json but logs it as invalid, not as "not joined"', async () => {
+    const ws = makeWorkspace();
+    writeFileSync(join(ws, '.radar', 'local.json'), '{"server": "http://127.0.0.1:1", "token": ');
+    const r = await runHook(bundles.lock_guard, [], prePayload(ws, 'src/checkout/checkout.ts'), {}, ws);
+    expect(r.code).toBe(0);
+    expect(r.stdout + r.stderr).toBe('');
+    const log = readFileSync(join(ws, '.radar', 'hook.log'), 'utf8');
+    expect(log).toMatch(/lock_guard config invalid, Radar checks are off until \.radar\/local\.json is fixed/);
+    expect(log).not.toContain('tok-');
   });
 
   it('reads server + token from .radar/local.json found from the payload cwd', async () => {

@@ -7,11 +7,15 @@ import { fileURLToPath } from 'node:url';
 // coder: all hooks; pm: brief + stop only (the PM does not write, so no lock_guard / mark_ai_edit)
 const KITS = { coder: ['brief', 'lock_guard', 'mark_ai_edit', 'stop'], pm: ['brief', 'stop'] };
 const src = (f) => fileURLToPath(new URL(`./src/${f}.ts`, import.meta.url));
+// bundle @radar/common from source, so the kit never ships a stale packages/common/dist
+const common = (f) => fileURLToPath(new URL(`../common/src/${f}.ts`, import.meta.url));
+const COMMON_ALIAS = { '@radar/common/node': common('node'), '@radar/common': common('index') };
 
 for (const [kit, hooks] of Object.entries(KITS)) await build({
   entryPoints: hooks.map(src),
   outdir: fileURLToPath(new URL(`../../bob-kit/${kit}/.bob/hooks/`, import.meta.url)),
   bundle: true,
+  alias: COMMON_ALIAS,
   platform: 'node',
   format: 'cjs',
   target: 'node20',
