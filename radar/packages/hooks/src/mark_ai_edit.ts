@@ -41,7 +41,7 @@ async function main(): Promise<void> {
     }),
   ];
   if (EDIT_TOOLS_REGEX.test(tool) && hook.paths.length > 0) {
-    // TODO(sync:alief): POST /v1/ai-edits lands in fase 12 (BC-05, P1); until then the call fails silently.
+    // TODO(sync:alief): the real server route POST /v1/ai-edits lands in fase 12 (BC-05, P1); the fase 02 mock accepts it (mock_contract.test.ts). Until then a failure is only logged.
     sends.push(
       radarFetch(cfg, 'POST', '/v1/ai-edits', { paths: hook.paths, tool, sessionId: hook.sessionId }, ACTIVITY_TIMEOUT_MS).catch(
         (err: unknown) => logLine(cfg.root, 'mark_ai_edit', `ai-edits not sent: ${String(err)}`),

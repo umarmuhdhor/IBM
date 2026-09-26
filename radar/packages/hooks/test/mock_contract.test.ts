@@ -62,6 +62,17 @@ describe('hooks against the fase 02 mock server', () => {
     expect(r.stdout).toContain('T-2');
   });
 
+  it('mark_ai_edit bodies (bob.activity tool.post + ai-edits) pass the server schema', async () => {
+    const before = activityOf('B').length;
+    const post = { ...prePayload(root, 'src/ui/theme.css'), hook_event_name: 'PostToolUse', tool_response: 'ok' };
+    const r = await runHook(bundles.mark_ai_edit, [], post, {}, root);
+    expect(r.code).toBe(0);
+    const posts = activityOf('B').slice(before).filter((e) => (e.payload as { kind: string }).kind === 'tool.post');
+    expect(posts).toHaveLength(1);
+    expect(posts[0]?.payload).toMatchObject({ tool: 'apply_diff', paths: ['src/ui/theme.css'], linesChanged: 1 });
+    expect(hookLog()).not.toMatch(/not sent/);
+  });
+
   it('every bob.activity body the hooks send passes the server schema', async () => {
     const before = activityOf('B').length;
     await runHook(bundles.lock_guard, [], prePayload(root, 'src/ui/Header.tsx'), {}, root);

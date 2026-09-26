@@ -99,3 +99,29 @@ Kutipan: `radar/bob-kit/prompts/bob-quotes.json` bagian `pm`.
 - **Alief (`GET /v1/team`):** tool menampilkan `id` + `name`; pastikan `members[].id` = ID yang dipakai `notify`/`ownerId`.
 - **Aarief (fase 09):** `proposal.reason` dari main agent bisa 1–3 kalimat panjang (contoh P-13); kartu keputusan perlu memotong/wrap.
 - **Imelda (11D):** kutipan PM di `bob-quotes.json` bagian `pm`.
+
+## Sinkron setelah fase 02 (Sab 26 12:00–12:30 WITA)
+
+PR fase 02 (#4) masuk `main`, jadi placeholder `TODO(sync:alief)` di lane Bob diganti (PROMPT langkah 13, "RESOLVE PLACEHOLDER"). Tidak ada fase baru; fase 10 masih menunggu fase 04 + 05 (Alief).
+
+- Dihapus: `packages/hooks/src/placeholder/common.ts`, `packages/mcp/src/placeholder/config.ts`. Hooks dan radar-mcp mengimpor `@radar/common` (konstanta, `normalizeHookPayload`, skema/tipe) dan `@radar/common/node` (`loadLocalConfig`, `loadState`, `saveState`).
+- `team_status` / `get_task_diff` memvalidasi jawaban server dengan `TeamRes` / `TaskDiffRes` (`expectShape` di `mcp/src/client.ts`). Jawaban yang melanggar kontrak → pesan singkat untuk model, detail (path + kode issue, tanpa nilai) ke stderr.
+- `bob.activity` memakai `BobActivityInput` (union per `kind`); `text` hanya untuk `kind: prompt` dan hanya bila `shareprompts`.
+- radar-mcp tetap hidup bila `.radar/local.json` rusak (`ConfigInvalidError`); hooks tetap fail-open tetapi menulis `config invalid, Radar checks are off until .radar/local.json is fixed` di `hook.log`.
+- esbuild (kit + test) membundel `@radar/common` dari sumber lewat `alias`, jadi kit tidak pernah memakai `packages/common/dist` yang basi (menggantikan catatan G12 D-alief-02 untuk lane Bob).
+- Test kontrak baru melawan mock fase 02 (`radar/scripts/mock-server.ts`, skenario demo `instant`): `packages/hooks/test/mock_contract.test.ts` (blokir/izin/`args.file` objek tunggal/brief/`mark_ai_edit`/aktivitas lolos skema) dan `packages/mcp/test/mock_contract.test.ts` (my_tasks, team_activity, why_blocked, team_status, get_task_diff, list_requests, notify). Fake server lama tetap untuk kasus tepi (timeout, 5xx, stdin macet).
+
+TDD: RED `8fcee121` (lock_guard melewatkan `tool_input.args.file` berbentuk objek; `team_status`/`get_task_diff` crash `TypeError` pada respons rusak) → GREEN `a389f943`. Review follow-up RED/GREEN `68220d16` (log config rusak).
+
+Verifikasi: `pnpm -C radar typecheck` bersih, `pnpm -C radar lint` bersih, `pnpm -C radar test` 213 lulus / 0 gagal (hooks 48, mcp 45). Smoke kit asli (`bob-kit/coder/.bob` di workspace `"type": "module"`) melawan mock: blokir exit 2 + pesan server, izin exit 0, brief `[Radar] Kamu B (coder). Task aktif: T-2 …`, aktivitas diterima.
+
+Review (code-reviewer, typescript-reviewer, silent-failure-hunter + keamanan): 0 CRITICAL. HIGH (config rusak tidak bisa dibedakan dari "belum join") diperbaiki + test. LOW `expectShape` (tipe `z.output<S>`, stderr tanpa nilai) diperbaiki. MEDIUM dicatat, tidak dikerjakan:
+- Bundel hook naik dari ~10 KB ke ~815 KB (zod ikut lewat `loadLocalConfig`; tree-shake `sideEffects: false` diuji, hemat <5%). Start hook 43 → 60 ms rata-rata (10 run), jauh di bawah budget 1,6 s. Opsi nanti: entry `@radar/common` yang lebih sempit (usul ke Alief) atau bundel ESM dengan chunk bersama.
+- `ActivityFields` masih menerima `text` untuk semua `kind` di level tipe (runtime hanya mengirim untuk `prompt`); cast `as BobActivityInput` di `activity.ts`.
+- `hook.log` bisa berulang tiap hook selama config rusak (tanpa dedupe).
+
+Deviasi: test `get_task_diff: tolerates …` tidak lagi menghapus `importers[].lines` (wajib di `TaskDiffRes`); pelanggaran kontrak kini diuji sebagai error ramah (test baru). Fixture `fromVersion: null` → `0` (skema: angka ≥ 0). `tsconfig.json` hooks/mcp: `rootDir: "../.."` hanya untuk typecheck (test mengimpor mock dari `radar/scripts`); build tetap `rootDir: src`.
+
+Placeholder aktif (sah, prasyarat belum di `main`):
+- `packages/hooks/src/mark_ai_edit.ts`: route asli `POST /v1/ai-edits` = fase 12 (mock sudah menerima).
+- `radar/spike/fake-radar/server.mjs`: bukti uji Bob IDE fase 07/08; diganti server asli di fase 10.
