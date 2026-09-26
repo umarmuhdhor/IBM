@@ -1,0 +1,815 @@
+{
+ "name": "demo",
+ "description": "PRD §15 flow: plan, T-0 submitted for review, A holds checkout.ts for T-1, B blocked then queued (auto antre), B continues on Header.tsx.",
+ "steps": [
+  {
+   "delayMs": 0,
+   "actor": "server",
+   "type": "workspace.created",
+   "payload": {
+    "workspaceId": "toko-demo",
+    "headCommit": "a1b2c3d",
+    "fileCount": 17
+   }
+  },
+  {
+   "delayMs": 0,
+   "actor": "server",
+   "type": "member.created",
+   "payload": {
+    "memberId": "A",
+    "name": "Andi",
+    "role": "coder"
+   }
+  },
+  {
+   "delayMs": 0,
+   "actor": "server",
+   "type": "member.created",
+   "payload": {
+    "memberId": "B",
+    "name": "Budi",
+    "role": "coder"
+   }
+  },
+  {
+   "delayMs": 0,
+   "actor": "server",
+   "type": "member.created",
+   "payload": {
+    "memberId": "C",
+    "name": "Citra",
+    "role": "pm"
+   }
+  },
+  {
+   "delayMs": 500,
+   "actor": "A",
+   "type": "member.online",
+   "payload": {
+    "memberId": "A"
+   }
+  },
+  {
+   "delayMs": 500,
+   "actor": "B",
+   "type": "member.online",
+   "payload": {
+    "memberId": "B"
+   }
+  },
+  {
+   "delayMs": 500,
+   "actor": "C",
+   "type": "member.online",
+   "payload": {
+    "memberId": "C"
+   }
+  },
+  {
+   "delayMs": 2000,
+   "actor": "C",
+   "type": "proposal.created",
+   "payload": {
+    "proposalId": "P-1",
+    "kind": "plan",
+    "refId": null,
+    "reason": "Tiga task tanpa file tumpang tindih.",
+    "payload": {
+     "goal": "Ongkir, kupon diskon, dan dark mode",
+     "tasks": [
+      {
+       "ref": "t0",
+       "title": "Setup ongkir",
+       "description": "Ongkos kirim flat per kota",
+       "ownerId": "A",
+       "files": [
+        "src/checkout/shipping.ts",
+        "src/utils.ts"
+       ],
+       "queuedFiles": []
+      },
+      {
+       "ref": "t1",
+       "title": "Kupon",
+       "description": "Kode kupon persen di checkout",
+       "ownerId": "A",
+       "files": [
+        "src/checkout/checkout.ts",
+        "src/checkout/coupon.ts",
+        "src/routes.ts"
+       ],
+       "queuedFiles": []
+      },
+      {
+       "ref": "t2",
+       "title": "Dark mode",
+       "description": "Toggle tema gelap di header",
+       "ownerId": "B",
+       "files": [
+        "src/ui/theme.css",
+        "src/ui/Header.tsx"
+       ],
+       "queuedFiles": []
+      }
+     ]
+    }
+   }
+  },
+  {
+   "delayMs": 3000,
+   "actor": "mc",
+   "type": "proposal.decided",
+   "payload": {
+    "proposalId": "P-1",
+    "kind": "plan",
+    "status": "disetujui",
+    "by": "mc",
+    "note": "ok"
+   }
+  },
+  {
+   "delayMs": 200,
+   "actor": "server",
+   "type": "task.created",
+   "payload": {
+    "taskId": "T-0",
+    "title": "Setup ongkir",
+    "description": "Ongkos kirim flat per kota",
+    "ownerId": "A",
+    "status": "terbuka",
+    "files": [
+     "src/checkout/shipping.ts",
+     "src/utils.ts"
+    ],
+    "queuedFiles": [],
+    "adhoc": false
+   }
+  },
+  {
+   "delayMs": 200,
+   "actor": "server",
+   "type": "task.created",
+   "payload": {
+    "taskId": "T-1",
+    "title": "Kupon",
+    "description": "Kode kupon persen di checkout",
+    "ownerId": "A",
+    "status": "terbuka",
+    "files": [
+     "src/checkout/checkout.ts",
+     "src/checkout/coupon.ts",
+     "src/routes.ts"
+    ],
+    "queuedFiles": [],
+    "adhoc": false
+   }
+  },
+  {
+   "delayMs": 200,
+   "actor": "server",
+   "type": "task.created",
+   "payload": {
+    "taskId": "T-2",
+    "title": "Dark mode",
+    "description": "Toggle tema gelap di header",
+    "ownerId": "B",
+    "status": "terbuka",
+    "files": [
+     "src/ui/theme.css",
+     "src/ui/Header.tsx"
+    ],
+    "queuedFiles": [],
+    "adhoc": false
+   }
+  },
+  {
+   "delayMs": 150,
+   "actor": "server",
+   "type": "lock.reserved",
+   "payload": {
+    "path": "src/checkout/shipping.ts",
+    "taskId": "T-0",
+    "memberId": "A",
+    "source": "plan"
+   }
+  },
+  {
+   "delayMs": 150,
+   "actor": "server",
+   "type": "lock.reserved",
+   "payload": {
+    "path": "src/utils.ts",
+    "taskId": "T-0",
+    "memberId": "A",
+    "source": "plan"
+   }
+  },
+  {
+   "delayMs": 150,
+   "actor": "server",
+   "type": "lock.reserved",
+   "payload": {
+    "path": "src/checkout/checkout.ts",
+    "taskId": "T-1",
+    "memberId": "A",
+    "source": "plan"
+   }
+  },
+  {
+   "delayMs": 150,
+   "actor": "server",
+   "type": "lock.reserved",
+   "payload": {
+    "path": "src/checkout/coupon.ts",
+    "taskId": "T-1",
+    "memberId": "A",
+    "source": "plan"
+   }
+  },
+  {
+   "delayMs": 150,
+   "actor": "server",
+   "type": "lock.reserved",
+   "payload": {
+    "path": "src/routes.ts",
+    "taskId": "T-1",
+    "memberId": "A",
+    "source": "plan"
+   }
+  },
+  {
+   "delayMs": 150,
+   "actor": "server",
+   "type": "lock.reserved",
+   "payload": {
+    "path": "src/ui/theme.css",
+    "taskId": "T-2",
+    "memberId": "B",
+    "source": "plan"
+   }
+  },
+  {
+   "delayMs": 150,
+   "actor": "server",
+   "type": "lock.reserved",
+   "payload": {
+    "path": "src/ui/Header.tsx",
+    "taskId": "T-2",
+    "memberId": "B",
+    "source": "plan"
+   }
+  },
+  {
+   "delayMs": 1000,
+   "actor": "A",
+   "type": "bob.activity",
+   "payload": {
+    "memberId": "A",
+    "kind": "session.start",
+    "sessionId": "bob-a-1",
+    "mode": "coder"
+   }
+  },
+  {
+   "delayMs": 1000,
+   "actor": "A",
+   "type": "bob.activity",
+   "payload": {
+    "memberId": "A",
+    "kind": "prompt",
+    "sessionId": "bob-a-1",
+    "mode": "coder",
+    "text": "tambahkan ongkos kirim flat per kota di checkout"
+   }
+  },
+  {
+   "delayMs": 1000,
+   "actor": "A",
+   "type": "bob.activity",
+   "payload": {
+    "memberId": "A",
+    "kind": "tool.pre",
+    "sessionId": "bob-a-1",
+    "mode": "coder",
+    "tool": "write_file",
+    "paths": [
+     "src/checkout/shipping.ts"
+    ],
+    "decision": "allow"
+   }
+  },
+  {
+   "delayMs": 200,
+   "actor": "A",
+   "type": "lock.acquired",
+   "payload": {
+    "path": "src/checkout/shipping.ts",
+    "taskId": "T-0",
+    "memberId": "A",
+    "auto": false
+   }
+  },
+  {
+   "delayMs": 100,
+   "actor": "A",
+   "type": "task.status",
+   "payload": {
+    "taskId": "T-0",
+    "from": "terbuka",
+    "to": "dikerjakan",
+    "by": "A"
+   }
+  },
+  {
+   "delayMs": 300,
+   "actor": "A",
+   "type": "file.changed",
+   "payload": {
+    "path": "src/checkout/shipping.ts",
+    "version": 1,
+    "hash": "sha-T-0-1-shipping.ts",
+    "by": "A",
+    "taskId": "T-0",
+    "size": 410
+   }
+  },
+  {
+   "delayMs": 1000,
+   "actor": "A",
+   "type": "bob.activity",
+   "payload": {
+    "memberId": "A",
+    "kind": "tool.post",
+    "sessionId": "bob-a-1",
+    "mode": "coder",
+    "tool": "write_file",
+    "paths": [
+     "src/checkout/shipping.ts"
+    ],
+    "linesChanged": 18
+   }
+  },
+  {
+   "delayMs": 1000,
+   "actor": "A",
+   "type": "bob.activity",
+   "payload": {
+    "memberId": "A",
+    "kind": "tool.pre",
+    "sessionId": "bob-a-1",
+    "mode": "coder",
+    "tool": "apply_diff",
+    "paths": [
+     "src/utils.ts"
+    ],
+    "decision": "allow"
+   }
+  },
+  {
+   "delayMs": 200,
+   "actor": "A",
+   "type": "lock.acquired",
+   "payload": {
+    "path": "src/utils.ts",
+    "taskId": "T-0",
+    "memberId": "A",
+    "auto": false
+   }
+  },
+  {
+   "delayMs": 300,
+   "actor": "A",
+   "type": "file.changed",
+   "payload": {
+    "path": "src/utils.ts",
+    "version": 2,
+    "hash": "sha-T-0-2-utils.ts",
+    "by": "A",
+    "taskId": "T-0",
+    "size": 420
+   }
+  },
+  {
+   "delayMs": 1000,
+   "actor": "A",
+   "type": "bob.activity",
+   "payload": {
+    "memberId": "A",
+    "kind": "tool.post",
+    "sessionId": "bob-a-1",
+    "mode": "coder",
+    "tool": "apply_diff",
+    "paths": [
+     "src/utils.ts"
+    ],
+    "linesChanged": 4
+   }
+  },
+  {
+   "delayMs": 1000,
+   "actor": "A",
+   "type": "bob.activity",
+   "payload": {
+    "memberId": "A",
+    "kind": "turn.end",
+    "sessionId": "bob-a-1",
+    "mode": "coder"
+   }
+  },
+  {
+   "delayMs": 2000,
+   "actor": "A",
+   "type": "task.submitted",
+   "payload": {
+    "taskId": "T-0",
+    "summary": "Ongkir flat per kota, calculateTotal menerima ongkir",
+    "files": [
+     "src/checkout/shipping.ts",
+     "src/utils.ts"
+    ]
+   }
+  },
+  {
+   "delayMs": 100,
+   "actor": "A",
+   "type": "task.status",
+   "payload": {
+    "taskId": "T-0",
+    "from": "dikerjakan",
+    "to": "review",
+    "by": "A"
+   }
+  },
+  {
+   "delayMs": 100,
+   "actor": "server",
+   "type": "lock.review",
+   "payload": {
+    "path": "src/checkout/shipping.ts",
+    "taskId": "T-0"
+   }
+  },
+  {
+   "delayMs": 100,
+   "actor": "server",
+   "type": "lock.review",
+   "payload": {
+    "path": "src/utils.ts",
+    "taskId": "T-0"
+   }
+  },
+  {
+   "delayMs": 2500,
+   "actor": "C",
+   "type": "proposal.created",
+   "payload": {
+    "proposalId": "P-2",
+    "kind": "review",
+    "refId": "T-0",
+    "reason": "Perubahan benar, B perlu tahu soal ongkir.",
+    "payload": {
+     "taskId": "T-0",
+     "verdict": "setujui_beri_tahu",
+     "notes": "Fungsi ongkir baru dipakai checkout.",
+     "notify": [
+      {
+       "memberId": "B",
+       "message": "Ongkir baru tersedia; Header.tsx bisa menampilkan total dengan ongkir."
+      }
+     ],
+     "flags": []
+    }
+   }
+  },
+  {
+   "delayMs": 1000,
+   "actor": "A",
+   "type": "bob.activity",
+   "payload": {
+    "memberId": "A",
+    "kind": "prompt",
+    "sessionId": "bob-a-1",
+    "mode": "coder",
+    "text": "tambahkan kupon diskon persen di checkout"
+   }
+  },
+  {
+   "delayMs": 1000,
+   "actor": "A",
+   "type": "bob.activity",
+   "payload": {
+    "memberId": "A",
+    "kind": "tool.pre",
+    "sessionId": "bob-a-1",
+    "mode": "coder",
+    "tool": "apply_diff",
+    "paths": [
+     "src/checkout/checkout.ts"
+    ],
+    "decision": "allow"
+   }
+  },
+  {
+   "delayMs": 200,
+   "actor": "A",
+   "type": "lock.acquired",
+   "payload": {
+    "path": "src/checkout/checkout.ts",
+    "taskId": "T-1",
+    "memberId": "A",
+    "auto": false
+   }
+  },
+  {
+   "delayMs": 100,
+   "actor": "A",
+   "type": "task.status",
+   "payload": {
+    "taskId": "T-1",
+    "from": "terbuka",
+    "to": "dikerjakan",
+    "by": "A"
+   }
+  },
+  {
+   "delayMs": 300,
+   "actor": "A",
+   "type": "file.changed",
+   "payload": {
+    "path": "src/checkout/checkout.ts",
+    "version": 2,
+    "hash": "sha-T-1-2-checkout.ts",
+    "by": "A",
+    "taskId": "T-1",
+    "size": 420
+   }
+  },
+  {
+   "delayMs": 1000,
+   "actor": "A",
+   "type": "bob.activity",
+   "payload": {
+    "memberId": "A",
+    "kind": "tool.post",
+    "sessionId": "bob-a-1",
+    "mode": "coder",
+    "tool": "apply_diff",
+    "paths": [
+     "src/checkout/checkout.ts"
+    ],
+    "linesChanged": 12
+   }
+  },
+  {
+   "delayMs": 1000,
+   "actor": "B",
+   "type": "bob.activity",
+   "payload": {
+    "memberId": "B",
+    "kind": "session.start",
+    "sessionId": "bob-b-1",
+    "mode": "coder"
+   }
+  },
+  {
+   "delayMs": 1000,
+   "actor": "B",
+   "type": "bob.activity",
+   "payload": {
+    "memberId": "B",
+    "kind": "prompt",
+    "sessionId": "bob-b-1",
+    "mode": "coder",
+    "text": "tambahkan toggle dark mode di header"
+   }
+  },
+  {
+   "delayMs": 1000,
+   "actor": "B",
+   "type": "bob.activity",
+   "payload": {
+    "memberId": "B",
+    "kind": "tool.pre",
+    "sessionId": "bob-b-1",
+    "mode": "coder",
+    "tool": "write_file",
+    "paths": [
+     "src/ui/theme.css"
+    ],
+    "decision": "allow"
+   }
+  },
+  {
+   "delayMs": 200,
+   "actor": "B",
+   "type": "lock.acquired",
+   "payload": {
+    "path": "src/ui/theme.css",
+    "taskId": "T-2",
+    "memberId": "B",
+    "auto": false
+   }
+  },
+  {
+   "delayMs": 100,
+   "actor": "B",
+   "type": "task.status",
+   "payload": {
+    "taskId": "T-2",
+    "from": "terbuka",
+    "to": "dikerjakan",
+    "by": "B"
+   }
+  },
+  {
+   "delayMs": 300,
+   "actor": "B",
+   "type": "file.changed",
+   "payload": {
+    "path": "src/ui/theme.css",
+    "version": 1,
+    "hash": "sha-T-2-1-theme.css",
+    "by": "B",
+    "taskId": "T-2",
+    "size": 410
+   }
+  },
+  {
+   "delayMs": 1000,
+   "actor": "B",
+   "type": "bob.activity",
+   "payload": {
+    "memberId": "B",
+    "kind": "tool.post",
+    "sessionId": "bob-b-1",
+    "mode": "coder",
+    "tool": "write_file",
+    "paths": [
+     "src/ui/theme.css"
+    ],
+    "linesChanged": 22
+   }
+  },
+  {
+   "delayMs": 1000,
+   "actor": "B",
+   "type": "bob.activity",
+   "payload": {
+    "memberId": "B",
+    "kind": "tool.pre",
+    "sessionId": "bob-b-1",
+    "mode": "coder",
+    "tool": "apply_diff",
+    "paths": [
+     "src/checkout/checkout.ts"
+    ],
+    "decision": "block"
+   }
+  },
+  {
+   "delayMs": 100,
+   "actor": "B",
+   "type": "lock.blocked",
+   "payload": {
+    "path": "src/checkout/checkout.ts",
+    "memberId": "B",
+    "taskId": "T-2",
+    "holderMemberId": "A",
+    "holderTaskId": "T-1",
+    "via": "hook",
+    "requestId": "R-1"
+   }
+  },
+  {
+   "delayMs": 100,
+   "actor": "B",
+   "type": "request.created",
+   "payload": {
+    "requestId": "R-1",
+    "path": "src/checkout/checkout.ts",
+    "requesterMemberId": "B",
+    "requesterTaskId": "T-2",
+    "holderMemberId": "A",
+    "holderTaskId": "T-1",
+    "source": "hook"
+   }
+  },
+  {
+   "delayMs": 2500,
+   "actor": "C",
+   "type": "proposal.created",
+   "payload": {
+    "proposalId": "P-3",
+    "kind": "decision",
+    "refId": "R-1",
+    "reason": "T-1 hampir selesai; B antre checkout.ts.",
+    "payload": {
+     "requestId": "R-1",
+     "option": "antre"
+    }
+   }
+  },
+  {
+   "delayMs": 200,
+   "actor": "server",
+   "type": "proposal.decided",
+   "payload": {
+    "proposalId": "P-3",
+    "kind": "decision",
+    "status": "diterapkan_otomatis",
+    "by": "server",
+    "note": null
+   }
+  },
+  {
+   "delayMs": 100,
+   "actor": "server",
+   "type": "lock.queued",
+   "payload": {
+    "path": "src/checkout/checkout.ts",
+    "taskId": "T-2",
+    "memberId": "B",
+    "pos": 1
+   }
+  },
+  {
+   "delayMs": 100,
+   "actor": "server",
+   "type": "request.decided",
+   "payload": {
+    "requestId": "R-1",
+    "outcome": "antre",
+    "proposalId": "P-3",
+    "auto": true
+   }
+  },
+  {
+   "delayMs": 1000,
+   "actor": "B",
+   "type": "bob.activity",
+   "payload": {
+    "memberId": "B",
+    "kind": "tool.pre",
+    "sessionId": "bob-b-1",
+    "mode": "coder",
+    "tool": "apply_diff",
+    "paths": [
+     "src/ui/Header.tsx"
+    ],
+    "decision": "allow"
+   }
+  },
+  {
+   "delayMs": 200,
+   "actor": "B",
+   "type": "lock.acquired",
+   "payload": {
+    "path": "src/ui/Header.tsx",
+    "taskId": "T-2",
+    "memberId": "B",
+    "auto": false
+   }
+  },
+  {
+   "delayMs": 300,
+   "actor": "B",
+   "type": "file.changed",
+   "payload": {
+    "path": "src/ui/Header.tsx",
+    "version": 1,
+    "hash": "sha-T-2-1-Header.tsx",
+    "by": "B",
+    "taskId": "T-2",
+    "size": 410
+   }
+  },
+  {
+   "delayMs": 1000,
+   "actor": "B",
+   "type": "bob.activity",
+   "payload": {
+    "memberId": "B",
+    "kind": "tool.post",
+    "sessionId": "bob-b-1",
+    "mode": "coder",
+    "tool": "apply_diff",
+    "paths": [
+     "src/ui/Header.tsx"
+    ],
+    "linesChanged": 6
+   }
+  },
+  {
+   "delayMs": 1000,
+   "actor": "B",
+   "type": "bob.activity",
+   "payload": {
+    "memberId": "B",
+    "kind": "turn.end",
+    "sessionId": "bob-b-1",
+    "mode": "coder"
+   }
+  }
+ ]
+}

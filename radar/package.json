@@ -8,8 +8,8 @@
   },
   "scripts": {
     "build": "pnpm -r build",
-    "typecheck": "pnpm -r typecheck",
-    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck && tsc -p scripts/tsconfig.json",
+    "test": "pnpm -r test && vitest run --root scripts",
     "lint": "eslint .",
     "format": "prettier -w .",
     "dev:server": "pnpm --filter \"@radar/server^...\" build && pnpm --filter @radar/server exec wrangler dev",
@@ -17,7 +17,7 @@
     "admin": "echo \"fase-03: scripts/admin.ts\"",
     "deploy:web": "pnpm --filter \"@radar/web...\" build && wrangler pages deploy packages/web/out --project-name ibm-bob-live-collab",
     "dev:web": "pnpm --filter \"@radar/web^...\" build && pnpm --filter @radar/web dev",
-    "dev:mock": "echo \"fase-02: scripts/mock-server.ts\"",
+    "dev:mock": "tsx scripts/mock-server.ts",
     "bundle:kit": "pnpm --filter @radar/hooks --filter @radar/mcp run bundle",
     "sim": "echo \"fase-10: scripts/sim-3pc.ts\"",
     "bench:sync": "echo \"fase-04: scripts/bench-sync.ts\"",
@@ -29,13 +29,17 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@hono/node-server": "^2.1.1",
     "@types/node": "catalog:",
+    "@types/ws": "^8.18.1",
     "eslint": "^10.11.0",
     "globals": "^17.12.0",
+    "hono": "^4.13.9",
     "prettier": "^3.9.9",
     "tsx": "^4.23.15",
     "typescript": "catalog:",
     "typescript-eslint": "^8.70.1",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "ws": "^8.21.3"
   }
 }

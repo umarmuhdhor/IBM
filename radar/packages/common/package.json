@@ -7,6 +7,10 @@
     ".": {
       "types": "./src/index.ts",
       "import": "./dist/index.js"
+    },
+    "./node": {
+      "types": "./src/node.ts",
+      "import": "./dist/node.js"
     }
   },
   "scripts": {
@@ -16,10 +20,12 @@
     "dev": "tsc -p tsconfig.build.json --watch"
   },
   "dependencies": {
+    "ignore": "^7.0.10",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@types/node": "catalog:",
+    "esbuild": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

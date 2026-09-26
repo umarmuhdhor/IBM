@@ -69,6 +69,7 @@ Co-authored-by: IBM Bob <bob@ibm.com>
 | `HEARTBEAT_INTERVAL_MS` | 15_000 | §06 aturan 7 |
 | `HEARTBEAT_EXPIRE_MS` | 300_000 | §06 aturan 7 |
 | `HOOK_SERVER_TIMEOUT_MS` | 1_500 | §06 tabel hook |
+| `ACTIVITY_TIMEOUT_MS` | 800 | R3 §2.24 (`bob/activity` fire-and-forget) |
 | `HOOK_TOTAL_TIMEOUT_S` | 3 (PreToolUse), 5 (brief) | §13 settings.json |
 | `WRITING_INDICATOR_MS` | 3_000 | UI-02 |
 | `BRIEF_MAX_LINES` | 6 | NFR-06 |
@@ -112,7 +113,7 @@ Co-authored-by: IBM Bob <bob@ibm.com>
 
 ### Klien (sync, hook, radar-mcp)
 
-Dibaca dari `.radar/local.json` (R1 §6). Override untuk test: `RADAR_SERVER`, `RADAR_TOKEN`, `RADAR_MEMBER`, `RADAR_ROLE`, `RADAR_ROOT`.
+Dibaca dari `.radar/local.json` (R1 §6). Override untuk test: `RADAR_SERVER`, `RADAR_TOKEN`, `RADAR_MEMBER`, `RADAR_ROLE`, `RADAR_ROOT`, `RADAR_SHAREPROMPTS` (`true` = kirim teks prompt, R3 §2.24).
 
 ## 6. Aturan abaikan (sync & import awal)
 

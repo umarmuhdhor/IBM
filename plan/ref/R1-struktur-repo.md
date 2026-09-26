@@ -145,7 +145,7 @@ radar agent --auto --max-cost <n>  → pemicu main agent otomatis di PC PM (SV-1
 
 | Path (di dalam workspace) | Isi |
 |---|---|
-| `.radar/local.json` | `{ "server": "https://…", "workspace": "toko-demo", "member": "A", "token": "…", "role": "coder" }` |
+| `.radar/local.json` | `{ "server": "https://…", "workspace": "toko-demo", "member": "A", "token": "…", "role": "coder", "shareprompts": false }` (`shareprompts` opsional, default `false`) |
 | `.radar/state.json` | `{ "briefCursor": 1234, "lastBlock": {...} }` |
 | `.radar/hook.log` | log hook (tanpa token) |
 | `.radar/sync.log` | log sync agent |

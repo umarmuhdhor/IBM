@@ -78,7 +78,7 @@ Response `200`:
 - `reason` ∈ `own` · `grabbed` · `held_by_other` · `reserved_by_other` · `in_review_by_other` · `committing` (commit task pemegang sedang berjalan, R4 §6.3) · `pm_readonly` · `ignored_path`.
 - `ignored_path` (mis. `node_modules/…`, `.radar/…`) → `allow`, tanpa kunci.
 - Logika lengkap: R4 §3. Latensi server dicatat ke `metric(lock_check_ms)`.
-- **Jalur `message` ke model: bukan stderr.** Docs lifecycle hooks Bob IDE: stdout `PreToolUse` diabaikan dan stderr hanya ditulis ke log Bob. Keputusan JSON tidak didokumentasikan. Kontrak hook = **exit 2 memblok**, exit 0 mengizinkan. Hook tetap menulis `message` ke stderr (murah, terlihat di log), tetapi desain **tidak bergantung** padanya. Penjelasan ke model lewat tiga jalur tetap: (1) instruksi mode `coder` + rules `.bob/rules-coder/`: "kalau tool edit ditolak, panggil `radar why_blocked` dulu" (tool ini ada di `alwaysAllow` `.bob/mcp.json`, jadi jalan tanpa klik approve); (2) server mencatat `block` sehingga `why_blocked` dan baris pertama brief `UserPromptSubmit` berikutnya memuatnya (stdout `UserPromptSubmit` masuk konteks, R4 §8); (3) lapis kedua sync (`file.rejected`). Spike fase 01 uji 2 hanya mengonfirmasi.
+- **Jalur `message` ke model: stderr hook exit 2 (terbukti, D-umar-01 poin 2).** Di Bob IDE 2.2.0 stderr `PreToolUse` yang exit 2 sampai ke model; Bob mengutip pesannya dan tidak mencoba ulang (spike fase 01 uji 2). Docs lifecycle hooks menyebut stderr hanya ke log, jadi desain tetap punya tiga jalur cadangan: (1) instruksi mode `coder` + rules `.bob/rules-coder/`: "kalau tool edit ditolak, panggil `radar why_blocked` dulu" (tool ini ada di `alwaysAllow` `.bob/mcp.json`, jadi jalan tanpa klik approve; terbukti di uji 17); (2) server mencatat `block` sehingga `why_blocked` dan baris pertama brief `UserPromptSubmit` berikutnya memuatnya (stdout `UserPromptSubmit` masuk konteks, R4 §8); (3) lapis kedua sync (`file.rejected`). JSON keputusan di stdout tetap diabaikan (uji 2b). Kontrak hook = **exit 2 memblok**, exit 0 mengizinkan.
 - **Timeout hook.** Settings memberi `timeout` eksplisit (3 s untuk `PreToolUse`, default Bob 10 s). Hook sendiri menyerah ke server setelah 1,5 s (`HOOK_SERVER_TIMEOUT_MS`) dan fail-open. Perilaku Bob saat hook melewati `timeout` diuji di spike 19.
 
 ### 2.3 `GET /v1/brief?kind=start|prompt&since=<eventId>[&peek=true]` — hook SessionStart / UserPromptSubmit (BC-02, BC-03)
@@ -252,7 +252,7 @@ Dipanggil hook kit coder/PM secara fire-and-forget (timeout 800 ms, gagal = diam
   "decision": "allow" | "block",                                  // untuk tool.pre (dari hasil /v1/locks/check)
   "linesChanged": 12,                                             // untuk tool.post, bila bisa dihitung
   "text": "tambahkan kupon diskon di checkout",                   // prompt ringkas ≤ 200 char (hanya bila shareprompts=on)
-  "clientTs": 1790000000000 }
+  "clientTs": 1790000000000 }                                     // opsional; server tidak menyimpannya di event
 ```
 Respons `204`. Server menulis event `bob.activity { memberId, …field di atas tanpa isi file }` dan menyiarkannya ke klien `app`/`mc`. Dibatasi 20 event/detik per member: sisanya dibuang (tetap `204`) dan dihitung di `metric(activity_dropped)`. Isi file **tidak pernah** dikirim.
 
@@ -264,7 +264,7 @@ Sumber tiap `kind` (menurut docs lifecycle hooks Bob; dikonfirmasi spike fase 01
 | `prompt` | `UserPromptSubmit` | session ID + teks prompt (dikirim hanya bila `shareprompts=on`) |
 | `tool.pre` | `PreToolUse` (hook `lock_guard` yang sama) | nama tool + input → `paths`, `decision` |
 | `tool.post` | `PostToolUse` | data tool + output → `paths`, `linesChanged` bila bisa dihitung |
-| `turn.end` | `Stop` | **hanya session ID**. Tidak ada ringkasan giliran. |
+| `turn.end` | `Stop` | session ID. Payload `Stop` membawa `last_assistant_message`, tetapi hook **tidak** mengirimnya (privasi, D-alief-01 poin 9; D-umar-01 P4). |
 
 - `mode` tidak dijamin ada di payload hook. Hook mengisinya dari kit yang terpasang (`.radar/local.json` `role` → `coder`/`pm-lead`).
 - Field payload hook bertanda **provisional** sampai fixture spike 1 (Sab 04:00). Perubahan nama field dilakukan di jendela ubah kontrak fase 02 (04:00–04:30), bukan sesudahnya.
