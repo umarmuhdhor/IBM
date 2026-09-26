@@ -18,6 +18,8 @@
     "../src/preload/runtime-environment-subscriptions.ts",
     "../src/preload/usage-provider-api.ts",
     "../src/shared/**/*",
+    "../../radar/packages/common/src/**/*",
+    "../../radar/packages/ui/src/**/*",
     "../src/main/gitlab/mappers.ts",
     "../src/main/ipc/deferred-emoji-shortcode-dataset.ts",
     "../src/main/ipc/worktree-branch-name.ts",
@@ -50,7 +52,9 @@
   "compilerOptions": {
     "paths": {
       "@renderer/*": ["../src/renderer/src/*"],
-      "@/*": ["../src/renderer/src/*"]
+      "@/*": ["../src/renderer/src/*"],
+      "@radar/common": ["../../radar/packages/common/src/index.ts"],
+      "@radar/ui": ["../../radar/packages/ui/src/index.ts"]
     }
   }
 }

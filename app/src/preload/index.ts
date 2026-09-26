@@ -21,6 +21,7 @@ import { workspaceCleanupApi } from './api/workspace-cleanup-bridge'
 import { workspaceSpaceApi } from './api/workspace-space-bridge'
 import { workspacePortsApi } from './api/workspace-ports-bridge'
 import { ptyApi } from './api/pty-bridge'
+import { radarApi } from './api/radar-bridge'
 import { feedbackApi } from './api/feedback-bridge'
 import { crashReportsApi } from './api/crash-reports-bridge'
 import { exportApi } from './api/export-bridge'
@@ -116,6 +117,7 @@ const api = {
   workspaceSpace: workspaceSpaceApi,
   workspacePorts: workspacePortsApi,
   pty: ptyApi,
+  radar: radarApi,
   feedback: feedbackApi,
   crashReports: crashReportsApi,
   export: exportApi,
