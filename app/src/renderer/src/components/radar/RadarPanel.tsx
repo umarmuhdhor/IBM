@@ -93,17 +93,19 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
           <>
             {/* Why: fixed slots keep ShareFolderCard mounted (and its message) when sharing turns this app into Mission Control. */}
             <div className="space-y-3 p-4 pb-0">
-              {connection?.role !== 'mc' && (
-                <JoinWithCodeCard connection={connection} onConnectionChange={onConnectionChange} />
-              )}
               {connection?.role !== 'coder' && (
                 <ShareFolderCard
                   connection={connection}
+                  folder={workspacePath}
+                  sharedCode={sharedCode}
                   onConnectionChange={onConnectionChange}
                   onShared={setSharedCode}
                 />
               )}
-              {connection?.role === 'mc' && <InviteCodesCard firstCode={sharedCode} />}
+              {connection?.role !== 'mc' && (
+                <JoinWithCodeCard connection={connection} onConnectionChange={onConnectionChange} />
+              )}
+              {connection?.role === 'mc' && <InviteCodesCard />}
             </div>
             {/* Why: teammates join with code + name + role only; server, workspace and tokens are for the owner. */}
             <details className="px-4 pt-3" open={Boolean(connectionFailure) || undefined}>
@@ -123,16 +125,18 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
           </>
         ) : !connection ? (
           <div className="m-4 space-y-3">
-            <JoinWithCodeCard connection={connection} onConnectionChange={onConnectionChange} />
             <ShareFolderCard
               connection={connection}
+              folder={workspacePath}
+              sharedCode={sharedCode}
               onConnectionChange={onConnectionChange}
               onShared={(code) => {
-                // Why: this view unmounts once connected; settings lists the copied code again.
+                // Why: this view unmounts once connected; settings shows the copied code again.
                 setSharedCode(code)
                 onTabChange('settings')
               }}
             />
+            <JoinWithCodeCard connection={connection} onConnectionChange={onConnectionChange} />
             <Button variant="link" size="xs" onClick={() => onTabChange('settings')}>
               Workspace owner? Connect Mission Control in settings
             </Button>
@@ -160,7 +164,7 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
           <>
             {connection?.role === 'mc' && (
               <div className="p-4 pb-0">
-                <InviteCodesCard firstCode={sharedCode} />
+                <InviteCodesCard />
               </div>
             )}
             <TeamPanel state={state} now={now} onWatch={watch} />

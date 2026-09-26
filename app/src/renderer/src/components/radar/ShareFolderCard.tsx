@@ -1,56 +1,65 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import type { RadarConnectionSummary } from '../../../../shared/radar-connection'
-import {
-  DEFAULT_RADAR_SERVER,
-  type RadarJoinCode,
-  type RadarJoinRole
-} from '../../../../shared/radar-join'
+import { DEFAULT_RADAR_SERVER, type RadarJoinCode } from '../../../../shared/radar-join'
 import { ipcErrorText, syncLine, useRadarSyncStatus } from './use-radar-sync-status'
 
 type Props = {
   connection: RadarConnectionSummary | null
+  /** The folder open in the app, shared with one click. */
+  folder: string | null
+  /** The code made by the last share; it outlives this card when the panel switches views. */
+  sharedCode: RadarJoinCode | null
   onConnectionChange: (connection: RadarConnectionSummary | null) => void
   onShared: (code: RadarJoinCode) => void
 }
 
+function folderName(path: string): string {
+  return path.split(/[\\/]/).findLast(Boolean) ?? path
+}
+
 /**
- * D-alief-12: the owner picks a project folder on this Mac. It becomes the workspace, keeps syncing in place,
- * and the first join code is copied for a teammate. Replacing a shared folder asks for confirmation first.
+ * D-alief-12: open a folder, click Share, send the code. The folder stays where it is and syncs live;
+ * the code is copied for you. Replacing a shared folder asks for confirmation first.
  */
-export function ShareFolderCard({ connection, onConnectionChange, onShared }: Props) {
+export function ShareFolderCard({
+  connection,
+  folder,
+  sharedCode,
+  onConnectionChange,
+  onShared
+}: Props) {
   const sync = useRadarSyncStatus()
-  const [name, setName] = useState('')
-  const [role, setRole] = useState<RadarJoinRole>('coder')
   const [busy, setBusy] = useState(false)
   const [replacing, setReplacing] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [invalid, setInvalid] = useState(false)
   const owner = connection?.role === 'mc'
+  // Only offer the open folder when it is not the one already shared.
+  const openFolder = folder && folder !== sync.folder ? folder : null
 
-  const share = async () => {
+  const copy = async (code: string) => {
+    try {
+      await navigator.clipboard.writeText(code)
+      setMessage(`Copied ${code}. Send it to your teammate.`)
+    } catch {
+      setMessage(`Unable to copy. Select ${code} and copy it by hand.`)
+    }
+  }
+
+  const share = async (target: string | null) => {
     setBusy(true)
     setMessage(null)
     setInvalid(false)
     try {
-      const result = await window.api.radar.shareFolder(name, role, DEFAULT_RADAR_SERVER)
+      const result = await window.api.radar.shareFolder(target, DEFAULT_RADAR_SERVER)
       if (!result) {
         return
       }
       setReplacing(false)
       onShared(result.code)
       onConnectionChange(result.connection)
-      const copied = await navigator.clipboard
-        .writeText(result.code.code)
-        .then(() => true)
-        .catch(() => false)
-      const skipped =
-        result.skipped > 0 ? ` (${result.skipped} binary or large files stay local)` : ''
-      setMessage(
-        `Shared ${result.files} files${skipped}. ${copied ? `Code ${result.code.code} is copied` : `Copy code ${result.code.code}`} and send it to a teammate.`
-      )
+      await copy(result.code.code)
     } catch (error) {
       setMessage(
         ipcErrorText(error) || 'Unable to share the folder. Check your internet connection.'
@@ -77,37 +86,93 @@ export function ShareFolderCard({ connection, onConnectionChange, onShared }: Pr
     </p>
   )
 
-  if (owner && !replacing) {
+  if (owner && replacing) {
     return (
       <section
-        aria-label="Your shared folder"
+        aria-label="Share a different folder"
+        className="space-y-3 rounded-lg border border-border bg-card p-4"
+      >
+        <div className="space-y-1">
+          <h3 className="text-sm font-semibold">Share a different folder?</h3>
+          <p className="text-xs text-destructive">
+            This replaces {connection.workspace} for everyone. Tasks, locks, files and teammates on
+            the server are removed, and teammates need a new code. Files on your Mac stay.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {openFolder && (
+            <Button
+              size="sm"
+              variant="destructive"
+              disabled={busy}
+              onClick={() => void share(openFolder)}
+            >
+              {busy ? 'Sharing…' : `Replace with ${folderName(openFolder)}`}
+            </Button>
+          )}
+          <Button
+            size="sm"
+            variant={openFolder ? 'outline' : 'destructive'}
+            disabled={busy}
+            onClick={() => void share(null)}
+          >
+            {openFolder
+              ? 'Choose another folder…'
+              : busy
+                ? 'Sharing…'
+                : 'Replace and choose folder…'}
+          </Button>
+          <Button size="sm" variant="outline" disabled={busy} onClick={() => setReplacing(false)}>
+            Cancel
+          </Button>
+        </div>
+        {status}
+      </section>
+    )
+  }
+
+  if (owner) {
+    return (
+      <section
+        aria-label="Multiplayer"
         className="space-y-3 rounded-lg border border-border bg-card p-4"
       >
         <div className="space-y-1">
           <h3 className="text-sm font-semibold">
-            {connection.workspace} · {sync.folder ? 'your folder' : 'owner'}
+            {sync.folder
+              ? `${folderName(sync.folder)} is shared`
+              : `${connection.workspace} · owner`}
           </h3>
           {sync.folder ? (
-            <>
-              <p
-                className={
-                  sync.state === 'error'
-                    ? 'text-xs text-destructive'
-                    : 'text-xs text-muted-foreground'
-                }
-              >
-                {syncLine(sync)}
-              </p>
-              <p className="font-mono text-xs text-muted-foreground [overflow-wrap:anywhere]">
-                {sync.folder}
-              </p>
-            </>
+            <p
+              className={
+                sync.state === 'error'
+                  ? 'text-xs text-destructive'
+                  : 'text-xs text-muted-foreground'
+              }
+            >
+              {syncLine(sync)} ·{' '}
+              <span className="font-mono [overflow-wrap:anywhere]">{sync.folder}</span>
+            </p>
           ) : (
             <p className="text-xs text-muted-foreground">
               You are Mission Control for this workspace. Its files are not synced on this Mac.
             </p>
           )}
         </div>
+        {sharedCode && (
+          <div className="flex flex-wrap items-center gap-3">
+            <code
+              aria-label="Join code"
+              className="rounded-md bg-secondary px-3 py-2 font-mono text-lg tracking-widest"
+            >
+              {sharedCode.code}
+            </code>
+            <Button size="sm" variant="outline" onClick={() => void copy(sharedCode.code)}>
+              Copy code
+            </Button>
+          </div>
+        )}
         <div className="flex flex-wrap gap-2">
           {sync.folder && (
             <>
@@ -125,7 +190,7 @@ export function ShareFolderCard({ connection, onConnectionChange, onShared }: Pr
           )}
           <Button
             size="sm"
-            variant="outline"
+            variant="ghost"
             onClick={() => {
               setReplacing(true)
               setMessage(null)
@@ -141,83 +206,35 @@ export function ShareFolderCard({ connection, onConnectionChange, onShared }: Pr
   }
 
   return (
-    <form
-      aria-label={replacing ? 'Share a different folder' : 'Share a folder'}
+    <section
+      aria-label="Multiplayer"
       className="space-y-3 rounded-lg border border-border bg-card p-4"
-      onSubmit={(event) => {
-        event.preventDefault()
-        void share()
-      }}
     >
       <div className="space-y-1">
-        <h3 className="text-sm font-semibold">
-          {replacing ? 'Share a different folder' : 'Share a folder'}
-        </h3>
-        {replacing ? (
-          <p className="text-xs text-destructive">
-            This replaces {connection?.workspace} for everyone. Tasks, locks, files and teammates on
-            the server are removed, and teammates need a new code. Files on your Mac stay.
-          </p>
-        ) : (
-          <p className="text-xs text-muted-foreground">
-            Own a project? Pick its folder. It stays where it is and syncs live, and you get a code
-            to send to your team.
-          </p>
-        )}
-      </div>
-      <label className="block max-w-xs space-y-1 text-xs">
-        <span>Your name</span>
-        <Input
-          required
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          placeholder="How your team sees you"
-          autoComplete="name"
-          maxLength={100}
-        />
-      </label>
-      <div className="space-y-1 text-xs">
-        <span id="radar-share-role">Your role</span>
-        <ToggleGroup
-          type="single"
-          aria-labelledby="radar-share-role"
-          value={role}
-          onValueChange={(value) => {
-            if (value === 'coder' || value === 'pm') {
-              setRole(value)
-            }
-          }}
-          variant="outline"
-          size="sm"
-        >
-          <ToggleGroupItem value="coder" className="px-3 text-xs">
-            Coder
-          </ToggleGroupItem>
-          <ToggleGroupItem value="pm" className="px-3 text-xs">
-            PM
-          </ToggleGroupItem>
-        </ToggleGroup>
+        <h3 className="text-sm font-semibold">Multiplayer</h3>
+        <p className="text-xs text-muted-foreground">
+          {openFolder
+            ? `Share ${folderName(openFolder)} and get a code for your team. The folder stays where it is and syncs live.`
+            : 'Open a project folder, then share it and get a code for your team.'}
+        </p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <Button
-          type="submit"
-          size="sm"
-          variant={replacing ? 'destructive' : 'default'}
-          disabled={busy}
-        >
-          {busy
-            ? 'Sharing…'
-            : replacing
-              ? 'Replace and choose folder…'
-              : 'Choose folder and share…'}
-        </Button>
-        {replacing && (
-          <Button type="button" size="sm" variant="outline" onClick={() => setReplacing(false)}>
-            Cancel
+        {openFolder ? (
+          <>
+            <Button size="sm" disabled={busy} onClick={() => void share(openFolder)}>
+              {busy ? 'Sharing…' : `Share ${folderName(openFolder)}`}
+            </Button>
+            <Button size="sm" variant="ghost" disabled={busy} onClick={() => void share(null)}>
+              Another folder…
+            </Button>
+          </>
+        ) : (
+          <Button size="sm" disabled={busy} onClick={() => void share(null)}>
+            {busy ? 'Sharing…' : 'Choose folder and share…'}
           </Button>
         )}
       </div>
       {status}
-    </form>
+    </section>
   )
 }

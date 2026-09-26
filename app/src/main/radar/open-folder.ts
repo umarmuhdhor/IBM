@@ -1,5 +1,14 @@
 import { app, BrowserWindow, dialog, ipcMain } from 'electron'
-import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync, mkdirSync } from 'node:fs'
+import {
+  existsSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+  mkdirSync
+} from 'node:fs'
+import { userInfo } from 'node:os'
 import { basename, join } from 'node:path'
 import {
   ADMIN_FILES_MAX_BATCH_BYTES,
@@ -10,6 +19,7 @@ import {
   MAX_FILE_BYTES,
   OpenWorkspaceRes
 } from '@radar/common'
+import { runProcess } from '../../shared/child-process/run-process'
 import type { RadarConnection } from '../../shared/radar-connection'
 import type { RadarJoinRole, RadarOpenFolderResult } from '../../shared/radar-join'
 import { startClient } from './connection-ipc'
@@ -139,6 +149,24 @@ function saveOwnerFolder(value: OwnerFolder): void {
   writeFileSync(ownerFolderPath(), JSON.stringify(value))
 }
 
+/** One-click sharing asks for no name: git's user.name, else the macOS account name. */
+export async function ownerName(folder: string): Promise<string> {
+  const git = await runProcess({
+    program: 'git',
+    args: ['-C', folder, 'config', '--get', 'user.name'],
+    timeoutMs: 5_000
+  }).catch(() => null)
+  const fromGit = git?.code === 0 ? git.stdout.trim().slice(0, 100) : ''
+  if (fromGit) {
+    return fromGit
+  }
+  try {
+    return userInfo().username.slice(0, 100) || 'Owner'
+  } catch {
+    return 'Owner'
+  }
+}
+
 /**
  * Makes `folder` the workspace on the server and shares it. On a server that already has a workspace,
  * only its current owner (a Mission Control connection) may do this, and it replaces everything there.
@@ -149,14 +177,12 @@ export async function shareFolder(
   roleInput: unknown,
   serverInput: unknown
 ): Promise<RadarOpenFolderResult> {
-  const name = typeof nameInput === 'string' ? nameInput.trim().slice(0, 100) : ''
-  if (!name) {
-    throw new Error('Enter your name so your team sees who owns this workspace.')
-  }
-  const role: RadarJoinRole = roleInput === 'pm' ? 'pm' : 'coder'
-  if (!existsSync(folder)) {
+  if (!existsSync(folder) || !statSync(folder).isDirectory()) {
     throw new Error('That folder no longer exists.')
   }
+  const typed = typeof nameInput === 'string' ? nameInput.trim().slice(0, 100) : ''
+  const name = typed || (await ownerName(folder))
+  const role: RadarJoinRole = roleInput === 'pm' ? 'pm' : 'coder'
   requireOsEncryption()
   const current = readRadarConnection()
   const server = current?.role === 'mc' ? new URL(current.server).origin : serverOrigin(serverInput)
@@ -221,6 +247,11 @@ async function chooseAndShare(
 ): Promise<RadarOpenFolderResult | null> {
   const field = (key: string): unknown =>
     typeof value === 'object' && value !== null && key in value ? Reflect.get(value, key) : null
+  // The folder open in the app is shared as is; the picker is only for a folder that is not open.
+  const given = field('folder')
+  if (typeof given === 'string' && given) {
+    return shareFolder(given, field('name'), field('role'), field('server'))
+  }
   const options: Electron.OpenDialogOptions = {
     title: 'Choose the project folder to share',
     buttonLabel: 'Share this folder',

@@ -34,39 +34,49 @@ const owner = {
   member: 'mc',
   role: 'mc' as const
 }
+const code = { member: null, code: 'K7QM-3XPA', expiresAt: 1 }
 
-it('shares a folder with the name and role, then copies the first code', async () => {
-  const code = { member: null, code: 'K7QM-3XPA', expiresAt: 1 }
-  shareFolder.mockResolvedValue({ connection: owner, folder: '/p', files: 12, skipped: 0, code })
+it('shares the folder open in the app with one click and copies the code', async () => {
+  shareFolder.mockResolvedValue({
+    connection: owner,
+    folder: '/Users/me/my-app',
+    files: 12,
+    skipped: 0,
+    code
+  })
   const onConnectionChange = vi.fn()
   const onShared = vi.fn()
   render(
     <ShareFolderCard
       connection={null}
+      folder="/Users/me/my-app"
+      sharedCode={null}
       onConnectionChange={onConnectionChange}
       onShared={onShared}
     />
   )
-  fireEvent.change(screen.getByLabelText('Your name'), { target: { value: 'Alief' } })
-  fireEvent.click(screen.getByRole('radio', { name: 'PM' }))
-  fireEvent.submit(screen.getByRole('form', { name: 'Share a folder' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Share my-app' }))
 
   await waitFor(() => expect(onConnectionChange).toHaveBeenCalledWith(owner))
-  expect(shareFolder).toHaveBeenCalledWith('Alief', 'pm', expect.any(String))
+  expect(shareFolder).toHaveBeenCalledWith('/Users/me/my-app', expect.any(String))
   expect(onShared).toHaveBeenCalledWith(code)
-  expect(writeText).toHaveBeenCalledWith('K7QM-3XPA')
-  expect(await screen.findByText(/Shared 12 files\. Code K7QM-3XPA is copied/)).toBeTruthy()
+  await waitFor(() => expect(writeText).toHaveBeenCalledWith('K7QM-3XPA'))
 })
 
-it('does nothing when the owner cancels the folder picker', async () => {
+it('opens the folder picker when no folder is open', async () => {
   shareFolder.mockResolvedValue(null)
   const onConnectionChange = vi.fn()
   render(
-    <ShareFolderCard connection={null} onConnectionChange={onConnectionChange} onShared={vi.fn()} />
+    <ShareFolderCard
+      connection={null}
+      folder={null}
+      sharedCode={null}
+      onConnectionChange={onConnectionChange}
+      onShared={vi.fn()}
+    />
   )
-  fireEvent.change(screen.getByLabelText('Your name'), { target: { value: 'Alief' } })
-  fireEvent.submit(screen.getByRole('form', { name: 'Share a folder' }))
-  await waitFor(() => expect(shareFolder).toHaveBeenCalled())
+  fireEvent.click(screen.getByRole('button', { name: 'Choose folder and share…' }))
+  await waitFor(() => expect(shareFolder).toHaveBeenCalledWith(null, expect.any(String)))
   expect(onConnectionChange).not.toHaveBeenCalled()
 })
 
@@ -76,9 +86,16 @@ it("shows the server's sentence when the server already has another owner", asyn
       "Error invoking remote method 'radar:share-folder': Error: This server already has the workspace toko-demo. Ask its owner for a join code, or use your own server to share a folder."
     )
   )
-  render(<ShareFolderCard connection={null} onConnectionChange={vi.fn()} onShared={vi.fn()} />)
-  fireEvent.change(screen.getByLabelText('Your name'), { target: { value: 'Alief' } })
-  fireEvent.submit(screen.getByRole('form', { name: 'Share a folder' }))
+  render(
+    <ShareFolderCard
+      connection={null}
+      folder="/p/app"
+      sharedCode={null}
+      onConnectionChange={vi.fn()}
+      onShared={vi.fn()}
+    />
+  )
+  fireEvent.click(screen.getByRole('button', { name: 'Share app' }))
   expect(
     await screen.findByText(
       'This server already has the workspace toko-demo. Ask its owner for a join code, or use your own server to share a folder.'
@@ -86,15 +103,26 @@ it("shows the server's sentence when the server already has another owner", asyn
   ).toBeTruthy()
 })
 
-it("shows the owner's folder and asks before replacing the workspace", async () => {
+it('shows the shared folder with its code, and asks before replacing the workspace', async () => {
   status.folder = '/Users/me/my-app'
-  render(<ShareFolderCard connection={owner} onConnectionChange={vi.fn()} onShared={vi.fn()} />)
-  expect(await screen.findByText('/Users/me/my-app')).toBeTruthy()
-  expect(screen.getByText('Syncing 3 files')).toBeTruthy()
+  render(
+    <ShareFolderCard
+      connection={owner}
+      folder="/Users/me/other"
+      sharedCode={code}
+      onConnectionChange={vi.fn()}
+      onShared={vi.fn()}
+    />
+  )
+  expect(await screen.findByText('my-app is shared')).toBeTruthy()
+  expect(screen.getByLabelText('Join code').textContent).toBe('K7QM-3XPA')
+  fireEvent.click(screen.getByRole('button', { name: 'Copy code' }))
+  await waitFor(() => expect(writeText).toHaveBeenCalledWith('K7QM-3XPA'))
 
   fireEvent.click(screen.getByRole('button', { name: 'Share a different folder…' }))
   expect(screen.getByText(/This replaces my-app for everyone/)).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'Replace with other' })).toBeTruthy()
   expect(shareFolder).not.toHaveBeenCalled()
   fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
-  expect(screen.getByRole('region', { name: 'Your shared folder' })).toBeTruthy()
+  expect(screen.getByRole('region', { name: 'Multiplayer' })).toBeTruthy()
 })

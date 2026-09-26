@@ -191,9 +191,18 @@ describe('shareFolder (D-alief-12)', () => {
     expect(mocks.startSyncAgent).not.toHaveBeenCalled()
   })
 
-  it('needs a name before it calls the server', async () => {
+  it('uses a default owner name when none is typed', async () => {
     respondInOrder([201, opened])
-    await expect(shareFolder(root, '  ', 'coder', SERVER)).rejects.toThrow(/name/)
+    await shareFolder(root, '  ', 'coder', SERVER)
+    const body = JSON.parse(String(vi.mocked(fetch).mock.calls[0]?.[1]?.body))
+    expect(body.owner.name.length).toBeGreaterThan(0)
+  })
+
+  it('refuses a folder that does not exist before it calls the server', async () => {
+    respondInOrder([201, opened])
+    await expect(shareFolder(join(root, 'gone'), 'Alief', 'coder', SERVER)).rejects.toThrow(
+      /no longer exists/
+    )
     expect(fetch).not.toHaveBeenCalled()
   })
 })

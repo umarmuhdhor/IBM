@@ -15,10 +15,9 @@ function until(expiresAt: number): string {
  * IN-03, Mission Control only (D-alief-10): make an open join code and share it. A teammate who uses it
  * enters their own name and role, and only then appears in the list below.
  */
-export function InviteCodesCard({ firstCode = null }: { firstCode?: RadarJoinCode | null }) {
+export function InviteCodesCard() {
   const members = useRadarStore((store) => store.state?.members)
-  // Why: sharing a folder already made (and copied) one code; list it so the owner can copy it again.
-  const [codes, setCodes] = useState<RadarJoinCode[]>(firstCode ? [firstCode] : [])
+  const [codes, setCodes] = useState<RadarJoinCode[]>([])
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const joined = Object.values(members ?? {}).sort((a, b) => a.id.localeCompare(b.id))
