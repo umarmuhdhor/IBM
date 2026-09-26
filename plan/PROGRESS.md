@@ -47,13 +47,13 @@ Waktu dalam WITA. Setiap lane **hanya mengedit baris fasenya sendiri** (supaya m
 | SV-01, SV-08 | 03 | [ ] | |
 | SV-02..06 | 05 | [x] | `test/engine.test.ts`, `test/invariants.prop.test.ts`, `test/flow.int.test.ts`, `locks.test.ts` (log fase 05); uji produksi fase 10 |
 | SV-07 | 06 | [ ] | |
-| BC-01..04, BC-07 | 07 | [x] | hooks 41 + mcp 16 test; Bob IDE vs fake server (log fase 07); ulang di toko-demo asli fase 10 |
-| MA-01..05, MA-07 | 08 (+05, 06) | [~] | sisi Bob: 20 test PM + uji Bob IDE vs fake server (log fase 08); sisi server = fase 05/06 |
+| BC-01..04, BC-07 | 07 | [x] | hooks 41 + mcp 16 test; Bob IDE vs fake server (log fase 07); fase 10: Bob IDE vs Worker asli di toko-demo (blokir hook + `why_blocked`, `request_file`) + `mcp/test/server.int.test.ts` (log fase-10-bob, task 10–11) |
+| MA-01..05, MA-07 | 08 (+05, 06) | [~] | fase 10 vs Worker asli: MA-01 (plan), MA-03 (antre otomatis), MA-05 (notify → brief), MA-07 (token PM 403) lulus di test integrasi + Bob IDE (task 09, 12); MA-02/04 butuh `get_task_diff` = fase 06 |
 | UI-01..04, UI-07 | 09 | [ ] | |
 | UI-05 | 11D1 | [ ] | |
 | DA-01 | 11b/11c | [ ] | |
 | DA-03, DA-04, DA-06 | 09 | [ ] | |
-| JT-01 (hook + `bob/activity`) | 03 + 07 | [ ] | |
+| JT-01 (hook + `bob/activity`) | 03 + 07 | [~] | sisi Bob: hook → `POST /v1/bob/activity` 204 di Worker asli (`server.int.test.ts`, log wrangler sesi Bob IDE fase 10); tampilan Watch Bob = 11a |
 | JT-02, JT-03 (Watch Bob, privasi prompt) | 11a (+07 `shareprompts`) | [ ] | |
 | UI-09 (landing web) | 11D1 | [ ] | |
 | IN-01 | 04 + 11 | [ ] | |
