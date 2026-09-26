@@ -19,7 +19,7 @@ Waktu dalam WITA. Setiap lane **hanya mengedit baris fasenya sendiri** (supaya m
 | 11a | Tonton Bob rekan (A) + script bukti C4 (E) | Aarief | lane/app | [ ] | | | | log/fase-11a.md |
 | 11b | `.dmg` + Release (C) | Aarief | lane/app | [ ] | | | | log/fase-11b.md |
 | 11c | Uji pasang Mac teman, P1, poles | Aarief | lane/app | [ ] | | | | log/fase-11c.md |
-| 11D1 | Landing + replay dengan fixture (I1, I2) | Imelda | lane/web | [~] | Sab 26 13:10 | | Infra replay siap (fixture dari skenario mock asli, sanitizer, metrics, chapters, player, export script, 28 test hijau); BERHENTI di BOB SLICE I1+I2 | log/fase-11D1.md |
+| 11D1 | Landing + replay dengan fixture (I1, I2) | Imelda | lane/web | [~] | Sab 26 13:10 | | Kode selesai: infra replay (46 test hijau) + Bob slice I1 (`/demo`,`/gallery`) + I2 (landing warm paper), build statis bersih, dicek visual 1440/390; BERHENTI di LANGKAH MANUAL (deploy Cloudflare butuh akun, Playwright butuh install browser) | log/fase-11D1.md |
 | 11D2 | I3 Long Description + replay final dari rekaman | Imelda | lane/web | [ ] | | | | log/fase-11D2.md |
 | 12 | Hardening & P1 | Alief | lane/core | [ ] | | | | log/fase-12.md |
 | 13 | Eksperimen A/B | Umar | lane/bob | [ ] | | | | log/fase-13.md |
@@ -50,12 +50,12 @@ Waktu dalam WITA. Setiap lane **hanya mengedit baris fasenya sendiri** (supaya m
 | BC-01..04, BC-07 | 07 | [x] | hooks 41 + mcp 16 test; Bob IDE vs fake server (log fase 07); ulang di toko-demo asli fase 10 |
 | MA-01..05, MA-07 | 08 (+05, 06) | [~] | sisi Bob: 20 test PM + uji Bob IDE vs fake server (log fase 08); sisi server = fase 05/06 |
 | UI-01..04, UI-07 | 09 | [ ] | |
-| UI-05 | 11D1 | [ ] | |
+| UI-05 | 11D1 | [~] | `/demo` jalan tanpa login/API key/server, dicek manual browser (log fase 11D1); Playwright otomatis belum jalan (LANGKAH MANUAL) |
 | DA-01 | 11b/11c | [ ] | |
 | DA-03, DA-04, DA-06 | 09 | [ ] | |
 | JT-01 (hook + `bob/activity`) | 03 + 07 | [ ] | |
 | JT-02, JT-03 (Watch Bob, privasi prompt) | 11a (+07 `shareprompts`) | [ ] | |
-| UI-09 (landing web) | 11D1 | [ ] | |
+| UI-09 (landing web) | 11D1 | [~] | Kode + build statis siap (log fase 11D1); belum live di Cloudflare Pages (LANGKAH MANUAL, TODO B2) |
 | IN-01 | 04 + 11 | [ ] | |
 | EV-01..03 | semua (dicek 14) | [ ] | |
 | NFR-11 (template IBM, check:ignored) | 00 | [x] | `check:ignored` di CI |
@@ -78,5 +78,5 @@ Waktu dalam WITA. Setiap lane **hanya mengedit baris fasenya sendiri** (supaya m
 | C4 `--md` + `evidence-check` | App | Aarief | | [ ] | |
 | C3 komponen `@radar/ui` | App | Aarief | | [ ] | |
 | I1 pemutar replay + `/demo` | Web | Imelda | `uaai_imelda_task01_replay_player_demo_summary.png` | [x] | 4.30 |
-| I2 landing | Web | Imelda | | [ ] | |
+| I2 landing | Web | Imelda | `uaai_imelda_task02_landing_warm_paper_summary.png` | [x] | 0.873 |
 | I3 Long Description + outline deck | Web | Imelda | | [ ] | |
