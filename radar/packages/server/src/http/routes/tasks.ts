@@ -13,7 +13,9 @@ export function registerTaskRoutes(app: Hono, deps: WorkspaceDeps): void {
     const member = requireMember(deps.db, c.req.header('authorization'), ['coder']);
     const q = parseWith(TasksQuery, c.req.query());
     // A coder lists only their own tasks; the team view is GET /v1/team (pm, mc).
-    if (q.owner !== undefined && q.owner !== member.memberId) throw new RadarError(403, 'FORBIDDEN', 'Hanya task milikmu sendiri.');
+    // R3 §7 my_tasks calls with ?owner=me, which means the caller (D-umar-04).
+    const owner = q.owner === 'me' ? member.memberId : q.owner;
+    if (owner !== undefined && owner !== member.memberId) throw new RadarError(403, 'FORBIDDEN', 'Hanya task milikmu sendiri.');
     const res: TasksRes = {
       tasks: listTaskItems(deps.db, member.memberId, q.status ?? 'open'),
       activeTaskId: getMember(deps.db, member.memberId)?.active_task_id ?? null,

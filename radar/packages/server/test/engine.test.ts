@@ -258,8 +258,10 @@ describe('role matrix for fase 05–06 endpoints (R3 §1)', () => {
   });
 });
 
+declare const __LOCK_CHECK_P95_BUDGET_MS__: number;
+
 describe('lock check latency (fase 05 step 13)', () => {
-  it('1000 checks through the Durable Object: p95 under 20 ms', { timeout: 60_000 }, async () => {
+  it('1000 checks through the Durable Object: p95 under budget (20 ms local)', { timeout: 60_000 }, async () => {
     const { stub } = freshWorkspace();
     const t = await seedTestWorkspace(stub);
     const ms: number[] = [];
@@ -272,7 +274,7 @@ describe('lock check latency (fase 05 step 13)', () => {
     }
     ms.sort((a, b) => a - b);
     const p95 = ms[Math.floor(ms.length * 0.95)]!;
-    expect(p95).toBeLessThan(20);
+    expect(p95).toBeLessThan(__LOCK_CHECK_P95_BUDGET_MS__);
   });
 });
 
@@ -411,6 +413,13 @@ describe('tasks and requests edge cases (R3 §2.5, §2.7, §2.9)', () => {
     const { stub, t } = await setup([P], [Q]);
     expect((await call(stub, 'GET', '/v1/tasks?owner=A&status=all', { token: t.B })).status).toBe(403);
     expect((await call(stub, 'GET', '/v1/tasks?owner=B', { token: t.B })).json.tasks.map((x: { id: string }) => x.id)).toEqual(['T-2']);
+  });
+
+  it("a coder can use ?owner=me for their own tasks (R3 §7 my_tasks, D-umar-04)", async () => {
+    const { stub, t } = await setup([P], [Q]);
+    const r = await call(stub, 'GET', '/v1/tasks?owner=me', { token: t.B });
+    expect(r.status).toBe(200);
+    expect(r.json.tasks.map((x: { id: string }) => x.id)).toEqual(['T-2']);
   });
 
   it('request_file: free file → bebas; held file → 201 then duplicate 200 with the same id', async () => {

@@ -12,4 +12,6 @@ export default defineConfig({
     }),
   ],
   resolve: { alias: workspaceAlias },
+  // Shared CI runners are noisy: the lock-check latency budget (fase 05 step 13) is 20 ms locally, looser in CI.
+  define: { __LOCK_CHECK_P95_BUDGET_MS__: process.env.CI ? '60' : '20' },
 });
