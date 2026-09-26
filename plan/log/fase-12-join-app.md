@@ -117,3 +117,25 @@ UI gate (better-interface), scope: `JoinWithCodeCard.tsx` mode teman dan mode ow
 | MEDIUM | Accessibility | `JoinWithCodeCard.tsx` tombol ganti mode | fokus tetap di tombol yang labelnya berubah | fokus pindah ke kolom kode | judul dan kolom berubah tanpa diumumkan ke pembaca layar |
 
 Tidak ada temuan HIGH. Colors, Typography, UI: Clear (primitive Orca yang sama dengan mode teman).
+
+## Tambahan 27 Sep · pemilik membagikan folder lokal (D-alief-12)
+
+Pemilik memilih folder project di Mac-nya. Folder itu jadi workspace, tetap di tempatnya, dan tersinkron live sebagai member A. Kode pertama otomatis tersalin.
+
+| Perintah / interaksi | Hasil |
+|---|---|
+| `pnpm -C radar --filter @radar/server test` | 180 lulus (termasuk `open-workspace.test.ts` dan commit lokal tanpa base commit) |
+| `pnpm -C radar typecheck` | bersih |
+| `vitest run src/main/radar src/renderer/src/components/radar` (app) | 84 lulus (termasuk `open-folder.test.ts`, `ShareFolderCard.test.tsx`) |
+| `pnpm -C app run typecheck:node`, `typecheck:web`; `oxlint` file yang diubah | bersih |
+| App dev (HOME terisolasi, belum terhubung) → Settings | kartu **Join a workspace** lalu **Share a folder** (nama, peran, **Choose folder and share…**) |
+| Pemilih folder native + unggah ke server nyata | **Not verified** lewat UI (dialog native tidak bisa dikendalikan lewat CDP); alurnya diuji di `open-folder.test.ts` dan test route server |
+| Tampilan pemilik (folder tersinkron, **Share a different folder…**, konfirmasi) | Not verified secara visual; diuji di `ShareFolderCard.test.tsx` |
+
+UI gate (better-interface), scope: `ShareFolderCard.tsx`, `RadarPanel.tsx` slot kartu. Layar 1512 px, tema terang.
+
+| Severity | Domain | Location | Before | After | Why |
+|---|---|---|---|---|---|
+| MEDIUM | Writing | `routes.ts` pesan 409 | "Only its owner can open a different folder." | "Ask its owner for a join code, or use your own server to share a folder." | pesan error harus memberi jalan keluar |
+
+Tidak ada temuan HIGH. Aksi destruktif (ganti folder) memakai konfirmasi di halaman, teks peringatan merah, dan tombol varian `destructive`.

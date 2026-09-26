@@ -1,7 +1,7 @@
 # Deploy dan cara pakai IBM Bob Live Collab
 
 Panduan singkat: cara menjalankan server dan app, lalu cara tim memakainya.
-Bagian 1–3 untuk pemilik workspace (yang men-deploy). Bagian 4–5 untuk semua anggota.
+Bagian 1–3 untuk yang men-deploy server. Bagian 4 untuk pemilik workspace, bagian 5 untuk anggota tim.
 
 Komponen:
 
@@ -131,14 +131,35 @@ pnpm -C radar deploy:web
 
 ## 4. Cara pakai: pemilik (Mission Control)
 
-1. Buka app → **Live Collab** → **Settings**.
-2. Klik **Workspace owner? Use your owner code**, masukkan kode owner, lalu klik **Connect**. App sekarang tersambung sebagai Mission Control.
-   Cara lama masih ada: **Workspace owner? Connect Mission Control with a token**, lalu tempel token `mc`.
-3. Di kartu **Invite teammates**, klik **Make code**. Kode langsung tersalin ke clipboard. Bagikan ke satu orang. Satu kode = satu anggota.
-4. Anggota yang sudah bergabung muncul di daftar **Joined** dan di tab Team.
-5. Dari Mission Control: lihat siapa memegang file apa, setujui atau tolak proposal dan permintaan, cabut kunci, dan batalkan task.
+### 4.1 Cara utama: bagikan folder project dari app
+
+1. Buka app → **Live Collab** → **Settings** → kartu **Share a folder**.
+2. Isi nama dan peran (**Coder** atau **PM**), lalu klik **Choose folder and share…** dan pilih folder project di Mac.
+3. App mengunggah file teks folder itu ke server (mengikuti `.gitignore`; file biner dan file di atas 1 MB tetap lokal; maksimal 3000 file). Folder **tetap di tempatnya** dan tersinkron live. Anda menjadi member A sekaligus Mission Control.
+4. Kode gabung pertama otomatis tersalin. Kirim ke satu teman. Kode ini juga muncul di kartu **Invite teammates**.
+5. Klik **Open in IBM Bob** untuk mulai kerja di folder itu.
+6. Saat app dibuka lagi, folder pemilik tersinkron lagi otomatis.
+
+Aturan server:
+
+- Satu server hanya punya satu workspace aktif.
+- Server kosong boleh diklaim siapa pun yang membagikan folder pertama kali.
+- Kalau server sudah punya workspace, hanya pemiliknya (app yang terhubung sebagai Mission Control) yang boleh membagikan folder lain lewat **Share a different folder…**. **Ini menghapus semua task, kunci, file, dan anggota di server.** File di Mac tidak disentuh. Teman perlu kode baru.
+- Proposal di workspace dari folder hanya menjadi commit lokal di server. Tidak ada push ke GitHub.
+
+### 4.2 Cara lain: workspace dari admin CLI (repo demo)
+
+1. Setelah `admin init` (bagian 3.2), buka **Live Collab** → **Settings**.
+2. Klik **Workspace owner? Use your owner code**, masukkan kode owner, lalu klik **Connect**. App sekarang tersambung sebagai Mission Control, tanpa folder tersinkron.
+   Cara lama masih ada: bagian lipat **Have a Mission Control token instead? Connect manually**, lalu tempel token `mc`.
 
 Setiap pemakaian kode owner mengganti token `mc`. Perangkat Mission Control sebelumnya ikut terputus.
+
+### 4.3 Mengundang dan mengelola tim
+
+1. Di kartu **Invite teammates**, klik **Make code**. Kode langsung tersalin ke clipboard. Bagikan ke satu orang. Satu kode = satu anggota.
+2. Anggota yang sudah bergabung muncul di daftar **Joined** dan di tab Team.
+3. Dari Mission Control: lihat siapa memegang file apa, setujui atau tolak proposal dan permintaan, cabut kunci, dan batalkan task.
 
 ## 5. Cara pakai: anggota tim (Coder / PM)
 
@@ -170,5 +191,7 @@ Perintah ini memasang Node dan CLI di `~/.radar`, menukar kode, menyinkronkan fo
 | 409 "already has 8 members" | Workspace penuh (A–H). |
 | Token lama tidak berlaku | Kode dipakai lagi di perangkat lain. Perangkat terbaru yang menang. |
 | Mission Control terputus | Kode owner atau `admin token --member mc` dipakai lagi. Sambung ulang dengan kode owner. |
+| "This server already has the workspace …" saat Share a folder | Server sudah dipakai orang lain. Minta kode gabung ke pemiliknya, atau deploy server sendiri (bagian 3.1). |
+| "more than 3000 files to share" | Tambahkan folder build atau data ke `.gitignore`, atau pilih folder yang lebih kecil. |
 | `ADMIN_SECRET is not set` | Set env di shell yang sama. Jangan kirim secret sebagai argumen. |
 | App tidak bisa menyimpan koneksi | Keychain macOS terkunci. Buka kunci, lalu coba lagi. |
