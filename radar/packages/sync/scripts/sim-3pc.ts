@@ -1,4 +1,5 @@
 // Fase 10 (lane Core): `pnpm -C radar sim [-- --server <url|local>] [--until plan|live|block|decision|review] [--runs N] [--writes N]`
+// Fase 12: `--load [--members 5] [--duration 120] [--rate 2]` runs the load test instead (sim-load.ts, local only).
 // End-to-end demo story (PRD §15) without Bob: three real SyncAgents (A, B, C) against a real Worker,
 // the real bundled `lock_guard` hook for the block step, and a raw WebSocket for the layer-2 rejection.
 // Local mode boots the Worker with wrangler's createTestHarness and GITHUB_COMMIT=false (the commit is
@@ -14,6 +15,7 @@ import { parseArgs } from 'node:util';
 import { WebSocket } from 'ws';
 import { createTestHarness } from 'wrangler';
 import { SyncAgent } from '../src/agent.js';
+import { LOAD_MAX_MEMBERS, runLoad } from './sim-load.js';
 import { bundleHooks, makeWorkspace, prePayload, runHook, type HookName } from '../../hooks/test/helpers.js';
 import {
   CHECKOUT,
@@ -395,8 +397,26 @@ export async function main(argv = process.argv.slice(2)): Promise<number> {
       runs: { type: 'string', default: '1' },
       writes: { type: 'string', default: '5' },
       'allow-remote-wipe': { type: 'boolean', default: false },
+      load: { type: 'boolean', default: false },
+      members: { type: 'string', default: String(LOAD_MAX_MEMBERS) },
+      duration: { type: 'string', default: '120' },
+      rate: { type: 'string', default: '2' },
     },
   });
+  if (values.load) {
+    const members = Number(values.members);
+    const durationS = Number(values.duration);
+    const rate = Number(values.rate);
+    if (values.server !== 'local') {
+      console.error('--load runs against the local Worker only (it wipes the workspace).');
+      return 2;
+    }
+    if (!Number.isInteger(members) || members < 2 || members > LOAD_MAX_MEMBERS || !(durationS > 0) || !(rate > 0 && rate <= 10)) {
+      console.error(`--load needs --members 2..${LOAD_MAX_MEMBERS}, --duration > 0 and --rate 0..10 (got ${values.members}, ${values.duration}, ${values.rate})`);
+      return 2;
+    }
+    return runLoad({ members, durationS, rate });
+  }
   if (!STAGES.includes(values.until as Stage)) {
     console.error(`--until must be one of ${STAGES.join('|')}`);
     return 2;
