@@ -8,11 +8,13 @@ import {
   type LockHolder,
   type TaskStatus,
 } from '@radar/common';
-import { queueOf } from '../db/repo/allocation';
+import { headOf, insertAllocation, queueOf } from '../db/repo/allocation';
+import { insertBlock } from '../db/repo/block';
 import { getFile } from '../db/repo/file';
-import { getLock, setTaskLocksState, type LockRow } from '../db/repo/lock';
+import { getLock, insertLock, setLockState, setTaskLocksState, type LockRow } from '../db/repo/lock';
 import { getMember, setActiveTask, type MemberRow } from '../db/repo/member';
 import { expirePendingReviews } from '../db/repo/proposal';
+import { createRequest } from '../db/repo/request';
 import { firstOpenTask, getTask, insertTask, latestWorkingTask, setTaskStatus, type TaskRow } from '../db/repo/task';
 import type { Db } from '../db/sql';
 import { appendEvent } from './events';
@@ -139,12 +141,171 @@ export function lockChanged(ctx: LockCtx, path: string): void {
 /**
  * R4 §3 `checkWrite(member, path, via)`: the decision table behind `POST /v1/locks/check` (via `hook`) and
  * every WebSocket `file.update` (via `sync`).
+ *
+ * Decision table (rows 1–12 from R4 §3):
+ *  1. ignored path          → allow  'ignored_path'       (no side-effects)
+ *  2. member is PM          → block  'pm_readonly'         (no request)
+ *  3. file free, no queue   → allow  'grabbed'             (lock dipegang, task → dikerjakan)
+ *  4. dipesan by own task   → allow  'own'                 (→ dipegang, task → dikerjakan)
+ *  5. dipegang by own task  → allow  'own'                 (no state change)
+ *  6. dipegang by own other → allow  'own'                 (active_task switches)
+ *  7. review by own task    → allow  'own'                 (task back to dikerjakan, reviews expire)
+ *  8. dipesan by other      → block  'reserved_by_other'   (request dedup + block row)
+ *  9. dipegang by other     → block  'held_by_other'       (request dedup + block row)
+ * 10. review by other       → block  'in_review_by_other'  (request dedup + block row)
+ * 11. #9 repeated           → block  'held_by_other'       (1 request, N block rows)
+ * 12. commit claim active   → block  'committing'          (no request, applies to owner too)
  */
 export function checkWrite(ctx: LockCtx, memberId: string, path: string, via: BlockVia): CheckWriteResult {
-  // BOB SLICE A2 (fase 05): implemented in IBM Bob IDE from plan/ref/R4-mesin-kunci.md §3.
-  void ctx;
-  void memberId;
-  void path;
-  void via;
-  throw new Error('checkWrite is not implemented yet (BOB SLICE A2)');
+  // Row 1: ignored paths are always allowed, no DB work needed.
+  if (isIgnoredPath(ctx.db, path)) return { decision: 'allow', reason: 'ignored_path', taskId: null };
+
+  // Row 2: PMs are read-only — block without creating a request.
+  const member = requireMember(ctx.db, memberId);
+  if (member.role === 'pm') return { decision: 'block', reason: 'pm_readonly', holder: null, taskId: null };
+
+  const lock = getLock(ctx.db, path);
+
+  // Row 12: commit claim active — blocks every member, including the lock owner.
+  if (lock !== null) {
+    const lockTask = getTask(ctx.db, lock.task_id);
+    if (commitClaimActive(lockTask, ctx.now)) {
+      return { decision: 'block', reason: 'committing', holder: holderOf(ctx, lock), taskId: null };
+    }
+  }
+
+  if (lock === null) {
+    // Row 3: file is free — but defensively promote a stale queue head if one exists (R4 §3, I4).
+    const head = headOf(ctx.db, path);
+    if (head !== null && head.owner_id !== memberId) {
+      // Promote queue head to dipesan and then block the requesting member.
+      insertLock(ctx.db, { path, taskId: head.task_id, memberId: head.owner_id, state: 'dipesan', now: ctx.now });
+      lockChanged(ctx, path);
+      return blockFor(ctx, memberId, path, via);
+    }
+
+    // No queue: auto-grab for the member's active (or new ad-hoc) task.
+    const task = resolveActiveTask(ctx, memberId);
+    insertAllocation(ctx.db, { taskId: task.id, path, pos: 0, source: 'auto', now: ctx.now });
+    insertLock(ctx.db, { path, taskId: task.id, memberId, state: 'dipegang', now: ctx.now });
+    markTaskWorking(ctx, task.id);
+    appendEvent(ctx.db, ctx.uow, {
+      ts: ctx.now,
+      actor: memberId,
+      type: 'lock.acquired',
+      payload: { path, taskId: task.id, memberId, auto: true },
+    });
+    lockChanged(ctx, path);
+    return { decision: 'allow', reason: 'grabbed', taskId: task.id };
+  }
+
+  // Lock exists and the member is the lock's owner (same member, any task of theirs).
+  if (lock.member_id === memberId) {
+    if (lock.state === 'dipesan') {
+      // Row 4: reserved by own task — promote to dipegang.
+      setLockState(ctx.db, path, 'dipegang', ctx.now);
+      appendEvent(ctx.db, ctx.uow, {
+        ts: ctx.now,
+        actor: memberId,
+        type: 'lock.acquired',
+        payload: { path, taskId: lock.task_id, memberId, auto: false },
+      });
+      lockChanged(ctx, path);
+    } else if (lock.state === 'review') {
+      // Row 7: in review by own task — revert task and all its locks back to dikerjakan/dipegang.
+      returnTaskToWorking(ctx, lock.task_id, memberId);
+      // returnTaskToWorking calls lockChanged for all paths of the task, including this one.
+    }
+    // Rows 5–7: mark task working and point active_task at it.
+    markTaskWorking(ctx, lock.task_id);
+    setActiveTask(ctx.db, memberId, lock.task_id);
+    return { decision: 'allow', reason: 'own', taskId: lock.task_id };
+  }
+
+  // Rows 8–11: lock is held by someone else.
+  return blockFor(ctx, memberId, path, via);
+}
+
+/**
+ * Records a block row (always) and a request (dedup: one open request per task+path), then returns the
+ * BLOCK result. Corresponds to `blockFor(member, path, via)` in R4 §3 pseudocode.
+ */
+function blockFor(ctx: LockCtx, memberId: string, path: string, via: BlockVia): CheckWriteResult {
+  const lock = getLock(ctx.db, path);
+  // lock is guaranteed to exist here: either it was just inserted (promote case) or it existed already.
+  if (!lock) throw new Error(`blockFor: no lock found for path ${path}`);
+
+  const reqTask = resolveActiveTask(ctx, memberId);
+
+  // One open request per task+path (SV-05 / I10); emit request.created only on first creation.
+  const { request, created } = createRequest(ctx.db, {
+    requesterMember: memberId,
+    requesterTask: reqTask.id,
+    path,
+    holderMember: lock.member_id,
+    holderTask: lock.task_id,
+    source: via,
+    now: ctx.now,
+  });
+
+  if (created) {
+    appendEvent(ctx.db, ctx.uow, {
+      ts: ctx.now,
+      actor: memberId,
+      type: 'request.created',
+      payload: {
+        requestId: request.id,
+        path,
+        requesterMemberId: memberId,
+        requesterTaskId: reqTask.id,
+        holderMemberId: lock.member_id,
+        holderTaskId: lock.task_id,
+        source: via,
+      },
+    });
+  }
+
+  // Always insert a block row (row 11: same request, N block rows).
+  insertBlock(ctx.db, {
+    memberId,
+    taskId: reqTask.id,
+    path,
+    holderMember: lock.member_id,
+    holderTask: lock.task_id,
+    via,
+    requestId: request.id,
+    now: ctx.now,
+  });
+
+  appendEvent(ctx.db, ctx.uow, {
+    ts: ctx.now,
+    actor: memberId,
+    type: 'lock.blocked',
+    payload: {
+      path,
+      memberId,
+      taskId: reqTask.id,
+      holderMemberId: lock.member_id,
+      holderTaskId: lock.task_id,
+      via,
+      requestId: request.id,
+    },
+  });
+
+  const reason =
+    lock.state === 'dipesan' ? 'reserved_by_other' : lock.state === 'review' ? 'in_review_by_other' : 'held_by_other';
+
+  // Compute queue position of the requester's task (null when not yet in the queue).
+  const queue = queueOf(ctx.db, path);
+  const queueEntry = queue.find((e) => e.task_id === reqTask.id);
+  const queuePos = queueEntry?.queue_pos ?? null;
+
+  return {
+    decision: 'block',
+    reason,
+    holder: holderOf(ctx, lock),
+    requestId: request.id,
+    queuePos,
+    taskId: reqTask.id,
+  };
 }
