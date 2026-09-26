@@ -13,6 +13,7 @@ import { ActivityLimiter } from './services/activity';
 import { authorizeWriteLocks, type AuthorizeWrite } from './services/files';
 import { createCommitter } from './services/github';
 import { expireCommitClaims } from './services/proposals';
+import { expireHeartbeats, staleDeadline } from './services/stale';
 import { UnitOfWork } from './services/uow';
 import { Hub } from './ws/hub';
 import { expireHellos, handleClose, handleMessage, helloDeadline, WS_CLOSE_RESET } from './ws/protocol';
@@ -36,7 +37,7 @@ export class WorkspaceDO extends DurableObject<Env> implements WorkspaceDeps {
     this.committer = createCommitter(env);
     this.db = createDb(ctx.storage);
     this.hub = new Hub(ctx);
-    this.scheduler = new AlarmScheduler(ctx.storage, [() => helloDeadline(this)]);
+    this.scheduler = new AlarmScheduler(ctx.storage, [() => helloDeadline(this), () => staleDeadline(this)]);
     // Keepalive answered by the runtime without waking the DO (R3 §3).
     ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair(WS_PING_FRAME, WS_PONG_FRAME));
     // A throw here makes the runtime reset the object and fail the waiting requests; log it so it is visible.
@@ -76,8 +77,11 @@ export class WorkspaceDO extends DurableObject<Env> implements WorkspaceDeps {
     this.limiter.clear();
   }
 
-  override fetch(request: Request): Response | Promise<Response> {
-    return this.app.fetch(request);
+  override async fetch(request: Request): Promise<Response> {
+    const res = await this.app.fetch(request);
+    // A request may create the first lock (plan decision) or a stale episode may end: keep the alarm in step.
+    await this.scheduler.reschedule();
+    return res;
   }
 
   override webSocketMessage(ws: WebSocket, message: string | ArrayBuffer): void {
@@ -94,6 +98,7 @@ export class WorkspaceDO extends DurableObject<Env> implements WorkspaceDeps {
 
   override async alarm(): Promise<void> {
     expireHellos(this);
+    expireHeartbeats(this);
     await this.scheduler.reschedule();
   }
 }

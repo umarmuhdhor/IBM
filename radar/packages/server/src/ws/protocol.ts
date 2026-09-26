@@ -7,6 +7,7 @@ import { principalForToken } from '../http/auth';
 import { appendEvent } from '../services/events';
 import { applyUpdate } from '../services/files';
 import { buildSnapshot, buildState } from '../services/state';
+import { endStaleEpisode } from '../services/stale';
 import type { ReadyAttachment } from './hub';
 
 /** Close code for a sync socket replaced by a newer one of the same member (R3 §3). */
@@ -60,6 +61,7 @@ export function handleMessage(deps: WorkspaceDeps, ws: WebSocket, raw: string | 
       return;
     case 'heartbeat':
       hub.setAttachment(ws, { ...att, lastHeartbeat: deps.now() });
+      if (att.client === 'sync' && att.principal.kind === 'member') endStaleEpisode(deps, att.principal.memberId);
       return;
     case 'hello':
       hub.send(ws, { t: 'error', d: { code: 'BAD_REQUEST', message: 'hello sudah diterima.' } });
