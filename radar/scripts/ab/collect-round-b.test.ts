@@ -16,14 +16,36 @@ async function mock(): Promise<string> {
 describe('fetchAllEvents', () => {
   it('pages through /v1/events/export until a short page', async () => {
     const calls: string[] = [];
-    const pages = [Array.from({ length: 3 }, (_, i) => ({ id: i + 1 })), [{ id: 4 }]];
+    const online = (id: number) => ({
+      id,
+      ts: id,
+      actor: 'A',
+      type: 'member.online',
+      payload: { memberId: 'A' },
+    });
+    const pages = [[online(1), online(2), online(3)], [online(4)]];
     const fakeFetch = (async (url: string) => {
       calls.push(url);
-      return new Response(JSON.stringify({ workspace: 'w', exportedAt: 0, events: pages.shift() ?? [] }));
+      return new Response(
+        JSON.stringify({ workspace: 'w', exportedAt: 0, events: pages.shift() ?? [] }),
+      );
     }) as unknown as typeof fetch;
     const events = await fetchAllEvents('http://x', 'tok', { pageSize: 3, fetchImpl: fakeFetch });
     expect(events.map((e) => e.id)).toEqual([1, 2, 3, 4]);
-    expect(calls).toEqual(['http://x/v1/events/export?from=0&limit=3', 'http://x/v1/events/export?from=4&limit=3']);
+    expect(calls).toEqual([
+      'http://x/v1/events/export?from=0&limit=3',
+      'http://x/v1/events/export?from=4&limit=3',
+    ]);
+  });
+
+  it('rejects an answer that does not match the export contract', async () => {
+    const fakeFetch = (async () =>
+      new Response(
+        JSON.stringify({ workspace: 'w', exportedAt: 0, events: [{ id: 1 }] }),
+      )) as unknown as typeof fetch;
+    await expect(fetchAllEvents('http://x', 'tok', { fetchImpl: fakeFetch })).rejects.toThrow(
+      /ExportRes/,
+    );
   });
 
   it('turns a non-2xx answer into an error naming the status', async () => {

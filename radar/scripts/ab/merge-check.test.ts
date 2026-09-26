@@ -11,7 +11,21 @@ afterEach(() => {
 });
 
 const git = (dir: string, ...args: string[]) =>
-  execFileSync('git', ['-C', dir, '-c', 'user.name=t', '-c', 'user.email=t@example.com', '-c', 'commit.gpgsign=false', ...args], { encoding: 'utf8' }).trim();
+  execFileSync(
+    'git',
+    [
+      '-C',
+      dir,
+      '-c',
+      'user.name=t',
+      '-c',
+      'user.email=t@example.com',
+      '-c',
+      'commit.gpgsign=false',
+      ...args,
+    ],
+    { encoding: 'utf8' },
+  ).trim();
 
 function conflictingRepo(): { dir: string; base: string; out: string } {
   const dir = mkdtempSync(join(tmpdir(), 'ab-cli-'));
@@ -21,7 +35,10 @@ function conflictingRepo(): { dir: string; base: string; out: string } {
   git(dir, 'add', '.');
   git(dir, 'commit', '-q', '-m', 'base');
   const base = git(dir, 'rev-parse', 'HEAD');
-  for (const [branch, line] of [['ab/a-coderA', 'A'], ['ab/a-coderB', 'B']] as const) {
+  for (const [branch, line] of [
+    ['ab/a-coderA', 'A'],
+    ['ab/a-coderB', 'B'],
+  ] as const) {
     git(dir, 'checkout', '-q', '-B', branch, base);
     writeFileSync(join(dir, 'checkout.ts'), `a\n${line}\nc\n`);
     git(dir, 'commit', '-q', '-am', branch);
@@ -39,16 +56,30 @@ describe('merge-check CLI', () => {
     const { dir, base, out } = conflictingRepo();
     expect(main(['check', '--repo', dir, '--base', base, '--out', out], log)).toBe(0);
     const checked = JSON.parse(readFileSync(out, 'utf8'));
-    expect(checked).toMatchObject({ base, branches: ['ab/a-coderA', 'ab/a-coderB'], conflictFiles: ['checkout.ts'], hunks: 1 });
+    expect(checked).toMatchObject({
+      base,
+      branches: ['ab/a-coderA', 'ab/a-coderB'],
+      conflictFiles: ['checkout.ts'],
+      hunks: 1,
+    });
     expect(typeof checked.checkedAt).toBe('string');
 
     // still conflicted: finish refuses
-    expect(main(['finish', '--repo', dir, '--minutes', '4', '--build', 'true', '--out', out], log)).toBe(1);
+    expect(
+      main(['finish', '--repo', dir, '--minutes', '4', '--build', 'true', '--out', out], log),
+    ).toBe(1);
 
     writeFileSync(join(dir, 'checkout.ts'), 'a\nAB\nc\n');
-    expect(main(['finish', '--repo', dir, '--minutes', '4', '--build', 'true', '--out', out], log)).toBe(0);
+    expect(
+      main(['finish', '--repo', dir, '--minutes', '4', '--build', 'true', '--out', out], log),
+    ).toBe(0);
     const done = JSON.parse(readFileSync(out, 'utf8'));
-    expect(done).toMatchObject({ conflictFiles: ['checkout.ts'], hunks: 1, resolutionMinutes: 4, build: { command: 'true', ok: true } });
+    expect(done).toMatchObject({
+      conflictFiles: ['checkout.ts'],
+      hunks: 1,
+      resolutionMinutes: 4,
+      build: { command: 'true', ok: true },
+    });
     expect(done.mergeSha).toMatch(/^[0-9a-f]{40}$/);
   });
 
@@ -56,8 +87,13 @@ describe('merge-check CLI', () => {
     const { dir, base, out } = conflictingRepo();
     main(['check', '--repo', dir, '--base', base, '--out', out], log);
     writeFileSync(join(dir, 'checkout.ts'), 'a\nAB\nc\n');
-    expect(main(['finish', '--repo', dir, '--minutes', '2', '--build', 'false', '--out', out], log)).toBe(0);
-    expect(JSON.parse(readFileSync(out, 'utf8')).build).toMatchObject({ command: 'false', ok: false });
+    expect(
+      main(['finish', '--repo', dir, '--minutes', '2', '--build', 'false', '--out', out], log),
+    ).toBe(0);
+    expect(JSON.parse(readFileSync(out, 'utf8')).build).toMatchObject({
+      command: 'false',
+      ok: false,
+    });
   });
 
   it('prints usage for missing arguments', () => {

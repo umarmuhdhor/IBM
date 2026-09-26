@@ -11,7 +11,21 @@ afterEach(() => {
 });
 
 const git = (dir: string, ...args: string[]) =>
-  execFileSync('git', ['-C', dir, '-c', 'user.name=t', '-c', 'user.email=t@example.com', '-c', 'commit.gpgsign=false', ...args], { encoding: 'utf8' }).trim();
+  execFileSync(
+    'git',
+    [
+      '-C',
+      dir,
+      '-c',
+      'user.name=t',
+      '-c',
+      'user.email=t@example.com',
+      '-c',
+      'commit.gpgsign=false',
+      ...args,
+    ],
+    { encoding: 'utf8' },
+  ).trim();
 
 /** A repo with checkout.ts (3 lines) and utils.ts on main; returns the base sha. */
 function repo(): { dir: string; base: string } {
@@ -25,7 +39,13 @@ function repo(): { dir: string; base: string } {
   return { dir, base: git(dir, 'rev-parse', 'HEAD') };
 }
 
-function branchWith(dir: string, base: string, name: string, file: string, content: string): string {
+function branchWith(
+  dir: string,
+  base: string,
+  name: string,
+  file: string,
+  content: string,
+): string {
   git(dir, 'checkout', '-q', '-B', name, base);
   writeFileSync(join(dir, file), content);
   git(dir, 'commit', '-q', '-am', name);
@@ -49,7 +69,10 @@ describe('mergeBranches (round A)', () => {
     const { dir, base } = repo();
     branchWith(dir, base, 'ab/a-coderA', 'checkout.ts', 'line1\nA\nline3\n');
     branchWith(dir, base, 'ab/a-coderB', 'utils.ts', 'u2\n');
-    expect(mergeBranches(dir, base, ['ab/a-coderA', 'ab/a-coderB'])).toMatchObject({ conflictFiles: [], hunks: 0 });
+    expect(mergeBranches(dir, base, ['ab/a-coderA', 'ab/a-coderB'])).toMatchObject({
+      conflictFiles: [],
+      hunks: 0,
+    });
   });
 
   it('refuses to run on a dirty tree', () => {

@@ -3,13 +3,22 @@ import { describe, expect, it } from 'vitest';
 import type { RadarEvent } from '../packages/common/src/index.js';
 import { computeMetrics, hookLockCheckMs, percentile, renderMarkdown } from './metrics.js';
 
-const flow = JSON.parse(readFileSync(new URL('../packages/server/test/fixtures/flow-export.json', import.meta.url), 'utf8')) as {
+const flow = JSON.parse(
+  readFileSync(
+    new URL('../packages/server/test/fixtures/flow-export.json', import.meta.url),
+    'utf8',
+  ),
+) as {
   events: RadarEvent[];
 };
 
 let nextId = 1;
-const ev = (type: string, actor: string, payload: Record<string, unknown>, ts = nextId * 1000): RadarEvent =>
-  ({ id: nextId++, ts, actor, type, payload }) as unknown as RadarEvent;
+const ev = (
+  type: string,
+  actor: string,
+  payload: Record<string, unknown>,
+  ts = nextId * 1000,
+): RadarEvent => ({ id: nextId++, ts, actor, type, payload }) as unknown as RadarEvent;
 
 describe('percentile', () => {
   it('uses the nearest-rank method and NaN for no data', () => {
@@ -45,7 +54,14 @@ describe('two-writer audit', () => {
   it('flags a file.changed by someone who does not hold the lock', () => {
     const events = [
       ev('lock.acquired', 'A', { path: 'a.ts', taskId: 'T-1', memberId: 'A', auto: false }),
-      ev('file.changed', 'B', { path: 'a.ts', version: 2, hash: 'x', by: 'B', taskId: 'T-2', size: 1 }),
+      ev('file.changed', 'B', {
+        path: 'a.ts',
+        version: 2,
+        hash: 'x',
+        by: 'B',
+        taskId: 'T-2',
+        size: 1,
+      }),
     ];
     const m = computeMetrics(events);
     expect(m.writers.violations).toHaveLength(1);
@@ -55,11 +71,38 @@ describe('two-writer audit', () => {
   it('follows reserve, transfer, release and revoke', () => {
     const events = [
       ev('lock.reserved', 'server', { path: 'a.ts', taskId: 'T-1', memberId: 'A', source: 'plan' }),
-      ev('file.changed', 'A', { path: 'a.ts', version: 2, hash: 'x', by: 'A', taskId: 'T-1', size: 1 }),
-      ev('lock.transferred', 'server', { path: 'a.ts', fromTaskId: 'T-1', toTaskId: 'T-2', toMemberId: 'B', cause: 'queue' }),
-      ev('file.changed', 'B', { path: 'a.ts', version: 3, hash: 'y', by: 'B', taskId: 'T-2', size: 1 }),
+      ev('file.changed', 'A', {
+        path: 'a.ts',
+        version: 2,
+        hash: 'x',
+        by: 'A',
+        taskId: 'T-1',
+        size: 1,
+      }),
+      ev('lock.transferred', 'server', {
+        path: 'a.ts',
+        fromTaskId: 'T-1',
+        toTaskId: 'T-2',
+        toMemberId: 'B',
+        cause: 'queue',
+      }),
+      ev('file.changed', 'B', {
+        path: 'a.ts',
+        version: 3,
+        hash: 'y',
+        by: 'B',
+        taskId: 'T-2',
+        size: 1,
+      }),
       ev('lock.revoked', 'mc', { path: 'a.ts', taskId: 'T-2', memberId: 'B', reason: 'x' }),
-      ev('file.changed', 'A', { path: 'a.ts', version: 4, hash: 'z', by: 'A', taskId: null, size: 1 }),
+      ev('file.changed', 'A', {
+        path: 'a.ts',
+        version: 4,
+        hash: 'z',
+        by: 'A',
+        taskId: null,
+        size: 1,
+      }),
     ];
     const m = computeMetrics(events);
     expect(m.writers.changes).toBe(3);
@@ -71,18 +114,32 @@ describe('two-writer audit', () => {
 
 describe('latency series', () => {
   it('summarises sync.applied latency', () => {
-    const events = [10, 20, 30, 400].map((latencyMs, i) => ev('sync.applied', 'B', { path: 'a.ts', version: i + 2, memberId: 'B', latencyMs }));
+    const events = [10, 20, 30, 400].map((latencyMs, i) =>
+      ev('sync.applied', 'B', { path: 'a.ts', version: i + 2, memberId: 'B', latencyMs }),
+    );
     const m = computeMetrics(events);
     expect(m.sync).toMatchObject({ n: 4, p50: 20, p95: 400, max: 400 });
   });
 
   it('takes lock-check latency from optional metric rows', () => {
-    const m = computeMetrics([], { metricRows: [{ name: 'lock_check_ms', value: 3 }, { name: 'lock_check_ms', value: 9 }, { name: 'other', value: 99 }] });
+    const m = computeMetrics([], {
+      metricRows: [
+        { name: 'lock_check_ms', value: 3 },
+        { name: 'lock_check_ms', value: 9 },
+        { name: 'other', value: 99 },
+      ],
+    });
     expect(m.lockCheck).toMatchObject({ n: 2, p95: 9 });
   });
 
   it('reports review.flagged', () => {
-    const m = computeMetrics([ev('review.flagged', 'C', { reviewId: 'P-3', taskId: 'T-1', flags: [{ path: 'b.ts', issue: 'x' }] })]);
+    const m = computeMetrics([
+      ev('review.flagged', 'C', {
+        reviewId: 'P-3',
+        taskId: 'T-1',
+        flags: [{ path: 'b.ts', issue: 'x' }],
+      }),
+    ]);
     expect(m.reviews.flagged).toBe(1);
   });
 });

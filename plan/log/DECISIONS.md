@@ -384,3 +384,14 @@ Format:
 - Dampak: fase 11D2 (replay cadangan), fase 12 (MEDIUM tercatat di log fase-10), milestone 21:00 (LANGKAH MANUAL di log).
 - File ref/ yang diperbarui: – (tidak ada perubahan kontrak).
 - Selisih vs `origin/main`: D-alief-06 (authorship) ada di worktree `lane/core` lain dan belum di-`main` saat entri ini ditulis; commit fase ini mengikutinya tanpa memodifikasi file itu.
+
+## D-umar-05 · 26 Sep 2026 19:45 · fase 13 (persiapan) · Script eksperimen A/B di `radar/scripts`
+
+- Keputusan:
+  1. Script fase 13 ditaruh sesuai file fase: `radar/scripts/metrics.ts` dan `radar/scripts/ab/*` (bukan paket baru). CLAUDE.md mencatat `radar/scripts/*` sebagai folder server Alief; lane Bob hanya menambah file baru ini dan tidak menyentuh `admin.ts`, `mock-server.ts`, atau `mock/`.
+  2. Persiapan (protokol, prompt, script + test) dikerjakan Sab 19:00–21:00 sebelum fase 10 `[x]`, atas permintaan Umar. Baris 13 di PROGRESS tetap `[ ]`; putaran eksperimen tetap di slot Min 04:30–10:30 setelah fase 10.
+  3. Latensi cek kunci diambil dari `.radar/hook.log` (`lock_guard … ms=<n>`, end-to-end, sesuai PRD §04 "log waktu di hook"). Metric server `lock_check_ms` tidak ikut di export; dipakai hanya bila ada salinan baris metric.
+  4. Konflik putaran B diukur dengan memutar ulang commit task yang ter-push di atas commit awal (worktree sementara), bukan diasumsikan 0. Coder putaran A tidak push: branch dikirim sebagai `git bundle`.
+- Alasan: plan fase 13 (output di `scripts/`), PRD §04/§17, protokol ditulis sebelum eksperimen.
+- Dampak: Alief (folder `radar/scripts`, usulan opsional: `metric` di `/admin/export`), fase 14 (tabel metrik).
+- File ref/ yang diperbarui: –.

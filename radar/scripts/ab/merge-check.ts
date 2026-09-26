@@ -27,9 +27,17 @@ export function main(argv: string[], log: (s: string) => void = console.log): nu
       if (!repo || !base || !out) return usage(log);
       const branches = [arg('--a') ?? 'ab/a-coderA', arg('--b') ?? 'ab/a-coderB'];
       const r = mergeBranches(repo, base, branches);
-      writeFileSync(out, `${JSON.stringify({ checkedAt: new Date().toISOString(), base, branches, ...r }, null, 2)}\n`);
-      log(`${r.conflictFiles.length} file konflik, ${r.hunks} hunk: ${r.conflictFiles.join(', ') || '–'}`);
-      if (r.conflictFiles.length > 0) log('Mulai stopwatch sekarang. Selesaikan konflik di editor, lalu jalankan "finish --minutes <n>".');
+      writeFileSync(
+        out,
+        `${JSON.stringify({ checkedAt: new Date().toISOString(), base, branches, ...r }, null, 2)}\n`,
+      );
+      log(
+        `${r.conflictFiles.length} file konflik, ${r.hunks} hunk: ${r.conflictFiles.join(', ') || '–'}`,
+      );
+      if (r.conflictFiles.length > 0)
+        log(
+          'Mulai stopwatch sekarang. Selesaikan konflik di editor, lalu jalankan "finish --minutes <n>".',
+        );
       return 0;
     }
     if (cmd === 'finish') {
@@ -44,7 +52,10 @@ export function main(argv: string[], log: (s: string) => void = console.log): nu
         ok = false; // recorded, not hidden: a red build at the end is a result of the round
       }
       const prev = JSON.parse(readFileSync(out, 'utf8')) as Record<string, unknown>;
-      writeFileSync(out, `${JSON.stringify({ ...prev, resolutionMinutes: minutes, mergeSha: sha, build: { command, ok } }, null, 2)}\n`);
+      writeFileSync(
+        out,
+        `${JSON.stringify({ ...prev, resolutionMinutes: minutes, mergeSha: sha, build: { command, ok } }, null, 2)}\n`,
+      );
       log(`merge ${sha.slice(0, 7)} · ${minutes} menit · build ${ok ? 'hijau' : 'MERAH'}`);
       return 0;
     }
@@ -60,4 +71,5 @@ function usage(log: (s: string) => void): number {
   return 2;
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) process.exit(main(process.argv.slice(2)));
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href)
+  process.exit(main(process.argv.slice(2)));

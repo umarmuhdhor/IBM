@@ -27,7 +27,12 @@ export interface Metrics {
   lockCheck: Series & { source: 'hook' | 'server' | 'none' };
   writers: { changes: number; violations: WriterViolation[]; unlocked: number };
   blocks: { total: number; viaHook: number; rejectedWrites: number };
-  requests: { created: number; decided: number; auto: number; decisionMs: Series & { median: number } };
+  requests: {
+    created: number;
+    decided: number;
+    auto: number;
+    decisionMs: Series & { median: number };
+  };
   reviews: { created: number; flagged: number };
   proposals: { created: number; decided: number };
   commits: { total: number; pushed: number; pushFailed: number };
@@ -47,21 +52,34 @@ export function percentile(sorted: readonly number[], p: number): number {
 
 function series(values: number[]): Series {
   const s = [...values].sort((a, b) => a - b);
-  return { n: s.length, p50: percentile(s, 50), p95: percentile(s, 95), max: s.length ? (s[s.length - 1] as number) : Number.NaN };
+  return {
+    n: s.length,
+    p50: percentile(s, 50),
+    p95: percentile(s, 95),
+    max: s.length ? (s[s.length - 1] as number) : Number.NaN,
+  };
 }
 
 // Payload fields read here, loosely typed so one pass handles every event kind.
 type P = Record<string, unknown>;
-const str = (p: P, k: string): string | null => (typeof p[k] === 'string' ? (p[k] as string) : null);
+const str = (p: P, k: string): string | null =>
+  typeof p[k] === 'string' ? (p[k] as string) : null;
 
 /** lock_guard durations from a .radar/hook.log (`<iso> lock_guard decision=… tool=… ms=<n>`). */
 export function hookLockCheckMs(log: string): number[] {
-  return [...log.matchAll(/ lock_guard decision=\S+ tool=\S+ ms=(\d+)$/gm)].map((x) => Number(x[1]));
+  return [...log.matchAll(/ lock_guard decision=\S+ tool=\S+ ms=(\d+)$/gm)].map((x) =>
+    Number(x[1]),
+  );
 }
 
-function lockCheckSeries(opts: { metricRows?: readonly MetricRow[]; hookMs?: readonly number[] }): Metrics['lockCheck'] {
+function lockCheckSeries(opts: {
+  metricRows?: readonly MetricRow[];
+  hookMs?: readonly number[];
+}): Metrics['lockCheck'] {
   if (opts.hookMs && opts.hookMs.length > 0) return { ...series([...opts.hookMs]), source: 'hook' };
-  const rows = (opts.metricRows ?? []).filter((r) => r.name === 'lock_check_ms').map((r) => r.value);
+  const rows = (opts.metricRows ?? [])
+    .filter((r) => r.name === 'lock_check_ms')
+    .map((r) => r.value);
   return { ...series(rows), source: rows.length > 0 ? 'server' : 'none' };
 }
 
@@ -78,7 +96,12 @@ export function computeMetrics(
     lockCheck: lockCheckSeries(opts),
     writers: { changes: 0, violations: [], unlocked: 0 },
     blocks: { total: 0, viaHook: 0, rejectedWrites: 0 },
-    requests: { created: 0, decided: 0, auto: 0, decisionMs: { ...series([]), median: Number.NaN } },
+    requests: {
+      created: 0,
+      decided: 0,
+      auto: 0,
+      decisionMs: { ...series([]), median: Number.NaN },
+    },
     reviews: { created: 0, flagged: 0 },
     proposals: { created: 0, decided: 0 },
     commits: { total: 0, pushed: 0, pushFailed: 0 },
@@ -106,7 +129,8 @@ export function computeMetrics(
         const by = str(p, 'by') ?? e.actor;
         const h = path ? holder.get(path) : undefined;
         if (h === undefined) m.writers.unlocked++;
-        else if (h !== by) m.writers.violations.push({ eventId: e.id, path: path ?? '', by, holder: h });
+        else if (h !== by)
+          m.writers.violations.push({ eventId: e.id, path: path ?? '', by, holder: h });
         break;
       }
       case 'sync.applied':
@@ -157,7 +181,10 @@ export function computeMetrics(
   return m;
 }
 
-const fmt = (s: Series, unit = 'ms') => (s.n === 0 ? 'tidak ada data' : `p50 ${s.p50} ${unit} · p95 ${s.p95} ${unit} · max ${s.max} ${unit} (n=${s.n})`);
+const fmt = (s: Series, unit = 'ms') =>
+  s.n === 0
+    ? 'tidak ada data'
+    : `p50 ${s.p50} ${unit} · p95 ${s.p95} ${unit} · max ${s.max} ${unit} (n=${s.n})`;
 
 /** PRD §04 table: target vs measured. Merge conflicts come from round-a/round-b (merge-check, collect-round-b). */
 export function renderMarkdown(m: Metrics): string {
@@ -174,21 +201,39 @@ export function renderMarkdown(m: Metrics): string {
       '0',
       `${m.writers.violations.length} pelanggaran dari ${m.writers.changes} perubahan file (${m.writers.unlocked} tanpa kunci)`,
     ],
-    ['Blokir', '–', `${m.blocks.total} (${m.blocks.viaHook} lewat hook), ${m.blocks.rejectedWrites} tulisan ditolak`],
+    [
+      'Blokir',
+      '–',
+      `${m.blocks.total} (${m.blocks.viaHook} lewat hook), ${m.blocks.rejectedWrites} tulisan ditolak`,
+    ],
     [
       'Blokir → keputusan',
       '< 60 s (demo)',
-      d.n === 0 ? 'tidak ada data' : `median ${Math.round(d.median / 1000)} s · max ${Math.round(d.max / 1000)} s (n=${d.n}, ${m.requests.auto} otomatis)`,
+      d.n === 0
+        ? 'tidak ada data'
+        : `median ${Math.round(d.median / 1000)} s · max ${Math.round(d.max / 1000)} s (n=${d.n}, ${m.requests.auto} otomatis)`,
     ],
     ['Masalah antar-file tertangkap (`review.flagged`)', '≥ 1', String(m.reviews.flagged)],
-    ['Commit', '–', `${m.commits.total} (${m.commits.pushed} ter-push, ${m.commits.pushFailed} gagal push)`],
+    [
+      'Commit',
+      '–',
+      `${m.commits.total} (${m.commits.pushed} ter-push, ${m.commits.pushFailed} gagal push)`,
+    ],
   ];
-  return ['| Metrik | Target | Hasil |', '|---|---|---|', ...rows.map((r) => `| ${r.join(' | ')} |`)].join('\n');
+  return [
+    '| Metrik | Target | Hasil |',
+    '|---|---|---|',
+    ...rows.map((r) => `| ${r.join(' | ')} |`),
+  ].join('\n');
 }
 
 function readEvents(file: string): RadarEvent[] {
-  const raw = JSON.parse(readFileSync(file, 'utf8')) as { events?: RadarEvent[] } | { events?: RadarEvent[] }[] | RadarEvent[];
-  if (Array.isArray(raw)) return raw.flatMap((x) => ('events' in x && Array.isArray(x.events) ? x.events : [x as RadarEvent]));
+  const raw = JSON.parse(readFileSync(file, 'utf8')) as
+    { events?: RadarEvent[] } | { events?: RadarEvent[] }[] | RadarEvent[];
+  if (Array.isArray(raw))
+    return raw.flatMap((x) =>
+      'events' in x && Array.isArray(x.events) ? x.events : [x as RadarEvent],
+    );
   return raw.events ?? [];
 }
 
@@ -199,18 +244,27 @@ export function main(argv: string[]): number {
   };
   const eventsFile = arg('--events');
   if (!eventsFile) {
-    console.error('usage: tsx scripts/metrics.ts --events <export.json> [--hook-log <hook.log> ...] [--metric-rows <rows.json>] [--out <metrics.json>]');
+    console.error(
+      'usage: tsx scripts/metrics.ts --events <export.json> [--hook-log <hook.log> ...] [--metric-rows <rows.json>] [--out <metrics.json>]',
+    );
     return 2;
   }
-  const rowsFile = arg('--metric-rows');
-  const metricRows = rowsFile ? (JSON.parse(readFileSync(rowsFile, 'utf8')) as MetricRow[]) : [];
-  const hookLogs = argv.flatMap((a, i) => (argv[i - 1] === '--hook-log' ? [a] : []));
-  const hookMs = hookLogs.flatMap((f) => hookLockCheckMs(readFileSync(f, 'utf8')));
-  const m = computeMetrics(readEvents(eventsFile), { metricRows, hookMs });
-  const out = arg('--out');
-  if (out) writeFileSync(out, `${JSON.stringify(m, null, 2)}\n`);
-  console.log(renderMarkdown(m));
-  return 0;
+  try {
+    const rowsFile = arg('--metric-rows');
+    const metricRows = rowsFile ? (JSON.parse(readFileSync(rowsFile, 'utf8')) as MetricRow[]) : [];
+    const hookLogs = argv.flatMap((a, i) => (argv[i - 1] === '--hook-log' ? [a] : []));
+    const hookMs = hookLogs.flatMap((f) => hookLockCheckMs(readFileSync(f, 'utf8')));
+    const m = computeMetrics(readEvents(eventsFile), { metricRows, hookMs });
+    const out = arg('--out');
+    if (out) writeFileSync(out, `${JSON.stringify(m, null, 2)}\n`);
+    console.log(renderMarkdown(m));
+    return 0;
+  } catch (err) {
+    // unreadable or malformed input: one clear line instead of a stack trace
+    console.error(err instanceof Error ? err.message : String(err));
+    return 1;
+  }
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) process.exit(main(process.argv.slice(2)));
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href)
+  process.exit(main(process.argv.slice(2)));

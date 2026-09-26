@@ -5,7 +5,10 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 const git = (dir: string, ...args: string[]): string =>
-  execFileSync('git', ['-C', dir, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+  execFileSync('git', ['-C', dir, ...args], {
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+  }).trim();
 
 /** Like `git`, but a non-zero exit (a conflict) is returned instead of thrown. */
 function gitTry(dir: string, ...args: string[]): { ok: boolean; out: string } {
@@ -17,13 +20,22 @@ function gitTry(dir: string, ...args: string[]): { ok: boolean; out: string } {
   }
 }
 
-const unmerged = (dir: string): string[] => git(dir, 'diff', '--name-only', '--diff-filter=U').split('\n').filter(Boolean);
+const unmerged = (dir: string): string[] =>
+  git(dir, 'diff', '--name-only', '--diff-filter=U').split('\n').filter(Boolean);
 
 const countHunks = (dir: string, files: string[]): number =>
-  files.reduce((n, f) => n + readFileSync(join(dir, f), 'utf8').split('\n').filter((l) => l.startsWith('<<<<<<<')).length, 0);
+  files.reduce(
+    (n, f) =>
+      n +
+      readFileSync(join(dir, f), 'utf8')
+        .split('\n')
+        .filter((l) => l.startsWith('<<<<<<<')).length,
+    0,
+  );
 
 function assertClean(dir: string): void {
-  if (git(dir, 'status', '--porcelain') !== '') throw new Error(`${dir}: working tree must be clean before the merge check`);
+  if (git(dir, 'status', '--porcelain') !== '')
+    throw new Error(`${dir}: working tree must be clean before the merge check`);
 }
 
 export interface MergeResult {
@@ -38,16 +50,42 @@ export interface MergeResult {
  * merge that conflicts and leaves the repo in that merge state, so the human resolves it (stopwatch) and runs
  * finishMerge. Without conflicts every merge is committed.
  */
-export function mergeBranches(dir: string, base: string, branches: string[], mergeBranch = 'ab/a-merge'): MergeResult {
+export function mergeBranches(
+  dir: string,
+  base: string,
+  branches: string[],
+  mergeBranch = 'ab/a-merge',
+): MergeResult {
   assertClean(dir);
   git(dir, 'checkout', '-q', '-B', mergeBranch, base);
   const merged: string[] = [];
   for (const b of branches) {
-    const r = gitTry(dir, '-c', 'user.name=ab-merge', '-c', 'user.email=ab-merge@example.com', 'merge', '--no-ff', '--no-commit', b);
+    const r = gitTry(
+      dir,
+      '-c',
+      'user.name=ab-merge',
+      '-c',
+      'user.email=ab-merge@example.com',
+      'merge',
+      '--no-ff',
+      '--no-commit',
+      b,
+    );
     const files = unmerged(dir);
-    if (files.length > 0) return { branch: mergeBranch, merged, conflictFiles: files, hunks: countHunks(dir, files) };
+    if (files.length > 0)
+      return { branch: mergeBranch, merged, conflictFiles: files, hunks: countHunks(dir, files) };
     if (!r.ok) throw new Error(`merge ${b} failed without conflicts: ${r.out}`);
-    gitTry(dir, '-c', 'user.name=ab-merge', '-c', 'user.email=ab-merge@example.com', 'commit', '-q', '--no-edit', '--allow-empty');
+    gitTry(
+      dir,
+      '-c',
+      'user.name=ab-merge',
+      '-c',
+      'user.email=ab-merge@example.com',
+      'commit',
+      '-q',
+      '--no-edit',
+      '--allow-empty',
+    );
     merged.push(b);
   }
   return { branch: mergeBranch, merged, conflictFiles: [], hunks: 0 };
@@ -65,7 +103,17 @@ export function finishMerge(dir: string): { sha: string } {
   });
   if (markers.length > 0) throw new Error(`conflict markers still in: ${markers.join(', ')}`);
   git(dir, 'add', '-A');
-  git(dir, '-c', 'user.name=ab-merge', '-c', 'user.email=ab-merge@example.com', 'commit', '-q', '--no-edit', '--allow-empty');
+  git(
+    dir,
+    '-c',
+    'user.name=ab-merge',
+    '-c',
+    'user.email=ab-merge@example.com',
+    'commit',
+    '-q',
+    '--no-edit',
+    '--allow-empty',
+  );
   return { sha: git(dir, 'rev-parse', 'HEAD') };
 }
 
@@ -86,13 +134,23 @@ export function replayCommits(dir: string, base: string, shas: string[]): Replay
   const result: ReplayResult = { applied: 0, conflicts: [] };
   try {
     for (const sha of shas) {
-      const r = gitTry(wt, '-c', 'user.name=ab-replay', '-c', 'user.email=ab-replay@example.com', 'cherry-pick', '--allow-empty', sha);
+      const r = gitTry(
+        wt,
+        '-c',
+        'user.name=ab-replay',
+        '-c',
+        'user.email=ab-replay@example.com',
+        'cherry-pick',
+        '--allow-empty',
+        sha,
+      );
       if (r.ok) {
         result.applied++;
         continue;
       }
       const files = unmerged(wt);
-      if (files.length === 0) throw new Error(`cherry-pick ${sha} failed without conflicts: ${r.out}`);
+      if (files.length === 0)
+        throw new Error(`cherry-pick ${sha} failed without conflicts: ${r.out}`);
       result.conflicts.push({ sha, files });
       git(wt, 'cherry-pick', '--abort');
     }
