@@ -3,6 +3,7 @@ import { isRadarConnection } from '../../shared/radar-connection'
 import type { RadarConnection } from '../../shared/radar-connection'
 import type { RadarWsUpdate } from '../../shared/radar-update'
 import { cancelTask, decideProposal, revokeLock } from './api'
+import { runRadarChecks } from './checks'
 import {
   clearRadarConnection,
   getRadarConnectionSummary,
@@ -65,6 +66,9 @@ export function registerRadarConnectionIpc(): void {
     stopClient()
     clearRadarConnection()
   })
+  ipcMain.handle('radar:checks', (_event, workspacePath: unknown) =>
+    runRadarChecks(typeof workspacePath === 'string' ? workspacePath : null)
+  )
   ipcMain.handle('radar:decide', (_event, value: unknown) => {
     if (
       !isRecord(value) ||

@@ -1,13 +1,33 @@
 import { useEffect, useState } from 'react'
+import { cn } from '@/lib/utils'
+import type { RadarChecks } from '../../../../shared/radar-checks'
 import type { RadarConnection, RadarConnectionSummary } from '../../../../shared/radar-connection'
 
 type Props = {
   connection: RadarConnectionSummary | null
   connected: boolean
+  workspacePath: string | null
   onConnectionChange: (connection: RadarConnectionSummary | null) => void
 }
 
-export function RadarSettingsPane({ connection, connected, onConnectionChange }: Props) {
+type CheckRow = { label: string; ok: boolean; value: string }
+
+function settingsCheckValue(found: boolean | null): string {
+  if (found === null) {
+    return 'Open a workspace folder first'
+  }
+  return found ? 'Found' : 'Missing in this folder'
+}
+
+function checkRows(connected: boolean, checks: RadarChecks): CheckRow[] {
+  return [
+    { label: 'WebSocket', ok: connected, value: connected ? 'Connected' : 'Not connected' },
+    { label: 'Bob Shell', ok: checks.bobVersion !== null, value: checks.bobVersion ?? 'Not found on PATH' },
+    { label: '.bob/settings.json', ok: checks.bobSettings === true, value: settingsCheckValue(checks.bobSettings) }
+  ]
+}
+
+export function RadarSettingsPane({ connection, connected, workspacePath, onConnectionChange }: Props) {
   const [server, setServer] = useState(connection?.server ?? '')
   const [workspace, setWorkspace] = useState(connection?.workspace ?? '')
   const [member, setMember] = useState(connection?.member ?? '')
@@ -15,6 +35,8 @@ export function RadarSettingsPane({ connection, connected, onConnectionChange }:
   const [token, setToken] = useState('')
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
+  const [checks, setChecks] = useState<RadarChecks | null>(null)
+  const [checking, setChecking] = useState(false)
 
   useEffect(() => {
     if (!connection) {
@@ -38,6 +60,17 @@ export function RadarSettingsPane({ connection, connected, onConnectionChange }:
       setMessage('Connection could not be saved. Check the fields and OS encryption.')
     } finally {
       setBusy(false)
+    }
+  }
+
+  const runChecks = async () => {
+    setChecking(true)
+    try {
+      setChecks(await window.api.radar.runChecks(workspacePath))
+    } catch {
+      setMessage('Checks could not run.')
+    } finally {
+      setChecking(false)
     }
   }
 
@@ -66,10 +99,23 @@ export function RadarSettingsPane({ connection, connected, onConnectionChange }:
       <label className="block text-xs">Access token<input required type="password" value={token} onChange={(event) => setToken(event.target.value)} autoComplete="off" className="mt-1 w-full rounded-md border border-border bg-card p-2" /></label>
       <div className="flex gap-2">
         <button type="submit" disabled={busy} className="rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground disabled:opacity-50">Connect</button>
-        <button type="button" disabled={busy} onClick={() => setMessage(connected ? 'WebSocket connected.' : 'WebSocket disconnected. Check the server and saved connection.')} className="rounded-md border border-border px-3 py-1.5 text-xs">Test</button>
+        <button type="button" disabled={busy || checking} onClick={() => void runChecks()} className="rounded-md border border-border px-3 py-1.5 text-xs disabled:opacity-50">Test</button>
         {connection && <button type="button" disabled={busy} onClick={() => void disconnect()} className="rounded-md border border-border px-3 py-1.5 text-xs">Forget</button>}
       </div>
       {message && <p role="status" className="text-xs text-muted-foreground">{message}</p>}
+      {checks && (
+        <dl aria-label="Connection checks" className="space-y-1.5 rounded-md border border-border bg-card p-3 text-xs">
+          {checkRows(connected, checks).map((row) => (
+            <div key={row.label} className="flex items-center justify-between gap-3">
+              <dt className="flex items-center gap-2">
+                <span aria-hidden className={cn(row.ok ? 'text-[var(--lc-ok)]' : 'text-destructive')}>{row.ok ? '●' : '○'}</span>
+                {row.label}
+              </dt>
+              <dd className="truncate font-mono text-muted-foreground">{row.value}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
     </form>
   )
 }
