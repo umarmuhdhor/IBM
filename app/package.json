@@ -54,7 +54,7 @@
     "tc:node": "pnpm run typecheck:node",
     "tc:cli": "pnpm run typecheck:cli",
     "tc:web": "pnpm run typecheck:web",
-    "tc": "pnpm run typecheck",
+    "tc": "pnpm -C ../radar --filter @radar/common --filter @radar/ui install --frozen-lockfile && pnpm run typecheck",
     "typecheck:node": "node node_modules/typescript/bin/tsc --noEmit -p config/tsconfig.node.json",
     "typecheck:cli": "node node_modules/typescript/bin/tsc --noEmit -p config/tsconfig.tc.cli.json",
     "typecheck:web": "node node_modules/typescript/bin/tsc --noEmit -p config/tsconfig.tc.web.json",
