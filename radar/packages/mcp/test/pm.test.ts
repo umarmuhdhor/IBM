@@ -196,6 +196,31 @@ describe('radar-mcp PM tools (MA-01..05, MA-07, R3 §7)', () => {
     }
   });
 
+  it('team_status: a response that breaks the TeamRes contract is a friendly error, not a crash', async () => {
+    const saved = TEAM.members;
+    (TEAM as { members: unknown }).members = 'not-a-list';
+    try {
+      const { isError, text } = await call('team_status');
+      expect(isError).toBe(true);
+      expect(text).toMatch(/tidak sesuai kontrak/);
+      expect(text).not.toMatch(/TypeError/);
+    } finally {
+      TEAM.members = saved;
+    }
+  });
+
+  it('get_task_diff: a response that breaks the TaskDiffRes contract is a friendly error', async () => {
+    const saved = DIFF.files;
+    (DIFF as { files: unknown }).files = 'not-a-list';
+    try {
+      const { isError, text } = await call('get_task_diff', { task_id: 'T-0' });
+      expect(isError).toBe(true);
+      expect(text).toMatch(/tidak sesuai kontrak/);
+    } finally {
+      DIFF.files = saved;
+    }
+  });
+
   it('get_task_diff: tolerates a server without exportsChanged/lines/importers', async () => {
     const saved = JSON.parse(JSON.stringify(DIFF));
     delete (DIFF.files[1] as { exportsChanged?: unknown }).exportsChanged;
