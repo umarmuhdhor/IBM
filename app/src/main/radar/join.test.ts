@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   getRadarConnectionSummary: vi.fn(),
   startClient: vi.fn(),
   startSyncAgent: vi.fn(),
+  stopSyncAgent: vi.fn(),
   ensureNodeForBob: vi.fn(async () => undefined)
 }))
 
@@ -27,7 +28,7 @@ vi.mock('./node-shim', () => ({ ensureNodeForBob: mocks.ensureNodeForBob }))
 vi.mock('./sync-agent', () => ({
   getSyncStatus: vi.fn(),
   startSyncAgent: mocks.startSyncAgent,
-  stopSyncAgent: vi.fn(),
+  stopSyncAgent: mocks.stopSyncAgent,
   workspaceFolder: (workspace: string) => `/home/test/live-collab/${workspace}`
 }))
 
@@ -108,6 +109,33 @@ describe('joinWithCode', () => {
         body: JSON.stringify({ code: 'K7QM-3XPA', name: 'Sari', role: 'pm' })
       })
     )
+  })
+
+  it('an owner code saves a Mission Control connection and does not sync files (D-alief-11)', async () => {
+    respond(200, { workspace: 'toko-demo', member: null, role: 'mc', token: 'rdr_test_mc_value' })
+    mocks.getRadarConnectionSummary.mockReturnValue({
+      server: `${SERVER}/`,
+      workspace: 'toko-demo',
+      member: 'mc',
+      role: 'mc'
+    })
+    const result = await joinWithCode('K7QM-3XPA', SERVER)
+    const saved = {
+      server: `${SERVER}/`,
+      workspace: 'toko-demo',
+      member: 'mc',
+      role: 'mc',
+      token: 'rdr_test_mc_value'
+    }
+    expect(mocks.saveRadarConnection).toHaveBeenCalledWith(saved)
+    expect(mocks.startClient).toHaveBeenCalledWith(saved)
+    expect(mocks.stopSyncAgent).toHaveBeenCalled()
+    expect(mocks.startSyncAgent).not.toHaveBeenCalled()
+    expect(result).toEqual({
+      connection: expect.objectContaining({ role: 'mc' }),
+      role: 'mc',
+      folder: null
+    })
   })
 
   it("shows the server's message for a wrong or expired code", async () => {
