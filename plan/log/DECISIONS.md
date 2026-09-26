@@ -310,3 +310,18 @@ Format:
   - `closeTask` menutup request terbuka jadi `batal` tanpa event, karena `request.decided.outcome` belum punya `batal` (perlu perubahan kontrak R3 §5). Usulan keputusan yang terkait sudah dikedaluwarsakan lewat event.
 - Alternatif yang ditolak: satu transaksi yang menunggu GitHub (DO memblokir semua request selama push); 502 baru di kontrak (kontrak beku); memindahkan `head_commit` dengan sha palsu.
 - Dampak: fase 06 (committer GitHub asli + `head_commit`, klasifikasi galat, sanitasi `error` di event), fase 10 (deploy + smoke di toko-demo), Umar (`my_tasks` hanya milik sendiri).
+
+## D-umar-04 · 26 Sep 2026 16:40 · fase 10 · Kit Bob melawan server asli: `my_tasks`, penanda sisa, temuan demo
+
+- Keputusan:
+  1. **`my_tasks` tidak lagi mengirim `owner=me`.** Tabel tool R3 §7 menulis `GET /v1/tasks?owner=me&status=open`, tetapi server fase 05 menjawab 403 "Hanya task milikmu sendiri." untuk `owner` selain ID pemanggil (`packages/server/src/http/routes/tasks.ts:15`). R3 §2.4 menyebut `owner` default = pemanggil, jadi tool memanggil `GET /v1/tasks?status=open` (lolos di mock dan server). **Usulan ke Alief:** samakan baris R3 §7 dengan §2.4 (atau server menerima `me` seperti mock). Tidak ada perubahan kontrak dari lane Bob.
+  2. **`mark_ai_edit` → `POST /v1/ai-edits`:** penanda `TODO(sync:alief)` diganti komentar biasa. Kode sisi Bob sudah final (R3 §2.20); route di Worker = fase 12 (BC-05, P1). Sampai itu ada, 404 hanya ditulis ke `.radar/hook.log` (fail-open, tidak memperlambat edit: panggilan paralel dengan `bob/activity`).
+  3. **`spike/fake-radar/server.mjs`:** tidak lagi dipakai untuk uji; uji Bob IDE fase 10 memakai Worker asli (`wrangler dev`). File disimpan hanya untuk mereproduksi bukti fase 07/08.
+  4. Log fase 10 lane Bob = `plan/log/fase-10-bob.md` (fase 10 dikerjakan semua lane; file terpisah supaya PR lane tidak bentrok).
+- Temuan demo (bukan kontrak, untuk naskah PRD §15 / `docs/DEMO_SCRIPT.md`):
+  - Dengan tujuan "Tambah fitur kupon diskon di checkout dan dark mode", Bob PM menaruh kupon di `coupon.ts` + `App.tsx`, **tanpa `checkout.ts`** (di toko-demo `applyCoupon` dipanggil dari `App.tsx`). Adegan blokir naskah butuh `checkout.ts` dipegang A → sebut file di tujuan (lihat LANGKAH MANUAL fase-10-bob).
+  - Brief start B menyebut file yang dipegang A, jadi Bob B memilih `request_file` tanpa mencoba edit (sama dengan handoff fase 07). Kartu permintaan dan keputusan tetap muncul, tetapi notifikasi "Bob B diblokir" hanya muncul kalau Bob benar-benar mencoba edit.
+  - Bob coder kadang menjawab dalam bahasa Inggris walau prompt Indonesia.
+- Alasan: test integrasi `packages/mcp/test/server.int.test.ts` (RED `ffc816a3` → GREEN `7c759f72`) dan 4 sesi Bob IDE 2.2.0 melawan Worker lokal.
+- Dampak: Alief (R3 §7), Imelda/semua (naskah demo), fase 12 (`/v1/ai-edits`).
+- File ref/ yang diperbarui: – (usulan saja).
