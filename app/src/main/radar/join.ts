@@ -18,8 +18,14 @@ import {
 } from './secure-store'
 import { getSyncStatus, startSyncAgent, stopSyncAgent, workspaceFolder } from './sync-agent'
 
+/**
+ * The renderer always sends DEFAULT_RADAR_SERVER. LIVE_COLLAB_SERVER (e.g. http://localhost:8787 for
+ * `pnpm -C radar dev:server`) replaces it, so dev and e2e runs never touch the deployed server.
+ */
 export function serverOrigin(value: unknown): string {
-  const raw = typeof value === 'string' && value.trim() ? value.trim() : DEFAULT_RADAR_SERVER
+  const typed = typeof value === 'string' ? value.trim() : ''
+  const fallback = process.env.LIVE_COLLAB_SERVER?.trim() || DEFAULT_RADAR_SERVER
+  const raw = typed && typed !== DEFAULT_RADAR_SERVER ? typed : fallback
   const url = new URL(raw)
   if (url.protocol !== 'http:' && url.protocol !== 'https:') {
     throw new Error('Invalid Live Collab server URL')

@@ -32,7 +32,7 @@ vi.mock('./sync-agent', () => ({
   workspaceFolder: (workspace: string) => `/home/test/live-collab/${workspace}`
 }))
 
-const { createJoinCode, joinWithCode } = await import('./join')
+const { createJoinCode, joinWithCode, serverOrigin } = await import('./join')
 
 const SERVER = 'https://collab.example.dev'
 const invite = encodeInvite({
@@ -187,5 +187,23 @@ describe('createJoinCode', () => {
         body: JSON.stringify({})
       })
     )
+  })
+})
+
+describe('serverOrigin', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  it('uses LIVE_COLLAB_SERVER instead of the deployed server, but keeps a typed server', () => {
+    vi.stubEnv('LIVE_COLLAB_SERVER', 'http://localhost:8787')
+    expect(serverOrigin('https://live-collab.afindo-mi01.workers.dev')).toBe('http://localhost:8787')
+    expect(serverOrigin(undefined)).toBe('http://localhost:8787')
+    expect(serverOrigin(SERVER)).toBe(SERVER)
+  })
+
+  it('falls back to the deployed server without LIVE_COLLAB_SERVER', () => {
+    vi.stubEnv('LIVE_COLLAB_SERVER', '')
+    expect(serverOrigin('')).toBe('https://live-collab.afindo-mi01.workers.dev')
   })
 })
