@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   readRadarConnection: vi.fn(),
   getRadarConnectionSummary: vi.fn(),
   startClient: vi.fn(),
+  disconnectRadar: vi.fn(),
   startSyncAgent: vi.fn(),
   userData: ''
 }))
@@ -31,7 +32,10 @@ vi.mock('./secure-store', () => ({
   readRadarConnection: mocks.readRadarConnection,
   getRadarConnectionSummary: mocks.getRadarConnectionSummary
 }))
-vi.mock('./connection-ipc', () => ({ startClient: mocks.startClient }))
+vi.mock('./connection-ipc', () => ({
+  startClient: mocks.startClient,
+  disconnectRadar: mocks.disconnectRadar
+}))
 vi.mock('./node-shim', () => ({ ensureNodeForBob: vi.fn(async () => undefined) }))
 vi.mock('./sync-agent', () => ({
   getSyncStatus: vi.fn(),
@@ -40,7 +44,7 @@ vi.mock('./sync-agent', () => ({
   workspaceFolder: (workspace: string) => `/home/test/live-collab/${workspace}`
 }))
 
-const { batchFolderFiles, collectFolderFiles, shareFolder, workspaceNameFor } =
+const { batchFolderFiles, collectFolderFiles, shareFolder, stopSharing, workspaceNameFor } =
   await import('./open-folder')
 
 const SERVER = 'https://collab.example.dev'
@@ -204,5 +208,45 @@ describe('shareFolder (D-alief-12)', () => {
       /no longer exists/
     )
     expect(fetch).not.toHaveBeenCalled()
+  })
+})
+
+describe('stopSharing (D-alief-12)', () => {
+  it('needs the owner connection', async () => {
+    respondInOrder([200, { ok: true }])
+    await expect(stopSharing()).rejects.toThrow(/owner/)
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it('closes the workspace on the server, then forgets the connection on this Mac', async () => {
+    mocks.readRadarConnection.mockReturnValue({
+      server: `${SERVER}/`,
+      workspace: 'my-app',
+      member: 'mc',
+      role: 'mc',
+      token: 'rdr_test_mc_value'
+    })
+    respondInOrder([200, { ok: true }])
+    await stopSharing()
+    expect(fetch).toHaveBeenCalledWith(
+      `${SERVER}/v1/workspace/close`,
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: 'Bearer rdr_test_mc_value' })
+      })
+    )
+    expect(mocks.disconnectRadar).toHaveBeenCalled()
+  })
+
+  it('keeps the connection when the server refuses', async () => {
+    mocks.readRadarConnection.mockReturnValue({
+      server: `${SERVER}/`,
+      workspace: 'my-app',
+      member: 'mc',
+      role: 'mc',
+      token: 'rdr_test_mc_value'
+    })
+    respondInOrder([401, { error: { code: 'UNAUTHORIZED', message: 'Token revoked.' } }])
+    await expect(stopSharing()).rejects.toThrow('Token revoked.')
+    expect(mocks.disconnectRadar).not.toHaveBeenCalled()
   })
 })

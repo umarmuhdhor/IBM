@@ -32,6 +32,7 @@ export function ShareFolderCard({
   const sync = useRadarSyncStatus()
   const [busy, setBusy] = useState(false)
   const [replacing, setReplacing] = useState(false)
+  const [stopping, setStopping] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [invalid, setInvalid] = useState(false)
   const owner = connection?.role === 'mc'
@@ -70,6 +71,23 @@ export function ShareFolderCard({
     }
   }
 
+  const stopSharing = async () => {
+    setBusy(true)
+    setMessage(null)
+    setInvalid(false)
+    try {
+      await window.api.radar.stopSharing()
+      setStopping(false)
+      onConnectionChange(null)
+      setMessage('Sharing stopped. The server is empty, so a teammate can share their folder now.')
+    } catch (error) {
+      setMessage(ipcErrorText(error) || 'Unable to stop sharing. Check your internet connection.')
+      setInvalid(true)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const openInBob = async () => {
     setMessage(
       (await window.api.radar.openInBob()) ??
@@ -85,6 +103,37 @@ export function ShareFolderCard({
       {message}
     </p>
   )
+
+  if (owner && stopping) {
+    return (
+      <section
+        aria-label="Stop sharing"
+        className="space-y-3 rounded-lg border border-border bg-card p-4"
+      >
+        <div className="space-y-1">
+          <h3 className="text-sm font-semibold">Stop sharing {connection.workspace}?</h3>
+          <p className="text-xs text-destructive">
+            Everyone is disconnected, and tasks, locks and teammates on the server are removed.
+            Files on every Mac stay. Afterwards anyone on the team can share their own folder.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            variant="destructive"
+            disabled={busy}
+            onClick={() => void stopSharing()}
+          >
+            {busy ? 'Stopping…' : 'Stop sharing'}
+          </Button>
+          <Button size="sm" variant="outline" disabled={busy} onClick={() => setStopping(false)}>
+            Cancel
+          </Button>
+        </div>
+        {status}
+      </section>
+    )
+  }
 
   if (owner && replacing) {
     return (
@@ -198,6 +247,17 @@ export function ShareFolderCard({
             }}
           >
             Share a different folder…
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              setStopping(true)
+              setMessage(null)
+              setInvalid(false)
+            }}
+          >
+            Stop sharing…
           </Button>
         </div>
         {status}

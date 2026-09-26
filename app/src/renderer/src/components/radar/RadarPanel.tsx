@@ -93,15 +93,14 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
           <>
             {/* Why: fixed slots keep ShareFolderCard mounted (and its message) when sharing turns this app into Mission Control. */}
             <div className="space-y-3 p-4 pb-0">
-              {connection?.role !== 'coder' && (
-                <ShareFolderCard
-                  connection={connection}
-                  folder={workspacePath}
-                  sharedCode={sharedCode}
-                  onConnectionChange={onConnectionChange}
-                  onShared={setSharedCode}
-                />
-              )}
+              {/* Teammates see it too: once the owner stops sharing, anyone can share the next folder. */}
+              <ShareFolderCard
+                connection={connection}
+                folder={workspacePath}
+                sharedCode={sharedCode}
+                onConnectionChange={onConnectionChange}
+                onShared={setSharedCode}
+              />
               {connection?.role !== 'mc' && (
                 <JoinWithCodeCard connection={connection} onConnectionChange={onConnectionChange} />
               )}

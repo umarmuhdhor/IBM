@@ -5,6 +5,7 @@ import type { RadarSyncStatus } from '../../../../shared/radar-join'
 import { ShareFolderCard } from './ShareFolderCard'
 
 const shareFolder = vi.fn()
+const stopSharing = vi.fn()
 const writeText = vi.fn(async () => undefined)
 const status: RadarSyncStatus = { state: 'syncing', folder: null, files: 3, message: null }
 
@@ -12,6 +13,7 @@ beforeEach(() => {
   vi.stubGlobal('api', {
     radar: {
       shareFolder,
+      stopSharing,
       getSyncStatus: vi.fn(async () => status),
       onSyncStatus: vi.fn(() => () => undefined),
       openInBob: vi.fn(),
@@ -125,4 +127,25 @@ it('shows the shared folder with its code, and asks before replacing the workspa
   expect(shareFolder).not.toHaveBeenCalled()
   fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
   expect(screen.getByRole('region', { name: 'Multiplayer' })).toBeTruthy()
+})
+
+it('stops sharing only after the owner confirms, then disconnects', async () => {
+  status.folder = '/Users/me/my-app'
+  stopSharing.mockResolvedValue(undefined)
+  const onConnectionChange = vi.fn()
+  render(
+    <ShareFolderCard
+      connection={owner}
+      folder="/Users/me/my-app"
+      sharedCode={null}
+      onConnectionChange={onConnectionChange}
+      onShared={vi.fn()}
+    />
+  )
+  fireEvent.click(await screen.findByRole('button', { name: 'Stop sharing…' }))
+  expect(screen.getByText(/Everyone is disconnected/)).toBeTruthy()
+  expect(stopSharing).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button', { name: 'Stop sharing' }))
+  await waitFor(() => expect(onConnectionChange).toHaveBeenCalledWith(null))
+  expect(stopSharing).toHaveBeenCalledTimes(1)
 })

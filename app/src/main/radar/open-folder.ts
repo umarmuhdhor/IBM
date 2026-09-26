@@ -22,7 +22,7 @@ import {
 import { runProcess } from '../../shared/child-process/run-process'
 import type { RadarConnection } from '../../shared/radar-connection'
 import type { RadarJoinRole, RadarOpenFolderResult } from '../../shared/radar-join'
-import { startClient } from './connection-ipc'
+import { disconnectRadar, startClient } from './connection-ipc'
 import { errorMessage, serverOrigin } from './join'
 import { ensureNodeForBob } from './node-shim'
 import {
@@ -241,6 +241,27 @@ export async function shareFolder(
   }
 }
 
+/**
+ * The owner stops sharing (D-alief-12): the server removes the workspace and closes every socket, so it is empty
+ * for whoever shares a folder next. This Mac forgets the connection; the folder and its files stay.
+ */
+export async function stopSharing(): Promise<void> {
+  const connection = readRadarConnection()
+  if (!connection || connection.role !== 'mc') {
+    throw new Error('Only the workspace owner can stop sharing.')
+  }
+  const response = await fetch(new URL('/v1/workspace/close', connection.server).toString(), {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${connection.token}` },
+    signal: AbortSignal.timeout(15_000)
+  })
+  if (!response.ok) {
+    throw new Error(await errorMessage(response))
+  }
+  disconnectRadar()
+  rmSync(ownerFolderPath(), { force: true })
+}
+
 async function chooseAndShare(
   window: BrowserWindow | null,
   value: unknown
@@ -290,6 +311,7 @@ export function registerRadarOpenFolderIpc(): void {
       )
     }
   })
+  ipcMain.handle('radar:stop-sharing', () => stopSharing())
   ipcMain.handle('radar:share-folder', (event, value: unknown) =>
     chooseAndShare(BrowserWindow.fromWebContents(event.sender), value)
   )

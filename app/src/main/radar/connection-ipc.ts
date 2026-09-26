@@ -39,6 +39,13 @@ export function startClient(connection: RadarConnection): void {
   activeClient.connect()
 }
 
+/** Forgets the saved connection on this Mac and stops the socket and the sync agent. */
+export function disconnectRadar(): void {
+  stopClient()
+  stopSyncAgent()
+  clearRadarConnection()
+}
+
 export function registerRadarConnectionIpc(): void {
   try {
     const saved = readRadarConnection()
@@ -64,11 +71,7 @@ export function registerRadarConnectionIpc(): void {
     startClient(value)
     return getRadarConnectionSummary()
   })
-  ipcMain.handle('radar:clear-connection', () => {
-    stopClient()
-    stopSyncAgent()
-    clearRadarConnection()
-  })
+  ipcMain.handle('radar:clear-connection', () => disconnectRadar())
   ipcMain.handle('radar:checks', (_event, workspacePath: unknown) =>
     runRadarChecks(typeof workspacePath === 'string' ? workspacePath : null)
   )

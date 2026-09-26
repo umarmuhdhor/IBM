@@ -20,6 +20,8 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
   const [name, setName] = useState('')
   const [role, setRole] = useState<RadarJoinRole>('coder')
   const [owner, setOwner] = useState(false)
+  // Why: after the owner stops sharing, a teammate joins the next workspace from the same card.
+  const [another, setAnother] = useState(false)
   const codeInput = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
   // A message belongs to the connection it was written for, so it disappears when that connection changes.
@@ -40,6 +42,7 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
         ? await window.api.radar.joinWithCode(code, DEFAULT_RADAR_SERVER)
         : await window.api.radar.joinWithCode(code, DEFAULT_RADAR_SERVER, name, role)
       setCode('')
+      setAnother(false)
       onConnectionChange(result.connection)
       if (result.role === 'mc') {
         return
@@ -65,7 +68,8 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
     )
   }
 
-  const joined = connection !== null && connection.role === 'coder' && sync.folder !== null
+  const joined =
+    !another && connection !== null && connection.role === 'coder' && sync.folder !== null
 
   if (joined) {
     return (
@@ -95,6 +99,9 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
           </Button>
           <Button size="sm" variant="outline" onClick={() => void window.api.radar.showFolder()}>
             Show folder
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setAnother(true)}>
+            Join with a different code
           </Button>
         </div>
         {message && <p className="text-xs text-muted-foreground">{message}</p>}

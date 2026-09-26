@@ -17,6 +17,8 @@ export type RadarJoinApi = {
   createJoinCode: () => Promise<RadarJoinCode>
   /** Shares `folder` (the one open in the app), or opens a folder picker when it is null; null when cancelled. */
   shareFolder: (folder: string | null, server?: string) => Promise<RadarOpenFolderResult | null>
+  /** Owner only: removes the workspace from the server for everyone and disconnects this app. */
+  stopSharing: () => Promise<void>
   getSyncStatus: () => Promise<RadarSyncStatus>
   openInBob: () => Promise<string | null>
   showFolder: () => Promise<string>
@@ -28,6 +30,7 @@ export const radarJoinApi: RadarJoinApi = {
     ipcRenderer.invoke('radar:join-with-code', { code, server, name, role }),
   createJoinCode: () => ipcRenderer.invoke('radar:create-join-code'),
   shareFolder: (folder, server) => ipcRenderer.invoke('radar:share-folder', { folder, server }),
+  stopSharing: () => ipcRenderer.invoke('radar:stop-sharing'),
   getSyncStatus: () => ipcRenderer.invoke('radar:sync-status'),
   openInBob: () => ipcRenderer.invoke('radar:open-in-bob'),
   showFolder: () => ipcRenderer.invoke('radar:show-folder'),
