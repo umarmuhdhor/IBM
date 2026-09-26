@@ -24,7 +24,7 @@ import { createSyncLog, type SyncLog } from './log.js';
 import { formatRejection, terminalNotifier, type Notifier } from './notify.js';
 import { writeSidecar } from './sidecar.js';
 import { createWatcher, isIgnored, listFiles, type SyncMode, type Watcher } from './watcher.js';
-import { atomicWrite, readLocal, removeLocal, safeRelative, UnsafePathError, type LocalFile } from './writer.js';
+import { atomicWrite, pruneEmptyParents, readLocal, removeLocal, safeRelative, UnsafePathError, type LocalFile } from './writer.js';
 
 /** Close code for a sync socket replaced by a newer one of the same member (R3 §3). */
 export const WS_CLOSE_REPLACED = 4000;
@@ -516,6 +516,8 @@ export class SyncAgent extends EventEmitter {
     this.saveConflict(path, prev?.hash, DELETED_HASH);
     this.known.set(path, { version, hash: DELETED_HASH });
     removeLocal(this.root, path);
+    // A folder renamed on another Mac arrives as deletes plus adds; do not leave the old folder behind empty.
+    pruneEmptyParents(this.root, path);
     if (path === '.gitignore') this.rebuildMatcher();
     return true;
   }

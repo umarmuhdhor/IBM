@@ -1,6 +1,6 @@
 // Local file IO for the sync agent: atomic writes (tmp file + rename), classified reads, hashing.
 import { createHash, randomBytes } from 'node:crypto';
-import { chmodSync, mkdirSync, readFileSync, realpathSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdirSync, readdirSync, readFileSync, realpathSync, renameSync, rmdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, sep } from 'node:path';
 import { isProbablyBinary, MAX_FILE_BYTES, normalizeRelative, PathOutsideWorkspaceError } from '@radar/common';
 
@@ -142,4 +142,17 @@ export function atomicWrite(root: string, rel: string, content: string | Buffer)
 /** Deletes `<root>/<rel>` (a symlink itself, not its target); a missing file is fine. */
 export function removeLocal(root: string, rel: string): void {
   rmSync(resolveInside(root, rel, false), { force: true });
+}
+
+/** After a remote delete: removes the folders it left empty, up to (not including) the root. */
+export function pruneEmptyParents(root: string, rel: string): void {
+  const realRoot = realpathSync(root);
+  for (let dir = dirname(resolveInside(root, rel, false)); dir.startsWith(realRoot + sep); dir = dirname(dir)) {
+    try {
+      if (readdirSync(dir).length > 0) return;
+      rmdirSync(dir);
+    } catch {
+      return;
+    }
+  }
 }

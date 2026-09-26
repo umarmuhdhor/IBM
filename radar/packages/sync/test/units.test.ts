@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { sha256Hex } from '@radar/common';
 import { KnownStore } from '../src/known.js';
-import { atomicWrite, hashText, readLocal, removeLocal, UnsafePathError } from '../src/writer.js';
+import { atomicWrite, hashText, pruneEmptyParents, readLocal, removeLocal, UnsafePathError } from '../src/writer.js';
 import { writeSidecar } from '../src/sidecar.js';
 import { formatRejection, terminalNotifier } from '../src/notify.js';
 import { fatalClose } from '../src/agent.js';
@@ -106,6 +106,19 @@ describe('writer', () => {
     removeLocal(root, 'a.ts');
     removeLocal(root, 'a.ts');
     expect(existsSync(join(root, 'a.ts'))).toBe(false);
+  });
+
+  it('pruneEmptyParents drops folders a remote rename emptied, and keeps the rest', () => {
+    const root = tempDir();
+    mkdirSync(join(root, 'old dir/deep'), { recursive: true });
+    mkdirSync(join(root, 'keep'), { recursive: true });
+    writeFileSync(join(root, 'keep/x.ts'), 'x');
+    pruneEmptyParents(root, 'old dir/deep/a.ts');
+    pruneEmptyParents(root, 'keep/gone.ts');
+    pruneEmptyParents(root, 'top.ts');
+    expect(existsSync(join(root, 'old dir'))).toBe(false);
+    expect(existsSync(join(root, 'keep/x.ts'))).toBe(true);
+    expect(existsSync(root)).toBe(true);
   });
 });
 
