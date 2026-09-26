@@ -1,14 +1,14 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { normalizeHookPayload } from '../src/placeholder/common.js';
+import { normalizeHookPayload } from '@radar/common';
 
 // Real, redacted Bob IDE 2.2.0 payloads captured in fase 01 (cwd is /Users/demo/toko-demo in every fixture).
 const fixtures = resolve(import.meta.dirname, '../../../docs/spike-payloads');
 const ROOT = '/Users/demo/toko-demo';
 const load = (name: string): unknown => JSON.parse(readFileSync(join(fixtures, name), 'utf8'));
 
-describe('normalizeHookPayload placeholder (real fixtures)', () => {
+describe('normalizeHookPayload from @radar/common as the hooks use it (real fixtures)', () => {
   it('has a fixture for every hook event', () => {
     const events = new Set(readdirSync(fixtures).map((f) => normalizeHookPayload(load(f), ROOT).event));
     expect([...events].sort()).toEqual(['PostToolUse', 'PreToolUse', 'SessionStart', 'Stop', 'UserPromptSubmit']);

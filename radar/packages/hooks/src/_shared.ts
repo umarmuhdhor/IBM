@@ -2,13 +2,8 @@
 // only a real `block` decision exits 2. Nothing here ever writes the token to a log.
 import { appendFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
-import {
-  ConfigMissingError,
-  loadLocalConfig,
-  normalizeHookPayload,
-  type LocalConfig,
-  type NormalizedHook,
-} from './placeholder/common.js';
+import { normalizeHookPayload, type NormalizedHook } from '@radar/common';
+import { ConfigMissingError, loadLocalConfig, type LocalConfig } from '@radar/common/node';
 
 export const STDIN_TIMEOUT_MS = 500;
 

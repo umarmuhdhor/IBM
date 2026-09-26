@@ -2,6 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
+    // typecheck only: contract tests import the fase 02 mock server from radar/scripts (build uses rootDir src)
+    "rootDir": "../..",
     "types": ["node"]
   },
   "include": ["src", "test", "build.mjs"]

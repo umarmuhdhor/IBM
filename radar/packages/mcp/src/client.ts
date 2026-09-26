@@ -1,5 +1,6 @@
 // Thin REST client for radar-mcp tools (R3 §2). Errors carry a short Indonesian message written for the model.
-import type { LocalConfig } from './placeholder/config.js';
+import type { LocalConfig } from '@radar/common/node';
+import type { z } from 'zod';
 
 export const MCP_FETCH_TIMEOUT_MS = 5_000;
 export const MSG_UNAVAILABLE = 'Server Radar tidak menjawab; lanjutkan pekerjaan lokal dan coba lagi nanti.';
@@ -57,4 +58,19 @@ export function createRadarClient(config: LocalConfig | null, timeoutMs = MCP_FE
     get: <T>(path: string) => call<T>('GET', path),
     post: <T>(path: string, body: unknown) => call<T>('POST', path, body),
   };
+}
+
+/**
+ * Check a server answer against its @radar/common schema (R3). A mismatch becomes a short message for the model
+ * instead of a TypeError deep inside the tool; the zod detail goes to stderr for the developer.
+ */
+export function expectShape<T>(schema: z.ZodType<T>, data: unknown, what: string): T {
+  const parsed = schema.safeParse(data);
+  if (parsed.success) return parsed.data;
+  const detail = parsed.error.issues
+    .slice(0, 3)
+    .map((i) => `${i.path.join('.') || '(root)'} ${i.message}`)
+    .join('; ');
+  process.stderr.write(`radar-mcp: ${what} response does not match R3: ${detail}\n`);
+  throw new RadarToolError(`Jawaban server Radar untuk ${what} tidak sesuai kontrak; beri tahu user dan coba lagi nanti.`);
 }

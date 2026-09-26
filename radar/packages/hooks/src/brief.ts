@@ -4,14 +4,8 @@
 // Always exits 0; server errors print nothing (fail-open).
 import { sendActivity } from './activity.js';
 import { loadContext, logLine, radarFetch, settleWithin } from './_shared.js';
-import {
-  ACTIVITY_TIMEOUT_MS,
-  BRIEF_MAX_LINES,
-  HOOK_SERVER_TIMEOUT_MS,
-  type BriefRes,
-  loadState,
-  saveState,
-} from './placeholder/common.js';
+import { ACTIVITY_TIMEOUT_MS, BRIEF_MAX_LINES, HOOK_SERVER_TIMEOUT_MS, type BriefRes } from '@radar/common';
+import { loadState, saveState } from '@radar/common/node';
 
 async function main(): Promise<void> {
   const arg = process.argv[2] as 'start' | 'prompt' | undefined;

@@ -3,7 +3,8 @@
 // Never prints to stdout. The block message goes to stderr: Bob IDE 2.2.0 passes it to the model (D-umar-01).
 import { sendActivity } from './activity.js';
 import { loadContext, logLine, radarFetch, settleWithin } from './_shared.js';
-import { EDIT_TOOLS_REGEX, HOOK_SERVER_TIMEOUT_MS, type LockCheckRes, saveState } from './placeholder/common.js';
+import { EDIT_TOOLS_REGEX, HOOK_SERVER_TIMEOUT_MS, type LockCheckRes } from '@radar/common';
+import { saveState } from '@radar/common/node';
 
 // Whole-hook budget from process start (stdin + server call); keeps the hook under the 1.8 s fail-open target
 // even when the host is slow to close stdin.

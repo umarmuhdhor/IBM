@@ -2,7 +2,7 @@
 // shows up in the Bob transcript, fase 01 spike 3) and always exits 0. File content never leaves the machine.
 import { sendActivity } from './activity.js';
 import { loadContext, logLine, radarFetch, settleWithin } from './_shared.js';
-import { ACTIVITY_TIMEOUT_MS, EDIT_TOOLS_REGEX } from './placeholder/common.js';
+import { ACTIVITY_TIMEOUT_MS, EDIT_TOOLS_REGEX } from '@radar/common';
 
 const OWN_MCP_TOOL = /^mcp__radar__/;
 

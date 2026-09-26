@@ -3,7 +3,7 @@
 // stdout is the MCP channel: diagnostics go to stderr only.
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { createRadarClient } from './client.js';
-import { ConfigMissingError, loadLocalConfig, type LocalConfig } from './placeholder/config.js';
+import { ConfigInvalidError, ConfigMissingError, loadLocalConfig, type LocalConfig } from '@radar/common/node';
 import { createRadarServer } from './server.js';
 
 export function rootFromArgs(argv: string[], env: NodeJS.ProcessEnv): string {
@@ -20,7 +20,8 @@ async function main(): Promise<void> {
   try {
     config = loadLocalConfig(root);
   } catch (err) {
-    if (!(err instanceof ConfigMissingError)) throw err;
+    // a missing or broken .radar/local.json must not kill the server: the tools then ask the user to run radar join
+    if (!(err instanceof ConfigMissingError || err instanceof ConfigInvalidError)) throw err;
     process.stderr.write(`radar-mcp: ${err.message}; tools will ask the user to run radar join\n`);
   }
   const role = config?.role ?? (process.env.RADAR_ROLE === 'pm' ? 'pm' : 'coder');
