@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import type { RadarEvent } from '../packages/common/src/index.js';
-import { computeMetrics, percentile, renderMarkdown } from './metrics.js';
+import { computeMetrics, hookLockCheckMs, percentile, renderMarkdown } from './metrics.js';
 
 const flow = JSON.parse(readFileSync(new URL('../packages/server/test/fixtures/flow-export.json', import.meta.url), 'utf8')) as {
   events: RadarEvent[];
@@ -84,6 +84,23 @@ describe('latency series', () => {
   it('reports review.flagged', () => {
     const m = computeMetrics([ev('review.flagged', 'C', { reviewId: 'P-3', taskId: 'T-1', flags: [{ path: 'b.ts', issue: 'x' }] })]);
     expect(m.reviews.flagged).toBe(1);
+  });
+});
+
+describe('hookLockCheckMs', () => {
+  it('reads the end-to-end lock_guard durations from .radar/hook.log', () => {
+    const log = [
+      '2026-09-26T08:21:21.100Z lock_guard decision=allow tool=apply_diff ms=41',
+      '2026-09-26T08:21:22.100Z lock_guard decision=block tool=write_to_file ms=58',
+      '2026-09-26T08:21:23.100Z mark_ai_edit ai-edits not sent: Error: POST /v1/ai-edits → 404',
+      '2026-09-26T08:21:24.100Z lock_guard locks/check failed: timeout',
+    ].join('\n');
+    expect(hookLockCheckMs(log)).toEqual([41, 58]);
+  });
+
+  it('feeds the lock-check series when given, instead of server metric rows', () => {
+    const m = computeMetrics([], { hookMs: [41, 58, 300] });
+    expect(m.lockCheck).toMatchObject({ n: 3, p95: 300, source: 'hook' });
   });
 });
 

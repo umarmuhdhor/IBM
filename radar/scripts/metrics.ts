@@ -1,7 +1,8 @@
 // PRD §04 metrics from a Radar event export (fase 13 step 4).
-// usage: tsx scripts/metrics.ts --events <export.json> [--metric-rows <rows.json>] [--out <metrics.json>]
+// usage: tsx scripts/metrics.ts --events <export.json> [--hook-log <hook.log> ...] [--metric-rows <rows.json>] [--out <metrics.json>]
 // The export is the body of GET /v1/events/export or GET /admin/export ({ events: [...] }); several pages may be
-// concatenated into one array. Metric rows ({ name, value }[]) are optional: the export does not carry them.
+// concatenated into one array. Lock-check latency comes from each coder's .radar/hook.log (end-to-end hook time,
+// PRD §04 "log waktu di hook"); server metric rows ({ name, value }[]) are a fallback: the export does not carry them.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import type { RadarEvent } from '../packages/common/src/index.js';
@@ -23,7 +24,7 @@ export interface WriterViolation {
 export interface Metrics {
   events: number;
   sync: Series;
-  lockCheck: Series;
+  lockCheck: Series & { source: 'hook' | 'server' | 'none' };
   writers: { changes: number; violations: WriterViolation[]; unlocked: number };
   blocks: { total: number; viaHook: number; rejectedWrites: number };
   requests: { created: number; decided: number; auto: number; decisionMs: Series & { median: number } };
@@ -53,14 +54,28 @@ function series(values: number[]): Series {
 type P = Record<string, unknown>;
 const str = (p: P, k: string): string | null => (typeof p[k] === 'string' ? (p[k] as string) : null);
 
-export function computeMetrics(events: readonly RadarEvent[], opts: { metricRows?: readonly MetricRow[] } = {}): Metrics {
+/** lock_guard durations from a .radar/hook.log (`<iso> lock_guard decision=… tool=… ms=<n>`). */
+export function hookLockCheckMs(log: string): number[] {
+  return [...log.matchAll(/ lock_guard decision=\S+ tool=\S+ ms=(\d+)$/gm)].map((x) => Number(x[1]));
+}
+
+function lockCheckSeries(opts: { metricRows?: readonly MetricRow[]; hookMs?: readonly number[] }): Metrics['lockCheck'] {
+  if (opts.hookMs && opts.hookMs.length > 0) return { ...series([...opts.hookMs]), source: 'hook' };
+  const rows = (opts.metricRows ?? []).filter((r) => r.name === 'lock_check_ms').map((r) => r.value);
+  return { ...series(rows), source: rows.length > 0 ? 'server' : 'none' };
+}
+
+export function computeMetrics(
+  events: readonly RadarEvent[],
+  opts: { metricRows?: readonly MetricRow[]; hookMs?: readonly number[] } = {},
+): Metrics {
   const ordered = [...events].sort((a, b) => a.id - b.id);
   const holder = new Map<string, string>(); // path → member holding (or reserving) the lock
   const requestOpened = new Map<string, number>();
   const m: Metrics = {
     events: ordered.length,
     sync: series([]),
-    lockCheck: series((opts.metricRows ?? []).filter((r) => r.name === 'lock_check_ms').map((r) => r.value)),
+    lockCheck: lockCheckSeries(opts),
     writers: { changes: 0, violations: [], unlocked: 0 },
     blocks: { total: 0, viaHook: 0, rejectedWrites: 0 },
     requests: { created: 0, decided: 0, auto: 0, decisionMs: { ...series([]), median: Number.NaN } },
@@ -149,7 +164,11 @@ export function renderMarkdown(m: Metrics): string {
   const d = m.requests.decisionMs;
   const rows: [string, string, string][] = [
     ['Latensi sinkron (event `sync.applied`)', 'p95 < 1000 ms', fmt(m.sync)],
-    ['Latensi cek kunci (server `lock_check_ms`)', 'p95 < 300 ms', fmt(m.lockCheck)],
+    [
+      `Latensi cek kunci (${m.lockCheck.source === 'server' ? 'server `lock_check_ms`' : 'hook, end-to-end'})`,
+      'p95 < 300 ms',
+      fmt(m.lockCheck),
+    ],
     [
       'Dua penulis bersamaan',
       '0',
@@ -158,7 +177,7 @@ export function renderMarkdown(m: Metrics): string {
     ['Blokir', '–', `${m.blocks.total} (${m.blocks.viaHook} lewat hook), ${m.blocks.rejectedWrites} tulisan ditolak`],
     [
       'Blokir → keputusan',
-      'tercatat',
+      '< 60 s (demo)',
       d.n === 0 ? 'tidak ada data' : `median ${Math.round(d.median / 1000)} s · max ${Math.round(d.max / 1000)} s (n=${d.n}, ${m.requests.auto} otomatis)`,
     ],
     ['Masalah antar-file tertangkap (`review.flagged`)', '≥ 1', String(m.reviews.flagged)],
@@ -180,12 +199,14 @@ export function main(argv: string[]): number {
   };
   const eventsFile = arg('--events');
   if (!eventsFile) {
-    console.error('usage: tsx scripts/metrics.ts --events <export.json> [--metric-rows <rows.json>] [--out <metrics.json>]');
+    console.error('usage: tsx scripts/metrics.ts --events <export.json> [--hook-log <hook.log> ...] [--metric-rows <rows.json>] [--out <metrics.json>]');
     return 2;
   }
   const rowsFile = arg('--metric-rows');
   const metricRows = rowsFile ? (JSON.parse(readFileSync(rowsFile, 'utf8')) as MetricRow[]) : [];
-  const m = computeMetrics(readEvents(eventsFile), { metricRows });
+  const hookLogs = argv.flatMap((a, i) => (argv[i - 1] === '--hook-log' ? [a] : []));
+  const hookMs = hookLogs.flatMap((f) => hookLockCheckMs(readFileSync(f, 'utf8')));
+  const m = computeMetrics(readEvents(eventsFile), { metricRows, hookMs });
   const out = arg('--out');
   if (out) writeFileSync(out, `${JSON.stringify(m, null, 2)}\n`);
   console.log(renderMarkdown(m));
