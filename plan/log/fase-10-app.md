@@ -13,6 +13,8 @@
 5. [ ] Uji alur 4 Mac dan p95 latensi Watch Bob dari peristiwa Bob IDE nyata; jalankan pada milestone bersama tim.
 6. [x] Pra-cek server publik Sab 20:48 WITA tanpa kode akses: `GET /healthz` → HTTP 200 (`ok: true`, workspace `toko-demo`, versi `0.3.0`); `GET /v1/state` tanpa kode → HTTP 401. Ini membuktikan endpoint dan penolakan akses anonim, belum membuktikan reset anggota, koneksi app, atau alur demo.
 7. [x] Pemeriksaan UI lokal: snapshot lama sengaja dipertahankan saat WS putus, tetapi status bar dan Team masih menyebut anggota online serta menawarkan Watch. Test `RadarPanel.test.tsx` merah 1/3, lalu hijau 3/3 setelah status offline tidak menghitung anggota dan panel menyembunyikan aksi berbasis data usang. `pnpm -C app tc` dan oxlint terfokus lulus. Screenshot panel offline yang dipotong tanpa data pribadi: `app/docs/img/app-offline-state.png`.
+8. [x] Diagnostik koneksi: screenshot pengguna menunjukkan Settings "Saved, waiting for server" walau server sehat. Test merah 3/17 membuktikan penolakan akses 4401 tidak sampai ke UI; sesudah perbaikan, Settings menampilkan "Access rejected" untuk kode ditolak dan pesan berbeda untuk koneksi jaringan. Pengujian ulang via koneksi tersimpan app menghasilkan `access-rejected` tanpa membaca kode akses. Screenshot aman: `app/docs/img/app-access-rejected.png`. Kode Mission Control yang baru perlu dimasukkan pengguna sendiri setelah reset Core.
+9. [x] Pilihan PM Lead: dropdown sebelumnya hanya Coder/Mission Control padahal kit Bob PM memakai peran `pm`. Dua test merah (penyimpanan menolak `pm`, dropdown memetakan ke Coder), lalu keduanya hijau setelah opsi PM Lead ditambahkan. PM anggota memakai klien app; hak Approve tetap hanya pada kode Mission Control. Screenshot aman: `app/docs/img/app-pm-role.png`.
 
 ## Pemeriksaan tampilan
 
@@ -20,6 +22,8 @@
 |---|---|
 | Team tersambung | Hierarki, kartu anggota, dan tombol Watch terbaca; tidak ada temuan HIGH pada screenshot CDP lokal. |
 | Team terputus | Label merah dan ajakan buka Settings jelas; kartu online lama tidak terlihat. Screenshot `app/docs/img/app-offline-state.png`. |
+| Settings ketika akses ditolak | Pesan error spesifik, URL/kode tidak ditampilkan pada screenshot. Screenshot `app/docs/img/app-access-rejected.png`. |
+| Pilihan peran | Coder, PM Lead, Mission Control tersedia; teks bantuan menjelaskan kode PM dan MC yang berbeda. Screenshot `app/docs/img/app-pm-role.png`. |
 | Batas | Review visual manual dilakukan karena skill `better-interface` tidak tersedia di lingkungan ini. |
 
 ## LANGKAH MANUAL — app pada 4 Mac
