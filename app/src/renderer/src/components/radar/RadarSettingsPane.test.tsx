@@ -1,12 +1,15 @@
 // @vitest-environment happy-dom
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { RadarSettingsPane } from './RadarSettingsPane'
 
 const runChecks = vi.fn()
+const getSharePrompts = vi.fn()
+const setSharePrompts = vi.fn()
 
 beforeEach(() => {
-  vi.stubGlobal('api', { radar: { runChecks } })
+  getSharePrompts.mockResolvedValue(false)
+  vi.stubGlobal('api', { radar: { runChecks, getSharePrompts, setSharePrompts } })
 })
 
 afterEach(() => {
@@ -49,4 +52,39 @@ it('says when no workspace folder is open', async () => {
 
   expect(await screen.findByText('Open a workspace folder first')).toBeTruthy()
   expect(runChecks).toHaveBeenCalledWith(null)
+})
+
+it('loads the share prompts flag for the open folder and saves a change', async () => {
+  getSharePrompts.mockResolvedValue(false)
+  setSharePrompts.mockResolvedValue(true)
+  render(<RadarSettingsPane connection={summary} connected workspacePath="/work/toko-demo" onConnectionChange={vi.fn()} />)
+
+  const toggle = screen.getByRole('switch', { name: 'Share my prompts' })
+  await waitFor(() => expect(toggle.hasAttribute('disabled')).toBe(false))
+  expect(getSharePrompts).toHaveBeenCalledWith('/work/toko-demo')
+  expect(toggle.getAttribute('aria-checked')).toBe('false')
+
+  fireEvent.click(toggle)
+
+  expect(setSharePrompts).toHaveBeenCalledWith('/work/toko-demo', true)
+  await waitFor(() => expect(toggle.getAttribute('aria-checked')).toBe('true'))
+})
+
+it('keeps the previous value and explains when saving fails', async () => {
+  getSharePrompts.mockResolvedValue(true)
+  setSharePrompts.mockRejectedValue(new Error('EACCES'))
+  render(<RadarSettingsPane connection={summary} connected workspacePath="/work/toko-demo" onConnectionChange={vi.fn()} />)
+
+  const toggle = screen.getByRole('switch', { name: 'Share my prompts' })
+  await waitFor(() => expect(toggle.getAttribute('aria-checked')).toBe('true'))
+  fireEvent.click(toggle)
+
+  expect(await screen.findByText('Could not save to .radar/local.json. Check that this folder is writable.')).toBeTruthy()
+  expect(toggle.getAttribute('aria-checked')).toBe('true')
+})
+
+it('disables prompt sharing until a workspace folder is open', () => {
+  render(<RadarSettingsPane connection={null} connected={false} workspacePath={null} onConnectionChange={vi.fn()} />)
+  expect(screen.getByRole('switch', { name: 'Share my prompts' }).hasAttribute('disabled')).toBe(true)
+  expect(getSharePrompts).not.toHaveBeenCalled()
 })

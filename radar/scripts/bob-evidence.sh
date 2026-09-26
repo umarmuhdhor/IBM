@@ -1,24 +1,24 @@
 #!/usr/bin/env bash
 # Capture the IBM Bob IDE task summary as judging evidence (R7 §2–§3).
 #
-# usage: bob-evidence.sh <nama> <NN> <slug> [--interactive] [--force]
+# usage: bob-evidence.sh <nama> <NN> <slug> [--md <path>] [--interactive] [--force]
 #   <nama>         member id from plan/team.json (alief, umar, aarief, imelda)
 #   <NN>           task number per member, two digits (01, 02, …)
 #   <slug>         short description, [a-z0-9_]+ (e.g. toko_demo)
+#   --md <path>    copy this Markdown task export into bob_sessions/ alongside the PNG
 #   --interactive  pick the region by hand (screencapture -i) instead of the Bob IDE window
 #   --force        overwrite an existing PNG without asking
 #
 # Output: bob_sessions/<team>_<nama>_task<NN>_<slug>_summary.png + one row in bob_sessions/index/<nama>.md
 # (one index file per member so lane PRs never conflict; bob_sessions/INDEX.md is assembled in fase 14)
-# exit 0 ok · 1 arguments · 2 window/screenshot failed
-# (--md <path> and the secret filter, exit 3/4, are added by Bob slice C4 in fase 11.)
+# exit 0 ok · 1 arguments · 2 window/screenshot failed · 3 md not found · 4 secret detected in md
 #
 # Never reads .env or .radar/. macOS needs Screen Recording permission for the terminal once
 # (System Settings → Privacy & Security → Screen Recording).
 set -euo pipefail
 
 usage() {
-  sed -n '4,10p' "$0" | sed 's/^# \{0,1\}//' >&2
+  sed -n '4,11p' "$0" | sed 's/^# \{0,1\}//' >&2
   exit 1
 }
 
@@ -29,14 +29,18 @@ die() {
 
 interactive=false
 force=false
+md_path=""
 args=()
-for arg in "$@"; do
-  case "$arg" in
-    --interactive) interactive=true ;;
-    --force) force=true ;;
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --interactive) interactive=true ; shift ;;
+    --force)       force=true ; shift ;;
+    --md)
+      [[ $# -ge 2 ]] || die 1 "--md requires a path argument"
+      md_path="$2" ; shift 2 ;;
     -h | --help) usage ;;
-    --*) die 1 "unknown option: $arg" ;;
-    *) args+=("$arg") ;;
+    --*) die 1 "unknown option: $1" ;;
+    *) args+=("$1") ; shift ;;
   esac
 done
 [[ ${#args[@]} -eq 3 ]] || usage
@@ -64,17 +68,25 @@ lane="$(node -e '
 sessions="$root/bob_sessions"
 file="${team}_${name}_task${num}_${slug}_summary.png"
 out="$sessions/$file"
+md_dest=""
+if [[ -n "$md_path" ]]; then
+  [[ -f "$md_path" ]] || die 3 "md source not found: $md_path"
+  if grep -qiE '(rdr_|ghp_|sk-[a-zA-Z0-9]{20,}|apikey|api_key|Bearer )[^[:space:]]{4,}' "$md_path" 2>/dev/null; then
+    die 4 "secret pattern detected in $md_path — refusing to copy"
+  fi
+  md_dest="$sessions/${team}_${name}_task${num}_${slug}.md"
+fi
 # The IBM template .gitignore silently drops names like these (R5 §8); refuse before capturing.
 [[ ! "$file" =~ (token|secret|password|credential|api_?key) ]] ||
   die 1 "'$file' would be git-ignored by the IBM template; pick another slug"
 mkdir -p "$sessions"
 
-if [[ -e "$out" && "$force" != true ]]; then
+if [[ ( -e "$out" || ( -n "$md_dest" && -e "$md_dest" ) ) && "$force" != true ]]; then
   if [[ -t 0 ]]; then
-    read -r -p "$file already exists. Overwrite? [y/N] " answer
-    [[ "$answer" =~ ^[Yy]$ ]] || die 1 "kept existing $file"
+    read -r -p "Task evidence already exists. Overwrite? [y/N] " answer
+    [[ "$answer" =~ ^[Yy]$ ]] || die 1 "kept existing task evidence"
   else
-    die 1 "$file already exists (pass --force to overwrite)"
+    die 1 "task evidence already exists (pass --force to overwrite)"
   fi
 fi
 
@@ -106,6 +118,12 @@ else
   screencapture -o -x -l "$window_id" "$out" || die 2 "screencapture failed (Screen Recording permission?)"
 fi
 [[ -s "$out" ]] || die 2 "screenshot is empty: $out"
+
+# --md: copy the preflighted task Markdown export into bob_sessions/.
+if [[ -n "$md_dest" ]]; then
+  cp "$md_path" "$md_dest"
+  echo "bob_sessions/$(basename "$md_dest")"
+fi
 
 mkdir -p "$sessions/index"
 index="$sessions/index/$name.md"

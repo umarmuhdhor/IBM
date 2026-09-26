@@ -4,6 +4,7 @@ import type { RadarConnection } from '../../shared/radar-connection'
 import type { RadarWsUpdate } from '../../shared/radar-update'
 import { cancelTask, decideProposal, revokeLock } from './api'
 import { runRadarChecks } from './checks'
+import { readSharePrompts, writeSharePrompts } from './share-prompts'
 import {
   clearRadarConnection,
   getRadarConnectionSummary,
@@ -69,6 +70,18 @@ export function registerRadarConnectionIpc(): void {
   ipcMain.handle('radar:checks', (_event, workspacePath: unknown) =>
     runRadarChecks(typeof workspacePath === 'string' ? workspacePath : null)
   )
+  ipcMain.handle('radar:get-share-prompts', (_event, workspacePath: unknown) => {
+    if (typeof workspacePath !== 'string') {
+      throw new Error('Invalid Live Collab workspace path')
+    }
+    return readSharePrompts(workspacePath)
+  })
+  ipcMain.handle('radar:set-share-prompts', (_event, value: unknown) => {
+    if (!isRecord(value) || typeof value.workspacePath !== 'string' || typeof value.enabled !== 'boolean') {
+      throw new Error('Invalid Live Collab share prompts request')
+    }
+    return writeSharePrompts(value.workspacePath, value.enabled)
+  })
   ipcMain.handle('radar:decide', (_event, value: unknown) => {
     if (
       !isRecord(value) ||
