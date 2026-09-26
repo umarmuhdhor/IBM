@@ -467,3 +467,13 @@ Format:
 - Alternatif yang ditolak: banyak workspace per server (butuh routing Durable Object per workspace, terlalu besar sebelum deadline); menyalin folder pemilik ke `~/live-collab/<ws>` (pemilik harus pindah folder); membiarkan sync agent mengunggah file satu per satu (PM tidak boleh menulis, dan unggah lewat HTTP lebih cepat).
 - Dampak: Aarief (kartu Share a folder di app), Imelda (demo dimulai dari pemilik membuka folder). Panduan: `deploy.md`.
 - File ref/ yang diperbarui: – (endpoint baru dicatat di sini; R3 diperbarui di fase integrasi).
+
+## D-alief-13 · 27 Sep 2026 · pasca fase 12 · Kode terbuka yang sudah dipakai tidak bisa diambil orang lain
+
+- Keputusan:
+  1. **Kontrak (milik Core):** kolom `join_code.open` (skema v4). Bernilai 1 untuk kode yang dibuat tanpa `member` dan bukan kode owner. Migrasi v3→v4 menandai semua kode non-owner lama sebagai `open = 1` (tidak bisa dibedakan lagi; aman karena kode kedaluwarsa).
+  2. `POST /v1/join`: kode terbuka yang sudah membuat member hanya boleh ditukar lagi oleh member itu sendiri (`name` sama, tanpa beda huruf besar/kecil). Orang lain, atau permintaan tanpa nama, mendapat 409 `This code was already used by <name>. Ask the owner for a new code.` Token dan socket member pertama tidak disentuh.
+  3. Kode member dari admin (`admin code --member B`) dan kode owner tidak berubah: tetap bisa dipakai ulang untuk memutar token.
+- Alasan: e2e 27 Sep: "Eve" (pm) menukar kode yang sudah dipakai B dan diam-diam mendapat kursi B (coder), lalu B ditendang dengan 4401. Kode hidup 72 jam, jadi siapa pun yang melihat kode bisa mengambil kursi teman.
+- Alternatif yang ditolak: kode terbuka sekali pakai (member yang pindah Mac butuh kode baru); membuat member baru untuk nama lain (satu kode jadi undangan untuk banyak orang tanpa sepengetahuan owner).
+- Dampak: Aarief (pesan 409 tampil apa adanya di kartu Join). Skrip join mengirim `RADAR_NAME`, jadi pemakaian ulang lewat skrip tetap jalan.

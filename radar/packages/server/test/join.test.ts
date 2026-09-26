@@ -89,10 +89,29 @@ describe('short join code (IN-03, D-alief-09)', () => {
     const state = (await call(stub, 'GET', '/v1/state', { token })).json;
     expect(state.members).toContainEqual(expect.objectContaining({ id: res.member, name: 'Sari', role: 'pm' }));
 
-    // second use: same member, name and role ignored
-    const again = JoinMemberRes.parse((await call(stub, 'POST', '/v1/join', { body: { code: made.code, name: 'Other', role: 'coder' } })).json);
+    // second use by the same person (same name, any case): same member and role, the old device is signed out
+    const again = JoinMemberRes.parse((await call(stub, 'POST', '/v1/join', { body: { code: made.code, name: 'sari', role: 'coder' } })).json);
     expect(again).toMatchObject({ member: res.member, role: 'pm' });
     expect((await call(stub, 'GET', '/v1/state', { token })).status).toBe(401);
+  });
+
+  it('a used open code refuses someone else and keeps the first member signed in (D-alief-13)', async () => {
+    const { stub } = freshWorkspace();
+    const t = await seedTestWorkspace(stub);
+    const { code } = AdminJoinCodeRes.parse((await call(stub, 'POST', '/v1/join-codes', { token: t.mc!, body: {} })).json);
+    const first = JoinMemberRes.parse((await call(stub, 'POST', '/v1/join', { body: { code, name: 'Budi', role: 'coder' } })).json);
+    const token = decodeInvite(first.invite).token;
+    const b = await hello(stub, token, 'sync');
+
+    for (const body of [{ code, name: 'Eve', role: 'pm' }, { code }]) {
+      const r = await call(stub, 'POST', '/v1/join', { body });
+      expect(r.status).toBe(409);
+      expect(r.json.error.message).toBe('This code was already used by Budi. Ask the owner for a new code.');
+    }
+    expect(await stillOpen(b.closed)).toBe('open');
+    expect((await call(stub, 'GET', '/v1/state', { token })).status).toBe(200);
+    const state = (await call(stub, 'GET', '/v1/state', { token })).json;
+    expect(state.members.map((m: { name: string }) => m.name)).not.toContain('Eve');
   });
 
   it('open codes fill the ids A–H in order and stop at 8 members', async () => {

@@ -35,6 +35,9 @@ import { registerRequestRoutes } from './routes/requests';
 import { registerTaskRoutes } from './routes/tasks';
 import { registerTeamRoutes } from './routes/team';
 
+const sameName = (a: string | undefined, b: string) =>
+  a !== undefined && a.trim().toLowerCase() === b.trim().toLowerCase();
+
 export function createApp(deps: WorkspaceDeps): Hono {
   const app = new Hono();
   app.onError((err) => toErrorResponse(err));
@@ -108,6 +111,15 @@ export function createApp(deps: WorkspaceDeps): Hono {
     }
     const member = getMember(deps.db, memberId);
     if (!member) throw notFound;
+    // D-alief-13: a used open code is not a seat anyone can take. Only the member it created (same name) may redeem
+    // it again, e.g. on a new Mac; anyone else is refused and the member stays signed in.
+    if (found.open && found.memberId !== null && !sameName(req.name, member.name)) {
+      throw new RadarError(
+        409,
+        'CONFLICT',
+        `This code was already used by ${member.name}. Ask the owner for a new code.`,
+      );
+    }
     const token = rotateToken(deps, member.id);
     const res: JoinRes = {
       workspace,
