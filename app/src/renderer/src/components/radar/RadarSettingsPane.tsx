@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
+import { Switch } from '@/components/ui/switch'
 import type { RadarChecks } from '../../../../shared/radar-checks'
 import type { RadarConnection, RadarConnectionSummary } from '../../../../shared/radar-connection'
 
@@ -37,6 +38,30 @@ export function RadarSettingsPane({ connection, connected, workspacePath, onConn
   const [message, setMessage] = useState<string | null>(null)
   const [checks, setChecks] = useState<RadarChecks | null>(null)
   const [checking, setChecking] = useState(false)
+  const [sharePrompts, setSharePrompts] = useState<boolean | null>(null)
+  const [savingShare, setSavingShare] = useState(false)
+  const [shareMessage, setShareMessage] = useState<string | null>(null)
+
+  useEffect(() => {
+    setSharePrompts(null)
+    setShareMessage(null)
+    if (!workspacePath) {
+      return
+    }
+    let active = true
+    window.api.radar.getSharePrompts(workspacePath).then((value) => {
+      if (active) {
+        setSharePrompts(value)
+      }
+    }).catch(() => {
+      if (active) {
+        setShareMessage('Could not read .radar/local.json in this folder.')
+      }
+    })
+    return () => {
+      active = false
+    }
+  }, [workspacePath])
 
   useEffect(() => {
     if (!connection) {
@@ -74,6 +99,21 @@ export function RadarSettingsPane({ connection, connected, workspacePath, onConn
     }
   }
 
+  const changeSharePrompts = async (enabled: boolean) => {
+    if (!workspacePath) {
+      return
+    }
+    setSavingShare(true)
+    setShareMessage(null)
+    try {
+      setSharePrompts(await window.api.radar.setSharePrompts(workspacePath, enabled))
+    } catch {
+      setShareMessage('Could not save to .radar/local.json. Check that this folder is writable.')
+    } finally {
+      setSavingShare(false)
+    }
+  }
+
   const disconnect = async () => {
     setBusy(true)
     try {
@@ -89,6 +129,7 @@ export function RadarSettingsPane({ connection, connected, workspacePath, onConn
   }
 
   return (
+    <>
     <form aria-label="Live Collab settings" className="max-w-lg space-y-3 p-4" onSubmit={(event) => { event.preventDefault(); void connect() }}>
       <h3 className="text-sm font-semibold">Connection</h3>
       <p className="text-xs text-muted-foreground">{connected ? 'Connected to Live Collab' : connection ? 'Saved, waiting for server' : 'Connect to a Live Collab workspace'}</p>
@@ -119,5 +160,17 @@ export function RadarSettingsPane({ connection, connected, workspacePath, onConn
         )}
       </div>
     </form>
+    <section aria-labelledby="share-prompts-title" className="max-w-lg space-y-2 px-4 pb-4">
+      <h3 id="share-prompts-title" className="text-sm font-semibold">Privacy</h3>
+      <div className="flex items-start justify-between gap-3 rounded-md border border-border bg-card p-3">
+        <div className="space-y-1">
+          <label htmlFor="share-prompts" className="text-xs font-medium">Share my prompts</label>
+          <p className="text-xs text-muted-foreground">{workspacePath ? 'Teammates watching your Bob see each prompt, cut to 200 characters. Off by default. Saved to .radar/local.json in this folder.' : 'Open a workspace folder to choose.'}</p>
+        </div>
+        <Switch id="share-prompts" checked={sharePrompts === true} disabled={!workspacePath || sharePrompts === null || savingShare} onCheckedChange={(checked) => void changeSharePrompts(checked)} />
+      </div>
+      {shareMessage && <p role="alert" className="text-xs text-destructive">{shareMessage}</p>}
+    </section>
+    </>
   )
 }

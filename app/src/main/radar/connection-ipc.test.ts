@@ -11,6 +11,7 @@ const validation = vi.hoisted(() => ({ isRadarConnection: vi.fn() }))
 const client = vi.hoisted(() => ({ connect: vi.fn(), disconnect: vi.fn() }))
 const windows = vi.hoisted(() => ({ getAllWindows: vi.fn(() => []) }))
 const checks = vi.hoisted(() => ({ runRadarChecks: vi.fn() }))
+const sharePrompts = vi.hoisted(() => ({ readSharePrompts: vi.fn(), writeSharePrompts: vi.fn() }))
 
 vi.mock('electron', () => ({
   ipcMain: { handle: vi.fn((name, handler) => handlers.set(name, handler)) },
@@ -18,6 +19,7 @@ vi.mock('electron', () => ({
 }))
 vi.mock('./secure-store', () => store)
 vi.mock('./checks', () => checks)
+vi.mock('./share-prompts', () => sharePrompts)
 vi.mock('../../shared/radar-connection', () => validation)
 vi.mock('./ws-client', () => ({
   RadarWsClient: class {
@@ -93,5 +95,24 @@ describe('Radar connection IPC', () => {
     expect(checks.runRadarChecks).toHaveBeenCalledWith('/work/toko-demo')
     await handlers.get('radar:checks')?.(null, { path: '/etc' })
     expect(checks.runRadarChecks).toHaveBeenLastCalledWith(null)
+  })
+
+  it('writes the share prompts flag only for a valid request', async () => {
+    sharePrompts.writeSharePrompts.mockResolvedValue(true)
+    await expect(
+      handlers.get('radar:set-share-prompts')?.(null, { workspacePath: '/work/toko-demo', enabled: true })
+    ).resolves.toBe(true)
+    expect(sharePrompts.writeSharePrompts).toHaveBeenCalledWith('/work/toko-demo', true)
+
+    expect(() => handlers.get('radar:set-share-prompts')?.(null, { workspacePath: '/work/toko-demo', enabled: 'yes' })).toThrow(/Invalid/)
+    expect(() => handlers.get('radar:set-share-prompts')?.(null, { enabled: true })).toThrow(/Invalid/)
+    expect(sharePrompts.writeSharePrompts).toHaveBeenCalledOnce()
+  })
+
+  it('reads the share prompts flag for a workspace path only', async () => {
+    sharePrompts.readSharePrompts.mockResolvedValue(true)
+    await expect(handlers.get('radar:get-share-prompts')?.(null, '/work/toko-demo')).resolves.toBe(true)
+    expect(sharePrompts.readSharePrompts).toHaveBeenCalledWith('/work/toko-demo')
+    expect(() => handlers.get('radar:get-share-prompts')?.(null, { path: '/etc' })).toThrow(/Invalid/)
   })
 })
