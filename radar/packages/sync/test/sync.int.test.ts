@@ -82,7 +82,7 @@ describe('sync agent against the real server', () => {
     await waitFor(() => read(C.root, 'README.md.radar-rejected') === '# PM edit\n', 3000, 'sidecar');
     await waitFor(() => read(C.root, 'README.md') === '# toko-demo\n', 3000, 'restore');
     expect(C.a.stats.rejected).toBe(1);
-    expect(notices.join('\n')).toMatch(/PM tidak menulis file/);
+    expect(notices.join('\n')).toMatch(/A PM does not write files/);
     await sleep(300);
     expect(read(A.root, 'README.md')).toBe('# toko-demo\n');
     expect(read(B.root, 'README.md')).toBe('# toko-demo\n');
@@ -135,8 +135,8 @@ describe('sync agent against the real server', () => {
     await waitFor(() => read(A.root, 'src/utils.ts') === '// B offline edit\n', 5000, 'offline edit reaches A');
     expect(B.a.stats.updatesSent).toBe(1);
     // disconnect and reconnect are shown without --verbose
-    expect(notices.join('\n')).toMatch(/terputus/);
-    expect(notices.join('\n')).toMatch(/tersambung lagi/);
+    expect(notices.join('\n')).toMatch(/Lost the connection/);
+    expect(notices.join('\n')).toMatch(/Connected to the server again/);
   }, 10_000);
 
   it('SY-07: offline edits after reconnect — own file is sent, a file changed on the server meanwhile becomes .radar-conflict', async () => {
@@ -213,13 +213,24 @@ describe('sync agent against the real server', () => {
     await agent(t.A!, 'A');
     await waitFor(() => first.a.stopped, 3000, 'first agent stopped');
     expect(first.a.stopReason).toMatch(/4000/);
+    expect(first.a.stopKind).toBe('replaced');
+  }, 10_000);
+
+  it('D-alief-15: after the workspace is reset (Stop sharing), the agent stops with workspace-closed', async () => {
+    const t = await seedTestWorkspace(server.url, SEED);
+    const B = await agent(t.B!, 'B');
+    await seedTestWorkspace(server.url, SEED);
+    await waitFor(() => B.a.stopped, 5000, 'B stopped');
+    expect(B.a.stopKind).toBe('workspace-closed');
+    expect(B.a.stopReason).toBe('The owner stopped sharing this workspace.');
   }, 10_000);
 
   it('a wrong token fails start() instead of retrying forever', async () => {
     await seedTestWorkspace(server.url, SEED);
     const a = new SyncAgent({ root: tempDir(), server: server.url, token: 'rdr_wrong', member: 'A', log: () => {}, notify: () => {}, ...FAST });
     agents.push(a);
-    await expect(a.start()).rejects.toThrow(/4401|token/i);
+    // A token the server does not know belongs to a workspace that is gone (D-alief-15).
+    await expect(a.start()).rejects.toThrow(/stopped sharing/);
   });
 
   it('ignored and oversized files are never sent', async () => {

@@ -39,14 +39,14 @@ export class InviteInvalidError extends Error {
 /** Throws InviteInvalidError without echoing the code (it holds a token). */
 export function decodeInvite(code: string): Invite {
   const s = code.trim();
-  if (!s.startsWith(INVITE_PREFIX)) throw new InviteInvalidError(`Kode undangan harus diawali ${INVITE_PREFIX}.`);
+  if (!s.startsWith(INVITE_PREFIX)) throw new InviteInvalidError(`An invite code starts with ${INVITE_PREFIX}.`);
   let raw: unknown;
   try {
     raw = JSON.parse(new TextDecoder().decode(fromBase64Url(s.slice(INVITE_PREFIX.length))));
   } catch {
-    throw new InviteInvalidError('Kode undangan rusak atau terpotong.');
+    throw new InviteInvalidError('The invite code is damaged or cut off.');
   }
   const parsed = Invite.safeParse(raw);
-  if (!parsed.success) throw new InviteInvalidError('Kode undangan tidak lengkap atau dari versi lain.');
+  if (!parsed.success) throw new InviteInvalidError('The invite code is incomplete or from another version.');
   return parsed.data;
 }

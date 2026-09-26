@@ -19,7 +19,7 @@ describe('invite code (IN-02)', () => {
     expect(() => decodeInvite('rdr_xyz')).toThrow(InviteInvalidError);
     expect(() => decodeInvite(code.slice(0, 20))).toThrow(InviteInvalidError);
     const noToken = INVITE_PREFIX + btoa(JSON.stringify({ v: 1, server: sample.server, workspace: 'w', member: 'B' })).replace(/=+$/, '');
-    expect(() => decodeInvite(noToken)).toThrow(/tidak lengkap/);
+    expect(() => decodeInvite(noToken)).toThrow(/incomplete/);
     expect(() => decodeInvite(code.slice(0, 30))).toThrow(expect.objectContaining({ message: expect.not.stringContaining(code.slice(8, 30)) }));
   });
 

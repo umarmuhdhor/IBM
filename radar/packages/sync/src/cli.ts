@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // `radar` CLI (R1 §5, fase 04 step 1): join, start, status, kit install; `task use` and `agent` are P1 stubs.
+import type { EventEmitter } from 'node:events';
 import { appendFileSync, chmodSync, existsSync, mkdirSync, readFileSync, realpathSync, statSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -7,7 +8,7 @@ import { Command, Option } from 'commander';
 import pc from 'picocolors';
 import { decodeInvite, HealthRes, InviteInvalidError, MEMBER_COLORS, TasksRes } from '@radar/common';
 import { ConfigInvalidError, ConfigMissingError, loadLocalConfig, type LocalConfig } from '@radar/common/node';
-import { SyncAgent, SYNC_CLIENT_VERSION } from './agent.js';
+import { SyncAgent, SYNC_CLIENT_VERSION, type StopKind } from './agent.js';
 import { findKitDir, installKit, type KitRole } from './kit.js';
 import { terminalNotifier } from './notify.js';
 import type { SyncMode } from './watcher.js';
@@ -78,12 +79,14 @@ interface RunFlags {
 }
 
 /**
- * `--json-status` lines for the desktop app: `status` on every change, and `conflict` when a local copy that
- * differed from the server was kept as `<file>.radar-conflict` (D-alief-14), so the app can list those files.
+ * `--json-status` lines for the desktop app: `status` on every change, `conflict` when a local copy that
+ * differed from the server was kept as `<file>.radar-conflict` (D-alief-14), and `stopped` with the reason
+ * when sync ends for good (D-alief-15), so the app can show a friendly state instead of an error.
  */
-export function wireJsonStatus(agent: Pick<SyncAgent, 'on'>, out: (line: string) => void): void {
+export function wireJsonStatus(agent: Pick<EventEmitter, 'on'>, out: (line: string) => void): void {
   agent.on('status', (s: object) => out(JSON.stringify({ type: 'status', ts: Date.now(), ...s })));
   agent.on('conflict', (c: { path: string; sidecar: string }) => out(JSON.stringify({ type: 'conflict', ts: Date.now(), path: c.path, sidecar: c.sidecar })));
+  agent.on('stopped', (message: string, reason: StopKind) => out(JSON.stringify({ type: 'stopped', ts: Date.now(), reason, message })));
 }
 
 /** Runs the agent in the foreground until Ctrl-C or a fatal close (4401/4000). Returns the exit code. */
@@ -95,7 +98,7 @@ export async function runAgent(cfg: LocalConfig, flags: RunFlags = {}): Promise<
     token: cfg.token,
     member: cfg.member,
     mode: flags.mode ?? (process.env.SYNC === 'poll-1s' ? 'poll-1s' : 'watch'),
-    notify: terminalNotifier(),
+    notify: terminalNotifier(undefined, { plain: flags.jsonStatus ?? false }),
     ...(flags.verbose ? { log: (l: string) => out(pc.dim(l)) } : {}),
   });
   if (flags.jsonStatus) wireJsonStatus(agent, out);
@@ -117,8 +120,8 @@ export async function runAgent(cfg: LocalConfig, flags: RunFlags = {}): Promise<
   }
   const s = agent.status();
   if (!flags.jsonStatus) {
-    out(`${memberDot(s.member ?? cfg.member)} terhubung sebagai ${s.member ?? cfg.member} (${s.role ?? cfg.role}) · ${s.files} file · ${cfg.server}`);
-    agent.on('snapshot', (x: { files: number; conflicts: number }) => out(pc.dim(`snapshot: ${x.files} file, ${x.conflicts} konflik`)));
+    out(`${memberDot(s.member ?? cfg.member)} connected as ${s.member ?? cfg.member} (${s.role ?? cfg.role}) · ${s.files} files · ${cfg.server}`);
+    agent.on('snapshot', (x: { files: number; conflicts: number }) => out(pc.dim(`snapshot: ${x.files} files, ${x.conflicts} conflicts`)));
   }
   flags.afterStart?.(agent);
   return done;
@@ -141,10 +144,10 @@ export async function printStatus(cfg: LocalConfig, out: (s: string) => void): P
   try {
     const h = await getJson(`${cfg.server}/healthz`);
     const health = HealthRes.safeParse(h.json);
-    out(health.success ? `koneksi  ${pc.green('ok')} · server v${health.data.version} · ${health.data.workspace}` : `koneksi  ${pc.red(`HTTP ${h.status}`)}`);
+    out(health.success ? `server   ${pc.green('ok')} · v${health.data.version} · ${health.data.workspace}` : `server   ${pc.red(`HTTP ${h.status}`)}`);
     if (!health.success) return 1;
   } catch (err) {
-    out(`koneksi  ${pc.red(`gagal: ${(err as Error).message}`)}`);
+    out(`server   ${pc.red(`unreachable: ${(err as Error).message}`)}`);
     return 1;
   }
   try {
@@ -152,22 +155,22 @@ export async function printStatus(cfg: LocalConfig, out: (s: string) => void): P
     const tasks = TasksRes.safeParse(t.json);
     if (tasks.success) {
       const mine = tasks.data.tasks.filter((x) => x.ownerId === cfg.member);
-      out(`task     aktif ${tasks.data.activeTaskId ?? '-'} · ${mine.length} task milikku`);
+      out(`task     active ${tasks.data.activeTaskId ?? '-'} · ${mine.length} mine`);
       const locks = mine.flatMap((x) => x.files.filter((f) => f.lock !== null).map((f) => `${f.path} (${f.lock})`));
-      out(`kunci    ${locks.length ? locks.join(', ') : '-'}`);
+      out(`locks    ${locks.length ? locks.join(', ') : '-'}`);
     } else {
-      out(`task     ${pc.dim(`belum tersedia (HTTP ${t.status}, fase 05)`)}`);
+      out(`task     ${pc.dim(`not available (HTTP ${t.status})`)}`);
     }
   } catch (err) {
-    out(`task     ${pc.yellow(`gagal: ${(err as Error).message}`)}`);
+    out(`task     ${pc.yellow(`failed: ${(err as Error).message}`)}`);
   }
   return 0;
 }
 
 function reportKit(r: ReturnType<typeof installKit>, role: KitRole, out: (s: string) => void): void {
-  if (r.status === 'installed') out(pc.green(`✓ kit ${role} terpasang di .bob/ (${r.files} file${r.backup ? `, cadangan ${r.backup}` : ''})`));
-  else if (r.status === 'refused') out(pc.yellow(`⚠ .bob/ berisi file lain (${r.foreign.slice(0, 3).join(', ')}…). Jalankan \`radar kit install ${role} --force\` (cadangan .bob.bak-<ts>).`));
-  else out(pc.yellow(`⚠ bob-kit tidak ditemukan${r.kitDir ? ` di ${r.kitDir}` : ''}; lewati pemasangan kit (set RADAR_KIT_DIR atau --kit-dir).`));
+  if (r.status === 'installed') out(pc.green(`✓ ${role} kit installed in .bob/ (${r.files} files${r.backup ? `, backup ${r.backup}` : ''})`));
+  else if (r.status === 'refused') out(pc.yellow(`⚠ .bob/ holds other files (${r.foreign.slice(0, 3).join(', ')}…). Run \`radar kit install ${role} --force\` (backup .bob.bak-<ts>).`));
+  else out(pc.yellow(`⚠ bob-kit not found${r.kitDir ? ` in ${r.kitDir}` : ''}; skipping the kit (set RADAR_KIT_DIR or --kit-dir).`));
 }
 
 function loadConfigOrExit(dir: string): LocalConfig {
@@ -175,7 +178,7 @@ function loadConfigOrExit(dir: string): LocalConfig {
     return loadLocalConfig(resolve(dir));
   } catch (err) {
     if (err instanceof ConfigMissingError || err instanceof ConfigInvalidError) {
-      process.stderr.write(`${pc.red(`✖ ${err.message}`)}\nJalankan \`radar join <server> --workspace … --as … --token …\` dulu.\n`);
+      process.stderr.write(`${pc.red(`✖ ${err.message}`)}\nRun \`radar join --invite <code>\` first.\n`);
       process.exit(2);
     }
     throw err;
@@ -202,16 +205,16 @@ export function resolveJoin(
   // RADAR_INVITE applies only when no server is given, so a stale env value never overrides explicit arguments.
   const invite = o.invite ?? (server ? undefined : env.RADAR_INVITE);
   if (invite) {
-    if (server || o.workspace || o.as || o.token) return { error: '--invite sudah berisi server, workspace, member, dan token; jangan digabung dengan argumen itu.' };
+    if (server || o.workspace || o.as || o.token) return { error: '--invite already holds the server, workspace, member and token; do not combine it with those arguments.' };
     try {
       const i = decodeInvite(invite);
       return { server: i.server, workspace: i.workspace, member: i.member, token: i.token };
     } catch (e) {
-      return { error: e instanceof InviteInvalidError ? e.message : 'Kode undangan tidak bisa dibaca.' };
+      return { error: e instanceof InviteInvalidError ? e.message : 'The invite code cannot be read.' };
     }
   }
   const token = o.token ?? env.RADAR_TOKEN;
-  if (!server || !o.workspace || !o.as || !token) return { error: 'Butuh --invite <kode>, atau <server> --workspace --as dengan --token / env RADAR_TOKEN.' };
+  if (!server || !o.workspace || !o.as || !token) return { error: 'Needs --invite <code>, or <server> --workspace --as with --token / env RADAR_TOKEN.' };
   return { server, workspace: o.workspace, member: o.as, token };
 }
 
@@ -247,7 +250,7 @@ export function buildProgram(): Command {
       mkdirSync(root, { recursive: true });
       const kitRole = typeof o.kit === 'string' ? (o.kit as KitRole) : undefined;
       const files = writeJoinFiles({ root, server, workspace, member, token, role: kitRole ?? 'coder' });
-      if (!o.jsonStatus) out(pc.dim(`.radar/local.json ditulis (0600)${files.excluded ? `; .radar/ ditambahkan ke ${files.excluded}` : ''}`));
+      if (!o.jsonStatus) out(pc.dim(`.radar/local.json written (0600)${files.excluded ? `; .radar/ added to ${files.excluded}` : ''}`));
       const cfg = loadConfigOrExit(root);
       const code = await runAgent(cfg, {
         ...(o.mode ? { mode: o.mode } : {}),
@@ -296,7 +299,7 @@ export function buildProgram(): Command {
       const root = resolve(o.dir);
       let role = roleArg as KitRole | undefined;
       if (role && role !== 'coder' && role !== 'pm') {
-        process.stderr.write(pc.red('✖ role harus coder atau pm\n'));
+        process.stderr.write(pc.red('✖ role must be coder or pm\n'));
         process.exit(2);
       }
       if (!role) role = existsSync(join(root, '.radar', 'local.json')) ? loadConfigOrExit(root).role : 'coder';
@@ -310,14 +313,14 @@ export function buildProgram(): Command {
     .description('task commands (P1)')
     .command('use <taskId>')
     .action(() => {
-      out(pc.yellow('radar task use: tersedia di fase 12'));
+      out(pc.yellow('radar task use: not available yet'));
     });
   program
     .command('agent')
     .description('automatic main-agent trigger on the PM PC (P1)')
     .allowUnknownOption()
     .action(() => {
-      out(pc.yellow('radar agent: tersedia di fase 12'));
+      out(pc.yellow('radar agent: not available yet'));
     });
 
   return program;
