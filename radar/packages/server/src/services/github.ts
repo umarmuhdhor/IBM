@@ -82,8 +82,8 @@ export class RealGitHubCommitter implements GitHubCommitter {
     if (snapshot.files.length > MAX_COMMIT_FILES || bytes > MAX_COMMIT_BYTES) {
       throw new CommitError('too_many_files', `Task ${snapshot.taskId} too large for one commit (${snapshot.files.length} files, ${bytes} bytes).`);
     }
-    if (!this.commitEnabled) return { sha: localSha(snapshot), pushed: false };
-    if (!snapshot.baseCommit) throw new CommitError('config_error', `Task ${snapshot.taskId} has no base commit.`);
+    // No base commit: the workspace came from a folder, not from the repo (D-alief-12), so it never pushes there.
+    if (!this.commitEnabled || !snapshot.baseCommit) return { sha: localSha(snapshot), pushed: false };
     if (!this.repo) throw new CommitError('config_error', 'GITHUB_REPO is not configured.');
     const iso = new Date(this.now()).toISOString();
 
