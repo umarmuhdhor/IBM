@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
@@ -39,6 +39,17 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
   const setMessage = (text: string | null, key = connectionKey) =>
     setNote(text === null ? null : { text, key })
   const [invalid, setInvalid] = useState(false)
+  useEffect(() => {
+    let live = true
+    void window.api.radar.getProfileName().then((saved) => {
+      if (live && saved) {
+        setName((typed) => typed || saved)
+      }
+    })
+    return () => {
+      live = false
+    }
+  }, [])
 
   const join = async () => {
     setBusy(true)

@@ -19,6 +19,7 @@ import {
 } from './secure-store'
 import { getSyncStatus, startSyncAgent, stopSyncAgent, workspaceFolder } from './sync-agent'
 import { serverFetch } from './server-fetch'
+import { readProfileName, saveProfileName } from './profile-name'
 
 /**
  * The renderer always sends DEFAULT_RADAR_SERVER. LIVE_COLLAB_SERVER (e.g. http://localhost:8787 for
@@ -57,7 +58,7 @@ export async function joinWithCode(
   if (!code) {
     throw new Error('A join code looks like K7QM-3XPA.')
   }
-  const name = typeof nameInput === 'string' ? nameInput.trim().slice(0, 100) : ''
+  const name = saveProfileName(nameInput) ?? ''
   const role = roleInput === 'pm' ? 'pm' : 'coder'
   const server = serverOrigin(serverInput)
   // Why: redeeming rotates the member's token, so fail before that if the new one cannot be stored.
@@ -190,6 +191,7 @@ export function registerRadarJoinIpc(): void {
     return joinWithCode(field('code'), field('server'), field('name'), field('role'))
   })
   ipcMain.handle('radar:create-join-code', () => createJoinCode())
+  ipcMain.handle('radar:profile-name', () => readProfileName())
   ipcMain.handle('radar:sync-status', () => getSyncStatus())
   ipcMain.handle('radar:open-in-bob', () => openInBob())
   // Why: navigator.clipboard rejects while the window is unfocused, e.g. right after the folder picker.

@@ -117,7 +117,8 @@ describe('RadarPanel without a connection', () => {
           conflicts: [],
           stopReason: null
         })),
-        onSyncStatus: vi.fn(() => stopListening)
+        onSyncStatus: vi.fn(() => stopListening),
+        getProfileName: vi.fn(async () => null)
       }
     })
     render(<Harness initial="team" joined={false} />)
@@ -140,6 +141,34 @@ describe('Live Collab connection labels', () => {
     expect(screen.getByLabelText('Live Collab status').textContent).toContain('offline')
     expect(screen.queryByText('1 online')).toBeNull()
     expect(screen.queryByRole('button', { name: "Watch Budi's Bob" })).toBeNull()
-    expect(screen.getByRole('button', { name: 'Open settings' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Open Multiplayer' })).toBeTruthy()
+  })
+})
+
+describe('Multiplayer and Settings tabs', () => {
+  it('Multiplayer is its own tab with its own title, next to Settings', () => {
+    vi.stubGlobal('api', {
+      radar: {
+        getSyncStatus: vi.fn(async () => ({
+          state: 'stopped',
+          folder: null,
+          files: null,
+          message: null,
+          conflicts: [],
+          stopReason: null
+        })),
+        onSyncStatus: vi.fn(() => () => undefined),
+        getProfileName: vi.fn(async () => null),
+        runChecks: vi.fn(async () => ({ bobVersion: null, bobSettings: null })),
+        getSharePrompts: vi.fn(async () => false)
+      }
+    })
+    render(<Harness initial="multiplayer" />)
+    expect(screen.getByRole('heading', { level: 2 }).textContent).toBe('Multiplayer')
+    expect(screen.getByRole('form', { name: 'Join with a code' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }))
+    expect(screen.getByRole('heading', { level: 2 }).textContent).toBe('Settings')
+    expect(screen.queryByRole('form', { name: 'Join with a code' })).toBeNull()
+    vi.unstubAllGlobals()
   })
 })

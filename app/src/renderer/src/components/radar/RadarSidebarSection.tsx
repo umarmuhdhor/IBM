@@ -8,7 +8,7 @@ type Props = {
 
 const ITEMS = [
   // D-alief-12: open a folder, then Multiplayer shares it and gives you a code.
-  { tab: 'settings', label: 'Multiplayer', icon: Share2 },
+  { tab: 'multiplayer', label: 'Multiplayer', icon: Share2 },
   { tab: 'mission', label: 'Mission Control', icon: LayoutDashboard },
   { tab: 'team', label: 'Team', icon: Users },
   { tab: 'files', label: 'Files & locks', icon: Files },

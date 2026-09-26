@@ -18,6 +18,10 @@ vi.mock('electron', () => ({
   ipcMain: { handle: vi.fn() },
   shell: { openPath: vi.fn() }
 }))
+vi.mock('./profile-name', () => ({
+  readProfileName: () => null,
+  saveProfileName: (value: unknown) => (typeof value === 'string' && value.trim()) || null
+}))
 vi.mock('./secure-store', () => ({
   requireOsEncryption: mocks.requireOsEncryption,
   saveRadarConnection: mocks.saveRadarConnection,

@@ -267,7 +267,7 @@ export function ShareFolderCard({
           )}
           <SyncConflictsNote sync={sync} />
         </div>
-        {sharedCode && (
+        {sharedCode ? (
           <div className="flex flex-wrap items-center gap-3">
             <code
               aria-label="Join code"
@@ -279,6 +279,11 @@ export function ShareFolderCard({
               Copy code
             </Button>
           </div>
+        ) : (
+          // Why: codes are shown once and not kept after a restart; new ones come from Invite teammates.
+          <p className="text-xs text-muted-foreground">
+            To add a teammate, click Make code under Invite teammates and send them the code.
+          </p>
         )}
         <div className="flex flex-wrap gap-2">
           {sync.folder && (

@@ -23,7 +23,8 @@ export function useRadarSyncStatus(): RadarSyncStatus {
 
 export function syncLine(status: RadarSyncStatus): string {
   if (status.state === 'syncing') {
-    return `Syncing ${status.files ?? 0} files`
+    const files = status.files ?? 0
+    return `Syncing ${files} ${files === 1 ? 'file' : 'files'}`
   }
   if (status.state === 'starting') {
     return status.message ?? 'Connecting and downloading files…'

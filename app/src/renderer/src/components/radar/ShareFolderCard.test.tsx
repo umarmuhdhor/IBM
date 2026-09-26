@@ -221,3 +221,17 @@ it("a teammate sees who is sharing instead of a Share button that always fails",
   expect(screen.queryByRole('button', { name: /Share/ })).toBeNull()
   useRadarStore.setState({ state: null })
 })
+
+it('after a restart the owner is told where to make a new join code', async () => {
+  status.folder = '/Users/me/my-app'
+  render(
+    <ShareFolderCard
+      connection={owner}
+      folder="/Users/me/my-app"
+      sharedCode={null}
+      onConnectionChange={vi.fn()}
+      onShared={vi.fn()}
+    />
+  )
+  expect(await screen.findByText(/click Make code under Invite teammates/)).toBeTruthy()
+})

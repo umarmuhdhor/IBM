@@ -202,6 +202,16 @@ describe('shareFolder (D-alief-12)', () => {
     expect(body.owner.name.length).toBeGreaterThan(0)
   })
 
+  it('keeps the first name so the owner does not drift between git and the Mac account', async () => {
+    respondInOrder([201, opened], [201, opened])
+    await shareFolder(root, ' Alief ', 'coder', SERVER)
+    await shareFolder(root, '', 'coder', SERVER)
+    const opens = vi
+      .mocked(fetch)
+      .mock.calls.filter(([url]) => String(url).endsWith('/v1/workspace/open'))
+    expect(JSON.parse(String(opens[1]?.[1]?.body)).owner.name).toBe('Alief')
+  })
+
   it('refuses a folder that does not exist before it calls the server', async () => {
     respondInOrder([201, opened])
     await expect(shareFolder(join(root, 'gone'), 'Alief', 'coder', SERVER)).rejects.toThrow(

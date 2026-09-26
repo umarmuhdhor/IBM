@@ -19,10 +19,11 @@ const LABEL: Record<RadarPanelTab, string> = {
   mission: 'Mission Control',
   team: 'Team',
   files: 'Files & locks',
+  multiplayer: 'Multiplayer',
   settings: 'Settings',
   watch: 'Watch Bob'
 }
-const TABS: RadarPanelTab[] = ['mission', 'team', 'files', 'settings']
+const TABS: RadarPanelTab[] = ['multiplayer', 'mission', 'team', 'files', 'settings']
 
 type Props = {
   tab: RadarPanelTab
@@ -89,43 +90,38 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
         ))}
       </div>
       <div className="scrollbar-sleek min-h-0 flex-1 overflow-y-auto">
-        {tab === 'settings' ? (
-          <>
-            {/* Why: fixed slots keep ShareFolderCard mounted (and its message) when sharing turns this app into Mission Control. */}
-            <div className="space-y-3 p-4 pb-0">
-              {/* Teammates see it too: once the owner stops sharing, anyone can share the next folder. */}
-              <ShareFolderCard
-                connection={connection}
-                folder={workspacePath}
-                sharedCode={sharedCode}
-                onConnectionChange={onConnectionChange}
-                onShared={setSharedCode}
-              />
-              {connection?.role !== 'mc' && (
-                <JoinWithCodeCard connection={connection} onConnectionChange={onConnectionChange} />
-              )}
-              {connection?.role === 'mc' && <InviteCodesCard />}
-            </div>
-            {/* Why: teammates join with code + name + role only; server, workspace and tokens are for the owner. */}
-            {/* Why: only a rejected token is fixed here; a closed workspace or a sign-in elsewhere needs a new code. */}
-            <details
-              className="px-4 pt-3"
-              open={connectionFailure === 'access-rejected' || undefined}
-            >
-              <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
-                {connection
-                  ? 'Connection details'
-                  : 'Have a Mission Control token instead? Connect manually'}
-              </summary>
-              <RadarSettingsPane
-                connection={connection}
-                connected={connected}
-                connectionFailure={connectionFailure}
-                workspacePath={workspacePath}
-                onConnectionChange={onConnectionChange}
-              />
-            </details>
-          </>
+        {tab === 'multiplayer' ? (
+          // Why: fixed slots keep ShareFolderCard mounted (and its message) when sharing turns this app into Mission Control.
+          <div className="space-y-3 p-4">
+            {/* Teammates see it too: once the owner stops sharing, anyone can share the next folder. */}
+            <ShareFolderCard
+              connection={connection}
+              folder={workspacePath}
+              sharedCode={sharedCode}
+              onConnectionChange={onConnectionChange}
+              onShared={setSharedCode}
+            />
+            {connection?.role !== 'mc' && (
+              <JoinWithCodeCard connection={connection} onConnectionChange={onConnectionChange} />
+            )}
+            {connection?.role === 'mc' && <InviteCodesCard />}
+            {connectionFailure === 'access-rejected' && (
+              <Button variant="link" size="xs" onClick={() => onTabChange('settings')}>
+                The server rejected this app’s token. Check it in Settings
+              </Button>
+            )}
+          </div>
+        ) : tab === 'settings' ? (
+          <div className="px-4 pt-3">
+            {/* Why: teammates join with code + name + role in Multiplayer; server, workspace and tokens are for the owner. */}
+            <RadarSettingsPane
+              connection={connection}
+              connected={connected}
+              connectionFailure={connectionFailure}
+              workspacePath={workspacePath}
+              onConnectionChange={onConnectionChange}
+            />
+          </div>
         ) : !connection ? (
           <div className="m-4 space-y-3">
             <ShareFolderCard
@@ -134,9 +130,9 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
               sharedCode={sharedCode}
               onConnectionChange={onConnectionChange}
               onShared={(code) => {
-                // Why: this view unmounts once connected; settings shows the copied code again.
+                // Why: this view unmounts once connected; Multiplayer shows the copied code again.
                 setSharedCode(code)
-                onTabChange('settings')
+                onTabChange('multiplayer')
               }}
             />
             <JoinWithCodeCard connection={connection} onConnectionChange={onConnectionChange} />
@@ -150,17 +146,17 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
               {connected
                 ? 'Waiting for workspace state from the server.'
                 : connectionFailure === 'workspace-closed'
-                  ? 'The owner stopped sharing this workspace. Join with a new code in settings.'
+                  ? 'The owner stopped sharing this workspace. Join with a new code in Multiplayer.'
                   : connectionFailure === 'signed-out'
                     ? 'You signed in on another device, so this app was signed out.'
-                    : 'Connection lost. Open settings to reconnect.'}
+                    : 'Connection lost. The app keeps trying to reconnect.'}
             </p>
             <button
               type="button"
-              onClick={() => onTabChange('settings')}
+              onClick={() => onTabChange('multiplayer')}
               className="mt-3 rounded-md border border-border px-3 py-1.5 text-xs"
             >
-              Open settings
+              Open Multiplayer
             </button>
           </div>
         ) : tab === 'mission' ? (

@@ -23,6 +23,8 @@ export type RadarJoinApi = {
   openInBob: () => Promise<string | null>
   showFolder: () => Promise<string>
   onSyncStatus: (callback: (status: RadarSyncStatus) => void) => () => void
+  /** The name this person chose once; used for every share and join so teammates see one name. */
+  getProfileName: () => Promise<string | null>
   /** Copies a join code from the main process, which works even when the window is not focused. */
   copyText: (text: string) => Promise<void>
 }
@@ -37,6 +39,7 @@ export const radarJoinApi: RadarJoinApi = {
   openInBob: () => ipcRenderer.invoke('radar:open-in-bob'),
   showFolder: () => ipcRenderer.invoke('radar:show-folder'),
   copyText: (text) => ipcRenderer.invoke('radar:copy-text', text),
+  getProfileName: () => ipcRenderer.invoke('radar:profile-name'),
   onSyncStatus: (callback) => {
     const listener = (_event: Electron.IpcRendererEvent, status: RadarSyncStatus): void =>
       callback(status)

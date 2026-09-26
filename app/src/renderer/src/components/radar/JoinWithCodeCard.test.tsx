@@ -19,6 +19,7 @@ beforeEach(() => {
       getSyncStatus: vi.fn(async () => status),
       onSyncStatus: vi.fn(() => () => undefined),
       joinWithCode: vi.fn(),
+      getProfileName: vi.fn(async () => 'Alief'),
       openInBob: vi.fn(),
       showFolder: vi.fn()
     }
@@ -97,4 +98,11 @@ it('Join with a different code can be cancelled', async () => {
 it('a first join has no Cancel', () => {
   render(<JoinWithCodeCard connection={null} onConnectionChange={vi.fn()} />)
   expect(screen.queryByRole('button', { name: 'Cancel' })).toBeNull()
+})
+
+it('fills in the name this person used before, so teammates see one name', async () => {
+  render(<JoinWithCodeCard connection={null} onConnectionChange={vi.fn()} />)
+  await vi.waitFor(() => {
+    expect(screen.getByLabelText<HTMLInputElement>('Your name').value).toBe('Alief')
+  })
 })

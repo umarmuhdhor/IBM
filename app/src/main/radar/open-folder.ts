@@ -33,6 +33,7 @@ import {
 } from './secure-store'
 import { startSyncAgent } from './sync-agent'
 import { serverFetch } from './server-fetch'
+import { readProfileName, saveProfileName } from './profile-name'
 
 // D-alief-12: the owner opens a folder on their own Mac, and that folder becomes the workspace.
 // The app uploads it with the Mission Control token, then syncs the same folder as member A.
@@ -150,7 +151,7 @@ function saveOwnerFolder(value: OwnerFolder): void {
   writeFileSync(ownerFolderPath(), JSON.stringify(value))
 }
 
-/** One-click sharing asks for no name: git's user.name, else the macOS account name. */
+/** First share without a saved name: git's user.name, else the macOS account name. */
 export async function ownerName(folder: string): Promise<string> {
   const git = await runProcess({
     program: 'git',
@@ -181,8 +182,11 @@ export async function shareFolder(
   if (!existsSync(folder) || !statSync(folder).isDirectory()) {
     throw new Error('That folder no longer exists.')
   }
-  const typed = typeof nameInput === 'string' ? nameInput.trim().slice(0, 100) : ''
-  const name = typed || (await ownerName(folder))
+  const name =
+    saveProfileName(nameInput) ??
+    readProfileName() ??
+    saveProfileName(await ownerName(folder)) ??
+    'Owner'
   const role: RadarJoinRole = roleInput === 'pm' ? 'pm' : 'coder'
   requireOsEncryption()
   const current = readRadarConnection()
