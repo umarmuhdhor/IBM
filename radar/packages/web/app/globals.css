@@ -22,9 +22,11 @@ body {
 
 /* ── Landing page (app/page.tsx, DESIGN §5.11 · dark Carbon) ───────────────── */
 .lp {
-  --lp-marigold: #ffb110;
-  --lp-navy: #02093a;
   --lp-ease: cubic-bezier(0.23, 1, 0.32, 1);
+  /* One accent for the whole page: Carbon Blue 40. Lavender stays only as Budi's member colour. */
+  --lp-blue: #78a9ff;
+  --lp-tint-line: rgba(120, 169, 255, 0.28);
+  --lp-glow: radial-gradient(120% 70% at 80% 0%, rgba(120, 169, 255, 0.1), transparent 60%);
   min-height: 100vh;
   color: var(--lc-text);
   background-color: var(--lc-bg);
@@ -196,58 +198,102 @@ body {
 }
 .lp-hero {
   position: relative;
-  padding: 72px 24px 72px;
+  width: 100%;
+  min-width: 0;
+  padding: 0 24px 96px;
   text-align: center;
 }
-.lp-hero > * {
+/* Fills the first screen (viewport minus the stage's top offset) so the fold shows only the message. */
+.lp-hero-intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100svh - 96px);
+  padding: 48px 0 64px;
+}
+.lp-hero-intro > * {
   animation: lp-rise 700ms var(--lp-ease) both;
 }
-.lp-hero > :nth-child(2) {
+.lp-hero-intro > :nth-child(2) {
   animation-delay: 80ms;
 }
-.lp-hero > :nth-child(3) {
+.lp-hero-intro > :nth-child(3) {
   animation-delay: 160ms;
 }
-.lp-hero > :nth-child(4) {
+.lp-hero-intro > :nth-child(4) {
   animation-delay: 220ms;
 }
 .lp-h1 {
   margin: 0 auto;
-  font-size: clamp(40px, 8.4vw, 104px);
+  font-size: clamp(38px, 5.6vw, 68px);
   font-weight: 500;
-  line-height: 1.02;
-  letter-spacing: -0.045em;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
   text-shadow: 0 0 32px rgba(14, 14, 16, 0.9);
 }
 .lp-sub {
-  margin: 28px auto 40px;
-  max-width: 560px;
-  font-size: clamp(17px, 1.9vw, 21px);
-  line-height: 1.5;
+  margin: 20px auto 32px;
+  max-width: 580px;
+  font-size: clamp(15px, 1.4vw, 17px);
+  line-height: 1.55;
   color: var(--lc-text-muted);
   text-shadow: 0 0 16px rgba(14, 14, 16, 0.95);
 }
-.lp-cta-note {
-  margin: 16px auto 0;
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--lc-text-muted);
+.lp-hero-ctas {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+.lp-hero-ctas .lp-btn {
+  min-width: 210px;
+  min-height: 46px;
+  padding: 0 24px;
+  font-size: 15px;
+}
+.lp-hero-note {
+  margin: 14px auto 0;
+  font-size: 12px;
+  color: var(--lc-text-faint, #6f6f6f);
+}
+.lp-hero-demo {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  justify-content: center;
+  margin: 0 auto;
+  max-width: 680px;
+  min-width: 0;
+  text-align: left;
+}
+/* Keep the demo caption legible over the halftone dots. */
+.lp-hero-demo .lcd-caption {
+  width: fit-content;
+  padding: 6px 14px 6px 6px;
+  border-radius: 999px;
+  background: rgba(14, 14, 16, 0.88);
+}
+/* Bob crew halftone behind the demo card (like the globe in the reference), fading at its edges. */
+.lp-demo-halftone {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: -1;
+  width: min(1040px, 160vw);
+  aspect-ratio: 1;
+  transform: translate(-50%, -46%);
+  background: url('/brand/bob-crew-halftone.svg') no-repeat center / contain;
+  -webkit-mask-image: radial-gradient(closest-side, #000 55%, transparent 100%);
+  mask-image: radial-gradient(closest-side, #000 55%, transparent 100%);
+  opacity: 0.16;
+  pointer-events: none;
 }
 /* Soft scrim so small copy stays legible over the halftone dots. */
-.lp-sub,
-.lp-cta-note {
+.lp-sub {
   width: fit-content;
   padding: 4px 18px;
   background: radial-gradient(closest-side, rgba(14, 14, 16, 0.94) 55%, rgba(14, 14, 16, 0));
-}
-.lp-cta-note-link {
-  color: var(--lc-text);
-  text-decoration: underline;
-  text-decoration-color: rgba(244, 244, 244, 0.35);
-  text-underline-offset: 3px;
-}
-.lp-cta-note-link:hover {
-  text-decoration-color: var(--lc-text);
 }
 
 @keyframes lp-rise {
@@ -298,13 +344,10 @@ body {
 
 /* Product window */
 .lp-product {
-  padding-top: 96px;
+  padding-top: 176px;
   padding-bottom: 32px;
 }
 .lp-window {
-  background: var(--lc-surface-1);
-  border: 1px solid var(--lc-border);
-  border-radius: 12px;
   overflow: hidden;
 }
 .lp-window-titlebar {
@@ -358,7 +401,7 @@ body {
 }
 .lp-tab[aria-selected='true'] {
   color: var(--lc-text);
-  border-bottom-color: var(--lc-accent);
+  border-bottom-color: var(--lp-blue);
 }
 .lp-window-body {
   min-height: 300px;
@@ -433,6 +476,26 @@ body {
   flex-direction: column;
   gap: 6px;
 }
+/* Budi pane: one 20/12/16 rhythm — who → which file → why (trace) → what now. */
+.lp-budi .lp-pane-head {
+  margin-bottom: 20px;
+}
+.lp-budi .lp-file {
+  margin-bottom: 12px;
+  color: var(--lc-text);
+}
+.lp-budi .lp-traces {
+  gap: 4px;
+  padding-left: 12px;
+  border-left: 1px solid var(--lc-border);
+}
+.lp-traces .lc-bob-trace > span:first-child {
+  display: inline-block;
+  width: 1.4em;
+}
+.lp-budi .lp-blocked-copy {
+  margin-top: 16px;
+}
 .lp-blocked-copy {
   margin: 14px 0 0;
   max-width: 560px;
@@ -469,14 +532,88 @@ body {
   }
 }
 
+
+/* ── Shared landing system: kicker, card, badge, chip ─────────────────────── */
+.lp-kicker {
+  margin: 0 0 12px;
+  font-family: var(--lc-font-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--lp-blue);
+}
+.lp-kicker-center {
+  text-align: center;
+}
+/* Every framed surface on the page uses this recipe. */
+.lp-window,
+.lp-stats,
+.lp-mechanism,
+.lp-prim,
+.lp-nm-stage,
+.lp-steps {
+  position: relative;
+  border: 1px solid var(--lc-border);
+  border-radius: 14px;
+  background: var(--lc-surface-1);
+}
+/* Only the install stepper gets the glow + blue hairline. */
+.lp-steps {
+  background: var(--lp-glow), var(--lc-surface-1);
+}
+.lp-steps::before {
+  content: '';
+  position: absolute;
+  inset: -1px 24px auto;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(120, 169, 255, 0.5), transparent);
+  pointer-events: none;
+}
+@media (hover: hover) {
+  .lp-mechanism,
+  .lp-prim {
+    transition: border-color 200ms var(--lp-ease);
+  }
+  .lp-mechanism:hover,
+  .lp-prim:hover {
+    border-color: var(--lp-tint-line);
+  }
+}
+.lp-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.lp-badge {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  font-family: var(--lc-font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--lp-blue);
+  background: var(--lc-surface-2);
+  border: 1px solid var(--lc-border);
+}
+.lp-chip {
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--lc-border);
+  font-family: var(--lc-font-mono);
+  font-size: 11.5px;
+  color: var(--lc-text-muted);
+}
+
 /* Stats (meta.json) */
 .lp-stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   margin: 16px 0 0;
-  border: 1px solid var(--lc-border);
-  border-radius: 12px;
-  background: var(--lc-surface-1);
 }
 .lp-stat {
   display: flex;
@@ -507,7 +644,7 @@ body {
 
 /* Sections */
 .lp-section {
-  padding-top: 80px;
+  padding-top: 200px;
 }
 .lp-h2 {
   margin: 0 0 28px;
@@ -530,15 +667,6 @@ body {
   display: flex;
   flex-direction: column;
   padding: 24px;
-  background: var(--lc-surface-2);
-  border: 1px solid var(--lc-border);
-  border-radius: 12px;
-}
-.lp-mechanism-num {
-  font-family: var(--lc-font-mono);
-  font-size: 12px;
-  color: var(--lc-text-muted);
-  margin-bottom: 12px;
 }
 .lp-mechanism h3 {
   margin: 0 0 8px;
@@ -547,31 +675,21 @@ body {
   letter-spacing: -0.01em;
 }
 .lp-mechanism p {
-  margin: 0 0 16px;
+  margin: 0;
   font-size: 14.5px;
   line-height: 1.6;
   color: var(--lc-text-muted);
-}
-.lp-mechanism code {
-  align-self: flex-start;
-  margin-top: auto;
-  padding: 3px 8px;
-  border-radius: 6px;
-  background: var(--lc-surface-3);
-  font-family: var(--lc-font-mono);
-  font-size: 12.5px;
-  color: var(--lc-accent-soft);
 }
 
 .lp-words {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 32px;
-  padding-top: 64px;
+  padding-top: 96px;
 }
 .lp-word {
-  border-top: 1px solid var(--lc-border-strong);
   padding-top: 20px;
+  border-top: 1px solid var(--lc-border-strong);
 }
 .lp-word h3 {
   margin: 0 0 8px;
@@ -586,39 +704,53 @@ body {
   color: var(--lc-text-muted);
 }
 
-/* Marigold near-miss */
-.lp-marigold {
+/* Near-miss: copy left, framed log right, lavender = Budi (member B). */
+.lp-nm {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
-  gap: 40px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+  gap: 48px;
   align-items: center;
-  padding: 40px;
-  border-radius: 12px;
-  background: var(--lp-marigold);
-  color: #1a0f00;
 }
-.lp-marigold-copy h2 {
-  margin: 0 0 14px;
-  font-family: var(--font-source-serif-4), Georgia, serif;
-  font-size: clamp(26px, 3.2vw, 34px);
-  font-weight: 600;
-  line-height: 1.2;
-  letter-spacing: -0.01em;
-  text-wrap: balance;
+.lp-nm .lp-h2 {
+  margin-bottom: 16px;
 }
-.lp-marigold-copy p {
-  margin: 0 0 20px;
-  font-size: 15.5px;
+.lp-nm-lede {
+  margin: 0 0 28px;
+  max-width: 440px;
+  font-size: 16px;
   line-height: 1.6;
-  color: rgba(26, 15, 0, 0.8);
+  color: var(--lc-text-muted);
 }
-.lp-marigold-link {
-  color: #1a0f00;
-  font-weight: 600;
+.lp-nm-point {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  margin-bottom: 28px;
+  max-width: 440px;
+}
+.lp-nm-point-title {
+  margin: 0 0 4px;
   font-size: 15px;
-  text-decoration: underline;
-  text-underline-offset: 4px;
-  text-decoration-thickness: 1px;
+  font-weight: 600;
+  color: var(--lc-text);
+}
+.lp-nm-point-body {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--lc-text-muted);
+}
+.lp-nm-link {
+  font-weight: 500;
+  font-size: 14px;
+}
+.lp-nm-stage {
+  padding: 28px;
+}
+.lp-nm-stage .lp-log {
+  border: 1px solid var(--lc-border);
+  box-shadow: 0 24px 48px -24px rgba(0, 0, 0, 0.6);
 }
 .lp-log {
   list-style: none;
@@ -656,37 +788,46 @@ body {
   color: var(--lc-text-muted);
 }
 
-/* Navy primitives */
-.lp-navy {
-  padding: 40px;
-  border-radius: 12px;
-  background: var(--lp-navy);
-  border: 1px solid rgba(166, 200, 255, 0.14);
+/* Primitives: neutral Carbon cards, blue accent only on the glyph. */
+.lp-prim-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 24px;
+  margin-bottom: 28px;
 }
-.lp-navy .lp-h2 {
-  color: #fff;
+.lp-prim-head .lp-h2 {
+  margin: 0;
+}
+.lp-prim-link {
+  font-size: 14px;
+  font-weight: 500;
 }
 .lp-primitives {
   list-style: none;
-  margin: 0 0 28px;
+  margin: 0;
   padding: 0;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 24px;
+  gap: 16px;
 }
-.lp-primitives code {
-  display: inline-block;
-  margin-bottom: 10px;
+.lp-prim {
+  padding: 24px;
+}
+.lp-prim code {
+  display: block;
+  margin-bottom: 8px;
   font-family: var(--lc-font-mono);
   font-size: 14px;
   font-weight: 600;
-  color: #fff;
+  color: var(--lc-text);
 }
-.lp-primitives p {
+.lp-prim p {
   margin: 0;
-  font-size: 14.5px;
+  font-size: 14px;
   line-height: 1.6;
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--lc-text-muted);
 }
 .lp-text-link {
   color: var(--lc-accent-soft);
@@ -700,49 +841,128 @@ body {
 }
 
 /* Install */
+/* Install: copy left, stepper card right (shared card surface + blue hairline). */
 .lp-install {
-  padding: 36px 40px;
-  background: var(--lc-surface-2);
-  border: 1px solid var(--lc-border);
-  border-radius: 12px;
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.2fr);
+  gap: 48px;
+  align-items: center;
 }
 .lp-install .lp-h2 {
-  font-size: 24px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
-.lp-steps {
-  margin: 0;
-  padding-left: 22px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  font-size: 15px;
+.lp-install-lede {
+  margin: 0 0 28px;
+  max-width: 400px;
+  font-size: 16px;
   line-height: 1.6;
   color: var(--lc-text-muted);
 }
-.lp-steps strong {
-  color: var(--lc-text);
-  font-weight: 600;
-}
-.lp-steps li > code {
+.lp-install-lede code,
+.lp-step-body code {
   font-family: var(--lc-font-mono);
+  font-size: 0.92em;
+  color: var(--lc-text);
+}
+.lp-install-ctas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 24px;
+}
+.lp-install-alt {
+  font-size: 14px;
+  font-weight: 500;
+}
+.lp-steps {
+  list-style: none;
+  margin: 0;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+.lp-step {
+  position: relative;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 16px;
+}
+/* Connector from this step's number down to the next one. */
+.lp-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 17.5px;
+  top: 44px;
+  bottom: -20px;
+  width: 1px;
+  background: linear-gradient(180deg, rgba(120, 169, 255, 0.35), var(--lc-border));
+}
+.lp-step-body {
+  min-width: 0;
+  padding-top: 4px;
+}
+.lp-step-body p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--lc-text-muted);
+}
+.lp-step-body .lp-step-title {
+  margin-bottom: 4px;
+  font-size: 15px;
+  font-weight: 600;
   color: var(--lc-text);
 }
 .lp-cmd {
-  margin: 10px 0 0;
-  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 8px 8px 8px 14px;
   background: var(--lc-bg);
   border: 1px solid var(--lc-border);
-  border-radius: 8px;
+  border-radius: 10px;
+}
+.lp-cmd code {
+  flex: 1;
+  min-width: 0;
   overflow-x: auto;
+  white-space: nowrap;
   font-family: var(--lc-font-mono);
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--lc-text);
+  scrollbar-width: none;
+  /* Long path scrolls; fade the edge so the cut reads as intentional. */
+  mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent);
+  padding-right: 20px;
+}
+.lp-cmd-copy {
+  flex: none;
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: 7px;
+  border: 1px solid var(--lc-border-strong);
+  background: var(--lc-surface-2);
+  color: var(--lc-text-muted);
+  font: 500 12px/1 var(--font-inter), system-ui, sans-serif;
+  cursor: pointer;
+  transition:
+    color 150ms ease,
+    border-color 150ms ease,
+    transform 150ms var(--lp-ease);
+}
+.lp-cmd-copy:hover {
+  color: var(--lc-text);
+  border-color: var(--lc-text-muted);
+}
+.lp-cmd-copy:active {
+  transform: scale(0.96);
 }
 
 /* Footer */
 .lp-footer {
-  margin-top: 96px;
+  margin-top: 176px;
   border-top: 1px solid var(--lc-border);
   background: var(--lc-bg);
 }
@@ -769,8 +989,10 @@ body {
 /* Responsive */
 @media (max-width: 860px) {
   .lp-mc,
-  .lp-marigold {
+  .lp-nm,
+  .lp-install {
     grid-template-columns: 1fr;
+    gap: 32px;
   }
   .lp-needs {
     order: -1;
@@ -819,10 +1041,13 @@ body {
     padding: 0 16px;
   }
   .lp-hero {
-    padding: 56px 16px 56px;
+    padding: 0 16px 56px;
+  }
+  .lp-hero-intro {
+    min-height: calc(100svh - 72px);
   }
   .lp-product {
-    padding-top: 64px;
+    padding-top: 112px;
   }
   .lp-window-body {
     padding: 18px 16px;
@@ -838,11 +1063,11 @@ body {
     grid-template-columns: 1fr;
   }
   .lp-section {
-    padding-top: 56px;
+    padding-top: 128px;
   }
-  .lp-marigold,
-  .lp-navy,
-  .lp-install {
+  .lp-nm-stage,
+  .lp-prim,
+  .lp-steps {
     padding: 24px 20px;
   }
   .lp-log li {
@@ -852,13 +1077,95 @@ body {
   }
 }
 
+/* ── Landing motion (src/landing-motion.tsx, src/type-title.tsx) ──────────────
+   `.lp-motion` is set on <html> only after mount and only without reduced motion,
+   so no-JS and reduced-motion visitors always see the finished page. */
+.lp-type-line {
+  display: block;
+}
+.lp-type-rest {
+  color: transparent;
+  text-shadow: none;
+}
+.lp-caret {
+  display: inline-block;
+  width: 3px;
+  height: 0.82em;
+  margin-right: -3px;
+  vertical-align: -0.06em;
+  border-radius: 1px;
+  background: var(--lp-blue);
+  animation: lp-blink 1s steps(1) infinite;
+}
+@keyframes lp-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Fade + slide up once, staggered by --i (70ms per item). */
+.lp-motion [data-reveal] {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity 700ms var(--lp-ease),
+    transform 700ms var(--lp-ease),
+    border-color 200ms var(--lp-ease);
+  transition-delay: calc(var(--i, 0) * 70ms), calc(var(--i, 0) * 70ms), 0ms;
+}
+.lp-motion [data-reveal][data-in] {
+  opacity: 1;
+  transform: none;
+}
+
+/* Near-miss log card drifts gently once it is on screen. */
+.lp-motion .lp-nm-stage {
+  animation: lp-float 6s ease-in-out 900ms infinite;
+}
+@keyframes lp-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+/* Install: steps land one by one, the connector draws down to the next number. */
+.lp-motion .lp-steps .lp-step {
+  --step-delay: calc(300ms + var(--i, 0) * 450ms);
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    opacity 500ms var(--lp-ease) var(--step-delay),
+    transform 500ms var(--lp-ease) var(--step-delay);
+}
+.lp-motion .lp-steps .lp-step-num {
+  transform: scale(0.85);
+  transition: transform 500ms var(--lp-ease) var(--step-delay);
+}
+.lp-motion .lp-steps .lp-step:not(:last-child)::after {
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform 420ms var(--lp-ease) calc(var(--step-delay) + 220ms);
+}
+.lp-motion .lp-steps[data-in] .lp-step {
+  opacity: 1;
+  transform: none;
+}
+.lp-motion .lp-steps[data-in] .lp-step-num,
+.lp-motion .lp-steps[data-in] .lp-step:not(:last-child)::after {
+  transform: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .lp-nav {
     transition: none;
   }
   .lp-reveal,
   .lp-halftone,
-  .lp-hero > *,
+  .lp-hero-intro > *,
   .lp-window-body,
   .lp-needs-enter {
     animation: none;

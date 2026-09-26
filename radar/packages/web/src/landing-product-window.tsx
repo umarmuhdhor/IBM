@@ -165,7 +165,7 @@ function MissionPane() {
 
 function BudiPane() {
   return (
-    <div>
+    <div className="lp-budi">
       <div className="lp-pane-head">
         <MemberChip member="B" initials="B" status="online" />
         <AgentTag label="Budi · Bob coder" member="B" status="blocked" />
