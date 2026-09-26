@@ -198,4 +198,11 @@ CREATE TABLE IF NOT EXISTS metric (
   tags  TEXT                                             -- JSON kecil
 );
 CREATE INDEX IF NOT EXISTS metric_name ON metric(name, ts);
+
+CREATE TABLE IF NOT EXISTS ai_mark (                     -- BC-05: PostToolUse tiba sebelum file.update dari sync
+  member_id TEXT NOT NULL,
+  path      TEXT NOT NULL,
+  ts        INTEGER NOT NULL,                            -- berlaku AI_MARK_WINDOW_MS (10 s)
+  PRIMARY KEY (member_id, path)
+);
 `;

@@ -16,6 +16,7 @@ import { bumpEditCount } from '../db/repo/task';
 import { upsertTouch } from '../db/repo/touch';
 import type { Db } from '../db/sql';
 import type { MemberPrincipal } from '../http/auth';
+import { applyPendingAiMark } from './ai-edits';
 import { appendEvent } from './events';
 import { checkWrite, type LockCtx } from './locks';
 import type { UnitOfWork } from './uow';
@@ -123,6 +124,7 @@ export function applyUpdate(
   const version = (f?.version ?? 0) + 1;
   const taskId = decision.taskId;
   writeFileVersion(db, { path, version, hash, content: input.content, size: bytes.byteLength, by: member.memberId, taskId, now: deps.now });
+  applyPendingAiMark(db, deps.now, member.memberId, path, version);
   if (taskId !== null) {
     upsertTouch(db, { taskId, path, firstVersion: f?.version ?? 0, lastVersion: version });
     bumpEditCount(db, taskId, deps.now);

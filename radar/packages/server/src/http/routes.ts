@@ -11,6 +11,7 @@ import { buildState } from '../services/state';
 import { requireMember, requireRole } from './auth';
 import { errorJson, parseWith, readJson, toErrorResponse } from './errors';
 import { ExportQuery } from './query';
+import { registerFileRoutes } from './routes/files';
 import { registerLockRoutes } from './routes/locks';
 import { registerProposalRoutes } from './routes/proposals';
 import { registerRequestRoutes } from './routes/requests';
@@ -61,6 +62,7 @@ export function createApp(deps: WorkspaceDeps): Hono {
   });
 
   registerLockRoutes(app, deps);
+  registerFileRoutes(app, deps);
   registerTaskRoutes(app, deps);
   registerRequestRoutes(app, deps);
   registerProposalRoutes(app, deps);
