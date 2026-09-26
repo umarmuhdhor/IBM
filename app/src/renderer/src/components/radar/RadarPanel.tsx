@@ -100,7 +100,7 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
               <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
                 {connection
                   ? 'Connection details'
-                  : 'Workspace owner? Connect Mission Control with a token'}
+                  : 'Have a Mission Control token instead? Connect manually'}
               </summary>
               <RadarSettingsPane
                 connection={connection}

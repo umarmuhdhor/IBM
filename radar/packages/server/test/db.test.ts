@@ -5,12 +5,12 @@ import { createDb } from '../src/db/sql';
 import { freshWorkspace } from './helpers';
 
 describe('SQLite schema in the Durable Object (R2)', () => {
-  it('migrates on construction and records schema_version = 2', async () => {
+  it('migrates on construction and records schema_version = 3', async () => {
     const { stub } = freshWorkspace();
     const v = await runInDurableObject(stub, (_i, state) =>
       state.storage.sql.exec<{ value: string }>("SELECT value FROM meta WHERE key = 'schema_version'").toArray(),
     );
-    expect(v).toEqual([{ value: '2' }]);
+    expect(v).toEqual([{ value: '3' }]);
   });
 
   it('v1 → v2 recreates join_code with a nullable member_id (D-alief-10)', async () => {
@@ -26,7 +26,25 @@ describe('SQLite schema in the Durable Object (R2)', () => {
         notnull: sql.exec<{ notnull: number }>("SELECT \"notnull\" FROM pragma_table_info('join_code') WHERE name = 'member_id'").one().notnull,
       };
     });
-    expect(notNull).toEqual({ version: '2', notnull: 0 });
+    expect(notNull).toEqual({ version: '3', notnull: 0 });
+  });
+
+  it('v2 → v3 adds join_code.owner and keeps existing codes (D-alief-11)', async () => {
+    const { stub } = freshWorkspace();
+    const after = await runInDurableObject(stub, (_i, state) => {
+      const sql = state.storage.sql;
+      sql.exec('DROP TABLE join_code');
+      sql.exec('CREATE TABLE join_code (hash TEXT PRIMARY KEY, member_id TEXT REFERENCES member(id), created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL)');
+      sql.exec("INSERT INTO join_code (hash, member_id, created_at, expires_at) VALUES ('h1', NULL, 0, 1)");
+      sql.exec("UPDATE meta SET value = '2' WHERE key = 'schema_version'");
+      migrate(createDb(state.storage));
+      migrate(createDb(state.storage)); // idempotent
+      return {
+        version: sql.exec<{ value: string }>("SELECT value FROM meta WHERE key = 'schema_version'").one().value,
+        rows: sql.exec<{ hash: string; owner: number }>('SELECT hash, owner FROM join_code').toArray(),
+      };
+    });
+    expect(after).toEqual({ version: '3', rows: [{ hash: 'h1', owner: 0 }] });
   });
 
   it('enforces foreign keys (R2 §1)', async () => {

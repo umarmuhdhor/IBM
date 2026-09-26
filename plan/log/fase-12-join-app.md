@@ -95,3 +95,25 @@ Verdict: **Approve** (tanpa HIGH). Workspace live masih berisi A–D hasil seed 
 ### Tambahan: gaya Google Docs (26 Sep)
 
 Teman hanya mengisi kode, nama, peran. Kartu Join tidak lagi punya "Use another server" (selalu `DEFAULT_RADAR_SERVER`). Form Connection manual (Server URL, Workspace, Member, token) dilipat dalam `<details>`: "Connection details" bila sudah terhubung, "Workspace owner? Connect Mission Control with a token" bila belum; terbuka otomatis saat ada `connectionFailure`. Kode baru langsung disalin ke clipboard. UI gate: screenshot Settings (mc) setelah perubahan, disclosure native (keyboard + fokus bawaan browser), tanpa temuan HIGH.
+
+## Tambahan 27 Sep · kode owner (D-alief-11)
+
+Pemilik menukar kode owner pendek (dari `admin init` / `admin code --owner`) di kartu Join, tanpa menempel token `mc`.
+
+| Perintah / interaksi | Hasil |
+|---|---|
+| `pnpm -C radar --filter @radar/server exec vitest run` | 175 lulus (termasuk kode owner + migrasi v2→v3) |
+| `vitest run admin.test.ts` (radar/scripts) | 17 lulus |
+| `vitest run src/main/radar src/renderer/src/components/radar` (app) | 73 lulus |
+| `pnpm -C app run typecheck:node`, `typecheck:web` | bersih |
+| App dev (HOME terisolasi, belum terhubung) → Settings | kartu Join tampil; tautan **Workspace owner? Use your owner code** mengganti form ke kode owner saja, fokus pindah ke kolom kode |
+| Tukar kode owner di app ke server live | **Not verified** (butuh server v3 terdeploy + kode owner dari `admin init`) |
+
+UI gate (better-interface), scope: `JoinWithCodeCard.tsx` mode teman dan mode owner, `RadarPanel.tsx` label lipat. Layar 1512 px, tema terang; tema gelap dan lebar sempit Not verified.
+
+| Severity | Domain | Location | Before | After | Why |
+|---|---|---|---|---|---|
+| MEDIUM | Writing | `RadarPanel.tsx:103` | dua pilihan berawalan "Workspace owner?" (tautan kode owner + lipatan token) | lipatan: "Have a Mission Control token instead? Connect manually" | dua jalan dengan awalan sama membingungkan; kode owner jadi jalan utama |
+| MEDIUM | Accessibility | `JoinWithCodeCard.tsx` tombol ganti mode | fokus tetap di tombol yang labelnya berubah | fokus pindah ke kolom kode | judul dan kolom berubah tanpa diumumkan ke pembaca layar |
+
+Tidak ada temuan HIGH. Colors, Typography, UI: Clear (primitive Orca yang sama dengan mode teman).

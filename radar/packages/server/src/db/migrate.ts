@@ -11,6 +11,9 @@ export function migrate(db: Db): void {
       // v2 (D-alief-10): join_code.member_id became nullable. Codes live at most 30 days, so dropping them is fine.
       db.script('DROP TABLE join_code;');
       db.script(SCHEMA_SQL);
+    } else if (row?.value === '2') {
+      // v3 (D-alief-11): owner codes. Existing codes are member or open codes, so the default 0 is right.
+      db.script('ALTER TABLE join_code ADD COLUMN owner INTEGER NOT NULL DEFAULT 0;');
     }
     if (row?.value !== SCHEMA_VERSION) {
       db.run("INSERT INTO meta (key, value) VALUES ('schema_version', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value", SCHEMA_VERSION);

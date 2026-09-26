@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
@@ -34,11 +34,16 @@ function syncLine(status: RadarSyncStatus): string {
   return status.message ?? 'Not syncing'
 }
 
-/** IN-03: paste a join code, and the app connects, syncs ~/live-collab/<workspace> and installs the Bob kit. */
+/**
+ * IN-03: paste a join code, and the app connects, syncs ~/live-collab/<workspace> and installs the Bob kit.
+ * The owner switches to an owner code instead, which connects this app as Mission Control (D-alief-11).
+ */
 export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
   const [code, setCode] = useState('')
   const [name, setName] = useState('')
   const [role, setRole] = useState<RadarJoinRole>('coder')
+  const [owner, setOwner] = useState(false)
+  const codeInput = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
   // A message belongs to the connection it was written for, so it disappears when that connection changes.
   const connectionKey = connection ? `${connection.workspace}/${connection.member}` : ''
@@ -59,9 +64,14 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
     setMessage(null)
     setInvalid(false)
     try {
-      const result = await window.api.radar.joinWithCode(code, DEFAULT_RADAR_SERVER, name, role)
+      const result = owner
+        ? await window.api.radar.joinWithCode(code, DEFAULT_RADAR_SERVER)
+        : await window.api.radar.joinWithCode(code, DEFAULT_RADAR_SERVER, name, role)
       setCode('')
       onConnectionChange(result.connection)
+      if (result.role === 'mc') {
+        return
+      }
       setMessage(
         `Joined ${result.connection.workspace} as ${name.trim() || result.connection.member} (${result.role === 'pm' ? 'PM' : 'coder'}).`,
         `${result.connection.workspace}/${result.connection.member}`
@@ -125,7 +135,7 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
 
   return (
     <form
-      aria-label="Join with a code"
+      aria-label={owner ? 'Connect as workspace owner' : 'Join with a code'}
       className="space-y-3 rounded-lg border border-border bg-card p-4"
       onSubmit={(event) => {
         event.preventDefault()
@@ -133,15 +143,19 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
       }}
     >
       <div className="space-y-1">
-        <h3 className="text-sm font-semibold">Join a workspace</h3>
+        <h3 className="text-sm font-semibold">
+          {owner ? 'Connect as workspace owner' : 'Join a workspace'}
+        </h3>
         <p className="text-xs text-muted-foreground">
-          Enter the code from your workspace owner, your name and your role. The files sync to your
-          Mac and open in IBM Bob IDE.
+          {owner
+            ? 'Enter the owner code printed by admin init. This app becomes Mission Control and can invite teammates.'
+            : 'Enter the code from your workspace owner, your name and your role. The files sync to your Mac and open in IBM Bob IDE.'}
         </p>
       </div>
       <label className="block max-w-xs space-y-1 text-xs">
-        <span>Join code</span>
+        <span>{owner ? 'Owner code' : 'Join code'}</span>
         <Input
+          ref={codeInput}
           required
           aria-invalid={invalid}
           aria-describedby="radar-join-message"
@@ -153,42 +167,62 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
           maxLength={12}
         />
       </label>
-      <label className="block max-w-xs space-y-1 text-xs">
-        <span>Your name</span>
-        <Input
-          required
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          placeholder="How your team sees you"
-          autoComplete="name"
-          maxLength={100}
-        />
-      </label>
-      <div className="space-y-1 text-xs">
-        <span id="radar-join-role">Your role</span>
-        <ToggleGroup
-          type="single"
-          aria-labelledby="radar-join-role"
-          value={role}
-          onValueChange={(value) => {
-            if (value === 'coder' || value === 'pm') {
-              setRole(value)
-            }
+      {!owner && (
+        <>
+          <label className="block max-w-xs space-y-1 text-xs">
+            <span>Your name</span>
+            <Input
+              required
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder="How your team sees you"
+              autoComplete="name"
+              maxLength={100}
+            />
+          </label>
+          <div className="space-y-1 text-xs">
+            <span id="radar-join-role">Your role</span>
+            <ToggleGroup
+              type="single"
+              aria-labelledby="radar-join-role"
+              value={role}
+              onValueChange={(value) => {
+                if (value === 'coder' || value === 'pm') {
+                  setRole(value)
+                }
+              }}
+              variant="outline"
+              size="sm"
+            >
+              <ToggleGroupItem value="coder" className="px-3 text-xs">
+                Coder
+              </ToggleGroupItem>
+              <ToggleGroupItem value="pm" className="px-3 text-xs">
+                PM
+              </ToggleGroupItem>
+            </ToggleGroup>
+          </div>
+        </>
+      )}
+      <div className="flex flex-wrap items-center gap-2">
+        <Button type="submit" size="sm" disabled={busy}>
+          {busy ? (owner ? 'Connecting…' : 'Joining…') : owner ? 'Connect' : 'Join'}
+        </Button>
+        <Button
+          type="button"
+          variant="link"
+          size="xs"
+          onClick={() => {
+            setOwner(!owner)
+            setMessage(null)
+            setInvalid(false)
+            // Why: the heading and fields change; move focus to the code field so the new form is announced.
+            codeInput.current?.focus()
           }}
-          variant="outline"
-          size="sm"
         >
-          <ToggleGroupItem value="coder" className="px-3 text-xs">
-            Coder
-          </ToggleGroupItem>
-          <ToggleGroupItem value="pm" className="px-3 text-xs">
-            PM
-          </ToggleGroupItem>
-        </ToggleGroup>
+          {owner ? 'Joining as a teammate?' : 'Workspace owner? Use your owner code'}
+        </Button>
       </div>
-      <Button type="submit" size="sm" disabled={busy}>
-        {busy ? 'Joining…' : 'Join'}
-      </Button>
       <p
         id="radar-join-message"
         role="status"

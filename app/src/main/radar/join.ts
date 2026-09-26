@@ -37,6 +37,7 @@ async function errorMessage(response: Response): Promise<string> {
 /**
  * Redeems a join code, stores the member connection, starts the WebSocket client and the sync agent.
  * `name` and `role` make the new member for an open code; a code that already belongs to a member ignores them.
+ * An owner code connects this app as Mission Control instead (D-alief-11).
  */
 export async function joinWithCode(
   codeInput: unknown,
@@ -63,6 +64,9 @@ export async function joinWithCode(
     throw new Error(await errorMessage(response))
   }
   const res = JoinRes.parse(await response.json())
+  if (res.role === 'mc') {
+    return connectOwner(server, res.workspace, res.token)
+  }
   const invite = decodeInvite(res.invite)
   // Why: the app's connection model knows coder and mc only; a PM member uses the member socket too.
   const connection: RadarConnection = {
@@ -85,6 +89,25 @@ export async function joinWithCode(
     role: res.role,
     folder: workspaceFolder(invite.workspace)
   }
+}
+
+/** D-alief-11: an owner code gives this app a Mission Control connection; Mission Control does not sync files. */
+function connectOwner(server: string, workspace: string, token: string): RadarJoinResult {
+  const connection: RadarConnection = {
+    server: `${server}/`,
+    workspace,
+    member: 'mc',
+    role: 'mc',
+    token
+  }
+  saveRadarConnection(connection)
+  stopSyncAgent()
+  startClient(connection)
+  const summary = getRadarConnectionSummary()
+  if (!summary) {
+    throw new Error('Connection could not be saved')
+  }
+  return { connection: summary, role: 'mc', folder: null }
 }
 
 /**

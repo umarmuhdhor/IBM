@@ -192,11 +192,22 @@ export async function makeJoinCodes(c: AdminClient, members: string[], ttlHours?
   return [`Join codes (valid until ${until} UTC; each use signs that member in on the new device):`, ...lines];
 }
 
+/** D-alief-11: the owner types this into the app instead of pasting the mc token. */
+export async function makeOwnerCode(c: AdminClient, ttlHours?: number): Promise<string[]> {
+  const r = await adminCall(c, 'POST', '/admin/join-code', { owner: true, ...(ttlHours ? { ttlHours } : {}) }, AdminJoinCodeRes);
+  const until = new Date(r.expiresAt).toISOString().slice(0, 16).replace('T', ' ');
+  return [
+    `Owner code (valid until ${until} UTC; type it in the app under "Workspace owner?", each use replaces the mc token):`,
+    `mc  ${r.code}`,
+  ];
+}
+
 const USAGE = `usage (ADMIN_SECRET must be set in the environment):
   admin init   --server <url> --workspace <name> [--repo owner/name] [--branch main] [--repo-dir <clone>]
                [--member ID:role:Name[:email] ...] [--force]   (no --member: teammates join with open codes)
   admin code   --server <url> [--member <ID> ...] [--ttl-hours 72]   (short join code + one-line install command;
                without --member one open code: the first person to use it joins with their own name and role)
+  admin code   --server <url> --owner [--ttl-hours 72]   (owner code: connects the owner's app as Mission Control)
   admin token  --server <url> --member <ID|mc>
   admin invite --server <url> --member <ID>   (rotates the token; prints an rdr_inv_ code for radar join --invite)
   admin export --server <url> [--out <file>] [--from <id>] [--to <id>]
@@ -214,6 +225,7 @@ export async function main(argv: string[], env: NodeJS.ProcessEnv = process.env,
       'repo-dir': { type: 'string' },
       member: { type: 'string', multiple: true },
       force: { type: 'boolean', default: false },
+      owner: { type: 'boolean', default: false },
       confirm: { type: 'boolean', default: false },
       out: { type: 'string' },
       from: { type: 'string' },
@@ -253,6 +265,8 @@ export async function main(argv: string[], env: NodeJS.ProcessEnv = process.env,
     out(formatTokenTable(r.tokens));
     out('');
     try {
+      for (const l of await makeOwnerCode(c)) out(l);
+      out('');
       for (const l of await makeJoinCodes(c, members.map((m) => m.id))) out(l);
     } catch (e) {
       // Init already succeeded; an older server simply has no join codes.
@@ -266,7 +280,11 @@ export async function main(argv: string[], env: NodeJS.ProcessEnv = process.env,
       out(USAGE);
       return 2;
     }
-    for (const l of await makeJoinCodes(c, values.member ?? [], ttl)) out(l);
+    if (values.owner && values.member?.length) {
+      out(USAGE);
+      return 2;
+    }
+    for (const l of await (values.owner ? makeOwnerCode(c, ttl) : makeJoinCodes(c, values.member ?? [], ttl))) out(l);
     return 0;
   }
   if (command === 'token') {

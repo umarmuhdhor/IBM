@@ -64,6 +64,12 @@ export function createApp(deps: WorkspaceDeps): Hono {
     const found = hash === null ? null : findJoinCode(deps.db, hash, deps.now());
     const notFound = new RadarError(404, 'NOT_FOUND', 'This join code is wrong or has expired. Ask the workspace owner for a new code.');
     if (!found || hash === null) throw notFound;
+    const workspace = deps.workspaceId();
+    // D-alief-11: an owner code connects the owner's app as Mission Control; name and role are ignored.
+    if (found.owner) {
+      const res: JoinRes = { workspace, member: null, role: 'mc', token: rotateToken(deps, null) };
+      return c.json(res);
+    }
     // D-alief-10: an open code creates the member on first use; after that it signs the same member in again.
     let memberId = found.memberId;
     if (memberId === null) {
@@ -72,16 +78,18 @@ export function createApp(deps: WorkspaceDeps): Hono {
     }
     const member = getMember(deps.db, memberId);
     if (!member) throw notFound;
-    const workspace = deps.workspaceId();
     const token = rotateToken(deps, member.id);
     const res: JoinRes = { workspace, member: member.id, role: member.role, invite: encodeInvite({ server: new URL(c.req.url).origin, workspace, member: member.id, token }) };
     return c.json(res);
   });
 
   // IN-03: Mission Control (the owner's app) makes join codes for teammates without the admin secret.
+  // Owner codes come only from the admin secret (`admin init` / `admin code --owner`).
   app.post('/v1/join-codes', async (c) => {
     requireRole(deps.db, c.req.header('authorization'), ['mc']);
-    return c.json(createJoinCode(deps, parseWith(AdminJoinCodeReq, await readJson(c.req.raw))), 201);
+    const req = parseWith(AdminJoinCodeReq, await readJson(c.req.raw));
+    if (req.owner) throw new RadarError(403, 'FORBIDDEN', 'Owner codes are made with the admin secret.');
+    return c.json(createJoinCode(deps, req), 201);
   });
 
   app.post('/v1/bob/activity', async (c) => {

@@ -26,16 +26,24 @@ export function newJoinCode(): string {
 /** Member ids a code-joined teammate gets, in order: the first free one wins. */
 export const JOIN_MEMBER_IDS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'] as const;
 
-/** Without `member` the code is open: the first person to redeem it becomes a new member with their own name and role. */
-export const AdminJoinCodeReq = z.object({
-  member: z.string().min(1).max(64).optional(),
-  ttlHours: z.number().int().min(1).max(JOIN_CODE_TTL_HOURS_MAX).optional(),
-});
+/**
+ * Without `member` the code is open: the first person to redeem it becomes a new member with their own name and role.
+ * `owner: true` makes an owner code instead (D-alief-11): redeeming it connects the owner's app as Mission Control.
+ */
+export const AdminJoinCodeReq = z
+  .object({
+    member: z.string().min(1).max(64).optional(),
+    owner: z.boolean().optional(),
+    ttlHours: z.number().int().min(1).max(JOIN_CODE_TTL_HOURS_MAX).optional(),
+  })
+  .refine((r) => !(r.owner && r.member), { message: 'An owner code cannot belong to a member.' });
 export type AdminJoinCodeReq = z.infer<typeof AdminJoinCodeReq>;
 
 export const AdminJoinCodeRes = z.object({
-  /** null for an open code. */
+  /** null for an open code and for an owner code. */
   member: z.string().nullable(),
+  /** true for an owner code (Mission Control). Absent from servers before D-alief-11. */
+  owner: z.boolean().optional(),
   code: z.string(),
   expiresAt: z.number().int(),
 });
@@ -50,10 +58,22 @@ export const JoinReq = z.object({
 export type JoinReq = z.infer<typeof JoinReq>;
 
 /** `invite` is an rdr_inv_ code with a token minted by this call (the member's older tokens are revoked). */
-export const JoinRes = z.object({
+export const JoinMemberRes = z.object({
   workspace: z.string(),
   member: z.string(),
   role: z.enum(['coder', 'pm']),
   invite: z.string(),
 });
+export type JoinMemberRes = z.infer<typeof JoinMemberRes>;
+
+/** An owner code (D-alief-11): a new Mission Control token; older mc tokens are revoked. */
+export const JoinOwnerRes = z.object({
+  workspace: z.string(),
+  member: z.null(),
+  role: z.literal('mc'),
+  token: z.string(),
+});
+export type JoinOwnerRes = z.infer<typeof JoinOwnerRes>;
+
+export const JoinRes = z.union([JoinMemberRes, JoinOwnerRes]);
 export type JoinRes = z.infer<typeof JoinRes>;
