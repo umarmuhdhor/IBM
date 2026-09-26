@@ -21514,7 +21514,11 @@ async function loadContext(hookName) {
   try {
     cfg = loadLocalConfig(payloadCwd);
   } catch (err) {
-    if (!(err instanceof ConfigMissingError)) logLine(payloadCwd, hookName, `config error: ${String(err)}`);
+    if (err instanceof ConfigInvalidError) {
+      logLine(payloadCwd, hookName, `config invalid, Radar checks are off until .radar/local.json is fixed: ${err.message}`);
+    } else if (!(err instanceof ConfigMissingError)) {
+      logLine(payloadCwd, hookName, `config error: ${err instanceof Error ? err.stack ?? err.message : String(err)}`);
+    }
     return null;
   }
   return { cfg, hook: normalizeHookPayload(raw, cfg.root), started };

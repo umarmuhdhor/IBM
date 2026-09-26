@@ -29373,7 +29373,7 @@ function createRadarClient(config2, timeoutMs = MCP_FETCH_TIMEOUT_MS) {
 function expectShape(schema, data, what) {
   const parsed = schema.safeParse(data);
   if (parsed.success) return parsed.data;
-  const detail = parsed.error.issues.slice(0, 3).map((i) => `${i.path.join(".") || "(root)"} ${i.message}`).join("; ");
+  const detail = parsed.error.issues.slice(0, 3).map((i) => `${i.path.join(".") || "(root)"} ${i.code}`).join("; ");
   process.stderr.write(`radar-mcp: ${what} response does not match R3: ${detail}
 `);
   throw new RadarToolError(`Jawaban server Radar untuk ${what} tidak sesuai kontrak; beri tahu user dan coba lagi nanti.`);
