@@ -322,6 +322,7 @@ Format:
   - Dengan tujuan "Tambah fitur kupon diskon di checkout dan dark mode", Bob PM menaruh kupon di `coupon.ts` + `App.tsx`, **tanpa `checkout.ts`** (di toko-demo `applyCoupon` dipanggil dari `App.tsx`). Adegan blokir naskah butuh `checkout.ts` dipegang A → sebut file di tujuan (lihat LANGKAH MANUAL fase-10-bob).
   - Brief start B menyebut file yang dipegang A, jadi Bob B memilih `request_file` tanpa mencoba edit (sama dengan handoff fase 07). Kartu permintaan dan keputusan tetap muncul, tetapi notifikasi "Bob B diblokir" hanya muncul kalau Bob benar-benar mencoba edit.
   - Bob coder kadang menjawab dalam bahasa Inggris walau prompt Indonesia.
+  - (Sab 18:20, setelah fase 06) Menyebut `src/checkout/checkout.ts` di tujuan membuat Bob PM menaruhnya di task A. Review `setujui_beri_tahu` hanya muncul kalau A juga memperbarui pemanggil di file task-nya sendiri; kalau tidak, Bob PM memilih `kembalikan` (benar menurut instruksi mode).
 - Alasan: test integrasi `packages/mcp/test/server.int.test.ts` (RED `ffc816a3` → GREEN `7c759f72`) dan 4 sesi Bob IDE 2.2.0 melawan Worker lokal.
 - Dampak: Alief (R3 §7), Imelda/semua (naskah demo), fase 12 (`/v1/ai-edits`).
 - File ref/ yang diperbarui: – (usulan saja).

@@ -1,6 +1,6 @@
 # Log fase 10 — Integrasi E2E, bagian Lane Umar · Bob
 
-- **Status:** [~] bagian otomatis lane Bob selesai (kit Bob melawan Worker asli: test integrasi + 4 sesi Bob IDE). Sisa: milestone 4 Mac (LANGKAH MANUAL, Sab 23:00), `get_task_diff`/review/commit setelah fase 06.
+- **Status:** [~] bagian otomatis lane Bob selesai (kit Bob melawan Worker asli: test integrasi + 7 sesi Bob IDE, termasuk review fase 06). Sisa: milestone 4 Mac (LANGKAH MANUAL, Sab 23:00).
 - **Mulai:** Sab 26 Sep 2026 16:18 WITA (PR #13 fase 05 merge 16:15) · branch `lane/bob` di atas `main` 1aa25d54.
 - **Model:** Claude Opus 5.5.
 - File log terpisah dari `fase-10.md` supaya PR tiap lane tidak bentrok (D-umar-04). Simulator `sim-3pc` = Lane Alief.
@@ -21,7 +21,7 @@
 - [x] Uji Bob IDE 2.2.0 melawan Worker lokal (tabel di bawah), bukti task 09–12.
 - [x] `TODO(sync` lane Bob = 0 (`mark_ai_edit` → komentar biasa + D-umar-04; `fake-radar` ditandai usang).
 - [ ] Milestone 4 Mac (LANGKAH MANUAL).
-- [ ] Setelah fase 06: `get_task_diff` + `pm-review` di Bob IDE, commit GitHub.
+- [x] Setelah fase 06 (#16, merge 18:12): test integrasi menambah `get_task_diff` (ekspor berubah + importer `Header.tsx` milik T-2) dan serah kunci `checkout.ts` ke B setelah approve; `pm-review` di Bob IDE (task 13–15). Push GitHub asli sudah dibuktikan Alief di fase 06 (`c0576499`); di sini `GITHUB_COMMIT=false`, commit lokal `pushed:false`.
 
 ## Uji Bob IDE melawan Worker asli (langkah 3)
 
@@ -35,13 +35,24 @@ Setup: `wrangler dev` lokal (`--persist-to` scratchpad, `ADMIN_SECRET` acak di `
 | 10 | B: "Uji Radar: langsung edit … jangan request_file dulu" | lulus BC-01: hook exit 2, pesan server tampil di Bob ("…dipegang Bob milik Andi (T-1…)"), Bob langsung `why_blocked`, tidak coba ulang, tanpa shell; file tidak berubah | `uaai_umar_task10_coder_block_real_server_summary.png` · 0.179 |
 | 12 | C: prompt `pm-rebutan.md` | lulus MA-03: `list_requests` + `team_status` + baca file → `propose_decision antre` P-2 dengan alasan satu kalimat → server `diterapkan_otomatis`; brief prompt B: "Keputusan PM: Kamu antre src/checkout/coupon.ts di posisi 1, setelah T-1." | `uaai_umar_task12_pm_decision_real_server_summary.png` · 0.120 |
 
-Total Bobcoin uji: 0.604.
+Putaran 2 (Sab 18:14–18:19, Worker lokal dengan kode fase 06, server dan workspace baru):
+
+| # | Uji | Hasil | Bukti |
+|---|---|---|---|
+| 13 | C: `pm-rencana.md` dengan tujuan "Tambah fitur kupon diskon (total dihitung di src/checkout/checkout.ts) dan dark mode" | lulus MA-02: T-1 A = `coupon.ts`, `checkout.ts`, `routes.ts`, `App.tsx`; T-2 B = `theme.css`, `Header.tsx`, queued `App.tsx`. Temuan demo 1 teratasi dengan menyebut file di tujuan | `uaai_umar_task13_pm_plan_checkout_real_server_summary.png` · 0.208 |
+| – | Approve P-1; A mengubah `calculateTotal(items)` → `(items, shipping)` di `checkout.ts` (hook asli + sync), submit T-1 | T-1 `review` | REST |
+| 14 | C: `pm-review.md` untuk T-1 | Bob memanggil `get_task_diff` dan memilih **`kembalikan`**: `App.tsx:27` milik T-1 sendiri belum diperbarui + `Header.tsx:17` milik T-2 terdampak, notify B. Benar menurut instruksi mode (task sendiri salah) | `uaai_umar_task14_pm_review_return_real_server_summary.png` · 0.125 |
+| – | Mission Control approve P-2 (kembalikan) → T-1 `dikerjakan`; A memperbarui `App.tsx` (`calculateTotal(cart, 0)`), submit ulang | T-1 `review` | REST |
+| 15 | C: `pm-review.md` ("diajukan ulang") | lulus MA-04/05: `setujui_beri_tahu` + notify B soal `Header.tsx`. Token PM → 403 pada decision (MA-07); Mission Control approve → commit `local-…` (`pushed:false`), `App.tsx` diserahkan ke B, brief prompt B: "Review: calculateTotal … kini wajib 2 argumen … Header.tsx baris 17" | `uaai_umar_task15_pm_review_notify_real_server_summary.png` · 0.158 |
+
+Total Bobcoin uji: 1.095 (putaran 1 0.604 + putaran 2 0.491).
 
 ## Hasil verifikasi
 
 | Perintah | Hasil |
 |---|---|
 | `pnpm -C radar --filter @radar/mcp test` | 48 lulus (termasuk 3 test integrasi Worker asli), 3× berturut-turut hijau sebelum review, 2× setelah perbaikan review |
+| (setelah fase 06) `pnpm -C radar --filter @radar/mcp test` | 48 lulus, 3× berturut-turut; test integrasi kini juga memeriksa `get_task_diff` dan serah kunci |
 | `pnpm -C radar typecheck` / `pnpm -C radar lint` | bersih |
 | `pnpm -C radar test` (semua paket) | 4 run: 3 hijau penuh; 1 run gagal di `hooks/lock_guard.test.ts` "p95 < 300 ms" (test waktu, lulus saat diulang, lihat MEDIUM) |
 | `grep -rn "TODO(sync" radar/packages/{hooks,mcp} radar/spike radar/bob-kit` | kosong |
@@ -62,14 +73,15 @@ MEDIUM dicatat, tidak dikerjakan: test waktu di `packages/hooks` (`lock_guard p9
 ## Deviasi
 
 - Uji Bob IDE memakai Worker lokal (`wrangler dev`), bukan deploy `live-collab.afindo-mi01.workers.dev` (token produksi milik tim, tidak boleh diketik agent).
-- MA-02/MA-04 (`get_task_diff`, `pm-review`) dan commit GitHub belum diuji melawan server asli: route `GET /v1/tasks/:id/diff` = fase 06.
+- Commit ke GitHub asli tidak diulang di sini (`GITHUB_COMMIT=false` lokal, tanpa PAT); bukti push asli = fase 06 (`c0576499`, `radar/docs/img/commit-github.png`).
 - `my_tasks` tidak mengikuti tabel R3 §7 (`owner=me`) tetapi R3 §2.4 (D-umar-04).
 
 ## Temuan untuk naskah demo (PRD §15)
 
 1. Tanpa menyebut file, Bob PM tidak menaruh `checkout.ts` di task kupon (toko-demo memanggil `applyCoupon` dari `App.tsx`). Adegan blokir butuh `checkout.ts` dipegang A → pakai tujuan yang menyebut file (LANGKAH MANUAL 4).
 2. Bob coder yang sudah membaca brief ("Dipegang orang lain: … coupon.ts→A") memilih `request_file` tanpa mencoba edit. Kartu permintaan + keputusan PM tetap muncul; notifikasi "Bob B diblokir" dan pesan merah hook hanya muncul kalau Bob benar-benar mencoba edit. Untuk adegan blokir, file rebutan sebaiknya dipegang A **setelah** sesi B dimulai, atau B diminta mengedit langsung (seperti uji 10).
-3. Bob coder menjawab dalam bahasa Inggris pada prompt Indonesia (2 dari 2 sesi coder). Kalau video memakai bahasa Indonesia, tambahkan "Jawab dalam Bahasa Indonesia." ke prompt demo.
+3. Adegan review naskah ("Ubah calculateTotal agar menerima ongkos kirim, lalu ajukan task") hanya berakhir `setujui_beri_tahu` kalau A juga memperbarui pemanggil di file miliknya sendiri (`App.tsx:27`). Kalau tidak, Bob PM memilih `kembalikan` (uji 14). Bob A biasanya memperbaiki pemanggil di task-nya, tetapi cek sebelum rekaman.
+4. Bob coder menjawab dalam bahasa Inggris pada prompt Indonesia (2 dari 2 sesi coder). Kalau video memakai bahasa Indonesia, tambahkan "Jawab dalam Bahasa Indonesia." ke prompt demo.
 
 ## LANGKAH MANUAL (milestone Sab 23:00, dipimpin Lane Umar)
 
@@ -79,12 +91,12 @@ MEDIUM dicatat, tidak dikerjakan: test waktu di `packages/hooks` (`lock_guard p9
 4. C: prompt `pm-rencana.md` dengan tujuan **"Tambah fitur kupon diskon (total dihitung di src/checkout/checkout.ts) dan dark mode"** → cek kartu rencana memuat `checkout.ts` di task A → Setujui.
 5. A: "Kerjakan task aktifmu: kupon diskon di checkout." · B: "Kerjakan task aktifmu: dark mode." → cek file berubah di PC lain dan ✎ di Mission Control.
 6. B (setelah A mengedit `checkout.ts`): "Tampilkan total dengan diskon kupon di checkout.ts juga" → catat apakah Bob mencoba edit (hook blokir) atau langsung `request_file`; keduanya harus berakhir dengan kartu permintaan → C: `pm-rebutan.md` → usulan antre (otomatis).
-7. (setelah fase 06) A: "Ubah calculateTotal agar menerima ongkos kirim, lalu ajukan task." → C: `pm-review.md` → setujui + beri tahu B → commit di GitHub (A + co-author IBM Bob).
-8. Catat waktu tiap adegan, Bobcoin per PC, keanehan. Bukti Bob per PC: `radar/scripts/bob-evidence.sh <nama> <NN> <slug>` (Umar lanjut dari NN 13).
+7. A: "Ubah calculateTotal agar menerima ongkos kirim, perbarui pemanggilnya di file task-mu, lalu ajukan task." → C: `pm-review.md` → setujui + beri tahu B → Setujui di Mission Control → commit di GitHub (A + co-author IBM Bob).
+8. Catat waktu tiap adegan, Bobcoin per PC, keanehan. Bukti Bob per PC: `radar/scripts/bob-evidence.sh <nama> <NN> <slug>` (Umar lanjut dari NN 16).
 9. Selesai: tutup Bob yang dibuka dengan port debugging, buka ulang tanpa port.
 
 ## Catatan handoff
 
 - **Alief:** usulan R3 §7 `my_tasks` (D-umar-04); `/v1/ai-edits` fase 12; test waktu hooks yang rentan beban (MEDIUM di atas) bila CI memakai `pnpm -C radar test`.
-- **Imelda/semua (naskah demo):** temuan 1–3 di atas.
+- **Imelda/semua (naskah demo):** temuan 1–4 di atas.
 - **Aarief:** tidak ada perubahan antarmuka; notifikasi "Bob diblokir" di app hanya muncul untuk blokir lewat hook (temuan 2).
