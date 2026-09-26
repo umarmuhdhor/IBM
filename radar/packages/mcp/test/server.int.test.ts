@@ -53,7 +53,12 @@ beforeAll(async () => {
   tokens = ((await init.json()) as { tokens: Record<string, string> }).tokens;
   // Fail here with a clear message instead of an opaque 401 later if the init shape drifts.
   for (const id of ['A', 'B', 'C', 'mc']) if (!tokens[id]) throw new Error(`init returned no token for ${id}`);
-  const files = FILES.map((path) => ({ path, content: `// ${path}\n` }));
+  // checkout.ts exports calculateTotal and Header.tsx imports it, so the review diff has an importer (MA-04).
+  const content: Record<string, string> = {
+    [CHECKOUT]: 'export function calculateTotal(items: number[]): number {\n  return items.length;\n}\n',
+    [HEADER]: "import { calculateTotal } from '../checkout/checkout';\n\nexport const total = calculateTotal([]);\n",
+  };
+  const files = FILES.map((path) => ({ path, content: content[path] ?? `// ${path}\n` }));
   const seeded = await fetch(`${url}/admin/files`, { method: 'POST', headers, body: JSON.stringify({ headCommit: null, files }) });
   if (seeded.status !== 200) throw new Error(`files failed: ${seeded.status} ${await seeded.text()}`);
 
@@ -168,7 +173,7 @@ describe('Bob kit against the real server (PRD §15 up to review)', () => {
     for (const s of ['Andi', 'Budi', 'Kupon', 'Dark mode']) expect(status.text).toContain(s);
 
     // 2. Live: A and B edit their own files (the first edit takes the lock); the other folder follows.
-    const checkoutA = 'export const calculateTotal = (items: number[], shipping: number) => 0;\n';
+    const checkoutA = 'export function calculateTotal(items: number[], shipping: number): number {\n  return items.length + shipping;\n}\n';
     expect((await bobWrite('A', CHECKOUT, checkoutA)).code).toBe(0);
     expect((await bobWrite('B', THEME, ':root { --bg: #111; }\n')).code).toBe(0);
     await waitFor(() => readWs('B', CHECKOUT) === checkoutA, 'checkout.ts from A reaches B');
@@ -215,6 +220,15 @@ describe('Bob kit against the real server (PRD §15 up to review)', () => {
     const submitted = await tool('A', 'submit_task', { task_id: taskA, summary: 'Kupon diskon di checkout selesai.' });
     expect(submitted.isError, submitted.text).toBe(false);
 
+    // The PM agent reads the task diff (fase 06): changed export + the importer held by B's task (MA-04).
+    const diff = await tool('C', 'get_task_diff', { task_id: taskA });
+    expect(diff.isError, diff.text).toBe(false);
+    const [first] = diff.text.split('\n');
+    expect(first).toContain('calculateTotal(items: number[], shipping: number)');
+    expect(first).toContain(HEADER);
+    expect(first).toContain('T-2');
+    expect(diff.text).toContain(`--- ${CHECKOUT}`);
+
     const review = await tool('C', 'propose_review', {
       task_id: taskA,
       verdict: 'setujui_beri_tahu',
@@ -230,6 +244,11 @@ describe('Bob kit against the real server (PRD §15 up to review)', () => {
     await approve(reviewId);
     const afterReview = await briefPrompt('B');
     expect(afterReview.stdout).toContain('calculateTotal(items, shipping)');
+
+    // After the approval checkout.ts moves to B, who queued for it (the antre decision above).
+    const state = await rest(tokens.mc!, 'GET', '/v1/state');
+    const locks = (state.json.locks ?? []) as { path: string; memberId: string | null }[];
+    expect(locks.find((l) => l.path === CHECKOUT)?.memberId).toBe('B');
   }, 60_000);
 
   it('activity hooks reach the server and show up in team_activity (JT-01)', async () => {
