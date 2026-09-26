@@ -199,6 +199,13 @@ CREATE TABLE IF NOT EXISTS metric (
 );
 CREATE INDEX IF NOT EXISTS metric_name ON metric(name, ts);
 
+CREATE TABLE IF NOT EXISTS join_code (                   -- IN-03 (D-alief-09): kode gabung pendek, hanya hash
+  hash       TEXT PRIMARY KEY,                           -- sha256 hex dari kode 'K7QM-3XPA'
+  member_id  TEXT NOT NULL REFERENCES member(id),
+  created_at INTEGER NOT NULL,
+  expires_at INTEGER NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS ai_mark (                     -- BC-05: PostToolUse tiba sebelum file.update dari sync
   member_id TEXT NOT NULL,
   path      TEXT NOT NULL,

@@ -32,7 +32,7 @@ describe('SQLite schema in the Durable Object (R2)', () => {
         .sort(),
     );
     expect(names).toEqual(
-      ['ai_mark', 'allocation', 'block', 'counter', 'event', 'file', 'file_version', 'lock', 'member', 'meta', 'metric', 'notification', 'proposal', 'request', 'review', 'task', 'task_touch', 'token'].sort(),
+      ['ai_mark', 'allocation', 'block', 'counter', 'event', 'file', 'file_version', 'join_code', 'lock', 'member', 'meta', 'metric', 'notification', 'proposal', 'request', 'review', 'task', 'task_touch', 'token'].sort(),
     );
   });
 });

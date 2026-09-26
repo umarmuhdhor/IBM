@@ -1,8 +1,9 @@
 // Worker entry (R1 §2.1, fase 03 step 2): answers /healthz and CORS itself and forwards everything else to the
 // workspace Durable Object. No state and no heavy work here (10 ms CPU per request on the Free plan).
-import type { HealthRes } from '@radar/common';
+import { normalizeJoinCode, type HealthRes } from '@radar/common';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import { joinScript } from './join-script';
 import { SERVER_VERSION } from './version';
 
 export { WorkspaceDO } from './workspace-do';
@@ -27,6 +28,16 @@ app.get('/healthz', (c) => {
   startedAt ??= Date.now();
   const body: HealthRes = { ok: true, workspace: c.env.WORKSPACE_ID, version: SERVER_VERSION, uptimeMs: Date.now() - startedAt };
   return c.json(body);
+});
+
+// IN-03 one-command join (D-alief-09): `curl -fsSL <server>/j/<code> | sh`, or `…/join.sh | sh -s <code>`.
+// The CLI tarball it installs is a static asset (public/radar-cli.tgz, built by `pnpm deploy`).
+const script = (body: string) => new Response(body, { headers: { 'content-type': 'text/x-shellscript; charset=utf-8', 'cache-control': 'no-store' } });
+app.get('/join.sh', (c) => script(joinScript(new URL(c.req.url).origin, '')));
+app.get('/j/:code', (c) => {
+  const code = normalizeJoinCode(c.req.param('code'));
+  if (code === null) return script(`#!/bin/sh\necho 'Kode gabung tidak valid. Contoh: K7QM-3XPA' >&2\nexit 1\n`);
+  return script(joinScript(new URL(c.req.url).origin, code));
 });
 
 app.all('*', async (c) => {

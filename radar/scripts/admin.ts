@@ -1,4 +1,4 @@
-// `pnpm -C radar admin <init|token|invite|export|reset>` (fase 03 step 8): replaces the v0.2 `radar-server` CLI by
+// `pnpm -C radar admin <init|code|token|invite|export|reset>` (fase 03 step 8): replaces the v0.2 `radar-server` CLI by
 // calling the Worker's /admin/* endpoints. ADMIN_SECRET is read from the environment only, never from argv,
 // so it does not end up in shell history. Tokens are printed once; store them in the team password manager.
 import { execFileSync } from 'node:child_process';
@@ -11,6 +11,7 @@ import {
   ADMIN_FILES_MAX_PER_BATCH,
   AdminFilesRes,
   AdminInitRes,
+  AdminJoinCodeRes,
   AdminMember,
   AdminTokenRes,
   encodeInvite,
@@ -176,9 +177,22 @@ export function formatTokenTable(tokens: Record<string, string>): string {
   return [`${'member'.padEnd(w)}  token`, ...rows.map(([k, v]) => `${k.padEnd(w)}  ${v}`)].join('\n');
 }
 
+/** IN-03 (D-alief-09): one short code per member plus the command a teammate pastes in a terminal. */
+export async function makeJoinCodes(c: AdminClient, members: string[], ttlHours?: number): Promise<string[]> {
+  const server = c.server.replace(/\/+$/, '');
+  const lines: string[] = [];
+  for (const member of members) {
+    const r = await adminCall(c, 'POST', '/admin/join-code', { member, ...(ttlHours ? { ttlHours } : {}) }, AdminJoinCodeRes);
+    lines.push(`${r.member}  ${r.code}  curl -fsSL ${server}/j/${r.code} | sh`);
+  }
+  const until = new Date(Date.now() + (ttlHours ?? 72) * 3_600_000).toISOString().slice(0, 16).replace('T', ' ');
+  return [`Join codes (valid until ${until} UTC; each use signs that member in on the new device):`, ...lines];
+}
+
 const USAGE = `usage (ADMIN_SECRET must be set in the environment):
   admin init   --server <url> --workspace <name> [--repo owner/name] [--branch main] [--repo-dir <clone>]
                --member ID:role:Name[:email] ... [--force]
+  admin code   --server <url> --member <ID> ... [--ttl-hours 72]   (short join code + one-line install command)
   admin token  --server <url> --member <ID|mc>
   admin invite --server <url> --member <ID>   (rotates the token; prints an rdr_inv_ code for radar join --invite)
   admin export --server <url> [--out <file>] [--from <id>] [--to <id>]
@@ -200,9 +214,10 @@ export async function main(argv: string[], env: NodeJS.ProcessEnv = process.env,
       out: { type: 'string' },
       from: { type: 'string' },
       to: { type: 'string' },
+      'ttl-hours': { type: 'string' },
     },
   });
-  if (!command || !['init', 'token', 'invite', 'export', 'reset'].includes(command) || !values.server) {
+  if (!command || !['init', 'code', 'token', 'invite', 'export', 'reset'].includes(command) || !values.server) {
     out(USAGE);
     return 2;
   }
@@ -232,6 +247,22 @@ export async function main(argv: string[], env: NodeJS.ProcessEnv = process.env,
     out(`imported ${r.inserted} files, head ${r.headCommit ?? '(none)'}`);
     out('Tokens (shown once; store them in the team password manager, never in the repo or a public chat):');
     out(formatTokenTable(r.tokens));
+    out('');
+    try {
+      for (const l of await makeJoinCodes(c, members.map((m) => m.id))) out(l);
+    } catch (e) {
+      // Init already succeeded; an older server simply has no join codes.
+      out(`Join codes skipped (${e instanceof Error ? e.message : String(e)}). Tokens above still work.`);
+    }
+    return 0;
+  }
+  if (command === 'code') {
+    const ttl = values['ttl-hours'] === undefined ? undefined : Number(values['ttl-hours']);
+    if (!values.member?.length || (ttl !== undefined && !(Number.isInteger(ttl) && ttl >= 1 && ttl <= 720))) {
+      out(USAGE);
+      return 2;
+    }
+    for (const l of await makeJoinCodes(c, values.member, ttl)) out(l);
     return 0;
   }
   if (command === 'token') {

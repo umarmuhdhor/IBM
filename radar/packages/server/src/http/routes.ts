@@ -1,15 +1,19 @@
 // Hono app that runs inside the Durable Object (fase 03 step 9). The Worker forwards everything except /healthz.
-import { BobActivityReq, WS_HELLO_TIMEOUT_MS } from '@radar/common';
+import { AdminJoinCodeReq, BobActivityReq, encodeInvite, JoinReq, normalizeJoinCode, WS_HELLO_TIMEOUT_MS, type JoinRes } from '@radar/common';
 import { Hono, type MiddlewareHandler } from 'hono';
-import { registerAdminRoutes } from '../admin';
+import { createJoinCode, registerAdminRoutes } from '../admin';
+import { sha256Hex } from '../crypto';
 import type { WorkspaceDeps } from '../deps';
+import { memberForJoinCode } from '../db/repo/join-code';
+import { getMember } from '../db/repo/member';
 import { insertMetric } from '../db/repo/metric';
 import { appendEvent } from '../services/events';
 import { exportEvents } from '../services/export';
 import { truncateActivityText } from '../services/activity';
+import { rotateToken } from '../services/join';
 import { buildState } from '../services/state';
 import { principalFromHeader, requireMember, requireRole } from './auth';
-import { errorJson, parseWith, readJson, toErrorResponse } from './errors';
+import { errorJson, parseWith, RadarError, readJson, toErrorResponse } from './errors';
 import { ExportQuery } from './query';
 import { registerFileRoutes } from './routes/files';
 import { registerLockRoutes } from './routes/locks';
@@ -43,6 +47,31 @@ export function createApp(deps: WorkspaceDeps): Hono {
     if (deps.env.PUBLIC_EXPORT !== 'true') requireRole(deps.db, c.req.header('authorization'), ['coder', 'pm', 'mc']);
     const q = parseWith(ExportQuery, c.req.query());
     return c.json(exportEvents(deps.db, deps.workspaceId(), q, deps.now()));
+  });
+
+  // IN-03 (D-alief-09): no token yet, the short code is the credential. Limited per client IP so codes cannot be
+  // guessed quickly (40 bits); a wrong or expired code is 404 without saying which.
+  app.post('/v1/join', async (c) => {
+    const retry = deps.rateLimiter.hit(`join:${c.req.header('cf-connecting-ip') ?? 'unknown'}`, deps.now());
+    if (retry > 0) {
+      const res = errorJson(429, 'RATE_LIMITED', `Terlalu banyak percobaan. Coba lagi dalam ${retry} detik.`);
+      res.headers.set('retry-after', String(retry));
+      return res;
+    }
+    const code = normalizeJoinCode(parseWith(JoinReq, await readJson(c.req.raw)).code);
+    const memberId = code === null ? null : memberForJoinCode(deps.db, sha256Hex(code), deps.now());
+    const member = memberId === null ? null : getMember(deps.db, memberId);
+    if (!member) throw new RadarError(404, 'NOT_FOUND', 'Kode gabung salah atau sudah kedaluwarsa. Minta kode baru ke pemilik workspace.');
+    const workspace = deps.workspaceId();
+    const token = rotateToken(deps, member.id);
+    const res: JoinRes = { workspace, member: member.id, role: member.role, invite: encodeInvite({ server: new URL(c.req.url).origin, workspace, member: member.id, token }) };
+    return c.json(res);
+  });
+
+  // IN-03: Mission Control (the owner's app) makes join codes for teammates without the admin secret.
+  app.post('/v1/join-codes', async (c) => {
+    requireRole(deps.db, c.req.header('authorization'), ['mc']);
+    return c.json(createJoinCode(deps, parseWith(AdminJoinCodeReq, await readJson(c.req.raw))), 201);
   });
 
   app.post('/v1/bob/activity', async (c) => {

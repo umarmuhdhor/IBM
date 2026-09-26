@@ -418,3 +418,13 @@ Format:
 - Alternatif yang ditolak: rate limit per `memberId` setelah auth (butuh auth dua kali per route); `member.stale` untuk semua member (ramai di feed, tidak bisa ditindaklanjuti tanpa kunci); invite berisi kode sekali pakai di server (butuh tabel + endpoint baru; token biasa cukup untuk demo).
 - Dampak: Aarief (banner stale, label AI, riwayat file, tempel undangan), Umar (`/v1/ai-edits` 204, `session_report`), Imelda (roadmap SV-10/BC-06 di README/deck).
 - File ref/ yang diperbarui: `R2-skema-db.md` (`ai_mark`), `R1-struktur-repo.md` (`join --invite`, SV-10 dipotong).
+
+## D-alief-09 · 26 Sep 2026 · pasca fase 12 · Gabung workspace dengan satu kode pendek (IN-03)
+
+- Keputusan:
+  1. **Kontrak baru (milik Core):** tabel `join_code(hash, member_id, created_at, expires_at)` (R2, hanya sha256 kode); `POST /admin/join-code` (admin secret) dan `POST /v1/join-codes` (token `mc`, untuk Mission Control) membuat kode `XXXX-XXXX` (Crockford base32, 40 bit, default 72 jam, maks 720); `POST /v1/join {code}` tanpa token menukar kode jadi `{workspace, member, role, invite}` dengan token member baru (token lama dicabut, socket lama ditutup 4401). Kode bisa dipakai ulang sampai kedaluwarsa; perangkat terbaru yang menang. Rate limit 60/menit per `cf-connecting-ip`; kode salah atau kedaluwarsa = 404 tanpa detail.
+  2. **Satu perintah untuk teman:** Worker menyajikan `GET /j/<kode>` (skrip sh berisi server + kode) dan `GET /join.sh`; tarball CLI (`public/radar-cli.tgz`, dibangun `pnpm deploy` lewat `scripts/pack-cli.mjs`, git-ignored) disajikan sebagai static asset. Skrip memasang Node 24 dari nodejs.org (cek SHA-256) bila tidak ada atau terlalu lama, memasang CLI di `~/.radar` tanpa sudo, menukar kode, menjalankan `radar join` di `~/live-collab/<workspace>`, lalu membuka IBM Bob IDE.
+  3. `admin init` langsung mencetak kode gabung tiap member; `admin code --member …` membuat kode baru.
+- Alasan: teman tidak perlu menerima file `radar-cli.tgz` atau kode `rdr_inv_` 200 karakter; cukup satu baris `curl -fsSL <server>/j/<kode> | sh`.
+- Alternatif yang ditolak: publish ke npm (butuh akun npm dan rilis publik); GET `/j/<kode>` yang langsung menukar kode (pratinjau tautan di chat akan merotasi token).
+- Dampak: Aarief (app bisa memakai `/v1/join` untuk kolom "masukkan kode" dan `/v1/join-codes` untuk tombol "buat kode" di Mission Control), Imelda (langkah gabung di README/video jadi satu baris).
