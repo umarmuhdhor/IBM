@@ -14,8 +14,7 @@ import {
 import type { z } from 'zod';
 import type { CommitResult, CommitSnapshot } from '../committer';
 import { ctxOf, type WorkspaceDeps } from '../deps';
-import { getFileVersion } from '../db/repo/file';
-import { getLock, locksOfTask } from '../db/repo/lock';
+import { getFileVersion } from '../db/repo/file';import { getLock, locksOfTask } from '../db/repo/lock';
 import { getMember } from '../db/repo/member';
 import { getMeta, setMeta } from '../db/repo/meta';
 import { insertMetric } from '../db/repo/metric';
@@ -28,6 +27,7 @@ import type { Db } from '../db/sql';
 import { RadarError } from '../http/errors';
 import { appendEvent } from './events';
 import { cleanPath } from './files';
+import { commitErrorCode } from './github';
 import { commitClaimActive, enqueue, requireTask, returnTaskToWorking, transferNow, type LockCtx } from './locks';
 import { addNotification, sendNote } from './notifications';
 import { closeTask, taskOr404 } from './tasks';
@@ -320,12 +320,23 @@ export async function decideProposalFlow(deps: WorkspaceDeps, id: string, req: D
   try {
     result = await deps.committer.commitTask(claim.snapshot);
   } catch (err) {
-    const error = err instanceof Error ? err.message : String(err);
-    console.error(`radar: commit of ${claim.taskId} failed`, err instanceof Error ? (err.stack ?? error) : error);
+    // Stable codes in the event (never secrets); the raw message stays in the server log only.
+    const code = commitErrorCode(err);
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(`radar: commit of ${claim.taskId} failed [${code}]`, err instanceof Error ? (err.stack ?? message) : message);
+    let head: string | null = null;
+    if (code === 'non_fast_forward' && typeof deps.committer.refreshHead === 'function') {
+      try {
+        head = await deps.committer.refreshHead(claim.snapshot.branch);
+      } catch {
+        head = null;
+      }
+    }
     deps.transact((uow) => {
       const ctx = ctxOf(deps, uow);
       if (getTask(ctx.db, claim.taskId)?.commit_started_at === claim.startedAt) setCommitClaim(ctx.db, claim.taskId, null);
-      appendEvent(ctx.db, ctx.uow, { ts: ctx.now, actor: 'server', type: 'commit.push_failed', payload: { taskId: claim.taskId, sha: null, error } });
+      if (head) setMeta(ctx.db, 'head_commit', head);
+      appendEvent(ctx.db, ctx.uow, { ts: ctx.now, actor: 'server', type: 'commit.push_failed', payload: { taskId: claim.taskId, sha: null, error: code } });
     });
     // The raw error stays in the server log and the event; the client gets a fixed message.
     throw new RadarError(409, 'CONFLICT', `Commit ${claim.taskId} gagal. Task tetap review; coba lagi.`);
@@ -355,6 +366,7 @@ function claimCommit(ctx: LockCtx, p: ProposalRow, task: TaskRow, review: Review
     const v = getFileVersion(ctx.db, t.path, t.last_version);
     return { path: t.path, content: t.deleted || !v || v.deleted ? null : (v.content ?? '') };
   });
+  const reviewer = getMember(ctx.db, p.created_by);
   return {
     proposalId: p.id,
     taskId: task.id,
@@ -366,7 +378,12 @@ function claimCommit(ctx: LockCtx, p: ProposalRow, task: TaskRow, review: Review
       title: task.title,
       summary: task.submit_summary,
       author: { name: owner?.git_name ?? task.owner_id, email: owner?.git_email ?? '' },
-      baseCommit: task.base_commit ?? getMeta(ctx.db, 'head_commit'),
+      // R4 §6.3 step 2: the commit is built on the current meta head (refreshed after a
+      // non-fast-forward), not the task's opening base. task.base_commit stays historical for the diff.
+      baseCommit: getMeta(ctx.db, 'head_commit'),
+      branch: getMeta(ctx.db, 'branch') ?? 'main',
+      proposalId: p.id,
+      reviewer: reviewer ? { name: reviewer.git_name || reviewer.name, role: reviewer.role, email: reviewer.git_email || '' } : null,
       files,
     },
   };

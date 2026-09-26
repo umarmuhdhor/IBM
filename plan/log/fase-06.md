@@ -5,3 +5,24 @@
 - **Model:** Claude Opus 5.5. BOB SLICE A3 (`services/git-message.ts`, mode Code) dan A4 (`/review` `locks.ts` vs R4, mode Ask) di IBM Bob IDE.
 - **Pra-cek:** PR fase 03 ([umarmuhdhor/IBM#5](https://github.com/umarmuhdhor/IBM/pull/5)) sudah merge; `lane/core` di-rebase ke `origin/main`. PR fase 04 ([#10](https://github.com/umarmuhdhor/IBM/pull/10), CI dijalankan ulang karena test latensi hook flaky) dan fase 05 ([#13](https://github.com/umarmuhdhor/IBM/pull/13)) masih terbuka.
 - **CI:** job `radar` di PR #10/#13 merah hanya karena test waktu `radar/packages/hooks/test/lock_guard.test.ts` (1839–1904 ms vs batas 1800 ms) saat runner sibuk menjalankan test server secara paralel. Main hijau. Job dijalankan ulang. Usulan untuk Lane Bob (Umar): longgarkan batas di CI (mis. `process.env.CI ? 2500 : 1800`) atau jalankan test waktu hook dengan `--sequence.concurrent=false`.
+
+## Rencana (run OpenCode, Sab 26 Sep 16:35 WITA)
+1. `services/git-message.ts` (A3): `formatCommitMessage` R5 §3 + trailer `Radar-Main-Agent-Proposal`.
+2. `services/github.ts`: `GitHubCommitter` 4-request inline-content, `CommitError` (`too_many_files|non_fast_forward|rate_limited|http|network`), `GITHUB_COMMIT=false` → `local-<hash>`.
+3. `claimCommit`: snapshot += `branch|proposalId|reviewer` (reviewer = pembuat proposal review).
+4. `decideProposalFlow`: event `push_failed` pakai kode stabil; refresh `head_commit` saat non-fast-forward; wiring default = committer asli.
+5. `services/diff.ts` + `GET /v1/tasks/:id/diff` (pm, mc): patch `diff` pkg, `exportsChanged`, `importers` + holder, cap 60 KB.
+6. Test: `test/github-mock.ts` (msw), `test/github.test.ts`, `services/diff.test.ts` — merah dulu.
+- Deviasi lingkungan (dicatat, bukan deviasi kontrak): ECC agent/skill tidak ada di OpenCode → pakai subagent `general` sebagai reviewer; model runner Muse Spark (bukan Opus 5.5); eskalasi R6 §3 = minta user lanjutkan di Claude Code Opus bila verifikasi gagal 2×.
+
+## Hasil (Sab 26 Sep 17:30 WITA, branch `lane/core`)
+- Status: [~] P0 selesai diuji (137 test hijau: 110 lama + 27 baru); menunggu LANGKAH MANUAL (bukti push GitHub asli + screenshot).
+- Checklist: GitHubCommitter 4-request [x] · `too_many_files`/`rate_limited`/`non_fast_forward` [x] · klaim dua transaksi + TTL [x] (fase 05, tidak diubah) · diff + importers [x] · P1 relay terminal → pindah fase 12 [x].
+- File: `services/github.ts`, `services/git-message.ts` (A3), `services/diff.ts`, `committer.ts` (snapshot +`branch|proposalId|reviewer`, result +`empty`, interface +`refreshHead`), `services/proposals.ts` (reviewer, kode stabil, refresh head), `workspace-do.ts` (wiring produksi), `http/routes/tasks.ts` (diff, pm+mc), `test/github-mock.ts`, `test/github.test.ts`, `services/diff.test.ts`, `test/engine.test.ts` (matriks + judul), `test/flow.int.test.ts` + fixture (sha `local-*`), `plan/ref/R4-mesin-kunci.md` (baris `terbuka→review`), `radar/docs/DEMO_SCRIPT.md`, `bob_sessions/` (2 PNG + index).
+- Verifikasi: `vitest run` 13 file/137 test hijau (incl. msw GitHub mock, property I1–I10) · `tsc --noEmit` bersih · `eslint` bersih · `wrangler deploy --dry-run` bundel OK · `gitleaks` bersih · reviewer `general` ×2: tidak ada temuan CRITICAL/HIGH.
+- DoD: SV-07 [~] (unit+mock lengkap; screenshot push asli = MANUAL) · MA-04 server [x] (`exportsChanged` + `importers` skenario `calculateTotal`) · state aman saat gagal [x] · token tidak di event/respons/log [x] (test + review).
+- Deviasi kontrak: tidak ada. R4 §2 +1 baris (`terbuka→review`, temuan A4 #5 — kontrak milik Core, selaras kode). `claimCommit` pakai `meta.head_commit` (bukan `task.base_commit`) sesuai R4 §6.3 langkah 2.
+- Bob slice: A3 `git-message.ts` (Code, 0.063) — diperbaiki: blank-line ganda saat summary null + indent tabs→2 spasi. A4 review `locks.ts` vs R4 (Ask, 0.098) — 11 temuan diadili: #5 → baris R4; #1 dipertahankan (load-bearing Tx2, dicatat); #4 + #2 → handoff fase 12; #7/#9/#10/#11 false positive (notifikasi di `proposals.ts:244`, klaim di `proposals.ts`+constructor).
+- Otomasi Bob IDE (untuk run berikutnya, dicatat di sini bukan SPIKE_RESULTS.md karena itu folder lane Bob): input chat tidak ada di AX tree (webview) → fokus via klik `New Task`, isi via `agent-browser keyboard inserttext`, submit via `press Enter`; pindah task via CDP mentah `Input.dispatchMouseEvent` (butuh koordinat, `node --input-type=module` + WebSocket bawaan, tanpa dependensi); osascript keystroke butuh izin Accessibility (belum ada — fallback `inserttext` berhasil). Bukti diambil `bob-evidence.sh` (jendela otomatis OK).
+- LANGKAH MANUAL: (1) uji GitHub asli fase 06 langkah 6 (Worker deploy + `curl` + screenshot `docs/img/commit-github.png`); (2) `deploy:server` produksi (butuh konfirmasi); (3) TODO B6: konfirmasi email `BOB_COAUTHOR` (default `IBM Bob <bob@ibm.com>` dipakai).
+- Catatan handoff: P1 `term.*` → fase 12 · temuan A4 #2/#4 (enqueue/promote) → fase 12 · B6 → sebelum submit.
