@@ -333,3 +333,9 @@ Format:
 - Menyimpang dari DESIGN §5.11: pill marigold di hero dan tombol ghost kedua dihapus; tombol utama putih (bukan IBM Blue) atas permintaan user; nav full-width yang berubah jadi pill saat scroll; teks "Privacy & Security → Open Anyway" pindah penuh ke bagian pasang (caption hero tetap sebut arm64 + unsigned).
 - File ref/ yang diperbarui: –
 
+## D-imelda-12 · 26 Sep 2026 · fase 11D1 · `.gitleaks.toml` pakai tabel lama `[allowlist]`
+
+- Keputusan: dua blok `[[allowlists]]` (commit vendoring Orca + fixture PAT palsu D-imelda-07) digabung jadi satu `[allowlist]` dengan `commits` + `regexes`. Arti sama: salah satu cocok → temuan diabaikan.
+- Alasan: `ci / gitleaks` di PR #18 merah. `gitleaks/gitleaks-action@v2` memasang gitleaks 8.24.3, yang diam-diam mengabaikan `[[allowlists]]` level atas; gitleaks lokal 8.30.1 membacanya, jadi scan lokal hijau. `[allowlist]` dibaca kedua versi (dicek lokal: rentang PR 0 leak, commit Orca 0 leak).
+- Alternatif ditolak: pin `GITLEAKS_VERSION` di `ci.yml` (file CI bersama); tulis ulang histori untuk menambah `gitleaks:allow`.
+- File ref/ yang diperbarui: –
