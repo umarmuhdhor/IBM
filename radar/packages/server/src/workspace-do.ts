@@ -44,7 +44,7 @@ export class WorkspaceDO extends DurableObject<Env> implements WorkspaceDeps {
         // A commit in flight dies with the old instance; its claim must not block a new approval (R4 §6.3).
         this.transact((uow) => expireCommitClaims({ db: this.db, uow, now: this.now() }));
       } catch (err) {
-        console.error('radar: schema migration or claim cleanup failed', err instanceof Error ? err.message : String(err));
+        console.error('radar: schema migration or claim cleanup failed', err instanceof Error ? (err.stack ?? err.message) : String(err));
         throw err;
       }
     });

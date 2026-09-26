@@ -307,3 +307,135 @@ describe('brief (R4 §8)', () => {
     expect(lines[1]).toContain(`R-1 ${P} (B→A)`);
   });
 });
+
+describe('proposal validation and rejection (R3 §2.12–2.14, R4 §6)', () => {
+  it('plan 422 names the offending path and task', async () => {
+    const { stub } = freshWorkspace();
+    const t = await seedTestWorkspace(stub);
+    const plan = (tasks: unknown[]) => call(stub, 'POST', '/v1/proposals', { token: t.C, body: { kind: 'plan', reason: 'x', payload: { goal: 'x', tasks } } });
+    const dup = await plan([
+      { ref: 'a', title: 'A', ownerId: 'A', files: [P] },
+      { ref: 'b', title: 'B', ownerId: 'B', files: [P] },
+    ]);
+    expect(dup.status).toBe(422);
+    expect(dup.json.error.message).toContain(P);
+    const pmOwner = await plan([{ ref: 'a', title: 'A', ownerId: 'C', files: [P] }]);
+    expect(pmOwner.status).toBe(422);
+    expect(pmOwner.json.error.message).toContain('task a: C bukan coder');
+    const outside = await plan([{ ref: 'a', title: 'A', ownerId: 'A', files: ['../x.ts'] }]);
+    expect(outside.status).toBe(422);
+    expect(outside.json.error.message).toContain('task a files: path ../x.ts tidak valid');
+    // Normalising can create the overlap: ./src/shared.ts and src/shared.ts are the same file.
+    const norm = await plan([
+      { ref: 'a', title: 'A', ownerId: 'A', files: [`./${P}`] },
+      { ref: 'b', title: 'B', ownerId: 'B', files: [P] },
+    ]);
+    expect(norm.status).toBe(422);
+  });
+
+  it('rejecting a plan creates nothing; a decided proposal cannot be decided again', async () => {
+    const { stub } = freshWorkspace();
+    const t = await seedTestWorkspace(stub);
+    const p = await call(stub, 'POST', '/v1/proposals', { token: t.C, body: { kind: 'plan', reason: 'x', payload: { goal: 'x', tasks: [{ ref: 'a', title: 'A', ownerId: 'A', files: [P] }] } } });
+    const r = await call(stub, 'POST', `/v1/proposals/${p.json.proposalId}/decision`, { token: t.mc, body: { approve: false, note: 'belum' } });
+    expect(r.json).toEqual({ proposalId: p.json.proposalId, status: 'ditolak' });
+    expect(await sql(stub, 'SELECT count(*) AS n FROM task')).toEqual([{ n: 0 }]);
+    expect(await sql(stub, 'SELECT count(*) AS n FROM lock')).toEqual([{ n: 0 }]);
+    expect((await call(stub, 'POST', `/v1/proposals/${p.json.proposalId}/decision`, { token: t.mc, body: { approve: true } })).status).toBe(409);
+    expect((await call(stub, 'POST', '/v1/proposals/P-99/decision', { token: t.mc, body: { approve: true } })).status).toBe(404);
+  });
+
+  it('rejecting a decision closes the request as ditolak and tells the requester; locks stay', async () => {
+    const { stub, t } = await setup([P], [Q]);
+    await editThenBlock(stub, t, P);
+    const p = await call(stub, 'POST', '/v1/proposals', { token: t.C, body: { kind: 'decision', reason: 'x', payload: { requestId: 'R-1', option: 'pindahkan' } } });
+    expect((await call(stub, 'POST', `/v1/proposals/${p.json.proposalId}/decision`, { token: t.mc, body: { approve: false } })).json.status).toBe('ditolak');
+    expect(await sql(stub, "SELECT status FROM request WHERE id = 'R-1'")).toEqual([{ status: 'ditolak' }]);
+    expect(await sql(stub, 'SELECT task_id FROM lock WHERE path = ?', P)).toEqual([{ task_id: 'T-1' }]);
+    expect(await sql(stub, "SELECT message FROM notification WHERE member_id = 'B' AND kind = 'decision'")).toEqual([{ message: `Permintaan ${P} ditolak PM.` }]);
+    // A closed request cannot get another decision.
+    const again = await call(stub, 'POST', '/v1/proposals', { token: t.C, body: { kind: 'decision', reason: 'x', payload: { requestId: 'R-1', option: 'antre' } } });
+    expect(again.status).toBe(409);
+  });
+
+  it('review kembalikan returns the task to dikerjakan with its locks held; rejecting a review keeps it in review', async () => {
+    const { stub, t } = await setup([P], [Q]);
+    const sync = await hello(stub, t.A!, 'sync');
+    await call(stub, 'POST', '/v1/locks/check', { token: t.A, body: { paths: [P], tool: 'write_file', clientTs: 0 } });
+    sync.send(await update('a1', P, 1, '// a\n'));
+    await sync.byType('file.ack');
+    sync.ws.close();
+    await call(stub, 'POST', '/v1/tasks/T-1/submit', { token: t.A, body: { summary: 'x' } });
+    const review = (verdict: string) => call(stub, 'POST', '/v1/proposals', { token: t.C, body: { kind: 'review', reason: 'x', payload: { taskId: 'T-1', verdict, notes: 'tambah test' } } });
+
+    const first = await review('setujui');
+    expect((await call(stub, 'POST', `/v1/proposals/${first.json.proposalId}/decision`, { token: t.mc, body: { approve: false } })).json.status).toBe('ditolak');
+    expect(await sql(stub, "SELECT status FROM task WHERE id = 'T-1'")).toEqual([{ status: 'review' }]);
+
+    const back = await review('kembalikan');
+    expect((await call(stub, 'POST', `/v1/proposals/${back.json.proposalId}/decision`, { token: t.mc, body: { approve: true } })).json.applied).toEqual({ taskId: 'T-1', verdict: 'kembalikan' });
+    expect(await sql(stub, "SELECT status FROM task WHERE id = 'T-1'")).toEqual([{ status: 'dikerjakan' }]);
+    expect(await sql(stub, 'SELECT state FROM lock WHERE path = ?', P)).toEqual([{ state: 'dipegang' }]);
+    expect(await sql(stub, "SELECT message FROM notification WHERE member_id = 'A' AND kind = 'review'")).toEqual([{ message: 'Review T-1 dikembalikan: tambah test' }]);
+  });
+
+  it('a newer review proposal expires the pending one for the same task', async () => {
+    const { stub, t } = await setup([P], [Q]);
+    const sync = await hello(stub, t.A!, 'sync');
+    await call(stub, 'POST', '/v1/locks/check', { token: t.A, body: { paths: [P], tool: 'write_file', clientTs: 0 } });
+    sync.send(await update('a1', P, 1, '// a\n'));
+    await sync.byType('file.ack');
+    sync.ws.close();
+    await call(stub, 'POST', '/v1/tasks/T-1/submit', { token: t.A, body: { summary: 'x' } });
+    const body = { kind: 'review', reason: 'x', payload: { taskId: 'T-1', verdict: 'setujui' } };
+    const a = await call(stub, 'POST', '/v1/proposals', { token: t.C, body });
+    const b = await call(stub, 'POST', '/v1/proposals', { token: t.C, body });
+    expect(await sql(stub, 'SELECT id, status FROM proposal WHERE id IN (?, ?) ORDER BY created_at, id', a.json.proposalId, b.json.proposalId)).toEqual([
+      { id: a.json.proposalId, status: 'kedaluwarsa' },
+      { id: b.json.proposalId, status: 'menunggu' },
+    ]);
+  });
+});
+
+describe('tasks and requests edge cases (R3 §2.5, §2.7, §2.9)', () => {
+  it('submit without any changed file is 409; someone else task is 403', async () => {
+    const { stub, t } = await setup([P], [Q]);
+    expect((await call(stub, 'POST', '/v1/tasks/T-1/submit', { token: t.A, body: { summary: 'x' } })).status).toBe(409);
+    expect((await call(stub, 'POST', '/v1/tasks/T-1/submit', { token: t.B, body: { summary: 'x' } })).status).toBe(403);
+    expect((await call(stub, 'POST', '/v1/tasks/T-1/activate', { token: t.B })).status).toBe(403);
+    expect((await call(stub, 'POST', '/v1/tasks/T-1/activate', { token: t.A })).json).toEqual({ activeTaskId: 'T-1' });
+  });
+
+  it('a coder cannot list another member tasks via ?owner=', async () => {
+    const { stub, t } = await setup([P], [Q]);
+    expect((await call(stub, 'GET', '/v1/tasks?owner=A&status=all', { token: t.B })).status).toBe(403);
+    expect((await call(stub, 'GET', '/v1/tasks?owner=B', { token: t.B })).json.tasks.map((x: { id: string }) => x.id)).toEqual(['T-2']);
+  });
+
+  it('request_file: free file → bebas; held file → 201 then duplicate 200 with the same id', async () => {
+    const { stub, t } = await setup([P], [Q]);
+    expect((await call(stub, 'POST', '/v1/requests', { token: t.B, body: { path: R } })).json).toMatchObject({ requestId: null, status: 'bebas' });
+    const first = await call(stub, 'POST', '/v1/requests', { token: t.B, body: { path: P, reason: 'butuh' } });
+    expect(first.status).toBe(201);
+    expect(first.json).toEqual({ requestId: 'R-1', status: 'terbuka', duplicate: false });
+    const again = await call(stub, 'POST', '/v1/requests', { token: t.B, body: { path: P } });
+    expect(again.status).toBe(200);
+    expect(again.json).toEqual({ requestId: 'R-1', status: 'terbuka', duplicate: true });
+    const list = await call(stub, 'GET', '/v1/requests', { token: t.C });
+    expect(list.json.requests).toHaveLength(1);
+    expect(list.json.requests[0]).toMatchObject({ id: 'R-1', source: 'mcp', requester: { memberId: 'B', taskId: 'T-2' }, holder: { memberId: 'A', taskId: 'T-1', state: 'dipesan' } });
+  });
+
+  it('team and activity return the R3 shapes', async () => {
+    const { stub, t } = await setup([P], [Q], [P]);
+    const team = (await call(stub, 'GET', '/v1/team', { token: t.mc })).json;
+    expect(team.members.map((m: { id: string }) => m.id)).toEqual(['A', 'B', 'C']);
+    expect(team.tasks).toContainEqual({ id: 'T-1', title: 'Tugas A', ownerId: 'A', status: 'terbuka', files: [P], editCount: 0 });
+    expect(team.locks).toContainEqual({ path: P, taskId: 'T-1', memberId: 'A', state: 'dipesan', queue: ['T-2'] });
+    expect(team).toMatchObject({ openRequests: 0, pendingProposals: 0, headCommit: 'abc1234' });
+    const act = (await call(stub, 'GET', `/v1/activity?path=${encodeURIComponent(P)}&limit=5`, { token: t.A })).json;
+    expect(act.items.length).toBeGreaterThan(0);
+    expect(act.items.every((i: { path?: string }) => i.path === P)).toBe(true);
+    expect(act.items[0].summary).not.toMatch(/^\d\d:\d\d /);
+  });
+});

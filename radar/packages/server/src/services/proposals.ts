@@ -1,16 +1,17 @@
 // Proposals from the PM main agent and their approval in Mission Control (R3 §2.12–2.14, R4 §6). Nothing changes
 // the workspace until a human approves, except `antre` decisions when AUTO_APPLY_QUEUE is on (PRD §7.3, I7).
 import {
+  DecisionPayload,
   PlanPayload,
-  type DecisionPayload,
+  ReviewPayload,
   type DecisionReq,
   type DecisionRes,
   type ProposalCreateReq,
   type ProposalCreateRes,
   type ProposalItem,
   type ProposalStatus,
-  type ReviewPayload,
 } from '@radar/common';
+import type { z } from 'zod';
 import type { CommitResult, CommitSnapshot } from '../committer';
 import { ctxOf, type WorkspaceDeps } from '../deps';
 import { getFileVersion } from '../db/repo/file';
@@ -126,13 +127,30 @@ export function createProposal(ctx: LockCtx, pmId: string, req: ProposalCreateRe
 
 // ---- list ------------------------------------------------------------------------------------------------------
 
+/** Display only: a broken payload is shown as null (and logged) instead of hiding the whole list. */
 function parsePayload(p: ProposalRow): unknown {
   try {
     return JSON.parse(p.payload) as unknown;
-  } catch {
-    console.error(`radar: proposal ${p.id} has an unreadable payload`);
+  } catch (err) {
+    console.error(`radar: proposal ${p.id} has an unreadable payload`, err instanceof Error ? err.message : String(err));
     return null;
   }
+}
+
+/** Decide path: the stored payload must still match its schema, else nothing is applied (500, logged). */
+function storedPayload<S extends z.ZodType>(p: ProposalRow, schema: S): z.infer<S> {
+  let raw: unknown;
+  try {
+    raw = JSON.parse(p.payload);
+  } catch {
+    raw = undefined;
+  }
+  const r = schema.safeParse(raw);
+  if (!r.success) {
+    console.error(`radar: proposal ${p.id} (${p.kind}) payload does not match its schema; nothing applied`);
+    throw new RadarError(500, 'INTERNAL', `Isi usulan ${p.id} rusak; tidak ada yang diterapkan.`);
+  }
+  return r.data;
 }
 
 export function listProposalItems(db: Db, status: ProposalStatus | 'all' | undefined): ProposalItem[] {
@@ -198,8 +216,8 @@ function applyDecision(ctx: LockCtx, request: RequestRow, payload: DecisionPaylo
     message = `${path} kini milikmu (${reqTask.id}).`;
     applied = { option: 'pindahkan', path, taskId: reqTask.id };
   } else {
-    // DecisionPayload guarantees newTask for pecah.
-    const spec = payload.newTask!;
+    const spec = payload.newTask;
+    if (!spec) throw new RadarError(500, 'INTERNAL', `Usulan ${proposalId} pecah tanpa newTask; tidak ada yang diterapkan.`);
     const child = insertTask(ctx.db, {
       title: spec.title,
       description: spec.description,
@@ -260,7 +278,6 @@ function decideNow(ctx: LockCtx, p: ProposalRow, status: 'disetujui' | 'ditolak'
 export function decideStart(ctx: LockCtx, id: string, req: DecisionReq): DecisionRes | { claim: CommitClaim } {
   const note = req.note ?? null;
   const p = pendingOr409(ctx.db, id);
-  const payload = parsePayload(p);
   if (!req.approve) {
     decideNow(ctx, p, 'ditolak', note);
     if (p.kind === 'decision') {
@@ -271,15 +288,15 @@ export function decideStart(ctx: LockCtx, id: string, req: DecisionReq): Decisio
   }
   if (p.kind === 'plan') {
     decideNow(ctx, p, 'disetujui', note);
-    return { proposalId: p.id, status: 'disetujui', applied: applyPlan(ctx, p, payload as PlanPayload) };
+    return { proposalId: p.id, status: 'disetujui', applied: applyPlan(ctx, p, storedPayload(p, PlanPayload)) };
   }
   if (p.kind === 'decision') {
     const request = p.ref_id ? getRequest(ctx.db, p.ref_id) : null;
     if (!request) throw new RadarError(404, 'NOT_FOUND', `Permintaan ${p.ref_id ?? '?'} tidak ada.`);
     decideNow(ctx, p, 'disetujui', note);
-    return { proposalId: p.id, status: 'disetujui', applied: applyDecision(ctx, request, payload as DecisionPayload, p.id, false) };
+    return { proposalId: p.id, status: 'disetujui', applied: applyDecision(ctx, request, storedPayload(p, DecisionPayload), p.id, false) };
   }
-  const review = payload as ReviewPayload;
+  const review = storedPayload(p, ReviewPayload);
   const task = taskOr404(ctx.db, review.taskId);
   if (task.status !== 'review') throw new RadarError(409, 'CONFLICT', `Task ${task.id} berstatus ${task.status}, bukan review.`);
   if (review.verdict === 'kembalikan') {
@@ -308,12 +325,14 @@ export async function decideProposalFlow(deps: WorkspaceDeps, id: string, req: D
     result = await deps.committer.commitTask(claim.snapshot);
   } catch (err) {
     const error = err instanceof Error ? err.message : String(err);
+    console.error(`radar: commit of ${claim.taskId} failed`, err instanceof Error ? (err.stack ?? error) : error);
     deps.transact((uow) => {
       const ctx = ctxOf(deps, uow);
       if (getTask(ctx.db, claim.taskId)?.commit_started_at === claim.startedAt) setCommitClaim(ctx.db, claim.taskId, null);
       appendEvent(ctx.db, ctx.uow, { ts: ctx.now, actor: 'server', type: 'commit.push_failed', payload: { taskId: claim.taskId, sha: null, error } });
     });
-    throw new RadarError(409, 'CONFLICT', `Commit ${claim.taskId} gagal: ${error}. Task tetap review; coba lagi.`);
+    // The raw error stays in the server log and the event; the client gets a fixed message.
+    throw new RadarError(409, 'CONFLICT', `Commit ${claim.taskId} gagal. Task tetap review; coba lagi.`);
   }
   const done = deps.transact((uow) => finishCommit(ctxOf(deps, uow), claim, result));
   if (!done) throw new RadarError(409, 'CONFLICT', `Keputusan ${claim.proposalId} berubah selama commit berjalan; tidak ada yang diterapkan.`);
@@ -364,7 +383,9 @@ export function finishCommit(ctx: LockCtx, claim: CommitClaim, result: CommitRes
   const p = getProposal(ctx.db, claim.proposalId);
   const task = getTask(ctx.db, claim.taskId);
   const ours = task?.commit_started_at === claim.startedAt;
-  if (!p || p.status !== 'menunggu' || !task || !ours || task.status !== 'review') {
+  const stale = !p ? 'proposal gone' : p.status !== 'menunggu' ? `proposal ${p.status}` : !task ? 'task gone' : !ours ? 'claim taken over' : task.status !== 'review' ? `task ${task.status}` : null;
+  if (stale !== null || !p || !task) {
+    console.error(`radar: commit ${result.sha} of ${claim.taskId} not applied: ${stale ?? 'unknown'}`);
     if (ours) setCommitClaim(ctx.db, claim.taskId, null);
     return null;
   }

@@ -5,14 +5,16 @@ import { ctxOf, type WorkspaceDeps } from '../../deps';
 import { getMember } from '../../db/repo/member';
 import { activateTask, cancelTask, listTaskItems, submitTask } from '../../services/tasks';
 import { requireMember, requireRole } from '../auth';
-import { parseWith, readJson } from '../errors';
+import { parseWith, RadarError, readJson } from '../errors';
 
 export function registerTaskRoutes(app: Hono, deps: WorkspaceDeps): void {
   app.get('/v1/tasks', (c) => {
     const member = requireMember(deps.db, c.req.header('authorization'), ['coder']);
     const q = parseWith(TasksQuery, c.req.query());
+    // A coder lists only their own tasks; the team view is GET /v1/team (pm, mc).
+    if (q.owner !== undefined && q.owner !== member.memberId) throw new RadarError(403, 'FORBIDDEN', 'Hanya task milikmu sendiri.');
     const res: TasksRes = {
-      tasks: listTaskItems(deps.db, q.owner ?? member.memberId, q.status ?? 'open'),
+      tasks: listTaskItems(deps.db, member.memberId, q.status ?? 'open'),
       activeTaskId: getMember(deps.db, member.memberId)?.active_task_id ?? null,
     };
     return c.json(res);
