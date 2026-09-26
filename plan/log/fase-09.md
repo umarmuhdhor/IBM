@@ -1,6 +1,6 @@
 # Log fase 09 — App desktop (Lane Aarief · `lane/app`)
 
-- **Status:** [~] berjalan (09c; 09a/09b menunggu gerbang UI dan snapshot PR).
+- **Status:** [~] berjalan (gerbang UI + security lulus 26 Sep 11:05; menunggu uji koneksi live oleh pengguna, lalu snapshot PR 09a/b/c).
 - **Mulai:** Sab 26 Sep 2026 00:12 WITA · branch `lane/app` (dibuat dari `origin/main` `ed1f2951`, tanpa upstream).
 - **Model:** Claude Opus 5.5 · high (R6 §2 menyarankan Sonnet 5 high; Opus diizinkan untuk titik sambung Orca).
 
@@ -11,7 +11,8 @@ Aturan yang tetap berlaku: `CLAUDE.md`, `plan/PROMPT.md` (LANE Aarief, FASE auto
 **Langkah berikutnya (urut):**
 1. DA-02 P1 terverifikasi: menu New tab menampilkan **IBM Bob** dengan glyph B; pemilihan dari UI membuka Terminal 2 dan Bob Shell 2.0.5 otomatis. Pesan `halo` dijawab normal dengan tim `ibm-coding-challenge-uat`. Screenshot lokal `/tmp/bob_app_picker_response.png` (tidak di-commit karena menampilkan identitas akun).
 2. PR Core #4 sudah di-merge ke `main` sebagai `8dd22e1c`; `lane/app` direbase ke commit itu. Placeholder tipe, reducer, dan keepalive telah diganti dengan `@radar/common`. Mock server `/healthz` hidup. Snapshot demo 61 event diuji tanpa token melalui CDP; Mission Control merender 3 task, 7 lock, dan feed. Uji WebSocket/Approve langsung di UI masih LANGKAH MANUAL karena memerlukan token; agent dilarang mengetik token.
-3. Lengkapi checklist Settings dan uji visual/security seluruh panel. Branding About selesai. Skill `better-interface` tidak tersedia pada daftar skill sesi Codex ini; lakukan inspeksi visual setara dan catat temuan.
+3. **Selesai 26 Sep 10:35–11:05:** checklist Settings (`c86c479b`, `cbbfd4d4`), gerbang UI `better-interface` lengkap (tabel di "Hasil verifikasi"), lint drawer (`aa625358`), kartu keputusan read-only untuk coder (`13f4c917`), security review PASS. Sisa gerbang: uji koneksi WS live + klik Approve/Deny oleh pengguna (LANGKAH MANUAL 2), lalu screenshot `radar/docs/img/app-*.png` saat status Live.
+3a. Agent paralel (worktree terpisah, belum di-merge ke `lane/app`): fase 11a bagian A (WatchBobView, tombol Watch, toggle Share my prompts) dan fase 11b (build `.dmg` lokal tanpa signing). Hasilnya di-cherry-pick setelah direview.
 4. Setelah gerbang UI lulus, buat snapshot lokal `snap/app-f09a|b|c`, dorong `lane/app-f09a|b|c`, lalu PR sesuai PROMPT langkah 11. Jangan push branch app sebelum review dan prasyaratnya selesai. Commit Bob C2/C3 sudah memiliki `Co-authored-by: IBM Bob <bob@ibm.com>`; email GitHub Bob masih perlu konfirmasi bila avatar coauthor diinginkan.
 
 **Keputusan yang sudah diambil (tulis ke DECISIONS sebagai D-aarief-01 saat commit berikutnya):**
@@ -41,11 +42,13 @@ Aturan yang tetap berlaku: `CLAUDE.md`, `plan/PROMPT.md` (LANE Aarief, FASE auto
 - [x] 6. BOB SLICE C3 lewat CDP Bob IDE, commit asli `c9e33b6c` dengan `Bob-Assisted` dan `Co-authored-by: IBM Bob <bob@ibm.com>`. Bukti `bob_sessions/uaai_aarief_task03_radar_ui_components_summary.png` (2.27 Bobcoin). Dua suite test ditulis merah sebelum Bob; hasil Bob 6/6 test dan typecheck hijau. Review terpisah: ganti satu warna hex pada komponen, jangan menandai pemilik task online bila status belum diketahui, rapikan EOF.
 - [x] 6a. Komponen pelengkap `ReviewCard`, `BriefMeter`, `PresenceStack` disiapkan dengan dua suite test merah dahulu, lalu 8/8 test UI dan typecheck hijau. Komponen ini mengikuti props murni dan token `--lc-*`.
 - [x] 7. Seksi LIVE COLLAB disisipkan setelah header sidebar dengan Mission Control, Team, Files & locks, Settings; badge Needs you dihitung dari proposal pending. Drawer mengikuti pola Sheet Orca.
-- [~] 8–9. Mission Control menampilkan task, keputusan, feed, ringkasan lock, dan notifikasi blocked/decision; Team dan Files & locks membaca state WS; Settings menyimpan koneksi melalui IPC dan status bar menampilkan ringkasan. Tombol Open in Bob IDE memakai launcher editor Orca pada worktree aktif. Test coder read-only dan keputusan MC menunggu event server lulus. Checklist Settings dan verifikasi koneksi UI dengan token masih berjalan; mock server fase 02 kini tersedia.
+- [~] 8–9. Mission Control menampilkan task, keputusan, feed, ringkasan lock, dan notifikasi blocked/decision; Team dan Files & locks membaca state WS; Settings menyimpan koneksi melalui IPC dan status bar menampilkan ringkasan. Tombol Open in Bob IDE memakai launcher editor Orca pada worktree aktif. Test coder read-only dan keputusan MC menunggu event server lulus. Checklist Settings selesai (`c86c479b`, `cbbfd4d4`): tombol Test menjalankan IPC `radar:checks` di main (versi Bob Shell lewat launcher Node 24 + `runProcess`, keberadaan `.bob/settings.json` di workspace aktif) dan status WebSocket. Coder melihat kartu keputusan tanpa tombol (`13f4c917`). Verifikasi koneksi UI dengan token tetap LANGKAH MANUAL 2.
 - [x] 8a. Renderer yang baru mount meminta `radar:refresh` setelah berlangganan update, agar frame `state` tidak hilang bila WS main tersambung sebelum UI siap. Handler membaca koneksi aman di main dan memulai ulang WS; token tidak dikirim ke renderer. Test IPC merah dahulu, lalu 5/5 lulus dan `app tc` hijau.
 - [x] 8b. Perbaikan startup dari uji manual: `app/vite.web.config.ts` belum memiliki alias `@radar/ui`/`@radar/common`, walau config Electron/Vitest sudah. `pnpm -C app build:web` gagal persis seperti laporan user sebelum patch, lalu hijau setelah alias dan dedupe React/lucide ditambah. `ORCA_BACKGROUND_LAUNCH=1 pnpm -C app dev` mencapai `starting electron app` + CDP 9339; proses dihentikan setelah verifikasi startup.
 - [x] 10. Branding utama — commit `d10f10d7`: nama bundle dev/menu, titlebar, judul web, landing, pilihan ikon default, serta aset ikon macOS/Windows memakai IBM Bob Live Collab dan gambar tiga Bob dari pengguna. Test komponen/ikon/identitas dibuat merah sebelum implementasi. App Electron lokal berhasil dibuka; screenshot landing melalui CDP 9339 diperiksa secara visual.
-- [~] 11–14. Branding About selesai; error/empty state lanjutan, gerbang UI lengkap, security review, snapshot PR masih berjalan. Mock server fase 02 sudah tersedia; respons interaktif Bob Shell berhasil dengan tim challenge.
+- [x] 11. Kondisi kosong/error: belum konek → kartu "Connect to a Live Collab workspace" + tombol Open settings; server putus → badge merah "Disconnected", state terakhir tetap tampil (store hanya mengubah `connected`). Uji tanpa token melawan mock asli: kredensial sintetis salah → mock menutup 4401 → client membuka tepat 1 socket (tanpa reconnect) dan status akhir `connected:false` (probe sementara, dihapus setelah lulus).
+- [x] 12–13. Gerbang UI `better-interface` + security review PASS (lihat "Hasil verifikasi").
+- [~] 14. Snapshot PR menunggu uji koneksi live (LANGKAH MANUAL 2). Branding About selesai. Mock server fase 02 sudah tersedia; respons interaktif Bob Shell berhasil dengan tim challenge.
 - [x] Sinkron fase 02: PR #4 diperiksa (CI hijau, mergeable, review kontrak) lalu squash-merge ke `main` sebagai `8dd22e1c`. `lane/app` direbase ke `origin/main` tanpa menyentuh folder lane lain. Test merah membuktikan snapshot array dan event resmi belum ditangani, kemudian `@radar/common` dipakai untuk tipe/reducer/keepalive. Test merah kedua menangkap duplikasi jam feed lalu diperbaiki. About menambah kredit Orca setelah test merah.
 
 ## File dibuat/diubah
@@ -101,6 +104,29 @@ Tidak ada `TODO(sync:alief)` tersisa di `app/**` atau `radar/packages/ui`.
 | Titlebar/workspace | Nama IBM Bob Live Collab tampil; workspace lama tetap dapat dibuka. | Tidak ada HIGH | Lulus pemeriksaan visual. |
 
 Skill `better-interface` tidak tersedia pada sesi ini; inspeksi visual langsung dipakai sebagai padanan untuk perubahan branding.
+
+### Gerbang UI `better-interface` — Settings + Mission Control (26 Sep, Claude Code)
+
+Scope: `RadarSettingsPane`, `RadarPanel`, drawer di `sidebar/index.tsx`, `MissionControlView` + `ReviewCard`/`DecisionCard`. Dokumen yang dibaca: `app/AGENTS.md`, `app/docs/STYLEGUIDE.md`, DESIGN.md. Semua 6 domain skill dimuat (accessibility, layout, writing, typography, colors, ui). Screenshot via Playwright CDP 9339 (light 2000×1317 dan dark 1512×982), lokal saja.
+
+| Severity | Domain | Location | Before | After | Status |
+|---|---|---|---|---|---|
+| HIGH | Writing | `RadarSettingsPane.tsx` catch `runChecks`/`disconnect` | "Checks could not run." / "Could not remove the connection." | "Unable to run checks. Try again." / "Unable to forget the connection. Try again." | Fixed `cbbfd4d4` |
+| HIGH | Accessibility | `RadarSettingsPane.tsx` tombol Forget | Tombol hapus koneksi (token harus diisi ulang) tampil sama dengan Test | "Forget connection", `text-destructive`, dipisah `ml-auto` | Fixed `cbbfd4d4` |
+| HIGH | Layout/Writing | `ReviewCard.tsx` di view coder | Tombol tanpa gaya tampil sebagai teks "Approve & commit Send back"; coder melihat aksi yang tidak bisa dipakai | Prop `readOnly` di ReviewCard/DecisionCard; coder tidak melihat tombol, gaya tombol sama dengan DecisionCard | Fixed `13f4c917` |
+| MEDIUM | Writing | checklist Settings | "Not found on PATH", "Missing in this folder", "Not connected" | Tiap status gagal menyebut cara memperbaiki | Fixed `cbbfd4d4` |
+| MEDIUM | Accessibility | pesan status | `<p role="status">` dirender kondisional | Region `role="status"` stabil membungkus pesan + checklist; Test → "Testing…" | Fixed `cbbfd4d4` |
+| MEDIUM | Writing | placeholder Server URL | `http://localhost:3000` | `http://localhost:8787` (port mock/worker) | Fixed `cbbfd4d4` |
+| MEDIUM | Correctness | `checks.ts` | Baris terakhir `bob --version` = `commit: …` | Ambil baris semver (lewati `Running node …`) | Fixed `cbbfd4d4` + test output asli |
+| LOW | Typography | checklist | Instruksi panjang ber-font mono, pecah jelek | Mono hanya untuk nilai versi | Fixed `cbbfd4d4` |
+
+Verifikasi: focus-visible terlihat di semua stop Tab form (outline ring Orca); kontras terukur tema light: `--lc-ok` 5.02:1, destructive 4.87:1, muted 4.74:1 di atas kartu putih (lulus 4.5:1). Status checklist tidak hanya warna (● / ○ + teks). **Not verified:** kontras terukur tema dark (inspeksi visual saja), zoom 200%/lebar 320 (app desktop, drawer lebar tetap), screen reader nyata. Temuan design-lint di `Landing.tsx:78`, `StatusBarSurface.tsx:159,288` berasal dari kode Orca asli (`7c86819e`), tidak disentuh. Verdict: **Approve** (tidak ada HIGH tersisa).
+
+Catatan alat: `pnpm -C app run check:code-quality:changed` tidak memeriksa file yang sudah di-commit di monorepo ini, karena `git diff --name-only` mengembalikan `app/src/...` sedangkan filter mengharapkan `src/...`. Padanan dijalankan manual: `git diff --name-only --relative origin/main -- 'src/**/*.ts' 'src/**/*.tsx' | xargs pnpm exec oxlint` (62 file, 1 error `curly` → fixed `aa625358`) dan design-lint pada file renderer (restyle `SheetContent` milik kita → fixed `aa625358`).
+
+### Security review (langkah 13, agent `security-reviewer`, read-only)
+
+PASS. Token hanya dibaca di `secure-store.ts` dan dipakai di header Bearer (`api.ts`) + frame WS hello (`ws-client.ts`); IPC hanya mengembalikan `RadarConnectionSummary` (tanpa token); tidak ada `console`/logger yang memuat token; tidak ada perubahan `webPreferences`/`nodeIntegration`; semua handler `radar:*` memvalidasi input; `radar:checks` hanya launcher tetap + cek keberadaan file berpath absolut; URL server dibatasi http/https. Satu-satunya nilai mirip token di diff adalah fixture test `synthetic-value`. Nama file lolos aturan R5 §8.
 
 ## Deviasi
 
