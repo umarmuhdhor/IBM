@@ -131,14 +131,19 @@ pnpm -C radar deploy:web
 
 ## 4. Cara pakai: pemilik (Mission Control)
 
-### 4.1 Cara utama: bagikan folder project dari app
+### 4.1 Cara utama: buka folder, klik Share, kirim kode
 
-1. Buka app → **Live Collab** → **Settings** → kartu **Share a folder**.
-2. Isi nama dan peran (**Coder** atau **PM**), lalu klik **Choose folder and share…** dan pilih folder project di Mac.
-3. App mengunggah file teks folder itu ke server (mengikuti `.gitignore`; file biner dan file di atas 1 MB tetap lokal; maksimal 3000 file). Folder **tetap di tempatnya** dan tersinkron live. Anda menjadi member A sekaligus Mission Control.
-4. Kode gabung pertama otomatis tersalin. Kirim ke satu teman. Kode ini juga muncul di kartu **Invite teammates**.
-5. Klik **Open in IBM Bob** untuk mulai kerja di folder itu.
-6. Saat app dibuka lagi, folder pemilik tersinkron lagi otomatis.
+1. Buka folder project di app (**Projects** → **Open**).
+2. Klik **Multiplayer** di bagian **LIVE COLLAB** sidebar, lalu klik **Share <nama-folder>**.
+3. Kode gabung tampil besar dan otomatis tersalin. Kirim ke teman. Butuh kode lagi untuk teman berikutnya? Klik **Make code** di kartu **Invite teammates**.
+
+Selesai. Folder tidak dipindah dan langsung tersinkron live. Anda menjadi member A (Coder) sekaligus Mission Control. Nama diambil dari `git config user.name`, atau nama akun Mac bila kosong. Klik **Open in IBM Bob** untuk mulai kerja.
+
+Detail:
+
+- File yang diunggah mengikuti `.gitignore`. File biner dan file di atas 1 MB tetap lokal. Maksimal 3000 file.
+- Tidak ada folder yang terbuka? Tombolnya jadi **Choose folder and share…** (pemilih folder).
+- Saat app dibuka lagi, folder pemilik tersinkron lagi otomatis.
 
 Aturan server:
 

@@ -139,3 +139,11 @@ UI gate (better-interface), scope: `ShareFolderCard.tsx`, `RadarPanel.tsx` slot 
 | MEDIUM | Writing | `routes.ts` pesan 409 | "Only its owner can open a different folder." | "Ask its owner for a join code, or use your own server to share a folder." | pesan error harus memberi jalan keluar |
 
 Tidak ada temuan HIGH. Aksi destruktif (ganti folder) memakai konfirmasi di halaman, teks peringatan merah, dan tombol varian `destructive`.
+
+### Revisi: satu klik (permintaan user "buka folder, klik share, dapat kode")
+
+- Sidebar **LIVE COLLAB** punya item pertama **Multiplayer** (membuka Settings, kartu Multiplayer paling atas).
+- Kartu Multiplayer tanpa form: **Share <folder yang terbuka>**, atau **Choose folder and share…** bila tidak ada folder terbuka. Nama owner otomatis (`git config user.name`, lalu nama akun Mac).
+- Tampilan owner: nama folder, status sync, kode besar + **Copy code**, **Open in IBM Bob**, **Show folder**, **Share a different folder…** (konfirmasi di halaman, tombol `destructive`).
+- Test app radar: 85 lulus. Typecheck node/web dan oxlint bersih.
+- Screenshot app dev (HOME terisolasi, tanpa folder terbuka): item Multiplayer di sidebar, kartu Multiplayer di atas kartu Join. Tampilan dengan folder terbuka dan tampilan owner: Not verified secara visual (diuji di `ShareFolderCard.test.tsx`). Tanpa temuan HIGH.
