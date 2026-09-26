@@ -60,7 +60,9 @@ export class RealGitHubCommitter implements GitHubCommitter {
     this.commitEnabled = c.commitEnabled;
     this.coauthor = c.coauthor;
     this.now = c.now ?? Date.now;
-    this.fetchImpl = c.fetchImpl ?? fetch;
+    // Never store a bare `fetch` reference: in workerd it throws "Illegal invocation" when called
+    // detached. The arrow keeps the call attached to the global.
+    this.fetchImpl = c.fetchImpl ?? ((...args) => fetch(...args));
   }
 
   /** Fresh head of `branch` (R4 §6.3: refresh before retrying after a non-fast-forward). */

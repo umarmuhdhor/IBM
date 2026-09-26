@@ -114,6 +114,14 @@ describe('GitHubCommitter over the mocked Git Data API', () => {
     expect(second.sha).not.toBe(first.sha);
   });
 
+  it('uses the attached global fetch by default (no detached reference)', async () => {
+    const res = await new GitHubCommitter({ repo: 'demo/toko-demo', token: TOKEN, commitEnabled: true, coauthor: COAUTHOR, now: () => 1_700_000_000_000 }).commitTask(
+      snap(),
+    );
+    expect(res).toMatchObject({ sha: 'c-mock-1', pushed: true });
+    expect(mock.apiCalls()).toBe(4);
+  });
+
   it('maps 409/422 to non_fast_forward, 403+retry-after to rate_limited, without leaking the token', async () => {
     mock.failNext('PATCH', '/git/refs/', 409, { message: 'Update is not a fast forward' });
     await expect(committer().commitTask(snap())).rejects.toMatchObject({ code: 'non_fast_forward' });
