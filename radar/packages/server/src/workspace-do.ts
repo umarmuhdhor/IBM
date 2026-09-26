@@ -13,6 +13,8 @@ import { ActivityLimiter } from './services/activity';
 import { authorizeWriteLocks, type AuthorizeWrite } from './services/files';
 import { createCommitter } from './services/github';
 import { expireCommitClaims } from './services/proposals';
+import { RateLimiter } from './services/rate-limit';
+import { expireHeartbeats, staleDeadline } from './services/stale';
 import { UnitOfWork } from './services/uow';
 import { Hub } from './ws/hub';
 import { expireHellos, handleClose, handleMessage, helloDeadline, WS_CLOSE_RESET } from './ws/protocol';
@@ -23,10 +25,13 @@ export class WorkspaceDO extends DurableObject<Env> implements WorkspaceDeps {
   readonly hub: Hub;
   readonly scheduler: AlarmScheduler;
   readonly limiter = new ActivityLimiter();
+  readonly rateLimiter = new RateLimiter();
   readonly authorizeWrite: AuthorizeWrite = authorizeWriteLocks;
   // Set in the constructor from env (fase 06 owns the default; tests swap in fakes).
   committer!: GitHubCommitter;
   private readonly app: Hono;
+  /** Set by every write transaction: a WebSocket frame that changed state reschedules the alarm afterwards. */
+  private wroteSinceSchedule = false;
   // Re-declared public so the DO itself can serve as WorkspaceDeps.
   declare readonly ctx: DurableObjectState<Record<string, never>>;
   declare readonly env: Env;
@@ -36,7 +41,7 @@ export class WorkspaceDO extends DurableObject<Env> implements WorkspaceDeps {
     this.committer = createCommitter(env);
     this.db = createDb(ctx.storage);
     this.hub = new Hub(ctx);
-    this.scheduler = new AlarmScheduler(ctx.storage, [() => helloDeadline(this)]);
+    this.scheduler = new AlarmScheduler(ctx.storage, [() => helloDeadline(this), () => staleDeadline(this)]);
     // Keepalive answered by the runtime without waking the DO (R3 §3).
     ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair(WS_PING_FRAME, WS_PONG_FRAME));
     // A throw here makes the runtime reset the object and fail the waiting requests; log it so it is visible.
@@ -64,6 +69,7 @@ export class WorkspaceDO extends DurableObject<Env> implements WorkspaceDeps {
   transact<T>(fn: (uow: UnitOfWork) => T): T {
     const uow = new UnitOfWork();
     const result = this.db.tx(() => fn(uow));
+    this.wroteSinceSchedule = true;
     this.hub.flush(uow);
     return result;
   }
@@ -74,26 +80,43 @@ export class WorkspaceDO extends DurableObject<Env> implements WorkspaceDeps {
     await this.ctx.storage.deleteAll();
     migrate(this.db);
     this.limiter.clear();
+    this.rateLimiter.clear();
   }
 
-  override fetch(request: Request): Response | Promise<Response> {
-    return this.app.fetch(request);
+  override async fetch(request: Request): Promise<Response> {
+    const res = await this.app.fetch(request);
+    // A write may create the first lock (plan decision): keep the alarm in step. Reads change no deadline, and
+    // the WebSocket upgrade (a GET) reschedules for its hello timeout itself.
+    if (request.method !== 'GET') await this.scheduler.reschedule();
+    return res;
   }
 
-  override webSocketMessage(ws: WebSocket, message: string | ArrayBuffer): void {
+  // A sync frame can grab the first lock (auto-grab in checkWrite) or end a stale episode; a close drops a hello
+  // deadline. Reschedule after any of them wrote, so SV-09 does not depend on a later HTTP request.
+  private async rescheduleIfWrote(): Promise<void> {
+    if (!this.wroteSinceSchedule) return;
+    this.wroteSinceSchedule = false;
+    await this.scheduler.reschedule();
+  }
+
+  override async webSocketMessage(ws: WebSocket, message: string | ArrayBuffer): Promise<void> {
     handleMessage(this, ws, message);
+    await this.rescheduleIfWrote();
   }
 
-  override webSocketClose(ws: WebSocket): void {
+  override async webSocketClose(ws: WebSocket): Promise<void> {
     handleClose(this, ws);
+    await this.rescheduleIfWrote();
   }
 
-  override webSocketError(ws: WebSocket): void {
+  override async webSocketError(ws: WebSocket): Promise<void> {
     handleClose(this, ws);
+    await this.rescheduleIfWrote();
   }
 
   override async alarm(): Promise<void> {
     expireHellos(this);
+    expireHeartbeats(this);
     await this.scheduler.reschedule();
   }
 }

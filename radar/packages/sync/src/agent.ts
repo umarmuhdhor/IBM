@@ -17,7 +17,7 @@ import {
   type WsMessageOf,
 } from '@radar/common';
 import { createIgnoreMatcher } from '@radar/common/node';
-import { KnownStore } from './known.js';
+import { DELETED_HASH, KnownStore } from './known.js';
 import { createSyncLog, type SyncLog } from './log.js';
 import { formatRejection, terminalNotifier, type Notifier } from './notify.js';
 import { writeSidecar } from './sidecar.js';
@@ -52,6 +52,7 @@ export interface SyncAgentOptions {
 
 export interface SyncStats {
   updatesSent: number;
+  deletesSent: number;
   heartbeatsSent: number;
   applied: number;
   rejected: number;
@@ -84,7 +85,7 @@ interface Pending {
 
 export class SyncAgent extends EventEmitter {
   readonly known = new KnownStore();
-  readonly stats: SyncStats = { updatesSent: 0, heartbeatsSent: 0, applied: 0, rejected: 0, conflicts: 0, reconnects: 0 };
+  readonly stats: SyncStats = { updatesSent: 0, deletesSent: 0, heartbeatsSent: 0, applied: 0, rejected: 0, conflicts: 0, reconnects: 0 };
   readonly locks = new Map<string, LockView>();
   principal: Principal | null = null;
   stopReason: string | null = null;
@@ -172,8 +173,8 @@ export class SyncAgent extends EventEmitter {
       debounceMs: this.o.debounceMs,
       ignores: (rel) => this.matcher.ignores(rel),
       onChange: (rel) => this.processPath(rel),
-      // file.delete is P1 (fase 12): deletes are only logged.
-      onUnlink: (rel) => this.log('local.unlink', `${rel} (not synced before fase 12)`),
+      // SY-06: processPath sees the file missing and sends file.delete.
+      onUnlink: (rel) => this.processPath(rel),
       onError: (err) => this.log('watch.error', err.message),
     });
     this.watcher = watcher;
@@ -421,8 +422,8 @@ export class SyncAgent extends EventEmitter {
       const path = this.serverPath(f.path);
       if (!path) continue;
       if (f.deleted || f.content === null || f.hash === null) {
-        // Absent from a filtered snapshot means "unchanged", not deleted. Real deletes are P1 (fase 12).
-        if (this.everSynced) this.log('snapshot.deleted', `${path} (kept locally until fase 12)`);
+        // Absent from a filtered snapshot means "unchanged"; a tombstone here is a real delete (SY-06).
+        if (this.applyRemoteDelete(path, f.version)) written++;
         continue;
       }
       const prev = this.known.get(path);
@@ -465,6 +466,10 @@ export class SyncAgent extends EventEmitter {
       }
       this.processPath(rel);
     }
+    // Deleted while offline: known on the server, gone from disk.
+    for (const [rel, e] of this.known.entries()) {
+      if (e.hash !== DELETED_HASH && e.version > 0 && !this.dirty.has(rel) && readLocal(this.root, rel).kind === 'missing') this.dirty.add(rel);
+    }
     for (const rel of [...this.dirty]) {
       this.dirty.delete(rel);
       this.processPath(rel);
@@ -485,12 +490,31 @@ export class SyncAgent extends EventEmitter {
     if (!this.pending.has(d.path)) this.processPath(d.path);
   }
 
+  /**
+   * A server tombstone (SY-06): removes the local file, keeping an unsent local edit as `.radar-conflict`.
+   * `known` keeps the version with an empty hash, which means "deleted". Returns false for a stale tombstone.
+   */
+  private applyRemoteDelete(path: string, version: number): boolean {
+    const prev = this.known.get(path);
+    if (prev && version <= prev.version) return false;
+    this.saveConflict(path, prev?.hash, DELETED_HASH);
+    this.known.set(path, { version, hash: DELETED_HASH });
+    removeLocal(this.root, path);
+    if (path === '.gitignore') this.rebuildMatcher();
+    return true;
+  }
+
   private onChanged(msg: WsMessageOf<'file.changed'>): void {
     const d = msg.d;
     const path = this.serverPath(d.path);
     if (!path) return;
     if (d.deleted || d.content === null || d.hash === null) {
-      this.log('recv.deleted', `${path} by ${d.by} (kept locally until fase 12)`);
+      if (!this.applyRemoteDelete(path, d.version)) return;
+      const appliedTs = Date.now();
+      this.sendMsg({ t: 'file.applied', d: { path, version: d.version, serverTs: d.serverTs, appliedTs } });
+      this.stats.applied++;
+      this.log('recv.deleted', `${path} v${d.version} by ${d.by}`);
+      this.emit('applied', { path, version: d.version, serverTs: d.serverTs, appliedTs, by: d.by });
       return;
     }
     const prev = this.known.get(path);
@@ -591,7 +615,10 @@ export class SyncAgent extends EventEmitter {
       this.log('local.unsafe', `${path} (symlink out of the workspace)`);
       return;
     }
-    if (local.kind === 'missing') return;
+    if (local.kind === 'missing') {
+      this.sendDelete(path);
+      return;
+    }
     if (local.kind !== 'text') {
       if (!this.skipped.has(path)) {
         this.skipped.add(path);
@@ -615,5 +642,21 @@ export class SyncAgent extends EventEmitter {
     this.stats.updatesSent++;
     this.log('send', `${path} base v${baseVersion} ${local.hash.slice(0, 8)}`);
     this.emit('sent', { path, id, hash: local.hash });
+  }
+
+  /** A file the server has, gone from disk (SY-06): `file.delete`. A rename is this plus an update of the new path. */
+  private sendDelete(path: string): void {
+    const known = this.known.get(path);
+    if (!known || known.hash === DELETED_HASH || known.version === 0) return;
+    if (this.pending.get(path)?.hash === DELETED_HASH) return;
+    const id = `d${++this.seq}`;
+    if (!this.sendMsg({ t: 'file.delete', id, d: { path, baseVersion: known.version, clientTs: Date.now() } })) {
+      this.dirty.add(path);
+      return;
+    }
+    this.pending.set(path, { id, hash: DELETED_HASH, sentAt: Date.now() });
+    this.stats.deletesSent++;
+    this.log('send.delete', `${path} base v${known.version}`);
+    this.emit('sent', { path, id, hash: DELETED_HASH });
   }
 }

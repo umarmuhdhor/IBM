@@ -1,6 +1,7 @@
 // The DO's single alarm (fase 03 step 11, R4 §7). Each provider reports its next deadline (hello timeouts now,
 // the 30 s lock job in fase 05); the alarm is set to the earliest one and removed when there is none, so an
-// idle DO can hibernate. `setAlarm` costs a row written, so an unchanged deadline is not set again.
+// idle DO can hibernate. `setAlarm` costs a row written, so an unchanged or later deadline is not set again: an
+// alarm that fires early is harmless (handlers are idempotent) and the alarm handler reschedules.
 export type DeadlineProvider = () => number | null;
 
 export class AlarmScheduler {
@@ -25,6 +26,6 @@ export class AlarmScheduler {
       if (current !== null) await this.storage.deleteAlarm();
       return;
     }
-    if (current !== next) await this.storage.setAlarm(next);
+    if (current === null || next < current) await this.storage.setAlarm(next);
   }
 }

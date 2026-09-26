@@ -5,8 +5,9 @@ import type { WorkspaceDeps } from '../deps';
 import { setOffline, setOnline } from '../db/repo/member';
 import { principalForToken } from '../http/auth';
 import { appendEvent } from '../services/events';
-import { applyUpdate } from '../services/files';
+import { applyDelete, applyUpdate } from '../services/files';
 import { buildSnapshot, buildState } from '../services/state';
+import { endStaleEpisode } from '../services/stale';
 import type { ReadyAttachment } from './hub';
 
 /** Close code for a sync socket replaced by a newer one of the same member (R3 §3). */
@@ -15,6 +16,13 @@ export const WS_CLOSE_REPLACED = 4000;
 export const WS_CLOSE_RESET = 1012;
 
 const decoder = new TextDecoder();
+
+/** WS frame cap (fase 12 step 9): a 1 MB file plus JSON escaping and envelope. */
+export const WS_MAX_MESSAGE_BYTES = 1.5 * 1024 * 1024;
+
+function frameBytes(raw: string | ArrayBuffer): number {
+  return typeof raw === 'string' ? (raw.length * 3 > WS_MAX_MESSAGE_BYTES ? new TextEncoder().encode(raw).byteLength : raw.length) : raw.byteLength;
+}
 
 function parseFrame(raw: string | ArrayBuffer): { ok: true; value: unknown } | { ok: false } {
   try {
@@ -28,6 +36,10 @@ export function handleMessage(deps: WorkspaceDeps, ws: WebSocket, raw: string | 
   const { hub } = deps;
   const att = hub.attachment(ws);
   if (!att || att.state === 'replaced' || att.state === 'closed') return;
+  if (frameBytes(raw) > WS_MAX_MESSAGE_BYTES) {
+    hub.send(ws, { t: 'error', d: { code: 'PAYLOAD_TOO_LARGE', message: 'Pesan WebSocket lebih dari 1,5 MB.' } });
+    return;
+  }
   const frame = parseFrame(raw);
 
   if (att.state === 'pending') {
@@ -55,17 +67,21 @@ export function handleMessage(deps: WorkspaceDeps, ws: WebSocket, raw: string | 
     case 'file.update':
       handleFileUpdate(deps, ws, att, msg);
       return;
+    case 'file.delete':
+      handleFileDelete(deps, ws, att, msg);
+      return;
     case 'file.applied':
       handleFileApplied(deps, att, msg);
       return;
     case 'heartbeat':
       hub.setAttachment(ws, { ...att, lastHeartbeat: deps.now() });
+      if (att.client === 'sync' && att.principal.kind === 'member') endStaleEpisode(deps, att.principal.memberId);
       return;
     case 'hello':
       hub.send(ws, { t: 'error', d: { code: 'BAD_REQUEST', message: 'hello sudah diterima.' } });
       return;
     default:
-      // file.delete (P1) and term.* (fase 06 P1) are not handled yet.
+      // term.* (terminal relay, P1) is not handled yet.
       hub.send(ws, { t: 'error', d: { code: 'BAD_REQUEST', message: `Pesan ${msg.t} belum didukung server.` } });
   }
 }
@@ -134,6 +150,32 @@ function handleFileUpdate(deps: WorkspaceDeps, ws: WebSocket, att: ReadyAttachme
         ...(msg.id ? { id: msg.id } : {}),
         d: { ...(msg.id ? { id: msg.id } : {}), path: r.path, reason: r.reason, holder: r.holder, server: r.server },
       };
+  hub.send(ws, reply);
+}
+
+function handleFileDelete(deps: WorkspaceDeps, ws: WebSocket, att: ReadyAttachment, msg: WsMessageOf<'file.delete'>): void {
+  const { hub, db } = deps;
+  const p = att.principal;
+  if (att.client !== 'sync' || p.kind !== 'member') {
+    hub.send(ws, { t: 'error', d: { code: 'FORBIDDEN', message: 'Hanya klien sync yang boleh mengirim file.delete.' } });
+    return;
+  }
+  const now = deps.now();
+  const r = deps.transact((uow) => {
+    const res = applyDelete(db, uow, { now, authorizeWrite: deps.authorizeWrite }, p, msg.d);
+    if (res.ok && res.changed) {
+      uow.toSync.push({
+        except: ws,
+        msg: { t: 'file.changed', d: { path: res.path, version: res.version, content: null, hash: null, deleted: true, by: p.memberId, taskId: res.taskId, serverTs: now } },
+      });
+    }
+    return res;
+  });
+  const id = msg.id ? { id: msg.id } : {};
+  // The ack of a delete carries an empty hash: there is no content.
+  const reply: WsMessage = r.ok
+    ? { t: 'file.ack', ...id, d: { ...id, path: r.path, version: r.version, hash: '' } }
+    : { t: 'file.rejected', ...id, d: { ...id, path: r.path, reason: r.reason, holder: r.holder, server: r.server } };
   hub.send(ws, reply);
 }
 

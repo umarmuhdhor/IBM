@@ -1,5 +1,5 @@
 // Integration: real Worker + Durable Object (phase 03) and three SyncAgents in temp folders (fase 04 step 11).
-import { appendFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, afterEach, beforeAll, describe, expect, it, onTestFailed } from 'vitest';
 import { SyncAgent, type SyncAgentOptions } from '../src/agent.js';
@@ -137,6 +137,61 @@ describe('sync agent against the real server', () => {
     // disconnect and reconnect are shown without --verbose
     expect(notices.join('\n')).toMatch(/terputus/);
     expect(notices.join('\n')).toMatch(/tersambung lagi/);
+  }, 10_000);
+
+  it('SY-07: offline edits after reconnect — own file is sent, a file changed on the server meanwhile becomes .radar-conflict', async () => {
+    const t = await seedTestWorkspace(server.url, SEED);
+    // A slow first retry keeps A offline while both sides edit.
+    const [A, B] = await Promise.all([agent(t.A!, 'A', { reconnect: { minMs: 1500, maxMs: 1500 } }), agent(t.B!, 'B')]);
+    A.a.dropConnection();
+    await waitFor(() => !A.a.connected, 1000, 'A disconnected');
+    writeFileSync(join(B.root, 'src/checkout/checkout.ts'), '// B online\n');
+    await waitFor(() => B.a.known.get('src/checkout/checkout.ts')?.version === 2, 3000, 'B acked');
+    writeFileSync(join(A.root, 'src/utils.ts'), '// A offline, own file\n');
+    writeFileSync(join(A.root, 'src/checkout/checkout.ts'), '// A offline, B file\n');
+    await waitFor(() => A.a.connected && read(B.root, 'src/utils.ts') === '// A offline, own file\n', 6000, 'own offline edit reaches B');
+    await waitFor(() => read(A.root, 'src/checkout/checkout.ts') === '// B online\n', 3000, 'server copy wins in A');
+    expect(read(A.root, 'src/checkout/checkout.ts.radar-conflict')).toBe('// A offline, B file\n');
+    expect(A.a.stats.conflicts).toBe(1);
+    await sleep(300);
+    // The losing copy is never uploaded.
+    expect(read(B.root, 'src/checkout/checkout.ts')).toBe('// B online\n');
+    expect(existsSync(join(B.root, 'src/checkout/checkout.ts.radar-conflict'))).toBe(false);
+  }, 12_000);
+
+  it('SY-06: a delete in A removes the file in B; a rename arrives as delete + add', async () => {
+    const t = await seedTestWorkspace(server.url, SEED);
+    const [A, B] = await Promise.all([agent(t.A!, 'A'), agent(t.B!, 'B')]);
+    rmSync(join(A.root, 'README.md'));
+    await waitFor(() => !existsSync(join(B.root, 'README.md')), 3000, 'README gone in B');
+    expect(B.a.known.get('README.md')).toEqual({ version: 2, hash: '' });
+    expect(A.a.stats.deletesSent).toBe(1);
+    renameSync(join(A.root, 'src/utils.ts'), join(A.root, 'src/sum.ts'));
+    await waitFor(() => !existsSync(join(B.root, 'src/utils.ts')) && read(B.root, 'src/sum.ts') === SEED[0]!.content, 3000, 'rename in B');
+    await sleep(300);
+    // No echo and no resurrection: B sent nothing, A's files stay as they are.
+    expect(B.a.stats.updatesSent + B.a.stats.deletesSent).toBe(0);
+    expect(existsSync(join(A.root, 'README.md'))).toBe(false);
+  }, 10_000);
+
+  it('SY-06: a file deleted while offline is deleted on the server after the reconnect', async () => {
+    const t = await seedTestWorkspace(server.url, SEED);
+    const [A, B] = await Promise.all([agent(t.A!, 'A', { reconnect: { minMs: 800, maxMs: 800 } }), agent(t.B!, 'B')]);
+    A.a.dropConnection();
+    await waitFor(() => !A.a.connected, 1000, 'A disconnected');
+    rmSync(join(A.root, 'README.md'));
+    await waitFor(() => !existsSync(join(B.root, 'README.md')), 6000, 'offline delete reaches B');
+  }, 10_000);
+
+  it('SY-06: deleting a file another member holds is rejected and the file comes back', async () => {
+    const t = await seedTestWorkspace(server.url, SEED);
+    const [A, B] = await Promise.all([agent(t.A!, 'A'), agent(t.B!, 'B')]);
+    writeFileSync(join(B.root, 'src/checkout/checkout.ts'), '// B holds this\n');
+    await waitFor(() => read(A.root, 'src/checkout/checkout.ts') === '// B holds this\n', 3000, 'B edit in A');
+    rmSync(join(A.root, 'src/checkout/checkout.ts'));
+    await waitFor(() => read(A.root, 'src/checkout/checkout.ts') === '// B holds this\n', 3000, 'file restored in A');
+    expect(A.a.stats.rejected).toBe(1);
+    expect(read(B.root, 'src/checkout/checkout.ts')).toBe('// B holds this\n');
   }, 10_000);
 
   it('a .gitignore edit is honoured at once: newly ignored files stop syncing', async () => {

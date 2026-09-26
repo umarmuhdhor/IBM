@@ -21,7 +21,7 @@ Waktu dalam WITA. Setiap lane **hanya mengedit baris fasenya sendiri** (supaya m
 | 11c | Uji pasang Mac teman, P1, poles | Aarief | lane/app | [ ] | | | | log/fase-11c.md |
 | 11D1 | Landing + replay dengan fixture (I1, I2) | Imelda | lane/web | [~] | Sab 26 13:10 | | I1/I2 + e2e 12/12 hijau (1440/390, trailingSlash); BERHENTI di LANGKAH MANUAL deploy Cloudflare Pages (TODO B2) + squash-merge PR #14 | log/fase-11D1.md |
 | 11D2 | I3 Long Description + replay final dari rekaman | Imelda | lane/web | [ ] | | | | log/fase-11D2.md |
-| 12 | Hardening & P1 | Alief | lane/core | [ ] | | | | log/fase-12.md |
+| 12 | Hardening & P1 | Alief | lane/core | [~] | Sab 26 19:15 | | SV-09, SY-07, MA-06, SY-06, BC-05, UI-06, IN-02 + body cap/rate limit, 520 test hijau, uji beban 5 anggota p95 219 ms; SV-10/BC-06 dipotong (D-alief-08); deploy Sab 21:30; sisa tag `v0.3.0-freeze` + bug E2E | log/fase-12.md |
 | 13 | Eksperimen A/B | Umar | lane/bob | [ ] | | | | log/fase-13.md |
 | 14 | Submission | Semua | lane masing-masing | [ ] | | | | log/fase-14.md |
 

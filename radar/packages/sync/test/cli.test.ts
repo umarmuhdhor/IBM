@@ -3,7 +3,8 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSy
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { loadLocalConfig } from '@radar/common/node';
-import { writeJoinFiles } from '../src/cli.js';
+import { encodeInvite } from '@radar/common';
+import { resolveJoin, writeJoinFiles } from '../src/cli.js';
 import { findKitDir, installKit } from '../src/kit.js';
 import { cleanupDirs, read, tempDir } from './helpers.js';
 
@@ -95,5 +96,32 @@ describe('kit install', () => {
     expect(findKitDir(kitDir, {})).toBe(kitDir);
     expect(findKitDir(undefined, { RADAR_KIT_DIR: kitDir })).toBe(kitDir);
     expect(findKitDir(undefined, {})).toMatch(/bob-kit$/);
+  });
+});
+
+describe('resolveJoin (IN-02 invite)', () => {
+  const code = encodeInvite({ server: 'https://s.example', workspace: 'toko-demo', member: 'B', token: 'rdr_b' });
+  const target = { server: 'https://s.example', workspace: 'toko-demo', member: 'B', token: 'rdr_b' };
+
+  it('an invite from --invite or RADAR_INVITE fills every field', () => {
+    expect(resolveJoin(undefined, { invite: code }, {})).toEqual(target);
+    expect(resolveJoin(undefined, {}, { RADAR_INVITE: code })).toEqual(target);
+  });
+
+  it('explicit arguments still work, with the token from RADAR_TOKEN, and win over RADAR_INVITE', () => {
+    expect(resolveJoin('https://o.example', { workspace: 'w', as: 'A' }, { RADAR_TOKEN: 'rdr_a', RADAR_INVITE: code })).toEqual({
+      server: 'https://o.example',
+      workspace: 'w',
+      member: 'A',
+      token: 'rdr_a',
+    });
+  });
+
+  it('refuses --invite mixed with other arguments, a bad code, or missing arguments, without echoing secrets', () => {
+    expect(resolveJoin('https://o.example', { invite: code }, {})).toMatchObject({ error: expect.stringContaining('--invite') });
+    const bad = resolveJoin(undefined, { invite: `${code.slice(0, 12)}!!` }, {});
+    expect(bad).toMatchObject({ error: expect.any(String) });
+    expect(JSON.stringify(bad)).not.toContain(code.slice(8, 12));
+    expect(resolveJoin('https://o.example', { workspace: 'w', as: 'A' }, {})).toMatchObject({ error: expect.stringContaining('RADAR_TOKEN') });
   });
 });

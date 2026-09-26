@@ -5,9 +5,11 @@ import { ctxOf, type WorkspaceDeps } from '../../deps';
 import { buildBrief } from '../../services/brief';
 import { requireMember as memberRow } from '../../services/locks';
 import { sendNote } from '../../services/notifications';
+import { buildSessionReport } from '../../services/report';
 import { buildTeam, listActivity } from '../../services/team';
 import { requireMember, requireRole } from '../auth';
 import { parseWith, readJson } from '../errors';
+import { ReportQuery } from '../query';
 
 const ACTIVITY_DEFAULT_LIMIT = 20;
 
@@ -15,6 +17,12 @@ export function registerTeamRoutes(app: Hono, deps: WorkspaceDeps): void {
   app.get('/v1/team', (c) => {
     requireRole(deps.db, c.req.header('authorization'), ['pm', 'mc']);
     return c.json(buildTeam(deps.db, deps.hub, deps.now()));
+  });
+
+  app.get('/v1/report/session', (c) => {
+    requireRole(deps.db, c.req.header('authorization'), ['pm', 'mc']);
+    const q = parseWith(ReportQuery, c.req.query());
+    return c.json(buildSessionReport(deps.db, q));
   });
 
   app.get('/v1/activity', (c) => {

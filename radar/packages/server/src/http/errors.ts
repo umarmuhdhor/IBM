@@ -2,7 +2,7 @@
 import type { ErrorCode } from '@radar/common';
 import { ZodError, type z } from 'zod';
 
-export type ErrorStatus = 400 | 401 | 403 | 404 | 409 | 422 | 426 | 500;
+export type ErrorStatus = 400 | 401 | 403 | 404 | 409 | 413 | 422 | 426 | 429 | 500;
 
 export class RadarError extends Error {
   override readonly name = 'RadarError';
@@ -47,8 +47,35 @@ export function parseJsonText(text: string): unknown {
   }
 }
 
-export async function readJson(req: Request): Promise<unknown> {
-  return parseJsonText(await req.text());
+/** REST body cap (fase 12 step 9). Admin file batches pass a larger cap. */
+export const REST_MAX_BODY_BYTES = 256 * 1024;
+
+export async function readJson(req: Request, maxBytes = REST_MAX_BODY_BYTES): Promise<unknown> {
+  const tooLarge = () => new RadarError(413, 'PAYLOAD_TOO_LARGE', `Body lebih dari ${Math.round(maxBytes / 1024)} KB.`);
+  const declared = Number(req.headers.get('content-length'));
+  if (Number.isFinite(declared) && declared > maxBytes) throw tooLarge();
+  if (!req.body) return parseJsonText('');
+  // The header can be absent or wrong (chunked): count the real bytes and stop reading once over the cap.
+  const reader = req.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > maxBytes) {
+      await reader.cancel().catch(() => undefined);
+      throw tooLarge();
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(size);
+  let at = 0;
+  for (const c of chunks) {
+    bytes.set(c, at);
+    at += c.byteLength;
+  }
+  return parseJsonText(new TextDecoder().decode(bytes));
 }
 
 export function parseWith<S extends z.ZodType>(schema: S, value: unknown): z.infer<S> {

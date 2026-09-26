@@ -362,10 +362,15 @@ function claimCommit(ctx: LockCtx, p: ProposalRow, task: TaskRow, review: Review
   setCommitClaim(ctx.db, task.id, ctx.now);
   const owner = getMember(ctx.db, task.owner_id);
   const held = new Set(locksOfTask(ctx.db, task.id).map((l) => l.path));
-  const files = touchesOf(ctx.db, task.id).filter((t) => held.has(t.path)).map((t) => {
-    const v = getFileVersion(ctx.db, t.path, t.last_version);
-    return { path: t.path, content: t.deleted || !v || v.deleted ? null : (v.content ?? '') };
-  });
+  const files = touchesOf(ctx.db, task.id)
+    .filter((t) => held.has(t.path))
+    .map((t) => {
+      const v = getFileVersion(ctx.db, t.path, t.last_version);
+      return { path: t.path, firstVersion: t.first_version, content: t.deleted || !v || v.deleted ? null : (v.content ?? '') };
+    })
+    // Created and deleted inside the task: nothing on GitHub to delete (a tree entry with sha null would be 422).
+    .filter((f) => f.content !== null || f.firstVersion > 0)
+    .map(({ path, content }) => ({ path, content }));
   const reviewer = getMember(ctx.db, p.created_by);
   return {
     proposalId: p.id,

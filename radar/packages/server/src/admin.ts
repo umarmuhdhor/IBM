@@ -77,7 +77,8 @@ export function registerAdminRoutes(app: Hono, deps: WorkspaceDeps): void {
   });
 
   app.post('/admin/files', async (c) => {
-    const body = await readJson(c.req.raw);
+    // A batch holds up to ADMIN_FILES_MAX_BATCH_BYTES of content; JSON escaping can double it.
+    const body = await readJson(c.req.raw, 2 * ADMIN_FILES_MAX_BATCH_BYTES + 64 * 1024);
     requireInitialised(deps);
     const req = parseWith(AdminFilesReq, body);
     const prepared: { path: string; content: string; hash: string; size: number }[] = [];

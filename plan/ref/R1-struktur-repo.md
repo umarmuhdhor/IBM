@@ -123,7 +123,7 @@ pnpm -C radar admin init --server <url> --workspace toko-demo --repo <owner>/tok
   → Worker membaca tree repo lewat GitHub API, impor file teks ke tabel file (versi 1),
     buat anggota + token, cetak token SEKALI (A, B, C, dan token Mission Control).
 pnpm -C radar admin token --member A --rotate  → token baru
-pnpm -C radar admin invite --member B          → kode undangan rdr_inv_<base64url {server, workspace, member, token}> (P1, IN-02)
+pnpm -C radar admin invite --member B          → kode undangan rdr_inv_<base64url {v, server, workspace, member, token}> (P1, IN-02; merotasi token member)
 pnpm -C radar admin export --out events.json [--with-terminals]  → sama dengan GET /v1/events/export
 pnpm -C radar admin reset --confirm            → hapus semua data DO (hanya untuk dev/gladi)
 ```
@@ -134,11 +134,13 @@ Server sendiri tidak punya perintah `start`: lokal `pnpm -C radar dev:server` (w
 ```text
 radar join <server-url> --workspace toko-demo --as A --token <tok> [--dir .] [--no-kit] [--kit coder|pm]
   → tulis .radar/local.json, pasang kit .bob/, unduh snapshot, mulai memantau (foreground).
+radar join --invite <rdr_inv_…> [--dir .]   → sama, server/workspace/member/token dari satu kode (IN-02, fase 12;
+                                              atau env RADAR_INVITE agar kode tidak masuk riwayat shell)
 radar start                    → pakai .radar/local.json yang ada, mulai memantau
 radar status                   → server, member, jumlah file, kunci saya, koneksi
 radar task use <T-id>          → set task aktif (P1)
 radar kit install [coder|pm]   → pasang ulang .bob/ (setelah bundle baru)
-radar agent --auto --max-cost <n>  → pemicu main agent otomatis di PC PM (SV-10, P1)
+radar agent --auto --max-cost <n>  → pemicu main agent otomatis di PC PM (SV-10, P1; dipotong ke roadmap di fase 12)
 ```
 
 ## 6. File lokal per PC (tidak disinkronkan, tidak di-commit)

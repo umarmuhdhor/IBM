@@ -3,4 +3,6 @@
 interface Env {
   ADMIN_SECRET?: string;
   GITHUB_TOKEN?: string;
+  /** Demo override of R4 §7's 300000 ms (e.g. 60000); a plain var, not a secret. */
+  HEARTBEAT_EXPIRE_MS?: string;
 }

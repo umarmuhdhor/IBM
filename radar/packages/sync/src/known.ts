@@ -1,6 +1,9 @@
 // `known`: the last version + hash agreed with the server per path (from snapshot, ack or changed).
 // It drives anti-echo (SY-03): a watcher event whose hash equals `known` is our own write.
 
+/** `hash` of a known entry whose file the server deleted (SY-06). */
+export const DELETED_HASH = '';
+
 export interface KnownEntry {
   version: number;
   hash: string;
@@ -27,6 +30,10 @@ export class KnownStore {
 
   clear(): void {
     this.map.clear();
+  }
+
+  entries(): IterableIterator<[string, KnownEntry]> {
+    return this.map.entries();
   }
 
   get size(): number {
