@@ -9,7 +9,7 @@ afterEach(cleanup)
 const state = {
   workspace: { id: 'w', name: 'Demo', headCommit: null, repoUrl: null },
   members: {}, tasks: {}, locks: {}, files: {}, requests: {},
-  proposals: { p1: { id: 'p1', kind: 'decision', status: 'menunggu', payload: { title: 'Blocked edit' }, reason: 'File held', refId: null, createdAt: 1 } },
+  proposals: { p1: { id: 'p1', kind: 'decision', status: 'menunggu', payload: { title: 'Blocked edit' }, reason: 'File held', refId: null, createdAt: 1, decidedBy: null, note: null } },
   feed: [], bobActivity: {}, cursor: 0
 } satisfies RadarState
 
@@ -26,5 +26,13 @@ describe('MissionControlView', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Approve' }))
     expect(decide).toHaveBeenCalledWith('p1', true, '')
     expect(screen.getByRole('button', { name: 'Approve' }).hasAttribute('disabled')).toBe(true)
+  })
+
+  it('shows the shared feed sentence without repeating its clock prefix', () => {
+    render(<MissionControlView state={{
+      ...state,
+      feed: [{ id: 2, ts: 1, actor: 'B', type: 'file.changed', text: '10:19 Bob B ubah Header.tsx' }]
+    }} canDecide={false} />)
+    expect(screen.getByText('Bob B ubah Header.tsx')).toBeTruthy()
   })
 })

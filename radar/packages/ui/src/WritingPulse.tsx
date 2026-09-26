@@ -4,7 +4,7 @@
  * Animates with opacity 1 → 0.3 at 900 ms. Respects prefers-reduced-motion.
  * The pulse color matches the member who made the change.
  */
-import type { MemberId } from './types-temp';
+import type { MemberId } from './types';
 
 export interface WritingPulseProps {
   /** Member whose Bob is writing — drives the dot color. */

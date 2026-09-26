@@ -1,9 +1,7 @@
 import type { RadarConnection } from '../../shared/radar-connection'
 import type { RadarWsUpdate } from '../../shared/radar-update'
+import { WS_CLOSE_UNAUTHORIZED, WS_PING_FRAME, WS_PING_MS } from '@radar/common'
 
-// TODO(sync:alief): import keepalive constants from @radar/common after fase 02 lands on main.
-const WS_PING_MS = 20_000
-const WS_PING_FRAME = '{"t":"ping"}'
 const INITIAL_RECONNECT_MS = 500
 const MAX_RECONNECT_MS = 8_000
 
@@ -117,7 +115,7 @@ export class RadarWsClient {
       this.socket = null
       this.clearTimers()
       this.onUpdate({ kind: 'status', connected: false })
-      if (event.code === 4401) {
+      if (event.code === WS_CLOSE_UNAUTHORIZED) {
         this.stopped = true
         return
       }

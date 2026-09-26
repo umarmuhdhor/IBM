@@ -12,7 +12,7 @@
  */
 import { BobTrace } from './BobTrace';
 import type { BobTracePrimitive } from './BobTrace';
-import type { FeedKind, MemberId } from './types-temp';
+import type { FeedKind, MemberId } from './types';
 
 export interface FeedItemTrace {
   primitive: BobTracePrimitive;

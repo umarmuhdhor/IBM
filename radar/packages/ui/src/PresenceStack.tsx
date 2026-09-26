@@ -1,6 +1,6 @@
 import { MemberChip } from './MemberChip';
 import type { MemberOnlineStatus } from './MemberChip';
-import type { MemberId } from './types-temp';
+import type { MemberId } from './types';
 
 export interface PresenceMember {
   id: MemberId;

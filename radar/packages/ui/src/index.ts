@@ -32,7 +32,7 @@ export type { BriefMeterProps } from './BriefMeter';
 export { PresenceStack } from './PresenceStack';
 export type { PresenceStackProps, PresenceMember } from './PresenceStack';
 
-// Shared view types (temporary local copy until @radar/common is published)
+// Shared view types from the frozen Radar contract.
 export type {
   RadarEvent,
   RadarState,
@@ -51,8 +51,8 @@ export type {
   FeedKind,
   BobActivityKind,
   BobActivityItem,
-} from './types-temp';
+} from './types';
 
-// Re-export FeedItem type from types-temp under a distinct name to avoid collision
+// Re-export FeedItem type from types under a distinct name to avoid collision
 // with the FeedItem component above.
-export type { FeedItem as FeedItemData } from './types-temp';
+export type { FeedItem as FeedItemData } from './types';

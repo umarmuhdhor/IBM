@@ -5,14 +5,14 @@ import type { RadarState } from '@radar/ui'
 const state = {
   workspace: { id: 'w', name: 'Demo', headCommit: null, repoUrl: null },
   members: {
-    A: { id: 'A', name: 'Andi', role: 'coder', online: true, activeTaskId: 'T-1', blocked: false },
-    B: { id: 'B', name: 'Budi', role: 'coder', online: false, activeTaskId: null, blocked: true }
+    A: { id: 'A', name: 'Andi', role: 'coder', color: null, online: true, stale: false, activeTaskId: 'T-1', blocked: false, writingUntil: 0 },
+    B: { id: 'B', name: 'Budi', role: 'coder', color: null, online: false, stale: false, activeTaskId: null, blocked: true, writingUntil: 0 }
   },
   tasks: {
-    'T-1': { id: 'T-1', title: 'Checkout', ownerId: 'A', status: 'dikerjakan', files: [], queuedFiles: [], editCount: 3, commitSha: null }
+    'T-1': { id: 'T-1', title: 'Checkout', description: '', ownerId: 'A', status: 'dikerjakan', files: [], queuedFiles: [], adhoc: false, parentTaskId: null, editCount: 3, commitSha: null, summary: null }
   },
   locks: {}, files: {}, requests: {},
-  proposals: { p1: { id: 'p1', kind: 'decision', status: 'menunggu', payload: { title: 'Budi needs checkout.ts' }, reason: 'Shared file', refId: null, createdAt: 1 } },
+  proposals: { p1: { id: 'p1', kind: 'decision', status: 'menunggu', payload: { title: 'Budi needs checkout.ts' }, reason: 'Shared file', refId: null, createdAt: 1, decidedBy: null, note: null } },
   feed: [], bobActivity: {}, cursor: 1
 } satisfies RadarState
 

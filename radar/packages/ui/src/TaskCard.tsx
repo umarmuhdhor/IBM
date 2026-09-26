@@ -3,7 +3,7 @@
  *
  * Shows:  T-<id> title, owner chip, file count + edit count, status badge.
  *
- * Status vocabulary (from types-temp):
+ * Status vocabulary (from types):
  *   terbuka   → open (dim)
  *   draf      → draft (dim)
  *   dikerjakan → working
@@ -13,7 +13,7 @@
  */
 import { MemberChip } from './MemberChip';
 import type { MemberOnlineStatus } from './MemberChip';
-import type { MemberId, TaskStatus } from './types-temp';
+import type { MemberId, TaskStatus } from './types';
 
 export interface TaskCardProps {
   /** Task identifier, e.g. "T-1". */

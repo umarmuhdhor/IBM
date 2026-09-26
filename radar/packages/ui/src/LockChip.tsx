@@ -11,7 +11,7 @@
  * so screen-readers and tests can find it regardless of locale.
  */
 import { Clock } from 'lucide-react';
-import type { LockState } from './types-temp';
+import type { LockState } from './types';
 
 export interface LockChipProps {
   /** Lock state using R3 vocabulary. */

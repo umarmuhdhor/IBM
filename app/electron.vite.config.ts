@@ -287,6 +287,7 @@ export const electronViteConfig: UserConfig = {
     // directly at the published main file so the bundler can inline it.
     resolve: {
       alias: {
+        '@radar/common': resolve('../radar/packages/common/src'),
         '@xterm/headless': resolve('node_modules/@xterm/headless/lib-headless/xterm-headless.js'),
         '@xterm/addon-serialize': resolve(
           'node_modules/@xterm/addon-serialize/lib/addon-serialize.js'

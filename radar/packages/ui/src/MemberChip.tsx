@@ -6,7 +6,7 @@
  *   stale   – yellow dot (connected but hasn't pushed in > 2 min)
  *   offline – grey (no dot)
  */
-import type { MemberId } from './types-temp';
+import type { MemberId } from './types';
 
 export type MemberOnlineStatus = 'online' | 'stale' | 'offline';
 
