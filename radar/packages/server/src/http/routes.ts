@@ -8,7 +8,7 @@ import { appendEvent } from '../services/events';
 import { exportEvents } from '../services/export';
 import { truncateActivityText } from '../services/activity';
 import { buildState } from '../services/state';
-import { requireMember, requireRole } from './auth';
+import { principalFromHeader, requireMember, requireRole } from './auth';
 import { errorJson, parseWith, readJson, toErrorResponse } from './errors';
 import { ExportQuery } from './query';
 import { registerFileRoutes } from './routes/files';
@@ -61,13 +61,15 @@ export function createApp(deps: WorkspaceDeps): Hono {
     return c.body(null, 204);
   });
 
-  // Rate limit before the routes: mc decisions and proposal writes (fase 12 step 9). Reads are not limited.
-  // One middleware with an explicit path test: Hono's `/x/*` also matches `/x`, so two patterns would count twice.
-  const limitedPath = /^\/v1\/(proposals(\/.*)?|locks\/revoke|tasks\/[^/]+\/cancel)$/;
+  // Rate limit before the routes (fase 12 step 9): mc decisions, proposal writes and AI edit marks. Reads are not
+  // limited. One middleware with an explicit path test: Hono's `/x/*` also matches `/x`, so two patterns would count
+  // twice. Keyed by principal; a request without a valid token is not counted and gets its 401 from the route.
+  const limitedPath = /^\/v1\/(proposals(\/.*)?|locks\/revoke|tasks\/[^/]+\/cancel|ai-edits)$/;
   const limited: MiddlewareHandler = async (c, next) => {
     if (c.req.method !== 'POST' || !limitedPath.test(c.req.path)) return next();
-    // Keyed by the raw header in memory only; never logged. Auth still runs in the route.
-    const retry = deps.rateLimiter.hit(c.req.header('authorization') ?? '', deps.now());
+    const p = principalFromHeader(deps.db, c.req.header('authorization'));
+    if (!p) return next();
+    const retry = deps.rateLimiter.hit(p.kind === 'mc' ? 'mc' : `member:${p.memberId}`, deps.now());
     if (retry === 0) return next();
     const res = errorJson(429, 'RATE_LIMITED', `Terlalu banyak permintaan. Coba lagi dalam ${retry} detik.`);
     res.headers.set('retry-after', String(retry));

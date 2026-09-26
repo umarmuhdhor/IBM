@@ -25,7 +25,7 @@ describe('body size caps', () => {
   });
 });
 
-describe('rate limit (60 POST/min per token)', () => {
+describe('rate limit (60 POST/min per principal)', () => {
   it('the 61st proposal write in a minute is 429 RATE_LIMITED with Retry-After; other tokens and reads are not limited', async () => {
     const { stub } = freshWorkspace();
     const t = await seedTestWorkspace(stub);
@@ -39,6 +39,8 @@ describe('rate limit (60 POST/min per token)', () => {
     expect(Number(over.headers.get('retry-after'))).toBeGreaterThan(0);
     // Same token on another limited route shares the budget.
     expect((await call(stub, 'POST', '/v1/locks/revoke', { token: t.C, body: {} })).status).toBe(429);
+    // A request without a valid token is not counted (the route answers 401).
+    expect((await call(stub, 'POST', '/v1/proposals', { body: {} })).status).toBe(401);
     // A different token and a read are unaffected.
     expect((await call(stub, 'POST', '/v1/proposals', { token: t.A, body: {} })).status).not.toBe(429);
     expect((await call(stub, 'GET', '/v1/state', { token: t.C })).status).toBe(200);
