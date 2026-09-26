@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { useRadarStore } from '@/store/radar-store'
 import type { RadarConnectionSummary } from '../../../../shared/radar-connection'
 import { DEFAULT_RADAR_SERVER, type RadarJoinCode } from '../../../../shared/radar-join'
 import { SyncConflictsNote } from './SyncConflictsNote'
@@ -31,6 +32,7 @@ export function ShareFolderCard({
   onShared
 }: Props) {
   const sync = useRadarSyncStatus()
+  const connectionFailure = useRadarStore((store) => store.connectionFailure)
   const [busy, setBusy] = useState(false)
   const [replacing, setReplacing] = useState(false)
   const [stopping, setStopping] = useState(false)
@@ -104,6 +106,42 @@ export function ShareFolderCard({
       {message}
     </p>
   )
+
+  // D-alief-15: the Mission Control token stopped working, so Stop sharing and codes would only fail.
+  const ownerEnded =
+    owner && (connectionFailure === 'signed-out' || connectionFailure === 'workspace-closed')
+  if (ownerEnded) {
+    return (
+      <section
+        aria-label="Multiplayer"
+        className="space-y-3 rounded-lg border border-border bg-card p-4"
+      >
+        <div className="space-y-1">
+          <h3 className="text-sm font-semibold">{connection.workspace}</h3>
+          <p className="text-xs text-foreground">
+            {connectionFailure === 'signed-out'
+              ? 'Another device took over as owner. This Mac no longer runs Mission Control.'
+              : 'This workspace is no longer shared from this Mac.'}
+          </p>
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={busy}
+          onClick={() => {
+            setBusy(true)
+            void window.api.radar
+              .clearConnection()
+              .then(() => onConnectionChange(null))
+              .finally(() => setBusy(false))
+          }}
+        >
+          Forget this workspace
+        </Button>
+        {status}
+      </section>
+    )
+  }
 
   if (owner && stopping) {
     return (

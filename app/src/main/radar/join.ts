@@ -18,6 +18,7 @@ import {
   saveRadarConnection
 } from './secure-store'
 import { getSyncStatus, startSyncAgent, stopSyncAgent, workspaceFolder } from './sync-agent'
+import { serverFetch } from './server-fetch'
 
 /**
  * The renderer always sends DEFAULT_RADAR_SERVER. LIVE_COLLAB_SERVER (e.g. http://localhost:8787 for
@@ -61,7 +62,7 @@ export async function joinWithCode(
   const server = serverOrigin(serverInput)
   // Why: redeeming rotates the member's token, so fail before that if the new one cannot be stored.
   requireOsEncryption()
-  const response = await fetch(`${server}/v1/join`, {
+  const response = await serverFetch(`${server}/v1/join`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(name ? { code, name, role } : { code }),
@@ -130,7 +131,7 @@ export async function createJoinCode(): Promise<RadarJoinCode> {
   if (!connection || connection.role !== 'mc') {
     throw new Error('Connect as Mission Control to make join codes.')
   }
-  const response = await fetch(new URL('/v1/join-codes', connection.server).toString(), {
+  const response = await serverFetch(new URL('/v1/join-codes', connection.server).toString(), {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${connection.token}`,

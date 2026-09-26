@@ -32,6 +32,7 @@ import {
   saveRadarConnection
 } from './secure-store'
 import { startSyncAgent } from './sync-agent'
+import { serverFetch } from './server-fetch'
 
 // D-alief-12: the owner opens a folder on their own Mac, and that folder becomes the workspace.
 // The app uploads it with the Mission Control token, then syncs the same folder as member A.
@@ -189,7 +190,7 @@ export async function shareFolder(
   const { files, skipped } = collectFolderFiles(folder)
   const workspace = workspaceNameFor(folder)
 
-  const opened = await fetch(`${server}/v1/workspace/open`, {
+  const opened = await serverFetch(`${server}/v1/workspace/open`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -203,7 +204,7 @@ export async function shareFolder(
   }
   const res = OpenWorkspaceRes.parse(await opened.json())
   for (const batch of batchFolderFiles(files)) {
-    const uploaded = await fetch(`${server}/v1/workspace/files`, {
+    const uploaded = await serverFetch(`${server}/v1/workspace/files`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${res.mcToken}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ headCommit: null, files: batch }),
@@ -250,7 +251,7 @@ export async function stopSharing(): Promise<void> {
   if (!connection || connection.role !== 'mc') {
     throw new Error('Only the workspace owner can stop sharing.')
   }
-  const response = await fetch(new URL('/v1/workspace/close', connection.server).toString(), {
+  const response = await serverFetch(new URL('/v1/workspace/close', connection.server).toString(), {
     method: 'POST',
     headers: { Authorization: `Bearer ${connection.token}` },
     signal: AbortSignal.timeout(15_000)

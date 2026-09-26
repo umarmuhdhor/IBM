@@ -237,6 +237,24 @@ describe('stopSharing (D-alief-12)', () => {
     expect(mocks.disconnectRadar).toHaveBeenCalled()
   })
 
+  it("says the server can't be reached instead of a raw TimeoutError (offline)", async () => {
+    mocks.readRadarConnection.mockReturnValue({
+      server: `${SERVER}/`,
+      workspace: 'my-app',
+      member: 'mc',
+      role: 'mc',
+      token: 'rdr_test_mc_value'
+    })
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        throw new DOMException('The operation was aborted due to timeout', 'TimeoutError')
+      })
+    )
+    await expect(stopSharing()).rejects.toThrow("Can't reach the Live Collab server. Try again.")
+    expect(mocks.disconnectRadar).not.toHaveBeenCalled()
+  })
+
   it('keeps the connection when the server refuses', async () => {
     mocks.readRadarConnection.mockReturnValue({
       server: `${SERVER}/`,

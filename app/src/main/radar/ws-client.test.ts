@@ -128,4 +128,34 @@ describe('Radar WebSocket client', () => {
     vi.advanceTimersByTime(30_000)
     expect(FakeSocket.instances).toHaveLength(2)
   })
+
+  it('shows Disconnected and reconnects when the server stops answering pings', () => {
+    const updates = vi.fn()
+    const client = new RadarWsClient(connection, updates, (url) => new FakeSocket(url))
+    client.connect()
+    const socket = FakeSocket.instances[0]!
+    socket.onopen?.()
+    socket.receive({ t: 'welcome', d: {} })
+    // Why: close() on a dead network never fires onclose, so the fake stays silent too.
+    socket.close = () => undefined
+    vi.advanceTimersByTime(60_000)
+    expect(updates).toHaveBeenLastCalledWith({ kind: 'status', connected: false, failure: 'connection-lost' })
+    vi.advanceTimersByTime(1_000)
+    expect(FakeSocket.instances).toHaveLength(2)
+    client.disconnect()
+  })
+
+  it('keeps a socket that answers pings', () => {
+    const updates = vi.fn()
+    const client = new RadarWsClient(connection, updates, (url) => new FakeSocket(url))
+    client.connect()
+    const socket = FakeSocket.instances[0]!
+    socket.receive({ t: 'welcome', d: {} })
+    for (let i = 0; i < 6; i++) {
+      vi.advanceTimersByTime(20_000)
+      socket.receive({ t: 'pong' })
+    }
+    expect(updates).toHaveBeenLastCalledWith({ kind: 'status', connected: true })
+    client.disconnect()
+  })
 })

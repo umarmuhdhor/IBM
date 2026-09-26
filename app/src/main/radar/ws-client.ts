@@ -9,6 +9,8 @@ import {
 } from '@radar/common'
 
 const INITIAL_RECONNECT_MS = 500
+// Why: a server that vanished without a TCP close (sleep, Wi-Fi drop) never fires onclose; missing pongs do.
+const SILENT_SOCKET_MS = WS_PING_MS * 2 + 5_000
 const MAX_RECONNECT_MS = 8_000
 
 type SocketLike = {
@@ -53,6 +55,7 @@ export class RadarWsClient {
   private reconnectDelayMs = INITIAL_RECONNECT_MS
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null
   private pingTimer: ReturnType<typeof setInterval> | null = null
+  private lastMessageAt = 0
 
   constructor(
     private readonly connection: RadarConnection,
@@ -102,6 +105,7 @@ export class RadarWsClient {
       if (this.socket !== socket || typeof message.data !== 'string') {
         return
       }
+      this.lastMessageAt = Date.now()
       let frame: unknown
       try {
         frame = JSON.parse(message.data)
@@ -125,39 +129,44 @@ export class RadarWsClient {
         this.onUpdate({ kind: 'event', data: frame.d, latencyMs })
       }
     }
-    socket.onclose = (event) => {
-      if (this.socket !== socket || this.stopped) {
-        return
-      }
-      this.socket = null
-      this.clearTimers()
-      this.onUpdate({
-        kind: 'status',
-        connected: false,
-        failure: closeFailure(event)
-      })
-      if (event.code === WS_CLOSE_UNAUTHORIZED) {
-        this.stopped = true
-        return
-      }
-      const delay = this.reconnectDelayMs
-      this.reconnectDelayMs = Math.min(MAX_RECONNECT_MS, delay * 2)
-      this.reconnectTimer = setTimeout(() => {
-        this.reconnectTimer = null
-        this.openSocket()
-      }, delay)
-    }
+    socket.onclose = (event) => this.lost(socket, closeFailure(event))
     socket.onerror = () => socket.close()
+  }
+
+  private lost(socket: SocketLike, failure: RadarConnectionFailure): void {
+    if (this.socket !== socket || this.stopped) {
+      return
+    }
+    this.socket = null
+    this.clearTimers()
+    this.onUpdate({ kind: 'status', connected: false, failure })
+    if (failure !== 'connection-lost') {
+      this.stopped = true
+      return
+    }
+    const delay = this.reconnectDelayMs
+    this.reconnectDelayMs = Math.min(MAX_RECONNECT_MS, delay * 2)
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null
+      this.openSocket()
+    }, delay)
   }
 
   private startPing(socket: SocketLike): void {
     if (this.pingTimer) {
       clearInterval(this.pingTimer)
     }
+    this.lastMessageAt = Date.now()
     this.pingTimer = setInterval(() => {
-      if (this.socket === socket) {
-        socket.send(WS_PING_FRAME)
+      if (this.socket !== socket) {
+        return
       }
+      if (Date.now() - this.lastMessageAt > SILENT_SOCKET_MS) {
+        this.lost(socket, 'connection-lost')
+        socket.close()
+        return
+      }
+      socket.send(WS_PING_FRAME)
     }, WS_PING_MS)
   }
 

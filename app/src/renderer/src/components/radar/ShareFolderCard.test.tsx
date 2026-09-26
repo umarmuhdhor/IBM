@@ -2,6 +2,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import type { RadarSyncStatus } from '../../../../shared/radar-join'
+import { useRadarStore } from '@/store/radar-store'
 import { ShareFolderCard } from './ShareFolderCard'
 
 const shareFolder = vi.fn()
@@ -21,6 +22,7 @@ beforeEach(() => {
     radar: {
       shareFolder,
       stopSharing,
+      clearConnection: vi.fn(async () => undefined),
       getSyncStatus: vi.fn(async () => status),
       onSyncStatus: vi.fn(() => () => undefined),
       openInBob: vi.fn(),
@@ -35,6 +37,7 @@ afterEach(() => {
   vi.unstubAllGlobals()
   vi.clearAllMocks()
   status.folder = null
+  useRadarStore.setState({ connectionFailure: null })
 })
 
 const owner = {
@@ -155,4 +158,23 @@ it('stops sharing only after the owner confirms, then disconnects', async () => 
   fireEvent.click(screen.getByRole('button', { name: 'Stop sharing' }))
   await waitFor(() => expect(onConnectionChange).toHaveBeenCalledWith(null))
   expect(stopSharing).toHaveBeenCalledTimes(1)
+})
+
+it('tells the old owner that another device took over, and lets them start over (D-alief-15)', async () => {
+  useRadarStore.setState({ connectionFailure: 'signed-out' })
+  const onConnectionChange = vi.fn()
+  render(
+    <ShareFolderCard
+      connection={owner}
+      folder={null}
+      sharedCode={code}
+      onConnectionChange={onConnectionChange}
+      onShared={vi.fn()}
+    />
+  )
+  expect(await screen.findByText(/Another device took over as owner/)).toBeTruthy()
+  expect(screen.queryByRole('button', { name: /Stop sharing/ })).toBeNull()
+  expect(screen.queryByLabelText('Join code')).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: 'Forget this workspace' }))
+  await waitFor(() => expect(onConnectionChange).toHaveBeenCalledWith(null))
 })
