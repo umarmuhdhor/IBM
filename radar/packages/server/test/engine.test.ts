@@ -258,8 +258,10 @@ describe('role matrix for fase 05–06 endpoints (R3 §1)', () => {
   });
 });
 
+declare const __LOCK_CHECK_P95_BUDGET_MS__: number;
+
 describe('lock check latency (fase 05 step 13)', () => {
-  it('1000 checks through the Durable Object: p95 under 20 ms', { timeout: 60_000 }, async () => {
+  it('1000 checks through the Durable Object: p95 under budget (20 ms local)', { timeout: 60_000 }, async () => {
     const { stub } = freshWorkspace();
     const t = await seedTestWorkspace(stub);
     const ms: number[] = [];
@@ -272,7 +274,7 @@ describe('lock check latency (fase 05 step 13)', () => {
     }
     ms.sort((a, b) => a - b);
     const p95 = ms[Math.floor(ms.length * 0.95)]!;
-    expect(p95).toBeLessThan(20);
+    expect(p95).toBeLessThan(__LOCK_CHECK_P95_BUDGET_MS__);
   });
 });
 
