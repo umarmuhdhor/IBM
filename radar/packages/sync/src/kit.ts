@@ -1,7 +1,7 @@
 // `radar kit install` (fase 04 step 8): copies bob-kit/<role>/.bob into <root>/.bob without clobbering
 // a .bob folder that holds the user's own files.
-import { cpSync, existsSync, readdirSync, renameSync, statSync } from 'node:fs';
-import { join, relative, resolve } from 'node:path';
+import { cpSync, existsSync, readdirSync, renameSync, rmdirSync, rmSync, statSync } from 'node:fs';
+import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export type KitRole = 'coder' | 'pm';
@@ -46,19 +46,31 @@ export function findKitDir(explicit: string | undefined, env: Record<string, str
   return null;
 }
 
+const KIT_ROLES: readonly KitRole[] = ['coder', 'pm'];
+
+function removeWithEmptyParents(root: string, rel: string): void {
+  rmSync(join(root, rel), { force: true });
+  for (let dir = dirname(join(root, rel)); dir !== root && readdirSync(dir).length === 0; dir = dirname(dir)) rmdirSync(dir);
+}
+
 export function installKit(o: { root: string; role: KitRole; kitDir: string | null; force?: boolean; now?: () => number }): KitResult {
   const src = o.kitDir ? join(o.kitDir, o.role, '.bob') : null;
   if (!src || !isDir(src)) return { status: 'missing-kit', kitDir: o.kitDir };
   const kitFiles = new Set(filesUnder(src));
+  // Files of any role's kit belong to the kit, so a coder kit is replaced by the pm kit and back.
+  const kitOwned = new Set(KIT_ROLES.flatMap((r) => (o.kitDir && isDir(join(o.kitDir, r, '.bob')) ? filesUnder(join(o.kitDir, r, '.bob')) : [])));
   const dest = join(o.root, '.bob');
   let backup: string | undefined;
   if (existsSync(dest)) {
-    // An older kit (every file is part of this kit) is replaced; anything else needs --force.
-    const foreign = filesUnder(dest).filter((f) => !kitFiles.has(f));
+    // An older kit (every file is part of a kit) is replaced; anything else needs --force.
+    const present = filesUnder(dest);
+    const foreign = present.filter((f) => !kitOwned.has(f));
     if (foreign.length > 0) {
       if (!o.force) return { status: 'refused', foreign };
       backup = `.bob.bak-${(o.now ?? Date.now)()}`;
       renameSync(dest, join(o.root, backup));
+    } else {
+      for (const f of present.filter((p) => !kitFiles.has(p))) removeWithEmptyParents(dest, f);
     }
   }
   cpSync(src, dest, { recursive: true, force: true });

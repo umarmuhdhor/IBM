@@ -86,6 +86,20 @@ describe('kit install', () => {
     expect(read(root, '.bob/mine.md')).toBeNull();
   });
 
+  it('switching coder to pm replaces the coder kit, including files only the coder kit has', () => {
+    const root = tempDir();
+    const kitDir = fakeKit();
+    mkdirSync(join(kitDir, 'coder/.bob/rules-coder'), { recursive: true });
+    writeFileSync(join(kitDir, 'coder/.bob/rules-coder/01-radar.md'), 'coder rule\n');
+    writeFileSync(join(kitDir, 'coder/.bob/hooks/lock_guard.js'), '// guard\n');
+    expect(installKit({ root, role: 'coder', kitDir }).status).toBe('installed');
+    const r = installKit({ root, role: 'pm', kitDir });
+    expect(r.status).toBe('installed');
+    expect(read(root, '.bob/custom_modes.yaml')).toBe('role: pm\n');
+    expect(read(root, '.bob/hooks/lock_guard.js')).toBeNull();
+    expect(existsSync(join(root, '.bob/rules-coder'))).toBe(false);
+  });
+
   it('reports a missing kit instead of failing', () => {
     const root = tempDir();
     expect(installKit({ root, role: 'coder', kitDir: join(root, 'nope') }).status).toBe('missing-kit');
