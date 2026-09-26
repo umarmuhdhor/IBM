@@ -325,6 +325,11 @@ const TUI_AGENT_CONFIG_SOURCE: Record<TuiAgent, TuiAgentConfigSource> = {
     detectCmd: 'devin',
     // Why: `devin -- <prompt>` auto-submits immediately (docs.devin.ai/cli), so start the REPL with no argv prompt.
     promptInjectionMode: 'stdin-after-start'
+  },
+  bob: {
+    detectCmd: 'bob',
+    // UNVERIFIED: Bob Shell prompt handling needs a live check. Avoid passing prompts as CLI arguments.
+    promptInjectionMode: 'stdin-after-start'
   }
 }
 

@@ -18,6 +18,15 @@ describe('TUI_AGENT_CONFIG', () => {
     })
   })
 
+  it('registers IBM Bob as a manually started CLI agent', () => {
+    expect(TUI_AGENT_CONFIG).toHaveProperty('bob')
+    expect(Object.entries(TUI_AGENT_CONFIG).find(([agent]) => agent === 'bob')?.[1]).toMatchObject({
+      detectCmd: 'bob',
+      launchCmd: 'bob',
+      expectedProcess: 'bob'
+    })
+  })
+
   it('keeps explicit overrides where the launch line or process differs from the binary', () => {
     const overrides: Partial<Record<TuiAgent, Partial<(typeof TUI_AGENT_CONFIG)[TuiAgent]>>> = {
       'claude-agent-teams': { launchCmd: 'orca claude-teams', expectedProcess: 'claude' },

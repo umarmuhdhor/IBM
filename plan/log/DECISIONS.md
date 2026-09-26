@@ -157,7 +157,6 @@ Format:
 - Alternatif yang ditolak: memakai tag `lane-<x>-fNN` untuk rebase (tag tidak ikut `--update-refs`); satu `INDEX.md` bersama (konflik di setiap rebase); menjalankan eksperimen setelah rekaman (tidak cukup waktu sebelum submit).
 - Dampak: PLAN §1/§2/§3/§5/§6/§7/§9/§10/§11/§12, PROMPT, CLAUDE.md, README, PRD, ARCHITECTURE, DESIGN, DATA_SOURCES, PROGRESS, plan/README, TODO, fase 00/01/03/06/07/09/10/11/12/13/14, `bob_sessions/{INDEX,README}.md`, `radar/scripts/bob-evidence.sh`, skill `live-collab-app`, `media-references/`.
 - File ref/ yang diperbarui: R1 (`admin init` member D), R2 (komentar `commit_started_at`), R3 §1 (matriks pm), R4 §2/§6.3 (TTL klaim), R5 §4 (`COMMIT_CLAIM_TTL_MS`), R7 (indeks per anggota, klaim C2).
-
 ## D-umar-01 · 26 Sep 2026 00:35 · fase 01 · Keputusan GATE 1 + fakta Bob IDE 2.2.0
 
 - Keputusan (GATE 1, bukti di `radar/docs/SPIKE_RESULTS.md`, fixture di `radar/docs/spike-payloads/`):
@@ -237,3 +236,9 @@ Format:
 - Alternatif yang ditolak: `StateRes` berbentuk map (JSON lebih besar dan urutan tidak stabil); satu entry dengan `node:*` di belakang cek runtime (Worker gagal bundel); menormalkan CRLF sebelum hash (versi berbeda dari isi file sebenarnya).
 - Dampak ke paket/fase lain: fase 03 (bentuk admin + `StateRes` array + `owner=me`), fase 04 (`/node`, ignore), fase 05 (pertanyaan terbuka antre), fase 07/08 (kit memakai normalizer + `ACTIVITY_TIMEOUT_MS` + `shareprompts`), fase 09 (app memakai `stateFromSnapshot`, selector, mock).
 - File ref/ yang diperbarui: R1 §6 (`shareprompts`), R3 §2.2 (jalur pesan blokir), R3 §2.24 (`clientTs` opsional, `turn.end`), R5 §4 (`ACTIVITY_TIMEOUT_MS`), R5 §5 (`RADAR_SHAREPROMPTS`).
+
+## D-aarief-01 · 26 Sep 2026 · fase 09 · Batas koneksi dan presentasi app
+
+- Keputusan: role Settings mengikuti R3 sebagai `coder | mc`. Token disimpan dan dipakai di main process melalui `safeStorage`; main process menjalankan WebSocket dan REST, renderer hanya menerima state/event melalui IPC. Ini menjaga token keluar dari log dan state renderer. Mission Control memakai drawer/sheet Orca, tanpa jenis tab persisten baru. Token `--lc-*` app mengambil warna/font Orca; UI web memakai `theme-vars.css`. Tambahkan `--lc-person-d` (#08BDBA) untuk member keempat sesuai R5 §4.
+- Alasan: kontrak R3 membatasi decision ke `mc`, DoD fase 09 melarang token di renderer, dan app vendored Orca meminta perubahan aditif.
+- Deviasi: path `lib/radar/ws-client.ts` dan `lib/radar/api.ts` di rencana fase menjadi modul main process.
