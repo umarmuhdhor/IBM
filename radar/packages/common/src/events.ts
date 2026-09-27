@@ -1,4 +1,4 @@
-// Event catalog (R3 §5) and the Indonesian feed sentences shown in Mission Control and the replay.
+// Event catalog (R3 §5) and the plain-English feed sentences shown in Mission Control.
 import { basename } from './paths.js';
 import type { RadarEvent, RadarEventType } from './schemas.js';
 
@@ -48,74 +48,104 @@ export function formatClock(ts: number): string {
   return `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`;
 }
 
-const PROPOSAL_KIND_TEXT = { plan: 'rencana', decision: 'keputusan', review: 'review' } as const;
+const TASK_STATUS_TEXT: Record<string, string> = {
+  draf: 'draft',
+  terbuka: 'open',
+  dikerjakan: 'in progress',
+  review: 'in review',
+  selesai: 'done',
+  batal: 'cancelled',
+};
+const PROPOSAL_STATUS_TEXT: Record<string, string> = {
+  menunggu: 'is waiting for the PM',
+  disetujui: 'is approved',
+  ditolak: 'is rejected',
+  diterapkan_otomatis: 'is applied automatically',
+  kedaluwarsa: 'expired',
+};
+const OUTCOME_TEXT: Record<string, string> = {
+  antre: 'queued',
+  pindahkan: 'file moved',
+  pecah: 'task split',
+  ditolak: 'rejected',
+};
+const VERDICT_TEXT: Record<string, string> = {
+  setujui: 'approve',
+  setujui_beri_tahu: 'approve and tell the team',
+  kembalikan: 'send back',
+};
 
-function sentence(ev: RadarEvent): string | null {
+/** Member id → display name; ids without a name are shown as-is. */
+export type FeedNames = Readonly<Record<string, string>>;
+
+// Plain-English feed sentences (same voice as the /demo replay narrator), with member names.
+function sentence(ev: RadarEvent, names: FeedNames): string | null {
+  const who = (id: string) => names[id] ?? id;
   switch (ev.type) {
     case 'workspace.created':
-      return `Workspace ${ev.payload.workspaceId} dibuat (${ev.payload.fileCount} file)`;
+      return `Workspace ${ev.payload.workspaceId} opens with ${ev.payload.fileCount} ${ev.payload.fileCount === 1 ? 'file' : 'files'}`;
     case 'member.created':
-      return `${ev.payload.name ?? ev.payload.memberId} bergabung`;
+      return `${ev.payload.name ?? who(ev.payload.memberId)} joins the team`;
     case 'member.online':
-      return `${ev.payload.memberId} terhubung`;
+      return `${who(ev.payload.memberId)} comes online`;
     case 'member.offline':
-      return `${ev.payload.memberId} terputus`;
+      return `${who(ev.payload.memberId)} goes offline`;
     case 'member.reconnected':
-      return `${ev.payload.memberId} tersambung ulang`;
+      return `${who(ev.payload.memberId)} is back online`;
     case 'member.stale':
-      return `PC ${ev.payload.memberId} tidak merespons`;
+      return `${who(ev.payload.memberId)}'s computer stopped responding`;
     case 'file.changed':
-      return `Bob ${ev.payload.by} ubah ${basename(ev.payload.path)}`;
+      return `${who(ev.payload.by)}'s Bob changes ${basename(ev.payload.path)}`;
     case 'file.deleted':
-      return `Bob ${ev.payload.by} hapus ${basename(ev.payload.path)}`;
+      return `${who(ev.payload.by)}'s Bob deletes ${basename(ev.payload.path)}`;
     case 'file.rejected':
       return ev.payload.holderMemberId
-        ? `Perubahan ${ev.payload.by} di ${basename(ev.payload.path)} ditolak (milik ${ev.payload.holderMemberId})`
-        : `Perubahan ${ev.payload.by} di ${basename(ev.payload.path)} ditolak (${ev.payload.reason})`;
+        ? `${who(ev.payload.by)}'s change to ${basename(ev.payload.path)} is refused, ${who(ev.payload.holderMemberId)} holds it`
+        : `${who(ev.payload.by)}'s change to ${basename(ev.payload.path)} is refused (${ev.payload.reason})`;
     case 'lock.reserved':
-      return `${basename(ev.payload.path)} dipesan untuk ${ev.payload.memberId} (${ev.payload.taskId})`;
+      return `${basename(ev.payload.path)} is reserved for ${who(ev.payload.memberId)} (${ev.payload.taskId})`;
     case 'lock.acquired':
-      return `${ev.payload.memberId} memegang ${basename(ev.payload.path)} (${ev.payload.taskId})`;
+      return `${who(ev.payload.memberId)} now holds ${basename(ev.payload.path)} (${ev.payload.taskId})`;
     case 'lock.review':
-      return `${basename(ev.payload.path)} masuk review (${ev.payload.taskId})`;
+      return `${basename(ev.payload.path)} is held for review (${ev.payload.taskId})`;
     case 'lock.released':
-      return `${basename(ev.payload.path)} dilepas ${ev.payload.taskId}`;
+      return `${ev.payload.taskId} releases ${basename(ev.payload.path)}`;
     case 'lock.transferred':
-      return `${basename(ev.payload.path)} pindah ke ${ev.payload.toMemberId} (${ev.payload.toTaskId})`;
+      return `${basename(ev.payload.path)} passes to ${who(ev.payload.toMemberId)} (${ev.payload.toTaskId})`;
     case 'lock.queued':
-      return `${ev.payload.memberId} antre ${basename(ev.payload.path)} (#${ev.payload.pos})`;
+      return `${who(ev.payload.memberId)} is #${ev.payload.pos} in the queue for ${basename(ev.payload.path)}`;
     case 'lock.revoked':
-      return `Kunci ${basename(ev.payload.path)} dicabut dari ${ev.payload.memberId}`;
+      return `The lock on ${basename(ev.payload.path)} is taken back from ${who(ev.payload.memberId)}`;
     case 'lock.blocked':
-      return `Bob ${ev.payload.memberId} diblokir di ${basename(ev.payload.path)} (milik ${ev.payload.holderMemberId})`;
+      return `${who(ev.payload.memberId)}'s Bob is blocked on ${basename(ev.payload.path)}, ${who(ev.payload.holderMemberId)} holds it`;
     case 'task.created':
-      return `Task ${ev.payload.taskId} ${ev.payload.title} dibuat untuk ${ev.payload.ownerId}`;
+      return `${ev.payload.taskId} “${ev.payload.title}” goes to ${who(ev.payload.ownerId)}`;
     case 'task.status':
-      return `${ev.payload.taskId}: ${ev.payload.from} → ${ev.payload.to}`;
+      return `${ev.payload.taskId} is now ${TASK_STATUS_TEXT[ev.payload.to] ?? ev.payload.to}`;
     case 'task.submitted':
-      return `${ev.actor} submit ${ev.payload.taskId}`;
+      return `${who(ev.actor)} submits ${ev.payload.taskId} for review`;
     case 'request.created':
       return ev.payload.holderMemberId
-        ? `${ev.payload.requesterMemberId} minta ${basename(ev.payload.path)} (dipegang ${ev.payload.holderMemberId})`
-        : `${ev.payload.requesterMemberId} minta ${basename(ev.payload.path)}`;
+        ? `${who(ev.payload.requesterMemberId)} asks for ${basename(ev.payload.path)}, ${who(ev.payload.holderMemberId)} holds it`
+        : `${who(ev.payload.requesterMemberId)} asks for ${basename(ev.payload.path)}`;
     case 'request.decided':
-      return `Permintaan ${ev.payload.requestId}: ${ev.payload.outcome}${ev.payload.auto ? ' (otomatis)' : ''}`;
+      return `Request ${ev.payload.requestId}: ${OUTCOME_TEXT[ev.payload.outcome] ?? ev.payload.outcome}${ev.payload.auto ? ' (automatic)' : ''}`;
     case 'proposal.created':
-      return `Main agent mengusulkan ${PROPOSAL_KIND_TEXT[ev.payload.kind]} ${ev.payload.proposalId}`;
+      return `${who(ev.actor)}'s Bob (PM) proposes a ${ev.payload.kind} (${ev.payload.proposalId})`;
     case 'proposal.decided':
-      return `${ev.payload.proposalId} ${ev.payload.status}`;
+      return `${ev.payload.proposalId} ${PROPOSAL_STATUS_TEXT[ev.payload.status] ?? ev.payload.status}`;
     case 'review.created':
-      return `Review ${ev.payload.taskId}: ${ev.payload.verdict}`;
+      return `Review of ${ev.payload.taskId}: ${VERDICT_TEXT[ev.payload.verdict] ?? ev.payload.verdict}`;
     case 'review.flagged':
-      return `Review ${ev.payload.taskId} menandai ${ev.payload.flags.length} file`;
+      return `Review of ${ev.payload.taskId} flags ${ev.payload.flags.length} ${ev.payload.flags.length === 1 ? 'file' : 'files'}`;
     case 'notify.sent':
-      return `PM ke ${ev.payload.memberId}: ${ev.payload.message}`;
+      return `PM to ${who(ev.payload.memberId)}: ${ev.payload.message}`;
     case 'commit.created':
-      return `Commit ${ev.payload.sha.slice(0, 7)} untuk ${ev.payload.taskId}${ev.payload.pushed ? '' : ' (belum di-push)'}`;
+      return `${ev.payload.taskId} lands as commit ${ev.payload.sha.slice(0, 7)}${ev.payload.pushed ? '' : ' (not pushed yet)'}`;
     case 'commit.push_failed':
-      return `Commit ${ev.payload.taskId} gagal: ${ev.payload.error}`;
+      return `Pushing ${ev.payload.taskId} failed: ${ev.payload.error}`;
     case 'bob.said':
-      return `Bob ${ev.payload.memberId}: ${ev.payload.text}`;
+      return `${who(ev.payload.memberId)}'s Bob: ${ev.payload.text}`;
     case 'sync.applied':
     case 'hook.failopen':
     case 'ai.edit':
@@ -126,10 +156,11 @@ function sentence(ev: RadarEvent): string | null {
 }
 
 /**
- * Feed line such as `21:06 Bob A ubah checkout.ts`. Returns null for events that stay out of the feed
+ * Feed line such as `21:06 Andi's Bob changes checkout.ts`. `names` maps member ids to names; ids
+ * without a name stay as ids. Returns null for events that stay out of the feed
  * (`sync.applied`, `hook.failopen`, `ai.edit`, `bob.activity`, `bob.turn`).
  */
-export function feedText(ev: RadarEvent): string | null {
-  const s = sentence(ev);
+export function feedText(ev: RadarEvent, names: FeedNames = {}): string | null {
+  const s = sentence(ev, names);
   return s === null ? null : `${formatClock(ev.ts)} ${s}`;
 }

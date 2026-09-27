@@ -62,7 +62,7 @@ describe('reducer on the demo scenario (PRD §15)', () => {
   it('feed is newest first and formatted HH:mm WITA', () => {
     expect(final.feed.length).toBeGreaterThan(20);
     expect(final.feed[0]!.id).toBeGreaterThan(final.feed.at(-1)!.id);
-    expect(final.feed.some((f) => /^\d\d:\d\d Bob B diblokir di checkout\.ts \(milik A\)$/.test(f.text))).toBe(true);
+    expect(final.feed.some((f) => /^\d\d:\d\d Budi's Bob is blocked on checkout\.ts, Andi holds it$/.test(f.text))).toBe(true);
   });
 
   it('is deterministic: replaying the same events twice gives the same state', () => {
@@ -220,7 +220,10 @@ describe('feedText', () => {
     const ts = Date.UTC(2026, 8, 26, 13, 6);
     expect(
       feedText({ id: 1, ts, actor: 'A', type: 'file.changed', payload: { path: 'src/checkout/checkout.ts', version: 2, hash: 'h', by: 'A', taskId: 'T-1', size: 1 } }),
-    ).toBe('21:06 Bob A ubah checkout.ts');
+    ).toBe("21:06 A's Bob changes checkout.ts");
+    expect(
+      feedText({ id: 3, ts, actor: 'B', type: 'lock.queued', payload: { path: 'src/checkout/checkout.ts', taskId: 'T-2', memberId: 'B', pos: 1 } }, { B: 'Budi' }),
+    ).toBe('21:06 Budi is #1 in the queue for checkout.ts');
     expect(feedText({ id: 2, ts, actor: 'A', type: 'bob.turn', payload: { memberId: 'A' } })).toBeNull();
   });
 });

@@ -314,7 +314,9 @@ function requestIdOf(payload: unknown): string | null {
 }
 
 function appendFeed(s: RadarState, ev: RadarEvent): RadarState {
-  const text = feedText(ev);
+  const names: Record<string, string> = {};
+  for (const m of Object.values(s.members)) names[m.id] = m.name;
+  const text = feedText(ev, names);
   if (text === null) return s;
   const item: FeedItem = { id: ev.id, ts: ev.ts, type: ev.type, actor: ev.actor, text };
   return { ...s, feed: [item, ...s.feed].slice(0, FEED_MAX_ITEMS) };
