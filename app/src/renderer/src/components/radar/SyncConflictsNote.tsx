@@ -8,16 +8,23 @@ const SHOWN = 3
  */
 export function SyncConflictsNote({ sync }: { sync: RadarSyncStatus }) {
   const count = sync.conflicts.length
-  if (count === 0) {
-    return null
-  }
   const names = sync.conflicts.slice(0, SHOWN).join(', ')
   const more = count > SHOWN ? ` and ${count - SHOWN} more` : ''
   return (
-    <p role="status" className="text-xs text-[var(--lc-warn)] [overflow-wrap:anywhere]">
-      {count === 1 ? '1 file' : `${count} files`} differed from the server, so the version on the
-      server is used. Your copy is kept next to it as .radar-conflict: {names}
-      {more}.
-    </p>
+    <>
+      {count > 0 && (
+        <p role="status" className="text-xs text-[var(--lc-warn)] [overflow-wrap:anywhere]">
+          {count === 1 ? '1 file' : `${count} files`} differed from the server, so the version on
+          the server is used. Your copy is kept next to it as .radar-conflict: {names}
+          {more}.
+        </p>
+      )}
+      {/* Why: a change the server refused would otherwise vanish without a word in the app. */}
+      {sync.rejected && (
+        <p role="status" className="text-xs text-[var(--lc-warn)] [overflow-wrap:anywhere]">
+          {sync.rejected}
+        </p>
+      )}
+    </>
   )
 }

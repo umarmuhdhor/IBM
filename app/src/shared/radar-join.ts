@@ -14,6 +14,8 @@ export type RadarSyncStatus = {
   conflicts: string[]
   /** Why sync ended for good, from the CLI's `stopped` line (D-alief-15); null while running or after a crash. */
   stopReason: RadarSyncStopReason | null
+  /** Why the last local change was not sent (PM read-only, file held by a task, too large); kept as `.radar-rejected`. */
+  rejected?: string | null
 }
 
 export type RadarSyncStopReason = 'workspace-closed' | 'signed-out' | 'replaced' | 'rejected'

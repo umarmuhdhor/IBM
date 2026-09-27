@@ -81,6 +81,11 @@ export function applySyncLine(current: RadarSyncStatus, line: string): RadarSync
       ? { ...current, conflicts: [...current.conflicts, path] }
       : null
   }
+  if (parsed.type === 'rejected') {
+    const text =
+      'message' in parsed && typeof parsed.message === 'string' ? cliErrorText(parsed.message) : ''
+    return text ? { ...current, rejected: text } : null
+  }
   if (parsed.type === 'stopped') {
     // D-alief-15: the CLI says why it ended for good; the exit that follows keeps this state.
     const reason = 'reason' in parsed && isStopReason(parsed.reason) ? parsed.reason : null
@@ -150,7 +155,15 @@ export function startSyncAgent(
   if (invite) {
     env.RADAR_INVITE = invite
   }
-  publish({ state: 'starting', folder, files: null, message: null, conflicts: [], stopReason: null })
+  publish({
+    state: 'starting',
+    folder,
+    files: null,
+    message: null,
+    conflicts: [],
+    stopReason: null,
+    rejected: null
+  })
   const proc = spawnProcess({ program: process.execPath, args, env, timeoutMs: null })
   child = proc
   let buffer = ''

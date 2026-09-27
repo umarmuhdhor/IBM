@@ -33,6 +33,19 @@ describe('applySyncLine', () => {
     expect(applySyncLine(BASE, '✓ kit coder installed')).toBeNull()
   })
 
+  it('keeps the latest reason a change was not sent, e.g. a PM edit', () => {
+    const line = JSON.stringify({
+      type: 'rejected',
+      path: 'notes.md',
+      reason: 'pm_readonly',
+      sidecar: 'notes.md.radar-rejected',
+      message: '\u0007✖ A PM does not write files. Your change is kept in notes.md.radar-rejected.'
+    })
+    expect(applySyncLine(BASE, line)?.rejected).toBe(
+      'A PM does not write files. Your change is kept in notes.md.radar-rejected.'
+    )
+  })
+
   it('lists each file kept as .radar-conflict once (D-alief-14)', () => {
     const line = '{"type":"conflict","path":"notes/a.md","sidecar":"notes/a.md.radar-conflict"}'
     const once = applySyncLine(BASE, line)

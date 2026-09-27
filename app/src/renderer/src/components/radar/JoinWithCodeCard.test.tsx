@@ -76,6 +76,15 @@ it('titles the joined workspace with your name and role, not the server member l
   useRadarStore.setState({ state: null })
 })
 
+it('tells a PM why their edit was not sent', async () => {
+  status.state = 'syncing'
+  status.message = null
+  status.rejected = 'A PM does not write files. Your change is kept in notes.md.radar-rejected.'
+  render(<JoinWithCodeCard connection={{ ...member, role: 'pm' }} onConnectionChange={vi.fn()} />)
+  expect(await screen.findByText(/A PM does not write files/)).toBeTruthy()
+  status.rejected = null
+})
+
 it('names the files whose local copy was kept as .radar-conflict (D-alief-14)', async () => {
   status.conflicts = ['notes/a.md', 'b.md']
   render(<JoinWithCodeCard connection={member} onConnectionChange={vi.fn()} />)
