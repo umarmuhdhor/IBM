@@ -116,6 +116,7 @@ export type UiViewHistory =
   | 'skills'
   | 'artifacts'
   | 'mobile'
+  | 'live-collab'
 
 export type UISliceCore = {
   sidebarOpen: boolean

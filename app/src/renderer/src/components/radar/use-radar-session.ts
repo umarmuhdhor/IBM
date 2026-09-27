@@ -1,12 +1,11 @@
-import { useEffect, useState } from 'react'
-import type { RadarConnectionSummary } from '../../../../shared/radar-connection'
+import { useEffect } from 'react'
 import { useRadarStore } from '@/store/radar-store'
+import { useLiveCollabPageStore } from './live-collab-page-store'
 
-export function useRadarSession() {
-  const [connection, setConnection] = useState<RadarConnectionSummary | null>(null)
-
+export function useRadarSession(): void {
   useEffect(() => {
     let active = true
+    const { setConnection } = useLiveCollabPageStore.getState()
     void window.api.radar.getConnection().then((value) => {
       if (active) {
         setConnection(value)
@@ -27,6 +26,4 @@ export function useRadarSession() {
       stopTicker()
     }
   }, [])
-
-  return { connection, setConnection }
 }
