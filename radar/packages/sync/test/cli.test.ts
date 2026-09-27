@@ -171,6 +171,22 @@ describe('--json-status lines', () => {
   });
 });
 
+describe('rejected notice clears (fase 12k)', () => {
+  it('says once when a refused path is accepted later, and says nothing for other saves', () => {
+    const agent = new EventEmitter();
+    const lines: string[] = [];
+    wireJsonStatus(agent, (l) => lines.push(l));
+    agent.emit('ack', { path: 'other.ts', version: 2 });
+    agent.emit('rejected', { path: 'app.ts', reason: 'locked', holder: null, sidecar: 'app.ts.radar-rejected' });
+    agent.emit('ack', { path: 'app.ts', version: 3 });
+    agent.emit('ack', { path: 'app.ts', version: 4 });
+    expect(lines.map((l) => JSON.parse(l))).toEqual([
+      expect.objectContaining({ type: 'rejected', path: 'app.ts' }),
+      expect.objectContaining({ type: 'accepted', path: 'app.ts' }),
+    ]);
+  });
+});
+
 describe('kit status line (fase 12k bug 4)', () => {
   it('tells the app the kit was refused, which files are in the way, and what --force does', () => {
     const line = JSON.parse(kitStatusLine({ status: 'refused', foreign: ['.bob/custom_modes.yaml', '.bob/notes.md'] }, 'coder'));
