@@ -185,6 +185,11 @@ export async function printStatus(cfg: LocalConfig, out: (s: string) => void): P
   return 0;
 }
 
+/** `kit install` exit code: the app's install button trusts it, so a missing kit is a failure too (fase 12k). */
+export function kitInstallExitCode(r: Pick<KitResult, 'status'>): number {
+  return r.status === 'installed' ? 0 : 1;
+}
+
 /** `--json-status` line for the app after the join installs the Bob kit (fase 12k bug 4). */
 export function kitStatusLine(r: KitResult, role: KitRole): string {
   const base = { type: 'kit', ts: Date.now(), status: r.status, role };
@@ -339,7 +344,7 @@ export function buildProgram(): Command {
       if (!role) role = existsSync(join(root, '.radar', 'local.json')) ? loadConfigOrExit(root).role : 'coder';
       const r = installKit({ root, role, kitDir: findKitDir(o.kitDir), force: o.force ?? false });
       reportKit(r, role, out);
-      process.exit(r.status === 'refused' ? 1 : 0);
+      process.exit(kitInstallExitCode(r));
     });
 
   program

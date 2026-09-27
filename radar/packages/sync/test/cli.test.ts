@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { loadLocalConfig } from '@radar/common/node';
 import { encodeInvite } from '@radar/common';
 import { EventEmitter } from 'node:events';
-import { kitStatusLine, resolveJoin, wireJsonStatus, writeJoinFiles } from '../src/cli.js';
+import { kitInstallExitCode, kitStatusLine, resolveJoin, wireJsonStatus, writeJoinFiles } from '../src/cli.js';
 import { findKitDir, installKit } from '../src/kit.js';
 import { cleanupDirs, read, tempDir } from './helpers.js';
 
@@ -116,6 +116,12 @@ describe('kit install', () => {
     const root = tempDir();
     expect(installKit({ root, role: 'coder', kitDir: join(root, 'nope') }).status).toBe('missing-kit');
     expect(readdirSync(root)).toEqual([]);
+  });
+
+  it('kit install fails unless the kit really was installed (fase 12k code review)', () => {
+    expect(kitInstallExitCode({ status: 'installed' })).toBe(0);
+    expect(kitInstallExitCode({ status: 'refused' })).toBe(1);
+    expect(kitInstallExitCode({ status: 'missing-kit' })).toBe(1);
   });
 
   it('finds the kit from the flag, then RADAR_KIT_DIR, then the repo bob-kit', () => {
