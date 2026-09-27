@@ -21,7 +21,18 @@ Rules for session B:
 
 ## Where to restart (stopped 27 Sep, 15:00 WITA)
 
-Session A stopped here on Alief's request. `lane/core` and `lane/core-f12k` are pushed at 03401731.
+Session A stopped here on Alief's request. `lane/core` and `lane/core-f12k` are pushed; both point at the commit that added this section.
+
+Ringkas, mulai lagi dari sini:
+1. Tunggu "B done", lalu cherry-pick commit B ke `lane/core`.
+2. Deploy dan canary, lalu rebuild app.
+3. E2E di prod untuk bug 5 dan 6.
+4. UI gate untuk tampilan Team dan code review untuk commit B.
+5. Buka PR `lane/core-f12k`.
+6. Alief menjalankan langkah Bob IDE untuk bug 10.
+7. Finish: bersihkan anggota dan folder e2e di prod, lalu laporan akhir.
+
+Details for each step are under "Next steps" below.
 
 State:
 - Prod live `0f415a37-afc4-45e1-beaa-7d7448afaaf0`, rollback `47e6cba5-ad94-42cb-8b58-3a0baaa73b8c`. It has everything up to d948fb06 except the app-only fix ffea1db3 and the CLI fix 569bd085 (those ship with the app build, not the server).
