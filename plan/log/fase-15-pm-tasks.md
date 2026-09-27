@@ -305,3 +305,16 @@ Di luar lane (dicatat, tidak diubah): pesan sync `radar/packages/sync/src/notify
 tidak ada salinan (lane Alief).
 Screenshot: `ui-15/layout-overview-1440.png`, `layout-room-1440.png`. Tidak diverifikasi: 900/320 px, tema gelap,
 screen reader nyata. Verdict: **Approve**.
+
+## Lanjutan · Sidebar dan status bar tanpa kontrol Orca yang tidak dipakai (fase 15g)
+
+- Pemicu: Umar bertanya fungsi bagian sidebar; sebagian besar bawaan Orca dan tidak dipakai Live Collab.
+- Disembunyikan lewat daftar yang sama dengan #48 (`app/src/shared/radar-product-trim.ts`; kode Orca tetap ada):
+  Search worktree, View activity, Workspace options, New workspace, Reveal active workspace, Workspace board, meteran
+  kuota Codex/Claude + tombol refresh, Resource Manager, Ports. Tetap: item Live Collab, Add project (folder yang
+  dibagikan di Room), Settings, Help, status Live Collab.
+- Empty state Projects sekarang memberi langkah berikut: "Add a project folder, then share it with your team in
+  Live Collab → Room." + tombol Add project.
+- Test upstream yang memeriksa kontrol Orca (SidebarHeader, SidebarToolbar) memakai `radar-product-trim-off` seperti #48.
+- Ditulis Claude Code. Verifikasi: vitest sidebar + status-bar + radar 3126 lulus, typecheck 0 error, oxlint bersih.
+  Screenshot: `ui-15/sidebar-trim-1440.png`. Tidak diverifikasi: tema gelap, 320 px.

@@ -1,6 +1,8 @@
 // Why: Live Collab ships on vendored Orca. Orca's own product surfaces (mobile pairing,
 // scheduled automations, upstream auto-update, star prompts, tours, pet) are hidden
 // here instead of deleted, so the vendored code stays close to upstream.
+// Also hidden: sidebar and status-bar controls for Orca worktrees, agent usage meters and
+// resource/port monitors, which Live Collab does not use (fase 15g).
 export type RadarHiddenSurface =
   | 'tasksSidebarButton'
   | 'automationsSidebarButton'
@@ -14,6 +16,15 @@ export type RadarHiddenSurface =
   | 'caffeinateStatus'
   | 'providerAccountSwitchers'
   | 'appIconPicker'
+  | 'sidebarSearch'
+  | 'activityViewButton'
+  | 'workspaceOptionsButton'
+  | 'newWorkspaceButton'
+  | 'workspaceBoardButton'
+  | 'revealWorkspaceButton'
+  | 'usageMeters'
+  | 'resourceUsageStatus'
+  | 'portsStatus'
 
 export const RADAR_HIDDEN_SURFACES: Readonly<Record<RadarHiddenSurface, boolean>> = {
   tasksSidebarButton: true,
@@ -27,7 +38,16 @@ export const RADAR_HIDDEN_SURFACES: Readonly<Record<RadarHiddenSurface, boolean>
   pet: true,
   caffeinateStatus: true,
   providerAccountSwitchers: true,
-  appIconPicker: true
+  appIconPicker: true,
+  sidebarSearch: true,
+  activityViewButton: true,
+  workspaceOptionsButton: true,
+  newWorkspaceButton: true,
+  workspaceBoardButton: true,
+  revealWorkspaceButton: true,
+  usageMeters: true,
+  resourceUsageStatus: true,
+  portsStatus: true
 }
 
 // Why: electron-builder's publish feed and the updater feed URL both point to

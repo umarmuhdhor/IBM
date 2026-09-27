@@ -8,6 +8,7 @@ import { Popover, PopoverAnchor, PopoverArrow, PopoverContent } from '@/componen
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { Sparkles, Bell } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { RADAR_HIDDEN_SURFACES } from '../../../../shared/radar-product-trim'
 
 type SidebarHeaderProps = {
   onWorkspaceBoardMenuOpenChange: (open: boolean) => void
@@ -58,70 +59,75 @@ const SidebarHeader = React.memo(function SidebarHeader({
         </span>
       </div>
       <div className="flex shrink-0 items-center gap-1">
-        <Popover
-          open={introOpen}
-          onOpenChange={(open) => {
-            if (!open) {
-              acknowledgeIntro()
-            }
-          }}
-        >
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="inline-flex shrink-0">
-                <PopoverAnchor asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-xs"
-                    className={cn(
-                      'text-muted-foreground',
-                      agentsViewActive && 'bg-primary/15 text-primary hover:bg-primary/20'
-                    )}
-                    aria-label={activityLabel}
-                    aria-pressed={agentsViewActive}
-                    onClick={() => setSidebarBody?.(agentsViewActive ? 'workspaces' : 'agents')}
-                  >
-                    <Bell className="size-3.5" strokeWidth={2.25} />
-                  </Button>
-                </PopoverAnchor>
-              </span>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" sideOffset={6}>
-              {activityLabel}
-            </TooltipContent>
-          </Tooltip>
-          <PopoverContent
-            side="bottom"
-            align="center"
-            sideOffset={8}
-            className="w-72 rounded-xl border border-border bg-popover p-3.5 text-popover-foreground shadow-floating"
-            onOpenAutoFocus={(event) => event.preventDefault()}
-            aria-labelledby={introTitleId}
-            aria-describedby={introDescriptionId}
+        {RADAR_HIDDEN_SURFACES.activityViewButton ? null : (
+          <Popover
+            open={introOpen}
+            onOpenChange={(open) => {
+              if (!open) {
+                acknowledgeIntro()
+              }
+            }}
           >
-            <PopoverArrow />
-            <div className="space-y-2.5">
-              <div className="flex items-center gap-1.5">
-                <Sparkles className="size-4 shrink-0 text-primary" aria-hidden="true" />
-                <h3 id={introTitleId} className="text-sm font-semibold text-foreground">
-                  {translate('agentsSidebarIntro.migrated.title', 'Agents are easier to find')}
-                </h3>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex shrink-0">
+                  <PopoverAnchor asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-xs"
+                      className={cn(
+                        'text-muted-foreground',
+                        agentsViewActive && 'bg-primary/15 text-primary hover:bg-primary/20'
+                      )}
+                      aria-label={activityLabel}
+                      aria-pressed={agentsViewActive}
+                      onClick={() => setSidebarBody?.(agentsViewActive ? 'workspaces' : 'agents')}
+                    >
+                      <Bell className="size-3.5" strokeWidth={2.25} />
+                    </Button>
+                  </PopoverAnchor>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" sideOffset={6}>
+                {activityLabel}
+              </TooltipContent>
+            </Tooltip>
+            <PopoverContent
+              side="bottom"
+              align="center"
+              sideOffset={8}
+              className="w-72 rounded-xl border border-border bg-popover p-3.5 text-popover-foreground shadow-floating"
+              onOpenAutoFocus={(event) => event.preventDefault()}
+              aria-labelledby={introTitleId}
+              aria-describedby={introDescriptionId}
+            >
+              <PopoverArrow />
+              <div className="space-y-2.5">
+                <div className="flex items-center gap-1.5">
+                  <Sparkles className="size-4 shrink-0 text-primary" aria-hidden="true" />
+                  <h3 id={introTitleId} className="text-sm font-semibold text-foreground">
+                    {translate('agentsSidebarIntro.migrated.title', 'Agents are easier to find')}
+                  </h3>
+                </div>
+                <p
+                  id={introDescriptionId}
+                  className="text-xs leading-relaxed text-muted-foreground"
+                >
+                  {translate(
+                    'agentsSidebarIntro.migrated.description',
+                    'Your Agents view is now a dedicated sidebar tab. Your activity and filters are preserved.'
+                  )}
+                </p>
+                <div className="flex justify-end pt-0.5">
+                  <Button size="sm" onClick={acknowledgeIntro}>
+                    {translate('agentsSidebarIntro.migrated.dismiss', 'Got it')}
+                  </Button>
+                </div>
               </div>
-              <p id={introDescriptionId} className="text-xs leading-relaxed text-muted-foreground">
-                {translate(
-                  'agentsSidebarIntro.migrated.description',
-                  'Your Agents view is now a dedicated sidebar tab. Your activity and filters are preserved.'
-                )}
-              </p>
-              <div className="flex justify-end pt-0.5">
-                <Button size="sm" onClick={acknowledgeIntro}>
-                  {translate('agentsSidebarIntro.migrated.dismiss', 'Got it')}
-                </Button>
-              </div>
-            </div>
-          </PopoverContent>
-        </Popover>
+            </PopoverContent>
+          </Popover>
+        )}
         {agentsViewActive ? (
           <div ref={activityOptionsTarget} className="flex items-center" />
         ) : null}

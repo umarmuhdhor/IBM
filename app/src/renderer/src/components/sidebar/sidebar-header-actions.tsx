@@ -7,6 +7,7 @@ import { formatOptionalPrimaryShortcutLabel } from '@/hooks/useShortcutLabel'
 import { translate } from '@/i18n/i18n'
 import { openWorkspaceCreationComposerWithTourHandoff } from '../contextual-tours/workspace-creation-tour-handoff'
 import SidebarWorkspaceOptionsMenu from './SidebarWorkspaceOptionsMenu'
+import { RADAR_HIDDEN_SURFACES } from '../../../../shared/radar-product-trim'
 
 function AddProjectButton({
   preserveWorkspaceBoardOpen
@@ -91,14 +92,18 @@ export function SidebarHeaderActions({
       {/* Why both hidden in the agents view: it lists activity, not projects. */}
       {agentsViewActive ? null : (
         <>
-          <SidebarWorkspaceOptionsMenu
-            preserveWorkspaceBoardOpen
-            onMenuOpenChange={onWorkspaceBoardMenuOpenChange}
-          />
+          {RADAR_HIDDEN_SURFACES.workspaceOptionsButton ? null : (
+            <SidebarWorkspaceOptionsMenu
+              preserveWorkspaceBoardOpen
+              onMenuOpenChange={onWorkspaceBoardMenuOpenChange}
+            />
+          )}
           <AddProjectButton preserveWorkspaceBoardOpen />
         </>
       )}
-      <NewWorkspaceButton preserveWorkspaceBoardOpen />
+      {RADAR_HIDDEN_SURFACES.newWorkspaceButton ? null : (
+        <NewWorkspaceButton preserveWorkspaceBoardOpen />
+      )}
     </div>
   )
 }

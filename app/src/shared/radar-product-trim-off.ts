@@ -13,7 +13,16 @@ export const RADAR_HIDDEN_SURFACES: Readonly<Record<RadarHiddenSurface, boolean>
   pet: false,
   caffeinateStatus: false,
   providerAccountSwitchers: false,
-  appIconPicker: false
+  appIconPicker: false,
+  sidebarSearch: false,
+  activityViewButton: false,
+  workspaceOptionsButton: false,
+  newWorkspaceButton: false,
+  workspaceBoardButton: false,
+  revealWorkspaceButton: false,
+  usageMeters: false,
+  resourceUsageStatus: false,
+  portsStatus: false
 }
 export const RADAR_AUTO_UPDATE_DISABLED: boolean = false
 export const RADAR_HIDDEN_SETTINGS_PANES: ReadonlySet<string> = new Set()

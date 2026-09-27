@@ -16,6 +16,12 @@ const mocks = vi.hoisted(() => ({
   } as Partial<AppState>
 }))
 
+// Why: these tests cover upstream Orca controls that Live Collab hides (radar-product-trim).
+vi.mock(
+  '../../../../shared/radar-product-trim',
+  () => import('../../../../shared/radar-product-trim-off')
+)
+
 vi.mock('@/store', () => ({
   useAppStore: (selector: (state: Partial<AppState>) => unknown) => selector(mocks.state)
 }))
