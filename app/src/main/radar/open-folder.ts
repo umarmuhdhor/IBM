@@ -32,6 +32,7 @@ import {
   saveRadarConnection
 } from './secure-store'
 import { startSyncAgent } from './sync-agent'
+import { readableOrThrow, refuseBroadFolder } from './share-folder-guard'
 import { serverFetch } from './server-fetch'
 import { readProfileName, saveProfileName } from './profile-name'
 
@@ -189,6 +190,7 @@ export async function shareFolder(
   roleInput: unknown,
   serverInput: unknown
 ): Promise<RadarOpenFolderResult> {
+  refuseBroadFolder(folder)
   if (!existsSync(folder) || !statSync(folder).isDirectory()) {
     throw new Error('That folder no longer exists.')
   }
@@ -201,7 +203,7 @@ export async function shareFolder(
   requireOsEncryption()
   const current = readRadarConnection()
   const server = current?.role === 'mc' ? new URL(current.server).origin : serverOrigin(serverInput)
-  const { files, skipped } = collectFolderFiles(folder)
+  const { files, skipped } = readableOrThrow(() => collectFolderFiles(folder))
   const workspace = workspaceNameFor(folder)
 
   const opened = await serverFetch(`${server}/v1/workspace/open`, {

@@ -1,6 +1,6 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { chmodSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { homedir, tmpdir } from 'node:os'
+import { dirname, join } from 'node:path'
 import { encodeInvite } from '@radar/common'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -230,6 +230,30 @@ describe('shareFolder (D-alief-12)', () => {
       .mocked(fetch)
       .mock.calls.filter(([url]) => String(url).endsWith('/v1/workspace/open'))
     expect(JSON.parse(String(opens[1]?.[1]?.body)).owner.name).toBe('Alief')
+  })
+
+  it('never shares the whole disk, the home folder or the folder teammates sync into', async () => {
+    respondInOrder([201, opened])
+    for (const folder of ['/', homedir(), dirname(homedir()), '/home/test/live-collab']) {
+      await expect(shareFolder(folder, 'Alief', 'coder', SERVER), folder).rejects.toThrow(
+        /Pick one project folder/
+      )
+    }
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it('says which file it cannot read instead of a raw EACCES', async () => {
+    respondInOrder([201, opened])
+    write('locked/a.txt', 'x')
+    chmodSync(join(root, 'locked'), 0o000)
+    try {
+      await expect(shareFolder(root, 'Alief', 'coder', SERVER)).rejects.toThrow(
+        /cannot read .*locked/
+      )
+    } finally {
+      chmodSync(join(root, 'locked'), 0o755)
+    }
+    expect(fetch).not.toHaveBeenCalled()
   })
 
   it('refuses a folder that does not exist before it calls the server', async () => {
