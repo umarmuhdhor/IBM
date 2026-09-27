@@ -679,3 +679,16 @@ Format:
 - Alternatif yang ditolak: tetap pakai `workers.dev` dan ubah `CORS_ORIGIN`/R5 (butuh persetujuan Alief, tidak perlu karena Pages project bisa dibuat langsung).
 - Dampak: `plan/PROGRESS.md` (baris 11D1, UI-09 dikembalikan ke `pages.dev`), `plan/fase-14-submission.md` (Application URL dikembalikan). `PLAN.md`, `plan/fase-11-terminal-dmg-replay.md`, `plan/ref/R5-konvensi.md` tidak perlu diubah lagi karena sudah cocok dengan `pages.dev` dari awal.
 - File ref/ yang diperbarui: – (tidak ada perubahan kontrak; R5 `CORS_ORIGIN` sudah cocok).
+
+## D-alief-22 · 27 Sep 2026 · Nama produk "Live Collab", logo Hub, fitur Orca yang tidak dipakai disembunyikan
+
+- Konteks: app masih menampilkan fitur produk Orca (Orca Mobile, Automations, Tasks GitHub/Linear, star prompt,
+  feature tour, pet) dan auto-update masih menunjuk ke `stablyai/orca`, sehingga .dmg demo bisa "update" menjadi Orca
+  biasa dan kehilangan Live Collab.
+- Keputusan: nama yang tampil untuk user menjadi **Live Collab** (productName, judul jendela, titlebar, landing,
+  README). "IBM Bob" tetap dipakai saat menyebut tool-nya. Logo "Hub" dari `live-collab-logo` dipakai untuk ikon app
+  dan entri sidebar. Fitur Orca yang tidak dipakai disembunyikan lewat satu modul
+  `app/src/shared/radar-product-trim.ts`, bukan dihapus, dan auto-update dimatikan.
+- Tetap sama: userData, Keychain, dan bundle dev tetap `IBM Bob Live Collab Dev` supaya data dev lokal tidak hilang.
+- Tindak lanjut lane lain: Imelda (landing, replay, deck, SUBMISSION) dan Umar (teks mode di `radar/bob-kit`)
+  menyesuaikan nama bila sempat. Banner README masih gambar lama; dibuat ulang setelah screenshot app baru.

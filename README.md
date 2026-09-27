@@ -1,10 +1,15 @@
 <div align="center">
 
-<img src=".github/readme/banner.png" width="100%" alt="IBM Bob Live Collab: your team's Bobs, one repo. The session replay, the desktop app's Tasks board, and a locked code block where Budi's Bob is blocked and queued." />
+<img src=".github/readme/banner.png" width="100%" alt="Live Collab: your team's Bobs, one repo. The session replay, the desktop app's Tasks board, and a locked code block where Budi's Bob is blocked and queued." />
 
-# IBM Bob Live Collab
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset=".github/readme/live-collab-lockup-white.png" />
+  <img src=".github/readme/live-collab-lockup-black.png" width="280" alt="Live Collab" />
+</picture>
 
-**Your team's Bobs, working together.**
+# Live Collab
+
+**Your team's IBM Bobs, working together.**
 
 One live workspace for every teammate's IBM Bob. Shared locks, a queue, and a PM who approves before anything risky lands.
 
@@ -40,6 +45,7 @@ One live workspace for every teammate's IBM Bob. Shared locks, a queue, and a PM
 - [Built on IBM Bob primitives](#built-on-ibm-bob-primitives)
 - [Architecture](#architecture)
 - [Quick start](#quick-start)
+- [Step by step in IBM Bob](#step-by-step-in-ibm-bob)
 - [Run from source](#run-from-source)
 - [Repository map](#repository-map)
 - [Tech stack](#tech-stack)
@@ -193,15 +199,15 @@ You need macOS on Apple Silicon and IBM Bob IDE 2.1 or later.
 2. **Allow the unsigned app.** System Settings → Privacy & Security → **Open Anyway**, or run:
 
    ```bash
-   xattr -dr com.apple.quarantine "/Applications/IBM Bob Live Collab.app"
+   xattr -dr com.apple.quarantine "/Applications/Live Collab.app"
    ```
 
 3. **Share or join.**
    - *Owner:* open your project folder, go to **Live Collab → Multiplayer**, click **Share &lt;folder&gt;**. A join code such as `K7QM-3XPA` is copied for you. One code per teammate, valid for 72 hours.
    - *Teammate:* **Live Collab → Multiplayer → Join a workspace**. Enter the code, your name, and a role (**Coder** or **PM**). Files sync to `~/live-collab/<workspace>` and the Bob kit is installed.
-4. **Open in IBM Bob.** Click **Open in IBM Bob**, click **Trust** in Bob IDE, and pick **Live Collab Coder** or **Live Collab PM Lead**.
+4. **Open in IBM Bob.** Click **Open in IBM Bob**, click **Trust** in Bob IDE, and switch the mode to **Live Collab Coder** or **Live Collab PM Lead**. The next section walks through every click.
 
-Starter prompts for both roles are in [`radar/bob-kit/prompts/`](radar/bob-kit/prompts/). The full walkthrough, with a check after every step, is in [`deploy.md`](deploy.md) §5.1.
+Starter prompts for both roles are in [`radar/bob-kit/prompts/`](radar/bob-kit/prompts/). The full walkthrough in Bahasa Indonesia, with a check after every step, is in [`deploy.md`](deploy.md) §5.1.
 
 <details>
 <summary>Join without the app (terminal only)</summary>
@@ -213,6 +219,86 @@ curl -fsSL https://live-collab.afindo-mi01.workers.dev/j/<CODE> | sh
 This installs Node and the `radar` CLI in `~/.radar`, redeems the code, syncs the folder, and opens IBM Bob IDE.
 
 </details>
+
+## Step by step in IBM Bob
+
+After you share or join (Quick start step 3), this is what a working session looks like. Every teammate does steps 1–3 on their own Mac.
+
+### 1. Open the project in IBM Bob IDE
+
+1. In the Live Collab app, open **Live Collab** in the sidebar and click **Open in IBM Bob**.
+   Bob IDE opens the shared folder (`~/live-collab/<workspace>`, or the owner's own folder).
+2. Bob asks whether you trust the folder. Click **Trust**. In Restricted Mode the Bob panel stays empty and the Live Collab kit does not load.
+
+### 2. Switch Bob to the Live Collab mode
+
+1. In the Bob panel, open the **mode picker** (it shows the current mode, for example `Code`).
+2. Pick the mode for your role:
+
+   | Your role | Pick this mode | What it can do |
+   |---|---|---|
+   | Coder | **Live Collab Coder** | Edit only the files of its own task. Other people's files are blocked. |
+   | PM | **Live Collab PM Lead** | Read code, plan tasks, review, and settle file conflicts. It does not edit code. |
+
+3. Start a **new task** in the Bob panel. The first line of Bob's context is a `[Radar]` brief: who holds which file and the latest decisions.
+4. The first `radar` tool call asks for permission once. Click **Approve**.
+
+If the Live Collab modes are missing, close Bob IDE and click **Open in IBM Bob** again from the app. If they are still missing, reinstall the kit: `~/.radar/bin/radar kit install --dir ~/live-collab/<workspace>`.
+
+### 3. Give Bob its first prompt
+
+**PM: plan the session.** Replace `<goal>` and use member IDs from the **Team** tab.
+
+```text
+Session goal: <goal>. Team: A and B (coders). Start with team_status, read the relevant files, then build a plan with propose_plan. No file may appear in two tasks; shared files go in queued_files.
+```
+
+The plan waits in **Mission Control** until it is approved. Then each coder sees their task on the **My tasks** tab.
+
+**Coder: start your task.** On the **My tasks** tab, click **Start in Bob** on your task card. The app marks the task active, copies a ready prompt, and opens Bob IDE. Check that the mode is **Live Collab Coder**, then paste the prompt. Or type it yourself:
+
+```text
+Start work: call radar my_tasks, then work only on your active task. Re-read a file before you edit it.
+```
+
+**Coder: an edit was blocked.** Another Bob holds those lines. Bob gets a `RADAR` message instead of overwriting their work.
+
+```text
+Continue your active task. If Radar rejected an edit, call why_blocked first, then work on another file.
+```
+
+**Coder: finished.**
+
+```text
+Check your work (typecheck/test if there are any). When it is done, call radar submit_task with a 1–3 sentence summary.
+```
+
+Then click **Mark task done** on your task card.
+
+**PM: review a submitted task.**
+
+```text
+Task <id> was submitted. Review it with get_task_diff: check changed exports and whether the files importing them belong to another task, then propose the review with propose_review.
+```
+
+**PM: two coders want the same file.**
+
+```text
+There is a new file request. Read list_requests, compare both tasks and the contested file, then propose a decision with propose_decision (one-sentence reason).
+```
+
+**PM: end of session.** `Write the session report with session_report.`
+
+### 4. Watch and decide in the app
+
+| What you want | Where | What you see |
+|---|---|---|
+| Who is online | **Team** tab | Every member with their status |
+| What a teammate's Bob is doing | **Team** → **Watch** (opens **Watch Bob**) | Live Bob activity and feed. Prompt text shows only if that member turned on **Share my prompts** in **Settings**. |
+| Who holds which file | **Files & locks** tab | Locked files with the holder's name |
+| Plans, reviews, file conflicts | **Mission Control** tab | Proposal cards with **Approve** / **Deny**, or **Approve & commit** / **Send back** for reviews |
+
+One Bob holds a block of lines, or the whole file if it rewrites the whole file. A second coder can still edit other parts of the same file.
 
 ## Run from source
 
