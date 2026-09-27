@@ -422,6 +422,15 @@ export class SyncAgent extends EventEmitter {
   }
 
   /** Keeps an unsent local edit before a server write replaces it. Returns the sidecar path. */
+  private hasUnsentEdit(path: string, knownHash: string, incomingHash: string): boolean {
+    try {
+      const local = readLocal(this.root, path);
+      return local.kind === 'text' && local.hash !== knownHash && local.hash !== incomingHash;
+    } catch {
+      return false;
+    }
+  }
+
   private saveConflict(path: string, previousHash: string | undefined, incomingHash: string): string | null {
     const local = readLocal(this.root, path);
     if (local.kind === 'missing') return null;
@@ -558,6 +567,16 @@ export class SyncAgent extends EventEmitter {
     if (this.pending.has(path)) {
       this.log('recv.deferred', `${path} v${d.version} by ${d.by} (our save is in flight)`);
       return;
+    }
+    // An edit on disk the debounce has not sent yet: send it now against the version it was made on, so the
+    // server can merge it by lines (D-alief-17). Without a line lock the server rejects it and the answer keeps
+    // it as `.radar-conflict`, as before.
+    if (prev && prev.hash !== DELETED_HASH && this.hasUnsentEdit(path, prev.hash, d.hash)) {
+      this.processPath(path);
+      if (this.pending.has(path)) {
+        this.log('recv.deferred', `${path} v${d.version} by ${d.by} (sent our unsent edit first)`);
+        return;
+      }
     }
     this.saveConflict(path, prev?.hash, d.hash);
     this.known.set(path, { version: d.version, hash: d.hash });

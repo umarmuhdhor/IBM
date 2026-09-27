@@ -161,4 +161,43 @@ describe('merged ack (D-alief-17)', () => {
     expect(contents).toEqual(['line 4\nbudi 12\n']);
     expect(a.known.get('a.ts')).toEqual({ version: 3, hash: sha(merged) });
   });
+
+  it('an unsent local edit is sent for merging before a teammate change is applied (prod e2e 12j)', async () => {
+    const { createHash } = await import('node:crypto');
+    const sha = (s: string) => createHash('sha256').update(s).digest('hex');
+    const base = 'line 4\nline 12\n';
+    const alice = 'alice 4\nline 12\n';
+    const merged = 'alice 4\nbudi 12\n';
+    const updates: { baseVersion: number; content: string }[] = [];
+    let sock: WebSocket | null = null;
+    wss = new WebSocketServer({ port: 0 });
+    wss.on('connection', (ws: WebSocket) => {
+      sock = ws;
+      ws.on('message', (raw) => {
+        const text = raw.toString();
+        if (text === '{"t":"ping"}') return;
+        const m = JSON.parse(text) as { t: string; id?: string; d: { path: string; content: string; baseVersion: number } };
+        if (m.t === 'hello') {
+          ws.send(JSON.stringify({ t: 'welcome', d: { principal: { kind: 'member', memberId: 'B', role: 'coder' }, serverTime: Date.now(), workspace: 'toko-demo' } }));
+          ws.send(JSON.stringify({ t: 'snapshot', d: { files: [{ path: 'a.ts', version: 1, hash: sha(base), content: base, deleted: false }], locks: [], cursor: 0 } }));
+        } else if (m.t === 'file.update') {
+          updates.push({ baseVersion: m.d.baseVersion, content: m.d.content });
+          ws.send(JSON.stringify({ t: 'file.ack', id: m.id, d: { id: m.id, path: 'a.ts', version: 3, hash: sha(merged), merged: true, content: merged } }));
+        }
+      });
+    });
+    await new Promise<void>((r) => wss!.once('listening', () => r()));
+    const { port } = wss.address() as { port: number };
+    const root = tempDir();
+    const a = new SyncAgent({ root, server: `http://127.0.0.1:${port}`, token: 'rdr_test', member: 'B', debounceMs: 2000, log: () => {}, notify: () => {}, ...FAST });
+    agents.push(a);
+    await a.start();
+    await waitFor(() => existsSync(join(root, 'a.ts')), 3000, 'snapshot on disk');
+    writeFileSync(join(root, 'a.ts'), 'line 4\nbudi 12\n');
+    // Alice's v2 arrives before the debounce sends Budi's edit.
+    sock!.send(JSON.stringify({ t: 'file.changed', d: { path: 'a.ts', version: 2, hash: sha(alice), content: alice, deleted: false, by: 'A', taskId: null, serverTs: Date.now() } }));
+    await waitFor(() => readFileSync(join(root, 'a.ts'), 'utf8') === merged, 3000, 'merged text on disk');
+    expect(updates[0]).toEqual({ baseVersion: 1, content: 'line 4\nbudi 12\n' });
+    expect(existsSync(join(root, 'a.ts.radar-conflict'))).toBe(false);
+  });
 });
