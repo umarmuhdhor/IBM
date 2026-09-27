@@ -37,6 +37,7 @@
   /* ── Accent ───────────────────────────────────────────────── */
   --lc-accent:       #0f62fe;   /* primary button, link (IBM Blue 60)      */
   --lc-accent-soft:  #a6c8ff;   /* text on dark accent, focus ring (Blue 30) */
+  --lc-on-accent:    #ffffff;   /* label on a solid accent button          */
 
   /* ── Status ───────────────────────────────────────────────── */
   --lc-ok:           #42be65;   /* green (Green 40)                        */
