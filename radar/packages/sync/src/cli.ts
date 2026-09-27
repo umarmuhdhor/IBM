@@ -9,7 +9,7 @@ import pc from 'picocolors';
 import { decodeInvite, HealthRes, InviteInvalidError, MEMBER_COLORS, TasksRes, type LockHolder } from '@radar/common';
 import { ConfigInvalidError, ConfigMissingError, loadLocalConfig, type LocalConfig } from '@radar/common/node';
 import { SyncAgent, SYNC_CLIENT_VERSION, type StopKind } from './agent.js';
-import { findKitDir, installKit, type KitRole } from './kit.js';
+import { findKitDir, installKit, type KitResult, type KitRole } from './kit.js';
 import { formatRejection, terminalNotifier, type RejectReason } from './notify.js';
 import type { SyncMode } from './watcher.js';
 
@@ -179,6 +179,21 @@ export async function printStatus(cfg: LocalConfig, out: (s: string) => void): P
   return 0;
 }
 
+/** `--json-status` line for the app after the join installs the Bob kit (fase 12k bug 4). */
+export function kitStatusLine(r: KitResult, role: KitRole): string {
+  const base = { type: 'kit', ts: Date.now(), status: r.status, role };
+  if (r.status === 'installed') return JSON.stringify({ ...base, message: `Bob ${role} kit installed in .bob/.` });
+  if (r.status === 'refused') {
+    const shown = r.foreign.slice(0, 3).join(', ') + (r.foreign.length > 3 ? ` and ${r.foreign.length - 3} more` : '');
+    return JSON.stringify({
+      ...base,
+      foreign: r.foreign,
+      message: `Bob kit not installed: this folder's .bob/ already has other files (${shown}). Installing it moves your current .bob/ to a backup folder .bob.bak-<time> first, so nothing is lost.`,
+    });
+  }
+  return JSON.stringify({ ...base, message: 'Bob kit not found in the app, so Bob IDE hooks and radar-mcp are not set up in this folder.' });
+}
+
 function reportKit(r: ReturnType<typeof installKit>, role: KitRole, out: (s: string) => void): void {
   if (r.status === 'installed') out(pc.green(`✓ ${role} kit installed in .bob/ (${r.files} files${r.backup ? `, backup ${r.backup}` : ''})`));
   else if (r.status === 'refused') out(pc.yellow(`⚠ .bob/ holds other files (${r.foreign.slice(0, 3).join(', ')}…). Run \`radar kit install ${role} --force\` (backup .bob.bak-<ts>).`));
@@ -274,7 +289,8 @@ export function buildProgram(): Command {
           if (role !== cfg.role) writeJoinFiles({ root, server, workspace, member, token, role });
           if (o.kit === false) return;
           const r = installKit({ root, role: kitRole ?? role, kitDir: findKitDir(o.kitDir), force: o.forceKit ?? false });
-          if (!o.jsonStatus) reportKit(r, kitRole ?? role, out);
+          if (o.jsonStatus) out(kitStatusLine(r, kitRole ?? role));
+          else reportKit(r, kitRole ?? role, out);
         },
       });
       process.exit(code);
