@@ -5,12 +5,15 @@ import { useAppStore } from '@/store'
 import { openWorktreePath } from '@/components/sidebar/WorktreeOpenInMenu'
 import { cn } from '@/lib/utils'
 import { memberColorVar } from './member-color'
+import { RemoveSeatControl } from './RemoveSeatControl'
 import { lastPrompt, queueSpots, recentActivity, TASK_STATUS_TEXT } from './radar-lanes'
 
 type Props = {
   state: RadarState
   now: number
   onWatch: (memberId: string) => void
+  /** Mission Control may remove any seat except A, the owner's (D-alief-20). */
+  canRemove?: boolean
 }
 
 const OUTCOME_CLASS = { ok: 'text-[var(--lc-ok)]', block: 'text-destructive', muted: 'text-muted-foreground' } as const
@@ -19,7 +22,7 @@ function baseName(path: string): string {
   return path.split('/').pop() ?? path
 }
 
-export function TeamPanel({ state, now, onWatch }: Props) {
+export function TeamPanel({ state, now, onWatch, canRemove = false }: Props) {
   const activeWorktreeId = useAppStore((store) => store.activeWorktreeId)
   const getKnownWorktreeById = useAppStore((store) => store.getKnownWorktreeById)
   const activeWorktree = activeWorktreeId ? getKnownWorktreeById(activeWorktreeId) : null
@@ -42,7 +45,7 @@ export function TeamPanel({ state, now, onWatch }: Props) {
           const activity = recentActivity(state, member.id)
           return (
             <article key={member.id} aria-label={member.name} className="flex min-w-0 flex-col gap-3 rounded-lg border border-border bg-card p-3" style={{ borderTopColor: memberColorVar(member.id), borderTopWidth: 2 }}>
-              <header className="flex items-center gap-3">
+              <header className="flex flex-wrap items-center gap-3">
                 <MemberChip member={member.id} initials={member.name.charAt(0)} status={presence} />
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-medium">{member.name}</div>
@@ -52,6 +55,7 @@ export function TeamPanel({ state, now, onWatch }: Props) {
                   </div>
                 </div>
                 {member.online && <button type="button" aria-label={`Watch ${member.name}'s Bob`} onClick={() => onWatch(member.id)} className="shrink-0 rounded-md border border-border px-2 py-1 text-xs hover:bg-secondary">Watch</button>}
+                {canRemove && member.id !== 'A' && <RemoveSeatControl memberId={member.id} name={member.name} />}
               </header>
               {latest && <AgentTag member={member.id} label={`${member.name} · Bob ${latest.mode || 'coder'}`} status={bob} />}
               {spots.map((spot) => (

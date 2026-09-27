@@ -15,6 +15,8 @@ export type RadarJoinApi = {
     role?: RadarJoinRole
   ) => Promise<RadarJoinResult>
   createJoinCode: () => Promise<RadarJoinCode>
+  /** Mission Control only (D-alief-20): removes a teammate's seat; their open tasks are cancelled. */
+  removeMember: (member: string) => Promise<void>
   /** Shares `folder` (the one open in the app), or opens a folder picker when it is null; null when cancelled. */
   shareFolder: (folder: string | null, server?: string) => Promise<RadarOpenFolderResult | null>
   /** Owner only: removes the workspace from the server for everyone and disconnects this app. */
@@ -35,6 +37,7 @@ export const radarJoinApi: RadarJoinApi = {
   joinWithCode: (code, server, name, role) =>
     ipcRenderer.invoke('radar:join-with-code', { code, server, name, role }),
   createJoinCode: () => ipcRenderer.invoke('radar:create-join-code'),
+  removeMember: (member) => ipcRenderer.invoke('radar:remove-member', member),
   shareFolder: (folder, server) => ipcRenderer.invoke('radar:share-folder', { folder, server }),
   stopSharing: () => ipcRenderer.invoke('radar:stop-sharing'),
   getSyncStatus: () => ipcRenderer.invoke('radar:sync-status'),
