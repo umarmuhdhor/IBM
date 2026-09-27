@@ -648,3 +648,19 @@ Format:
   aktif yang sedang **offline** memakai kursi itu. Kursi owner (`meta.owner_member`) tidak pernah diambil lewat nama.
 - Risiko diterima: pemegang kode open dari owner bisa mengambil kursi teman yang offline dengan mengetik namanya.
   Kode itu sendiri diberikan owner secara pribadi; kursi online tidak bisa diambil.
+
+## D-umar-10 · 27 Sep 2026 · fase 15d · Pembuat room adalah PM
+
+- Konteks: di tim, pembuat room (owner, Mission Control) menjadi coder, sehingga persetujuan dan peran PM
+  membingungkan; server production lama juga hanya menerima persetujuan dari Mission Control.
+- Keputusan (app saja, kontrak server tidak berubah):
+  1. Membagikan folder membuka workspace dengan owner berperan `pm` (`shareFolder` default `pm`; `coder` hanya bila
+     diminta eksplisit, untuk kompatibilitas).
+  2. Form Join tidak lagi menawarkan PM; semua yang bergabung dengan kode adalah coder (PM sudah pasti owner, dan
+     server menolak PM kedua, D-umar-06).
+  3. Mission Control menyetujui bila kursinya sendiri adalah PM (atau room tanpa PM). Owner-PM tidak punya My tasks
+     dan mendapat kit Bob PM Lead (kit mengikuti peran dari server).
+- Akibat: owner-PM tidak menulis kode di folder bersama (hanya `.md`/`.txt`, D-umar-07). File awal proyek tetap
+  diunggah lewat token Mission Control saat share, jadi pembuatan room tidak terpengaruh. Karena persetujuan owner
+  memakai token Mission Control, alur ini jalan juga di server production lama.
+- Room yang sudah ada tidak berubah (owner-nya tetap coder); berlaku untuk room baru.

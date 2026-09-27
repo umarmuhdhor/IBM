@@ -224,3 +224,13 @@ Scope: tab Tasks (PM, coder, owner), baris task di Team; app dev di background l
 Screenshot: `ui-15/pm-plan-approval-1440.png`, `pm-after-approve-1440.png`, `coder-my-tasks-start-1440.png`,
 `coder-my-tasks-900.png`, `team-task-rows-1440.png`. Tidak diverifikasi: 320 px, tema terang, screen reader nyata.
 Verdict: **Approve**.
+
+## Lanjutan · Pembuat room = PM (fase 15d, D-umar-10)
+
+- Pemicu: PM ditolak "Your role cannot do this." saat approve, karena server production belum dideploy (#46).
+  Umar memutuskan pembuat room langsung menjadi PM.
+- Perubahan app: `shareFolder` default `pm`; pilihan PM di form Join dihapus ("You join as a coder. The person who
+  created the room is its PM."); Mission Control menyetujui bila kursinya PM; owner-PM tanpa My tasks.
+- Ditulis Claude Code (kuota Bob habis). Verifikasi: app vitest radar 190 (baru: share tanpa role → `pm`; owner-PM
+  approve dari Mission Control), `pnpm run typecheck` 0 error, oxlint bersih.
+- Tidak diverifikasi ter-render: form Join baru (perubahan kecil: toggle dihapus, satu kalimat ditambah).
