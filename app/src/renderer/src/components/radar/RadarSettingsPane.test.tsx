@@ -34,6 +34,12 @@ it('explains an access rejection without showing the old waiting message', () =>
   expect(screen.queryByText('Saved, waiting for server')).toBeNull()
 })
 
+it('says the owner removed this seat (D-alief-20)', () => {
+  render(<RadarSettingsPane connection={summary} connected={false} connectionFailure="removed" workspacePath={null} onConnectionChange={vi.fn()} />)
+  expect(screen.getByText('The owner removed you from this workspace. Join with a new code.')).toBeTruthy()
+  expect(screen.queryByText('Saved, waiting for server')).toBeNull()
+})
+
 it('runs the connection checklist for the active workspace', async () => {
   runChecks.mockResolvedValue({ bobVersion: 'bob 2.0.5', bobSettings: true })
   render(<RadarSettingsPane connection={summary} connected workspacePath="/work/toko-demo" onConnectionChange={vi.fn()} />)
