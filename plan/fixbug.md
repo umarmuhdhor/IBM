@@ -29,13 +29,16 @@ Rules for session B:
 - [ ] 6. **(B)** Owner recovery without the CLI: a coder reclaims ownership with a fresh owner code, kept secure.
 - [x] 7. Escape in the "Share a different folder?" confirmation closes only the confirmation. Also "Stop sharing?". (951be715)
 - [x] 8. **(A)** One "X is sharing …" card, not two. (c5d1b784)
-- [ ] 9. **(A)** Quitting mid-upload resumes cleanly on the next start (tested on prod). Code: 23b7d3c6; prod test pending.
+- [x] 9. **(A)** Quitting mid-upload resumes cleanly on the next start. Verified on prod: the relaunch finished the share in 4.8 s, 2401 files. (23b7d3c6)
 - [ ] 10. **(A)** Bob IDE steps for hooks and radar-mcp after a folder switch are written down. Alief runs them in Bob IDE.
 
 ## Extra fixes
 
 - [x] Server calls in `app/src/main/radar/server-fetch.ts` go through the main HTTP client, not bare `fetch`. (12a5b848)
 - [x] The app's `rejected` notice is a list that clears once the file syncs, not a single string that stays forever (silent-failure-hunter finding 2). (d8859df9, 55302886)
+- [x] Status file count leaves out deleted files and empty-folder markers (found on prod: "Syncing 5 files" after deletes). (ac15dc81)
+- [x] The `.bob.bak-<time>/` backup from a kit install never syncs (found on prod while testing bug 4). (d3d94b4b)
+- [x] React review: sharing confirmations are alert dialogs and take Escape only from inside; a new Bob kit notice drops the old install error. (6af8ed58, e793ec36)
 
 ## Phase gates
 
