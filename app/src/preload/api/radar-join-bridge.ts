@@ -1,4 +1,5 @@
 import { ipcRenderer } from 'electron'
+import type { RadarConnectionSummary } from '../../shared/radar-connection'
 import type {
   RadarJoinCode,
   RadarJoinResult,
@@ -17,6 +18,11 @@ export type RadarJoinApi = {
   createJoinCode: () => Promise<RadarJoinCode>
   /** Mission Control only (D-alief-20): removes a teammate's seat; their open tasks are cancelled. */
   removeMember: (member: string) => Promise<void>
+  /**
+   * D-alief-21: the owner takes back Mission Control after another device took over and is gone. Uses the shared
+   * folder's seat; the owner code never reaches the renderer.
+   */
+  reclaimOwner: () => Promise<RadarConnectionSummary>
   /** Shares `folder` (the one open in the app), or opens a folder picker when it is null; null when cancelled. */
   shareFolder: (folder: string | null, server?: string) => Promise<RadarOpenFolderResult | null>
   /** Owner only: removes the workspace from the server for everyone and disconnects this app. */
@@ -38,6 +44,7 @@ export const radarJoinApi: RadarJoinApi = {
     ipcRenderer.invoke('radar:join-with-code', { code, server, name, role }),
   createJoinCode: () => ipcRenderer.invoke('radar:create-join-code'),
   removeMember: (member) => ipcRenderer.invoke('radar:remove-member', member),
+  reclaimOwner: () => ipcRenderer.invoke('radar:reclaim-owner'),
   shareFolder: (folder, server) => ipcRenderer.invoke('radar:share-folder', { folder, server }),
   stopSharing: () => ipcRenderer.invoke('radar:stop-sharing'),
   getSyncStatus: () => ipcRenderer.invoke('radar:sync-status'),

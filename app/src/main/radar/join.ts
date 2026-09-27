@@ -1,9 +1,11 @@
 import { ipcMain, app, clipboard, shell } from 'electron'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import {
   AdminJoinCodeRes,
   decodeInvite,
   ErrorRes,
+  JoinOwnerRes,
   JoinRes,
   normalizeJoinCode
 } from '@radar/common'
@@ -196,6 +198,72 @@ export async function removeMember(memberInput: unknown): Promise<void> {
   }
 }
 
+const RECLAIM_NEEDS_FOLDER = 'Open the shared folder on this Mac to take back ownership.'
+
+/** The shared folder's own seat token from `.radar/local.json`, only for the workspace and server of `saved`. */
+function ownerSeatToken(saved: RadarConnection): string {
+  const folder = getSyncStatus().folder
+  if (!folder) {
+    throw new Error(RECLAIM_NEEDS_FOLDER)
+  }
+  let local: unknown
+  try {
+    local = JSON.parse(readFileSync(join(folder, '.radar', 'local.json'), 'utf8'))
+  } catch {
+    throw new Error(RECLAIM_NEEDS_FOLDER)
+  }
+  const field = (key: string): string =>
+    typeof local === 'object' && local !== null && typeof (local as Record<string, unknown>)[key] === 'string'
+      ? ((local as Record<string, unknown>)[key] as string)
+      : ''
+  const sameServer = URL.canParse(field('server')) && new URL(field('server')).origin === new URL(saved.server).origin
+  if (!sameServer || field('workspace') !== saved.workspace || !field('token')) {
+    throw new Error(RECLAIM_NEEDS_FOLDER)
+  }
+  return field('token')
+}
+
+/**
+ * D-alief-21: after another device took over as owner and is gone, the member who shared the folder takes Mission
+ * Control back. The owner code is redeemed at once and never shown; the folder keeps syncing.
+ */
+export async function reclaimOwner(): Promise<RadarJoinResult['connection']> {
+  const saved = readRadarConnection()
+  if (!saved || saved.role !== 'mc') {
+    throw new Error('Only the owner of a shared workspace can take back ownership.')
+  }
+  const seat = ownerSeatToken(saved)
+  requireOsEncryption()
+  const server = new URL(saved.server).origin
+  const asked = await serverFetch(`${server}/v1/owner/reclaim`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${seat}` },
+    signal: AbortSignal.timeout(10_000)
+  })
+  if (!asked.ok) {
+    throw new Error(await errorMessage(asked))
+  }
+  const { code } = AdminJoinCodeRes.parse(await asked.json())
+  const redeemed = await serverFetch(`${server}/v1/join`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code }),
+    signal: AbortSignal.timeout(15_000)
+  })
+  if (!redeemed.ok) {
+    throw new Error(await errorMessage(redeemed))
+  }
+  const res = JoinOwnerRes.parse(await redeemed.json())
+  const connection: RadarConnection = { ...saved, workspace: res.workspace, token: res.token }
+  saveRadarConnection(connection)
+  startClient(connection)
+  const summary = getRadarConnectionSummary()
+  if (!summary) {
+    throw new Error('Connection could not be saved')
+  }
+  return summary
+}
+
 async function openInBob(): Promise<string | null> {
   const folder = getSyncStatus().folder
   if (!folder || !existsSync(folder)) {
@@ -243,6 +311,7 @@ export function registerRadarJoinIpc(): void {
   })
   ipcMain.handle('radar:create-join-code', () => createJoinCode())
   ipcMain.handle('radar:remove-member', (_event, member: unknown) => removeMember(member))
+  ipcMain.handle('radar:reclaim-owner', () => reclaimOwner())
   ipcMain.handle('radar:profile-name', () => readProfileName())
   ipcMain.handle('radar:sync-status', () => getSyncStatus())
   ipcMain.handle('radar:open-in-bob', () => openInBob())

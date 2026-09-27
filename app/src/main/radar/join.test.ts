@@ -48,7 +48,7 @@ vi.mock('./sync-agent', () => ({
   workspaceFolder: (workspace: string) => `/home/test/live-collab/${workspace}`
 }))
 
-const { createJoinCode, joinWithCode, removeMember, resumeMemberSync, serverOrigin } =
+const { createJoinCode, joinWithCode, reclaimOwner, removeMember, resumeMemberSync, serverOrigin } =
   await import('./join')
 
 const SERVER = 'https://collab.example.dev'
@@ -361,3 +361,68 @@ describe('removeMember (D-alief-20)', () => {
   })
 })
 
+describe('reclaimOwner (D-alief-21)', () => {
+  const mcSaved = {
+    server: `${SERVER}/`,
+    workspace: 'toko-demo',
+    member: 'mc',
+    role: 'mc',
+    token: 'rdr_revoked_mc'
+  }
+  const local = JSON.stringify({ server: SERVER, workspace: 'toko-demo', member: 'A', token: 'rdr_owner_seat', role: 'coder' })
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.getRadarConnectionSummary.mockReturnValue({
+      server: `${SERVER}/`,
+      workspace: 'toko-demo',
+      member: 'mc',
+      role: 'mc'
+    })
+  })
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('asks for an owner code with the shared folder seat token, redeems it and keeps the folder syncing', async () => {
+    mocks.readRadarConnection.mockReturnValue(mcSaved)
+    mocks.getSyncStatus.mockReturnValue({ folder: '/home/test/projects/toko-demo' })
+    mocks.readFileSync.mockReturnValue(local)
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ member: null, owner: true, code: 'K7QM-3XPA', expiresAt: 1 }), { status: 201 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ workspace: 'toko-demo', member: null, role: 'mc', token: 'rdr_new_mc' }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(reclaimOwner()).resolves.toMatchObject({ workspace: 'toko-demo', role: 'mc' })
+    expect(mocks.readFileSync).toHaveBeenCalledWith('/home/test/projects/toko-demo/.radar/local.json', 'utf8')
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      `${SERVER}/v1/owner/reclaim`,
+      expect.objectContaining({ method: 'POST', headers: expect.objectContaining({ Authorization: 'Bearer rdr_owner_seat' }) })
+    )
+    expect(fetchMock).toHaveBeenNthCalledWith(2, `${SERVER}/v1/join`, expect.objectContaining({ body: JSON.stringify({ code: 'K7QM-3XPA' }) }))
+    const saved = { ...mcSaved, token: 'rdr_new_mc' }
+    expect(mocks.saveRadarConnection).toHaveBeenCalledWith(saved)
+    expect(mocks.startClient).toHaveBeenCalledWith(saved)
+    expect(mocks.stopSyncAgent).not.toHaveBeenCalled()
+  })
+
+  it('refuses without a shared folder of the same workspace and server', async () => {
+    mocks.readRadarConnection.mockReturnValue(mcSaved)
+    respond(201, {})
+    mocks.getSyncStatus.mockReturnValue({ folder: null })
+    await expect(reclaimOwner()).rejects.toThrow('Open the shared folder on this Mac to take back ownership.')
+    mocks.getSyncStatus.mockReturnValue({ folder: '/home/test/projects/other' })
+    mocks.readFileSync.mockReturnValue(JSON.stringify({ server: SERVER, workspace: 'other', member: 'A', token: 't', role: 'coder' }))
+    await expect(reclaimOwner()).rejects.toThrow('Open the shared folder on this Mac to take back ownership.')
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it("shows the server's message when it refuses", async () => {
+    mocks.readRadarConnection.mockReturnValue(mcSaved)
+    mocks.getSyncStatus.mockReturnValue({ folder: '/home/test/projects/toko-demo' })
+    mocks.readFileSync.mockReturnValue(local)
+    respond(409, { error: { code: 'CONFLICT', message: 'Mission Control is open on another device. Take back ownership there, or close it first.' } })
+    await expect(reclaimOwner()).rejects.toThrow('Mission Control is open on another device')
+    expect(mocks.saveRadarConnection).not.toHaveBeenCalled()
+  })
+})
