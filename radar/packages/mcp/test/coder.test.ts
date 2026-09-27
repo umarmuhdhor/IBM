@@ -134,6 +134,18 @@ describe('radar-mcp coder tools (BC-07, R3 §7)', () => {
     expect(text.split('\n').length).toBeLessThanOrEqual(12);
   });
 
+  it('why_blocked: names the locked lines of a line-range lock (D-alief-17)', async () => {
+    const holder = BLOCK.block.holder as Record<string, unknown>;
+    holder.range = { start: 3, end: 5 };
+    try {
+      const { text } = await call('why_blocked');
+      expect(text.split('\n')[0]).toContain('lines 3–5');
+      expect(text).toContain('Alice');
+    } finally {
+      delete holder.range;
+    }
+  });
+
   it('why_blocked: says so when nothing was blocked', async () => {
     noBlockYet = true;
     const { text, isError } = await call('why_blocked');
