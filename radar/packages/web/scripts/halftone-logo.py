@@ -1,6 +1,6 @@
-"""Render the app icon as a monochrome halftone SVG for the landing hero.
+"""Render the Live Collab mark as a monochrome halftone SVG for the landing hero.
 
-Usage: python3 scripts/halftone-logo.py ../../../app/resources/icon.png public/brand/bob-crew-halftone.svg
+Usage: python3 scripts/halftone-logo.py public/brand/logo/png/live-collab-mark-white-1024.png public/brand/live-collab-halftone.svg
 Dot radius follows luminance x alpha, so faces read bright and outlines drop out.
 """
 

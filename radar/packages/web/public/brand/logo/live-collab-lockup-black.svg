@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 464 120" width="464" height="120">
+  <title>Live Collab</title>
+  <style>@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&amp;display=swap');</style>
+  <g fill="#000000" transform="translate(60 60)">
+    <rect x="-8" y="-54" width="16" height="38" rx="3"/>
+    <rect x="-8" y="-54" width="16" height="38" rx="3" transform="rotate(120)"/>
+    <rect x="-8" y="-54" width="16" height="38" rx="3" transform="rotate(180)"/>
+    <rect x="-8" y="-54" width="16" height="38" rx="3" transform="rotate(240)"/>
+    <rect x="-8" y="-54" width="16" height="38" rx="3" transform="rotate(300)"/>
+    <circle cx="0" cy="-44" r="10" transform="rotate(60)"/>
+  </g>
+  <text x="148" y="85" fill="#000000" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="72" letter-spacing="-2.16"><tspan font-weight="600">live</tspan><tspan font-weight="400"> collab</tspan></text>
+</svg>
