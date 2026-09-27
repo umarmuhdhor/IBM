@@ -46,6 +46,18 @@ describe('applySyncLine', () => {
     )
   })
 
+  it('drops the notice once the server accepts that file after all, not for another file (fase 12k)', () => {
+    const rejected = applySyncLine(
+      BASE,
+      JSON.stringify({ type: 'rejected', path: 'app.ts', reason: 'locked', message: 'app.ts is locked.' })
+    )
+    expect(rejected?.rejected).toBe('app.ts is locked.')
+    expect(applySyncLine(rejected ?? BASE, JSON.stringify({ type: 'accepted', path: 'other.ts' }))).toBeNull()
+    expect(applySyncLine(rejected ?? BASE, JSON.stringify({ type: 'accepted', path: 'app.ts' }))).toMatchObject({
+      rejected: null
+    })
+  })
+
   it('keeps a refused or missing Bob kit and clears it once installed (fase 12k bug 4)', () => {
     const refused = applySyncLine(
       BASE,

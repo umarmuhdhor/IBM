@@ -81,10 +81,17 @@ export function applySyncLine(current: RadarSyncStatus, line: string): RadarSync
       ? { ...current, conflicts: [...current.conflicts, path] }
       : null
   }
+  const linePath = 'path' in parsed && typeof parsed.path === 'string' ? parsed.path : null
   if (parsed.type === 'rejected') {
     const text =
       'message' in parsed && typeof parsed.message === 'string' ? cliErrorText(parsed.message) : ''
-    return text ? { ...current, rejected: text } : null
+    return text ? { ...current, rejected: text, rejectedPath: linePath } : null
+  }
+  if (parsed.type === 'accepted') {
+    // The server took the refused file after all (lock released, file fixed): the notice is stale.
+    return current.rejected && linePath === current.rejectedPath
+      ? { ...current, rejected: null, rejectedPath: null }
+      : null
   }
   if (parsed.type === 'kit') {
     // Fase 12k: the join could not put the Bob kit in .bob/; say why instead of leaving Bob IDE half set up.
@@ -175,6 +182,7 @@ export function startSyncAgent(
     conflicts: [],
     stopReason: null,
     rejected: null,
+    rejectedPath: null,
     kit: null
   })
   const proc = spawnProcess({ program: process.execPath, args, env, timeoutMs: null })
