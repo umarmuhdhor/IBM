@@ -28,7 +28,8 @@ export function SyncConflictsNote({ sync }: { sync: RadarSyncStatus }) {
           </span>
         </p>
       )}
-      {sync.kit && <KitNote kit={sync.kit} />}
+      {/* Why: a new notice starts fresh, without the last install error. */}
+      {sync.kit && <KitNote key={`${sync.kit.status}:${sync.kit.message}`} kit={sync.kit} />}
       {/* Why: a change the server refused would otherwise vanish without a word in the app. */}
       {sync.rejected && (
         <p role="status" className={CALLOUT}>

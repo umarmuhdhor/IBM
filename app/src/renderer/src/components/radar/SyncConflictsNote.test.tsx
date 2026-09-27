@@ -37,7 +37,9 @@ it('explains a refused Bob kit and installs it with a backup on request (fase 12
 })
 
 it('shows why the kit install failed instead of hiding it', async () => {
-  const installBobKit = vi.fn(async () => Promise.reject(new Error('disk full')))
+  const installBobKit = vi.fn(async () => {
+    throw new Error('disk full')
+  })
   vi.stubGlobal('api', { radar: { installBobKit } })
   const kit = { status: 'refused', message: 'Bob kit not installed.' } as const
   render(<SyncConflictsNote sync={{ ...base, kit }} />)
@@ -50,4 +52,17 @@ it('a missing kit has no install button', () => {
   render(<SyncConflictsNote sync={{ ...base, kit }} />)
   expect(screen.getByText('Bob kit not found in the app.')).toBeTruthy()
   expect(screen.queryByRole('button')).toBeNull()
+})
+
+it('drops the old install error when a new kit notice arrives', async () => {
+  const installBobKit = vi.fn(async () => {
+    throw new Error('disk full')
+  })
+  vi.stubGlobal('api', { radar: { installBobKit } })
+  const kit = { status: 'refused', message: 'Bob kit not installed.' } as const
+  const view = render(<SyncConflictsNote sync={{ ...base, kit }} />)
+  fireEvent.click(screen.getByRole('button', { name: 'Back up .bob and install the Bob kit' }))
+  expect(await screen.findByText(/Could not install the Bob kit/)).toBeTruthy()
+  view.rerender(<SyncConflictsNote sync={{ ...base, kit: { status: 'missing-kit', message: 'Bob kit not found in the app.' } }} />)
+  expect(screen.queryByText(/Could not install the Bob kit/)).toBeNull()
 })
