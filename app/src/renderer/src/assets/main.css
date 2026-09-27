@@ -39,6 +39,7 @@
   --lc-text-faint: var(--muted-foreground);
   --lc-accent: var(--primary);
   --lc-accent-soft: var(--primary-foreground);
+  --lc-on-accent: var(--primary-foreground);
   --lc-ok: var(--status-success);
   --lc-warn: var(--status-warning);
   --lc-danger: var(--destructive);

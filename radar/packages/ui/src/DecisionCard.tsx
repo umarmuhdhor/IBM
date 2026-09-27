@@ -114,7 +114,7 @@ export function DecisionCard({
               fontWeight: 500,
               cursor: isDeciding ? 'default' : 'pointer',
               background: 'var(--lc-accent)',
-              color: 'var(--lc-text)',
+              color: 'var(--lc-on-accent)',
               border: 'none',
               opacity: isDeciding ? 0.5 : 1,
             }}

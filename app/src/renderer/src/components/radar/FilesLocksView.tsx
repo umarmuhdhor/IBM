@@ -1,24 +1,20 @@
-import { LockChip, WritingPulse } from '@radar/ui'
 import type { RadarState } from '@radar/ui'
+import { repoRows } from './radar-lanes'
+import { SharedRepoList } from './SharedRepoList'
 
 export function FilesLocksView({ state, now }: { state: RadarState; now: number }) {
-  const paths = [...new Set([...Object.keys(state.files), ...Object.keys(state.locks)])].sort()
+  const rows = repoRows(state, now)
+  const locked = rows.filter((row) => row.lock).length
   return (
     <section aria-label="Files and locks" className="space-y-2 p-4">
-      <h3 className="text-sm font-semibold">Files & locks</h3>
-      {paths.length === 0 && <p className="text-xs text-muted-foreground">No files have been synced yet.</p>}
-      {paths.map((path) => {
-        const file = state.files[path]
-        const lock = state.locks[path]
-        const holder = lock?.memberId ? state.members[lock.memberId] : null
-        return (
-          <div key={path} className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-xs">
-            <span className="min-w-0 flex-1 truncate font-mono" title={path}>{path}</span>
-            {file?.updatedBy && file.writingUntil > now && <WritingPulse member={file.updatedBy} />}
-            <LockChip state={lock?.state ?? 'bebas'} holder={holder?.name.charAt(0) ?? ''} />
-          </div>
-        )
-      })}
+      <div className="flex items-baseline justify-between gap-2">
+        <h3 className="text-sm font-semibold">Shared repo</h3>
+        <span className="text-xs text-muted-foreground">
+          {rows.length} {rows.length === 1 ? 'file' : 'files'} · {locked} locked
+        </span>
+      </div>
+      <p className="text-xs text-muted-foreground">One Bob per file. Others queue and keep working on their other files.</p>
+      <SharedRepoList rows={rows} emptyText="No files have been synced yet." />
     </section>
   )
 }

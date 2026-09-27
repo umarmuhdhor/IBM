@@ -3,12 +3,24 @@ import { DecisionCard, FeedItem, ReviewCard, TaskCard } from '@radar/ui'
 import type { FeedKind, ProposalView, RadarState, TaskView } from '@radar/ui'
 import { getRadarViewModel } from './radar-view-model'
 import { NotificationsPanel } from './NotificationsPanel'
+import { repoRows } from './radar-lanes'
+import { SharedRepoList } from './SharedRepoList'
 
-type Props = { state: RadarState; canDecide: boolean }
+type Props = { state: RadarState; canDecide: boolean; now: number }
+
+const KIND_TITLE: Record<string, string> = { plan: 'Plan', decision: 'Decision', review: 'Review' }
 
 function proposalTitle(proposal: ProposalView): string {
   const title = proposalPayload(proposal).title
-  return typeof title === 'string' && title.trim() ? title : `${proposal.kind} ${proposal.id}`
+  if (typeof title === 'string' && title.trim()) {
+    return title
+  }
+  return `${KIND_TITLE[proposal.kind] ?? proposal.kind} · ${proposal.refId ?? proposal.id}`
+}
+
+/** A number the proposal reported, or undefined so the card hides it instead of showing 0. */
+function reported(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -35,7 +47,7 @@ function feedKind(type: string): FeedKind {
   return 'info'
 }
 
-export function MissionControlView({ state, canDecide }: Props) {
+export function MissionControlView({ state, canDecide, now }: Props) {
   const model = getRadarViewModel(state)
   const [decidingId, setDecidingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -79,7 +91,6 @@ export function MissionControlView({ state, canDecide }: Props) {
         </section>
       </div>
       <div className="space-y-4">
-        <NotificationsPanel state={state} />
         <section aria-label="Needs you" className="space-y-2">
           <h3 className="text-sm font-semibold">Needs you · {model.needsYou}</h3>
           {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
@@ -87,17 +98,18 @@ export function MissionControlView({ state, canDecide }: Props) {
           {model.pending.map((proposal) => {
             const payload = proposalPayload(proposal)
             return proposal.kind === 'review' ? (
-              <ReviewCard key={proposal.id} title={proposalTitle(proposal)} added={Number(payload.added) || 0} removed={Number(payload.removed) || 0} fileCount={Number(payload.fileCount) || 0} verdict={proposal.reason} readOnly={!canDecide} pending={activeDecisionId === proposal.id} onApprove={() => decide(proposal.id, true)} onSendBack={() => decide(proposal.id, false)} />
+              <ReviewCard key={proposal.id} title={proposalTitle(proposal)} added={reported(payload.added)} removed={reported(payload.removed)} fileCount={reported(payload.fileCount)} verdict={proposal.reason} readOnly={!canDecide} pending={activeDecisionId === proposal.id} onApprove={() => decide(proposal.id, true)} onSendBack={() => decide(proposal.id, false)} />
             ) : (
               <DecisionCard key={proposal.id} title={proposalTitle(proposal)} reason={proposal.reason} readOnly={!canDecide} status={activeDecisionId === proposal.id ? 'deciding' : 'pending'} onApprove={() => decide(proposal.id, true)} onDeny={() => decide(proposal.id, false)} />
             )
           })}
           {!canDecide && model.needsYou > 0 && <p className="text-xs text-muted-foreground">Only Mission Control can decide.</p>}
         </section>
-        <section aria-label="Files and locks">
-          <h3 className="mb-2 text-sm font-semibold">Files & locks</h3>
-          <p className="text-xs text-muted-foreground">{Object.keys(state.files).length} files · {Object.keys(state.locks).length} locks</p>
+        <section aria-label="Shared repo" className="space-y-2">
+          <h3 className="text-sm font-semibold">Shared repo</h3>
+          <SharedRepoList rows={repoRows(state, now).filter((row) => row.lock)} emptyText="No files claimed yet. The plan decides who gets what." />
         </section>
+        <NotificationsPanel state={state} />
       </div>
     </div>
   )

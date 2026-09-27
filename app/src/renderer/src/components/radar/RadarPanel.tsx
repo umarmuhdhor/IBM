@@ -162,7 +162,7 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
             </button>
           </div>
         ) : tab === 'mission' ? (
-          <MissionControlView state={state} canDecide={connection?.role === 'mc'} />
+          <MissionControlView state={state} canDecide={connection?.role === 'mc'} now={now} />
         ) : tab === 'team' ? (
           <>
             {connection?.role === 'mc' && (

@@ -261,7 +261,7 @@ describe('Bob kit against the real server (PRD §15 up to review)', () => {
     // bob.activity goes to app/mc sockets (JT-01), not to /v1/activity; team_activity still reads the team feed.
     const act = await tool('A', 'team_activity');
     expect(act.isError, act.text).toBe(false);
-    expect(act.text).toContain('T-1: review → selesai');
+    expect(act.text).toContain('T-1 is now done');
   });
 
   it('brief start names the member and the active task (T-1 is done, B still has Dark mode)', async () => {
