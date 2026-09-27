@@ -48,16 +48,19 @@ export function buildTeam(db: Db, hub: Hub, now: number): TeamRes {
     editCount: t.edit_count,
   }));
 
-  const locks = listLocks(db).map((l) => ({
-    ...(rangeOf(l) ? { range: rangeOf(l)! } : {}),
-    path: l.path,
-    taskId: l.task_id,
-    memberId: l.member_id,
-    state: l.state,
-    queue: queueOf(db, l.path)
-      .filter((e) => e.task_id !== l.task_id)
-      .map((e) => e.task_id),
-  }));
+  const locks = listLocks(db).map((l) => {
+    const range = rangeOf(l);
+    return {
+      ...(range ? { range } : {}),
+      path: l.path,
+      taskId: l.task_id,
+      memberId: l.member_id,
+      state: l.state,
+      queue: queueOf(db, l.path)
+        .filter((e) => e.task_id !== l.task_id)
+        .map((e) => e.task_id),
+    };
+  });
 
   return {
     members,
