@@ -32,7 +32,7 @@ export function SharedRepoList({ rows, emptyText }: Props) {
                     className="size-2 rounded-full border"
                     style={{ borderColor: memberColorVar(row.holderId), background: row.lock === 'reserved' ? 'transparent' : memberColorVar(row.holderId) }}
                   />
-                  <span title={`${row.holderLabel} · ${row.lock}`} className={cn('max-w-[16rem] truncate', row.lock === 'review' && 'text-[var(--lc-warn)]')}>
+                  <span className={cn('max-w-[16rem] text-right [overflow-wrap:anywhere]', row.lock === 'review' && 'text-[var(--lc-warn)]')}>
                     {row.holderLabel} · {row.lock}
                   </span>
                 </span>
