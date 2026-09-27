@@ -1,0 +1,67 @@
+[
+  {
+    "id": "01-waiting",
+    "title": "Problem · waiting",
+    "text": "Here is how a sprint really goes. Tasks get split by hand, and half the team sits waiting on someone else's code. Hours, gone."
+  },
+  {
+    "id": "02-overwrite",
+    "title": "Problem · overwrite",
+    "text": "And with AI, it gets worse. Your Bob doesn't know what my Bob is doing. One edit, and someone's work is gone."
+  },
+  {
+    "id": "02b-parallel",
+    "title": "Solution · parallel",
+    "text": "IBM Bob Live Collab puts your team's Bobs to work together. A PM Lead mode in Bob splits the brief, our radar-mcp server gives every file one owner, and everyone builds in parallel."
+  },
+  {
+    "id": "02c-lock",
+    "title": "Solution · lock",
+    "text": "And no one can overwrite someone else's work. Bob's PreToolUse hook blocks the edit before it lands, and Bob's rules make it ask, not force."
+  },
+  {
+    "id": "03-sizzle",
+    "title": "Sizzle",
+    "text": "Every Bob is visible. Every file has one owner. And every decision goes past a human."
+  },
+  {
+    "id": "04-slowdown",
+    "title": "Slow down",
+    "text": "Let's watch it happen, step by step."
+  },
+  {
+    "id": "05-brief",
+    "title": "The brief",
+    "text": "It starts with the PM. Aarief has the client brief, and right now, only Aarief knows the project. Aarief switches Bob IDE to our custom mode, PM Lead. In this mode, Bob can read and plan, but it can't touch the code. Then Aarief asks Bob to split the brief for Alief and Umar."
+  },
+  {
+    "id": "06-plan",
+    "title": "The plan",
+    "text": "Bob checks who's online and proposes a plan through our MCP server, radar-mcp. Every task gets an owner, and every file belongs to exactly one person. Nothing moves until a human approves."
+  },
+  {
+    "id": "07-zoomout",
+    "title": "Zoom out",
+    "text": "Now zoom out. Each task lands in that coder's own Bob IDE, with their own account and their own context."
+  },
+  {
+    "id": "08-build",
+    "title": "Build",
+    "text": "Alief and Umar switch to Coder mode. The moment a session starts, a hook hands each Bob a short brief: your task, your files, and who owns the rest. Bob pulls the task through MCP and gets to work, and every edit is checked against the lock before it's written."
+  },
+  {
+    "id": "09-nearmiss",
+    "title": "Near-miss",
+    "text": "Then it happens. Umar asks Bob to change calculateTotal, in checkout.ts. But that's Alief's file. Before the edit lands, our PreToolUse hook blocks it. Now the rules kick in: Bob doesn't retry, and it doesn't sneak around the lock through the shell. It calls why_blocked, explains who holds the file, and asks the PM for access. Aarief decides. No conflict. No broken build."
+  },
+  {
+    "id": "10-primitives",
+    "title": "Built on Bob",
+    "text": "Custom modes, hooks, MCP, and rules. All of it runs on Bob's own features. And we built it all with Bob."
+  },
+  {
+    "id": "11-cta",
+    "title": "CTA",
+    "text": "IBM Bob Live Collab. Every Bob, on the same page. Watch the live replay at the link below."
+  }
+]

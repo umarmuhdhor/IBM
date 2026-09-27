@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Film Storyboard v1</title>
+<style>
+@font-face{font-family:"Plex";font-weight:400;src:url(assets/fonts/ibm-plex-sans-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:"Plex";font-weight:500;src:url(assets/fonts/ibm-plex-sans-latin-500-normal.woff2) format("woff2")}
+@font-face{font-family:"Plex";font-weight:600;src:url(assets/fonts/ibm-plex-sans-latin-600-normal.woff2) format("woff2")}
+@font-face{font-family:"PlexMono";font-weight:400;src:url(assets/fonts/ibm-plex-mono-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:"PlexMono";font-weight:500;src:url(assets/fonts/ibm-plex-mono-latin-500-normal.woff2) format("woff2")}
+@font-face{font-family:"Serif4";src:url(assets/fonts/source-serif-4-latin.woff2) format("woff2")}
+:root{
+  --bg:#0e0e10;--s1:#161616;--s2:#1e1e20;--s3:#262626;--bd:#393939;
+  --tx:#f4f4f4;--mu:#a8a8a8;--fa:#6f6f6f;
+  --acc:#0f62fe;--accs:#a6c8ff;--ok:#42be65;--warn:#f1c21b;--bad:#fa4d56;--need:#ff7eb6;
+  --pm:#be95ff;--al:#78a9ff;--um:#08bdba;
+  --sans:"Plex",system-ui,sans-serif;--mono:"PlexMono",ui-monospace,monospace;--serif:"Serif4",Georgia,serif;
+}
+*{box-sizing:border-box;margin:0}
+body{background:#08080a;color:var(--tx);font-family:var(--sans)}
+.page{max-width:1680px;margin:0 auto;padding:40px 24px 80px}
+header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:28px}
+header.top h1{font-size:30px;font-weight:600;letter-spacing:-.01em}
+header.top h1 em{font-family:var(--serif);font-weight:400}
+header.top p{color:var(--mu);font-size:15px;margin-top:6px;max-width:760px;line-height:1.5}
+.tag{font:13px var(--mono);color:var(--mu);border:1px solid var(--bd);padding:6px 10px;white-space:nowrap}
+.act{font:500 12px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mu);border-top:1px solid var(--bd);padding:14px 0 12px;margin-top:18px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.act b{color:var(--tx);font-weight:500}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+@media (max-width:1100px){.grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:700px){.grid{grid-template-columns:1fr}}
+figure{display:flex;flex-direction:column;gap:10px}
+.cell{aspect-ratio:16/9;container-type:inline-size;position:relative;overflow:hidden;background:var(--bg);border:1px solid #232326}
+.meta{display:flex;justify-content:space-between;gap:8px;font:12px var(--mono);color:var(--mu)}
+.meta b{color:var(--tx);font-weight:500}
+.note{font-size:13.5px;line-height:1.5;color:var(--mu)}
+.note b{color:var(--tx);font-weight:600}
+.seam{align-self:flex-start;font:11px var(--mono);border:1px solid var(--bd);padding:3px 8px;color:var(--accs)}
+
+.blob{position:absolute;border-radius:50%;filter:blur(6cqw);opacity:.55}
+.grain{position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.035) 1px,transparent 1px);background-size:.9cqw .9cqw}
+.h{font-weight:600;letter-spacing:-.025em;line-height:.98}
+.it{font-family:var(--serif);font-style:italic;font-weight:400;letter-spacing:-.01em}
+.dot{color:var(--acc)}
+.mono{font-family:var(--mono)}
+.lbl{font:500 1.05cqw var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--mu)}
+.chip{display:inline-flex;align-items:center;gap:.5cqw;font:500 1.2cqw var(--sans);border:.12cqw solid var(--c);color:var(--tx);padding:.35cqw .9cqw;border-radius:5cqw;background:rgba(0,0,0,.35)}
+.chip i{width:.8cqw;height:.8cqw;border-radius:50%;background:var(--c)}
+.win{position:absolute;background:var(--s2);border:.1cqw solid var(--bd);border-radius:.8cqw;overflow:hidden;box-shadow:0 2cqw 5cqw rgba(0,0,0,.55)}
+.win .bar{height:2.2cqw;background:var(--s1);border-bottom:.1cqw solid var(--bd);display:flex;align-items:center;padding:0 1cqw;gap:.5cqw;font-size:.9cqw;color:var(--fa)}
+.win .bar s{width:.6cqw;height:.6cqw;border-radius:50%;background:#4a4a4a;text-decoration:none}
+.win .bar .who{margin-left:auto;color:var(--tx);font-weight:600;display:flex;gap:.4cqw;align-items:center}
+.win .bar .who i{width:.6cqw;height:.6cqw;border-radius:50%;background:var(--c)}
+.code{font:1.25cqw/1.75 var(--mono);color:#d0d0d0;padding:1cqw 1.4cqw;white-space:pre}
+.code .n{color:#555;display:inline-block;width:2.2cqw}
+.k{color:#be95ff}.s{color:#42be65}.f{color:#78a9ff}
+.caret{display:inline-block;width:.25cqw;height:1.6cqw;vertical-align:-.3cqw;background:var(--c);margin:0 .1cqw}
+.tr{font:1.15cqw/1.5 var(--mono);border:.1cqw solid var(--bd);background:#18181a;padding:.7cqw 1cqw;color:var(--mu)}
+.tr b{font-weight:400;color:var(--accs)}
+.tr.hook b{color:var(--warn)}
+.tr.bad{border-color:var(--bad);background:rgba(250,77,86,.14);color:#ffd7d9}
+.tr.bad b{color:var(--bad)}
+.tr.rule{border-style:dashed;border-color:var(--pm);color:#e8daff}
+.tr.rule b{color:var(--pm)}
+.btn{display:inline-block;font:500 1.2cqw var(--sans);padding:.55cqw 1.3cqw;border:.1cqw solid var(--bd);color:var(--mu)}
+.btn.pri{background:var(--acc);border-color:var(--acc);color:#fff}
+.cursor{position:absolute;width:0;height:0;border-left:1cqw solid transparent;border-right:1cqw solid transparent;border-bottom:2.4cqw solid #fff;transform:rotate(-28deg);filter:drop-shadow(0 .3cqw .4cqw rgba(0,0,0,.6))}
+.num{position:absolute;right:2.4cqw;top:2cqw;font:500 1.1cqw var(--mono);color:var(--fa)}
+
+.seammap{padding:2.4cqw;display:flex;flex-direction:column;gap:1.2cqw}
+.strip{display:flex;gap:.4cqw;align-items:stretch;flex:1}
+.strip div{flex:var(--d);background:var(--s1);border:.1cqw solid var(--bd);padding:.6cqw;font:1cqw var(--mono);color:var(--mu);display:flex;flex-direction:column;justify-content:space-between;min-width:0;overflow:hidden}
+.strip div b{color:var(--tx);font-weight:500}
+.strip .fast{border-top:.35cqw solid var(--acc)}
+.strip .slow{border-top:.35cqw solid var(--pm)}
+.strip .end{border-top:.35cqw solid var(--ok)}
+.tokens{padding:2.4cqw;display:grid;grid-template-columns:1fr 1fr;gap:1.6cqw}
+.sw{display:flex;flex-wrap:wrap;gap:.6cqw}
+.sw span{width:5.2cqw;height:5.2cqw;background:var(--c);border:.1cqw solid var(--bd);font:.85cqw var(--mono);color:#fff;display:flex;align-items:flex-end;padding:.4cqw;text-shadow:0 0 .4cqw #000}
+.card4{border:.12cqw solid var(--bd);background:var(--s1);padding:1.4cqw;height:26cqw}
+.card4 .t{font-weight:600;font-size:2cqw;margin:.8cqw 0}
+.card4 .mono{font-size:1.1cqw;color:var(--mu);line-height:1.6}
+</style>
+</head>
+<body>
+<div class="page">
+<header class="top">
+  <div>
+    <h1>IBM Bob Live Collab — <em>the film</em> · storyboard v1</h1>
+    <p>Fast kinetic open built from the site's own words and screens, then the camera slows down and walks one near-miss through three Bob IDE windows. These are static sketches of each beat's key moment, so you can judge layout, hierarchy and copy. Motion comes in the build.</p>
+  </div>
+  <span class="tag">1920×1080 · ~2:50 · 11 beats · VO + music</span>
+</header>
+
+<div class="act"><b>Act I — Fast open</b><span>0:00–0:34 · kinetic, one idea per beat</span></div>
+<div class="grid">
+
+<figure>
+<div class="cell" id="frame-01">
+  <div class="blob" style="width:40cqw;height:40cqw;left:-8cqw;top:-10cqw;background:#1b3a8a"></div>
+  <div class="blob" style="width:30cqw;height:30cqw;right:-6cqw;bottom:-12cqw;background:#5a1a22"></div>
+  <div class="grain"></div>
+  <div style="position:absolute;left:5cqw;top:9cqw">
+    <div class="lbl" style="margin-bottom:1.6cqw">Everyone brings their own Bob</div>
+    <div class="h" style="font-size:8.4cqw">Two Bobs.<br><span class="it">One file</span><span class="dot" style="color:var(--bad)">.</span></div>
+    <div style="display:flex;gap:1cqw;margin-top:2.4cqw">
+      <span class="chip" style="--c:var(--pm)"><i></i>Aarief</span><span class="chip" style="--c:var(--al)"><i></i>Alief</span><span class="chip" style="--c:var(--um)"><i></i>Umar</span>
+    </div>
+  </div>
+  <div class="win" style="right:4cqw;top:10cqw;width:40cqw;transform:rotate(2deg)">
+    <div class="bar"><s></s><s></s><s></s>src/checkout.ts</div>
+<div class="code"><span class="n">1</span><span class="k">export function</span> <span class="f">calculateTotal</span>(cart) {
+<span class="n">2</span>  <span class="k">const</span> sum = cart.items.reduce(add, 0)
+<span class="n">3</span>  <span class="k">return</span> sum<span class="caret" style="--c:var(--al)"></span><span class="caret" style="--c:var(--um)"></span>
+<span class="n">4</span>}</div>
+  </div>
+  <div style="position:absolute;right:2cqw;top:31cqw;transform:rotate(-3deg);background:#a2191f;font:500 1.7cqw var(--mono);padding:1cqw 1.8cqw;box-shadow:0 1cqw 3cqw rgba(0,0,0,.6)">CONFLICT (content): Merge conflict in src/checkout.ts</div>
+  <div class="num">0:00</div>
+</div>
+<div class="meta"><b>01 · COLLISION</b><span>kinetic-type-beats · 0:00–0:09</span></div>
+<p class="note"><b>The words swap in place on each beat:</b> "Your team codes with AI" → "Everyone brings their own Bob" (the chips pop in) → "Two Bobs. <i>One file.</i>" The code card slides in from the right, two carets type on line 3, and the CONFLICT bar slams in with a frame shake.</p>
+<span class="seam">→ cut on impact</span>
+</figure>
+
+<figure>
+<div class="cell" id="frame-02">
+  <div class="blob" style="width:46cqw;height:46cqw;left:22cqw;top:-18cqw;background:#123a9c"></div>
+  <div class="blob" style="width:26cqw;height:26cqw;left:-6cqw;bottom:-10cqw;background:#3a2266"></div>
+  <div class="grain"></div>
+  <div style="position:absolute;right:-9cqw;top:8cqw;transform:rotate(9deg);background:#a2191f;font:500 1.7cqw var(--mono);padding:1cqw 1.8cqw;opacity:.8">CONFLICT (content): Merge conf…</div>
+  <img src="assets/img/bob-crew.png" alt="" style="position:absolute;left:5cqw;top:8cqw;width:9cqw;height:9cqw">
+  <div style="position:absolute;left:5cqw;top:19cqw">
+    <div class="h" style="font-size:7.6cqw">Your team's Bobs,<br><span class="it">working together</span><span class="dot">.</span></div>
+    <p style="font-size:1.9cqw;color:var(--mu);margin-top:2.2cqw;max-width:62cqw;line-height:1.4">One live workspace for every teammate's IBM Bob. Shared locks, a queue, and a PM who approves before anything risky lands.</p>
+  </div>
+  <div class="num">0:09</div>
+</div>
+<div class="meta"><b>02 · TAKEOVER</b><span>ticker-takeover · 0:09–0:18</span></div>
+<p class="note"><b>The headline crashes in from the left and shoves the CONFLICT bar off the right edge</b>, with a spring overshoot. The mascot springs up, then the sub-line rises. The copy is the site hero, word for word.</p>
+<span class="seam">→ whip left</span>
+</figure>
+
+<figure>
+<div class="cell" id="frame-03" style="perspective:120cqw">
+  <div class="blob" style="width:50cqw;height:40cqw;left:10cqw;top:10cqw;background:#0f2e7a"></div>
+  <img src="assets/img/scroll-035.png" alt="" style="position:absolute;left:-4cqw;top:6cqw;width:52cqw;border:.1cqw solid var(--bd);transform:rotateY(24deg) rotateX(6deg);opacity:.55">
+  <img src="assets/img/scroll-070.png" alt="" style="position:absolute;right:-6cqw;top:16cqw;width:50cqw;border:.1cqw solid var(--bd);transform:rotateY(-26deg) rotateX(4deg);opacity:.5">
+  <img src="assets/img/scroll-000.png" alt="" style="position:absolute;left:24cqw;top:4cqw;width:52cqw;border:.15cqw solid var(--bd);box-shadow:0 3cqw 6cqw rgba(0,0,0,.7);transform:rotateX(14deg) rotateZ(-2deg)">
+  <div style="position:absolute;left:0;right:0;bottom:6cqw;text-align:center">
+    <div class="h" style="font-size:7cqw;text-shadow:0 .5cqw 2cqw rgba(0,0,0,.8)"><span style="opacity:.28">Visible.</span> Locked<span class="dot">.</span> <span class="it" style="opacity:.28">Human-approved.</span></div>
+  </div>
+  <div class="num">0:18</div>
+</div>
+<div class="meta"><b>03 · SIZZLE</b><span>camera-journey (B) · 0:18–0:30</span></div>
+<p class="note"><b>The camera flies in 3D, with no cursor, across real screenshots of the site</b> (hero, Mission Control, near-miss, primitives), with motion blur on each leg. One slam word lands per leg, and the other two stay at 28% so the triad reads. The last leg pushes into black.</p>
+<span class="seam">→ push to black</span>
+</figure>
+
+<figure>
+<div class="cell" id="frame-04">
+  <div class="blob" style="width:30cqw;height:30cqw;left:35cqw;top:18cqw;background:#1e2a55;opacity:.4"></div>
+  <div class="grain"></div>
+  <div style="position:absolute;left:0;right:0;top:19cqw;text-align:center">
+    <div class="h" style="font-size:7.2cqw">Let's slow it <span class="it">down</span><span class="dot">.</span></div>
+    <div class="mono" style="font-size:1.6cqw;color:var(--mu);margin-top:2.4cqw;letter-spacing:.06em">ONE BRIEF · TWO CODERS · ONE NEAR-MISS</div>
+  </div>
+  <div class="num">0:30</div>
+</div>
+<div class="meta"><b>04 · SLOW DOWN</b><span>titlecard-reveal · 0:30–0:34</span></div>
+<p class="note"><b>A breather.</b> The line slides up and crossfades in, then everything holds still. This is where the film shifts from sizzle to demo.</p>
+<span class="seam">→ zoom into window</span>
+</figure>
+
+</div>
+
+<div class="act"><b>Act II — Slow demo in Bob IDE</b><span>0:34–2:28 · one continuous world, the camera does the cutting</span></div>
+<div class="grid">
+
+<figure>
+<div class="cell" id="frame-05">
+  <div class="blob" style="width:36cqw;height:36cqw;left:40cqw;top:-8cqw;background:#2d1a55;opacity:.45"></div>
+  <div class="win" style="left:4cqw;top:4cqw;width:92cqw;height:44cqw;--c:var(--pm)">
+    <div class="bar"><s></s><s></s><s></s>toko-demo — Bob IDE<span class="who"><i></i>Aarief · PM</span></div>
+    <div style="display:flex;height:calc(100% - 2.2cqw)">
+      <div style="width:34cqw;background:#2b2b2b;padding:1.6cqw"><div style="background:#f4f4f4;color:#161616;height:100%;padding:1.8cqw;font-size:1.15cqw;line-height:1.55"><b style="font-size:1.5cqw">toko-demo · Sprint brief</b><br><br>• Promo code at checkout<br>• Header shows live cart total<br>• Total includes the discount</div></div>
+      <div style="flex:1;background:var(--s1);position:relative;padding:1.6cqw">
+        <div style="display:flex;align-items:center;gap:.8cqw;font-weight:600;font-size:1.4cqw">Bob<span style="margin-left:auto;font:500 1.15cqw var(--sans);border:.12cqw solid var(--pm);padding:.4cqw .9cqw">◐ Live Collab PM Lead ▾</span></div>
+        <div style="position:absolute;right:1.6cqw;top:4.4cqw;width:22cqw;background:var(--s3);border:.1cqw solid var(--bd);font-size:1.15cqw">
+          <div style="padding:.6cqw 1cqw;color:var(--mu)">Ask</div><div style="padding:.6cqw 1cqw;color:var(--mu)">Plan</div><div style="padding:.6cqw 1cqw;color:var(--mu)">Code</div><div style="padding:.6cqw 1cqw;background:rgba(15,98,254,.4)">◐ Live Collab PM Lead</div>
+        </div>
+        <div style="position:absolute;left:1.6cqw;right:1.6cqw;bottom:1.6cqw;border:.1cqw solid var(--bd);padding:1cqw;font-size:1.2cqw;background:var(--s2);line-height:1.5"><span class="mono" style="font-size:1cqw;border:.1cqw solid var(--bd);padding:.1cqw .5cqw;color:var(--mu)">▤ brief.pdf</span><br>Read brief.pdf and split it into tasks for Alief and Umar. One owner per file.<span class="caret" style="--c:#fff"></span></div>
+      </div>
+    </div>
+  </div>
+  <span class="chip" style="position:absolute;left:5cqw;top:50cqw;--c:var(--pm);font-size:1.3cqw"><i></i>custom mode · pm-lead · read + mcp only</span>
+  <div class="num">0:34</div>
+</div>
+<div class="meta"><b>05 · THE BRIEF</b><span>prompt-type-submit-generate · 0:34–0:58</span></div>
+<p class="note"><b>We open tight on Aarief's Bob IDE, and the camera punches in on each VO cue.</b> The dropdown opens on "custom mode", the pm-lead chip rises on "can't touch the code", and the prompt types on "asks Bob". Submit is a small press-spring.</p>
+<span class="seam">continuous</span>
+</figure>
+
+<figure>
+<div class="cell" id="frame-06">
+  <div class="blob" style="width:34cqw;height:34cqw;left:-6cqw;top:10cqw;background:#10306e;opacity:.45"></div>
+  <div style="position:absolute;left:5cqw;top:6cqw;width:38cqw;display:flex;flex-direction:column;gap:1.2cqw">
+    <div class="tr"><b>⧉ mcp · radar.team_status</b><br>2 coders online · Alief, Umar</div>
+    <div class="tr"><b>⧉ mcp · radar.propose_plan</b><br>2 tasks · 4 files · waiting for approval</div>
+    <div class="lbl" style="margin-top:1cqw">Nothing moves until a human approves</div>
+  </div>
+  <div style="position:absolute;right:5cqw;top:6cqw;width:46cqw;background:var(--s1);border:.12cqw solid var(--bd);padding:2cqw;box-shadow:0 2cqw 5cqw rgba(0,0,0,.55)">
+    <div style="font-weight:600;font-size:1.8cqw;margin-bottom:1.4cqw">Plan · <span class="it">needs your approval</span></div>
+    <div style="border:.1cqw solid var(--bd);border-top:.35cqw solid var(--al);padding:1cqw;margin-bottom:1cqw"><b style="font-size:1.4cqw">T1 · Promo codes at checkout</b><div class="mono" style="font-size:1.1cqw;color:var(--mu);margin-top:.4cqw">Alief · checkout.ts · promo.ts</div></div>
+    <div style="border:.1cqw solid var(--bd);border-top:.35cqw solid var(--um);padding:1cqw;margin-bottom:1.4cqw"><b style="font-size:1.4cqw">T2 · Cart total in header</b><div class="mono" style="font-size:1.1cqw;color:var(--mu);margin-top:.4cqw">Umar · Header.tsx · cartBadge.ts</div></div>
+    <span class="btn pri" style="outline:.2cqw solid #fff;outline-offset:.2cqw">Approve</span> <span class="btn">Edit</span>
+  </div>
+  <div class="cursor" style="left:61cqw;top:40cqw"></div>
+  <div class="num">0:58</div>
+</div>
+<div class="meta"><b>06 · THE PLAN</b><span>agent-progress-theater · 0:58–1:16</span></div>
+<p class="note"><b>Bob works: each MCP call's spinner turns into a check.</b> The plan card cascades in row by row. The cursor glides to Approve, press-spring, and "✓ Approved by Aarief" replaces the buttons.</p>
+<span class="seam">continuous</span>
+</figure>
+
+<figure>
+<div class="cell" id="frame-07">
+  <div class="win" style="left:3cqw;top:6cqw;width:34cqw;height:46cqw;--c:var(--pm)"><div class="bar"><s></s><s></s><s></s>Bob IDE<span class="who"><i></i>Aarief · pm-lead</span></div></div>
+  <div class="win" style="left:41cqw;top:6cqw;width:56cqw;height:22cqw;--c:var(--al)"><div class="bar"><s></s><s></s><s></s>Bob IDE<span class="who"><i></i>Alief · coder</span></div></div>
+  <div class="win" style="left:41cqw;top:30cqw;width:56cqw;height:22cqw;--c:var(--um)"><div class="bar"><s></s><s></s><s></s>Bob IDE<span class="who"><i></i>Umar · coder</span></div></div>
+  <svg viewBox="0 0 100 56.25" style="position:absolute;inset:0;width:100%;height:100%" fill="none">
+    <path d="M30 22 C 38 10, 44 10, 52 16" stroke="#78a9ff" stroke-width=".25" stroke-dasharray="1 .8"/>
+    <path d="M30 30 C 38 42, 44 42, 52 40" stroke="#08bdba" stroke-width=".25" stroke-dasharray="1 .8"/>
+  </svg>
+  <span class="chip" style="position:absolute;left:34cqw;top:9cqw;--c:var(--al)"><i></i>T1 → Alief</span>
+  <span class="chip" style="position:absolute;left:34cqw;top:42cqw;--c:var(--um)"><i></i>T2 → Umar</span>
+  <div class="num">1:16</div>
+</div>
+<div class="meta"><b>07 · ZOOM OUT</b><span>zoom-out-workspace-reveal · 1:16–1:26</span></div>
+<p class="note"><b>One unbroken, decelerating pull-back</b> from Aarief's chat to the three-window workspace. Once it settles, the T1 and T2 cards fly on arcs into each coder's window. No zoom-in in this beat.</p>
+<span class="seam">continuous</span>
+</figure>
+
+<figure>
+<div class="cell" id="frame-08">
+  <div class="win" style="left:3cqw;top:4cqw;width:68cqw;height:46cqw;--c:var(--al)">
+    <div class="bar"><s></s><s></s><s></s>toko-demo — Bob IDE<span class="who"><i></i>Alief · coder</span></div>
+    <div style="display:flex;height:calc(100% - 2.2cqw)">
+      <div style="width:16cqw;background:#181818;padding:1cqw;font-size:1.05cqw;color:var(--mu);line-height:2.1">▾ src<br>&nbsp;&nbsp;checkout.ts <span style="border:.1cqw solid var(--al);color:var(--al);border-radius:2cqw;padding:0 .5cqw;font-size:.85cqw">you</span><br>&nbsp;&nbsp;promo.ts<br>&nbsp;&nbsp;Header.tsx <span style="color:var(--um);font-size:.85cqw">🔒 Umar</span></div>
+      <div style="flex:1;background:#131313;position:relative">
+        <span style="position:absolute;right:1cqw;top:.8cqw;font:1cqw var(--mono);color:var(--al);border:.1cqw solid var(--al);border-radius:2cqw;padding:0 .7cqw;background:#131313">Alief · Bob coder writing</span>
+<div class="code" style="padding-top:3.4cqw"><span class="n">1</span><span class="k">import</span> { applyPromo } <span class="k">from</span> <span class="s">'./promo'</span>
+<span class="n">3</span><span class="k">export function</span> <span class="f">calculateTotal</span>(cart, code) {
+<span class="n">4</span>  <span class="k">const</span> subtotal = sum(cart)
+<span class="n">5</span>  <span class="k">const</span> discount = <span class="f">applyPromo</span>(code)<span class="caret" style="--c:var(--al)"></span></div>
+      </div>
+    </div>
+  </div>
+  <div style="position:absolute;right:3cqw;top:6cqw;width:24cqw;display:flex;flex-direction:column;gap:1cqw">
+    <div class="tr hook"><b>⚓ hook · SessionStart</b><br>You: Alief · T1<br>Umar owns Header.tsx</div>
+    <div class="tr"><b>⧉ mcp · radar.my_tasks</b><br>T1 · checkout.ts, promo.ts</div>
+  </div>
+  <div class="win" style="right:-10cqw;bottom:-8cqw;width:36cqw;height:18cqw;opacity:.5;--c:var(--um)"><div class="bar"><s></s>Bob IDE<span class="who"><i></i>Umar</span></div></div>
+  <div class="num">1:26</div>
+</div>
+<div class="meta"><b>08 · BUILD</b><span>spatial-pan-stations · 1:26–1:52</span></div>
+<p class="note"><b>The camera stops at Alief first, then pans down to Umar.</b> The brief and MCP traces stack on the right, code types line by line under the owner pill, and a lock chip pops on each owned file. Umar's window waits in the corner for the next leg.</p>
+<span class="seam">continuous</span>
+</figure>
+
+<figure>
+<div class="cell" id="frame-09">
+  <div class="blob" style="width:40cqw;height:34cqw;left:30cqw;top:10cqw;background:#5a1a22;opacity:.55"></div>
+  <div class="win" style="left:2cqw;top:4cqw;width:96cqw;height:50cqw;opacity:.35;--c:var(--um)"><div class="bar"><s></s><s></s><s></s>toko-demo — Bob IDE<span class="who"><i></i>Umar · coder</span></div></div>
+  <div style="position:absolute;left:12cqw;top:9cqw;width:76cqw;display:flex;flex-direction:column;gap:1.2cqw">
+    <div class="tr" style="font-size:1.4cqw"><b>✎ apply_diff · src/checkout.ts</b></div>
+    <div class="tr bad" style="font-size:2.1cqw;padding:1.6cqw 2cqw"><b>⚓ hook · PreToolUse · lock_guard → blocked</b><br>checkout.ts is locked by <span style="color:var(--al)">Alief</span> (T1)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2cqw">
+      <div class="tr rule"><b>§ rules</b> · don't retry · no shell</div>
+      <div class="tr"><b>⧉ radar.why_blocked</b> → held by Alief</div>
+    </div>
+  </div>
+  <div class="h" style="position:absolute;left:12cqw;bottom:4cqw;font-size:4.2cqw">Blocked <span class="it">before</span> it lands<span class="dot" style="color:var(--bad)">.</span></div>
+  <div class="num">1:52</div>
+</div>
+<div class="meta"><b>09 · NEAR-MISS</b><span>camera-journey (A) · 1:52–2:28 · HELD</span></div>
+<p class="note"><b>The camera punches into Umar's chat as the red block lands,</b> with a flash and a small shake, then <b>holds still for ~1.5 s</b> while the line lands. The rules and why_blocked cards stack in. The camera swoops to Aarief's "Needs you" toast, and a click on "Queue after T1" resolves it. This is the callback to 01: same file, opposite outcome.</p>
+<span class="seam">→ whip up</span>
+</figure>
+
+</div>
+
+<div class="act"><b>Act III — Close</b><span>2:28–2:50</span></div>
+<div class="grid">
+
+<figure>
+<div class="cell" id="frame-10">
+  <div class="blob" style="width:44cqw;height:30cqw;left:28cqw;top:14cqw;background:#10306e;opacity:.4"></div>
+  <div style="position:absolute;left:5cqw;top:5cqw" class="h"><span style="font-size:4.6cqw">Built on Bob's <span class="it">own</span> features<span class="dot">.</span></span></div>
+  <div style="position:absolute;left:5cqw;right:5cqw;top:16cqw;display:grid;grid-template-columns:repeat(4,1fr);gap:1.4cqw">
+    <div class="card4" style="border-top:.4cqw solid var(--pm)"><div class="lbl" style="color:var(--pm)">◐ Custom modes</div><div class="t">Roles</div><div class="mono">pm-lead · plans<br>coder · builds</div></div>
+    <div class="card4" style="border-top:.4cqw solid var(--warn);transform:translateY(1.2cqw)"><div class="lbl" style="color:var(--warn)">⚓ Hooks</div><div class="t">Enforcement</div><div class="mono">SessionStart<br>PreToolUse<br>PostToolUse · Stop</div></div>
+    <div class="card4" style="border-top:.4cqw solid var(--acc)"><div class="lbl" style="color:var(--accs)">⧉ MCP</div><div class="t">A voice</div><div class="mono">propose_plan<br>why_blocked<br>request_file</div></div>
+    <div class="card4" style="border-top:.4cqw solid var(--ok);transform:translateY(1.2cqw)"><div class="lbl" style="color:var(--ok)">§ Rules</div><div class="t">Manners</div><div class="mono">✗ retry<br>✗ shell tricks<br>✓ explain, move on</div></div>
+  </div>
+  <div class="mono" style="position:absolute;left:5cqw;bottom:3cqw;font-size:1.3cqw;color:var(--mu)">all in one <span style="color:var(--accs)">.bob/</span> kit per workspace · built with Bob</div>
+  <div class="num">2:28</div>
+</div>
+<div class="meta"><b>10 · BUILT ON BOB</b><span>grid-card-assemble · 2:28–2:41</span></div>
+<p class="note"><b>The four cards cascade in on an offset baseline</b> (not a flat grid), one per VO clause. On "we built it all with Bob" they collapse into a single <code>.bob/</code> chip.</p>
+<span class="seam">→ collapse to center</span>
+</figure>
+
+<figure>
+<div class="cell" id="frame-11">
+  <div class="blob" style="width:50cqw;height:40cqw;left:25cqw;top:4cqw;background:#123a9c;opacity:.5"></div>
+  <div class="grain"></div>
+  <div style="position:absolute;left:0;right:0;top:6cqw;text-align:center">
+    <img src="assets/img/bob-crew.png" alt="" style="width:10cqw;height:10cqw">
+    <div class="h" style="font-size:6.2cqw;margin-top:1.2cqw">IBM Bob Live Collab</div>
+    <div style="font-size:2.2cqw;color:var(--mu);margin-top:1cqw">Every Bob, <span class="it" style="color:var(--tx)">on the same page</span><span class="dot">.</span></div>
+    <div style="margin-top:2.4cqw;display:inline-flex;gap:1.2cqw;align-items:center"><span class="btn pri" style="font-size:1.5cqw">Watch the live replay</span><span class="mono" style="font-size:1.6cqw;color:var(--accs)">ibm-bob-live-collab.pages.dev</span></div>
+    <div style="margin-top:2.6cqw;display:flex;justify-content:center;gap:1cqw"><span class="chip" style="--c:var(--pm)"><i></i>Aarief</span><span class="chip" style="--c:var(--al)"><i></i>Alief</span><span class="chip" style="--c:var(--um)"><i></i>Umar</span><span class="chip" style="--c:var(--need)"><i></i>Imelda</span></div>
+    <div style="font-size:1.1cqw;color:var(--fa);margin-top:2cqw">Community hackathon project · not an official IBM product</div>
+  </div>
+  <div class="num">2:41</div>
+</div>
+<div class="meta"><b>11 · CTA</b><span>logo-assemble-lockup · 2:41–2:50</span></div>
+<p class="note"><b>The mascot springs out of the <code>.bob/</code> chip,</b> the wordmark letters cascade in, the URL types, and the team chips pop. The frame holds to the last second, with no fade to black.</p>
+<span class="seam">end · hold</span>
+</figure>
+
+<figure>
+<div class="cell">
+  <div class="seammap" style="height:100%">
+    <div class="lbl">Seam map · pace</div>
+    <div class="strip">
+      <div class="fast" style="--d:9"><b>01</b>cut</div><div class="fast" style="--d:9"><b>02</b>whip</div><div class="fast" style="--d:12"><b>03</b>push</div><div class="fast" style="--d:4"><b>04</b>zm</div>
+      <div class="slow" style="--d:24"><b>05</b>—</div><div class="slow" style="--d:18"><b>06</b>—</div><div class="slow" style="--d:10"><b>07</b>—</div><div class="slow" style="--d:26"><b>08</b>—</div><div class="slow" style="--d:36"><b>09</b>whip</div>
+      <div class="end" style="--d:13"><b>10</b>coll</div><div class="end" style="--d:9"><b>11</b>hold</div>
+    </div>
+    <div style="font-size:1.25cqw;color:var(--mu);line-height:1.5"><span style="color:var(--accs)">■</span> fast open, one beat every 1.5–2.5 s &nbsp; <span style="color:var(--pm)">■</span> slow demo, camera moves on VO cues &nbsp; <span style="color:var(--ok)">■</span> close</div>
+  </div>
+</div>
+<div class="meta"><b>SEAMS</b><span>34 s fast · 114 s demo · 22 s close</span></div>
+<p class="note"><b>One world from 05 to 09:</b> no cuts, only camera legs. Act I seams travel leftward.</p>
+</figure>
+
+<figure>
+<div class="cell">
+  <div class="tokens">
+    <div>
+      <div class="lbl" style="margin-bottom:1cqw">Palette · from the site</div>
+      <div class="sw">
+        <span style="--c:#0e0e10">bg</span><span style="--c:#1e1e20">surface</span><span style="--c:#0f62fe">accent</span><span style="--c:#fa4d56">danger</span><span style="--c:#be95ff">Aarief</span><span style="--c:#78a9ff">Alief</span><span style="--c:#08bdba">Umar</span><span style="--c:#f1c21b">hook</span>
+      </div>
+    </div>
+    <div>
+      <div class="lbl" style="margin-bottom:1cqw">Type</div>
+      <div class="h" style="font-size:3.4cqw">Plex Sans 600</div>
+      <div class="it" style="font-size:3.4cqw">Source Serif italic</div>
+      <div class="mono" style="font-size:1.8cqw;color:var(--mu);margin-top:.6cqw">Plex Mono · traces</div>
+    </div>
+    <div style="grid-column:1/3;font-size:1.25cqw;color:var(--mu);line-height:1.6">
+      <b style="color:var(--tx)">From the reference:</b> a huge headline with one serif-italic word and a colored full stop, soft blurred color fields, lots of air, and hard word cuts on the beat.<br>
+      <b style="color:var(--tx)">Bans:</b> gradient text · invented stats · IBM logo · slideshow cuts · screensaver motion · Andi/Budi names.
+    </div>
+  </div>
+</div>
+<div class="meta"><b>TOKENS</b><span>capture/extracted/tokens.json</span></div>
+<p class="note"><b>The Bob IDE in 05–09 is a reconstruction.</b> Each window can be swapped for a real screen recording later without changing the timing.</p>
+</figure>
+
+</div>
+</div>
+</body>
+</html>

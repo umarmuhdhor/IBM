@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Live Collab Logo Options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #000;
+    --panel: #161616;
+    --panel-2: #262626;
+    --line: #393939;
+    --text: #f4f4f4;
+    --muted: #a8a8a8;
+    --paper: #fff;
+    --ink: #000;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 64px 16px 96px; }
+  header { border-bottom: 1px solid var(--line); padding-bottom: 32px; margin-bottom: 48px; }
+  .eyebrow { font-family: "IBM Plex Mono", monospace; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  h1 { font-size: clamp(32px, 5vw, 56px); font-weight: 400; letter-spacing: -0.02em; margin: 12px 0 16px; line-height: 1.1; }
+  h1 b { font-weight: 600; }
+  header p { color: var(--muted); max-width: 64ch; }
+
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+  .card { background: var(--panel); display: flex; flex-direction: column; }
+  .hero { background: var(--bg); aspect-ratio: 16 / 9; display: grid; place-items: center; position: relative; color: var(--text); }
+  .hero svg { width: 34%; height: auto; }
+  .num { position: absolute; top: 16px; left: 16px; font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--muted); }
+  .rec { position: absolute; top: 12px; right: 12px; font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; border: 1px solid var(--text); padding: 4px 8px; }
+
+  .lockups { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--line); }
+  @media (max-width: 520px) { .lockups { grid-template-columns: 1fr; } }
+  .lockup { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 28px 16px; }
+  .lockup.light { background: var(--paper); color: var(--ink); }
+  .lockup.dark { background: var(--panel-2); color: var(--text); }
+  .lockup svg { width: 40px; height: 40px; flex: none; }
+  .word { font-size: 26px; font-weight: 600; letter-spacing: -0.03em; line-height: 1; white-space: nowrap; }
+  .word span { font-weight: 400; }
+
+  .sizes { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 24px; padding: 20px 24px; border-top: 1px solid var(--line); color: var(--text); }
+  .sizes figure { display: flex; flex-direction: column; align-items: center; gap: 6px; margin: 0; }
+  .sizes figcaption { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--muted); }
+  .sizes .app { background: var(--paper); color: var(--ink); border-radius: 12px; padding: 8px; display: grid; place-items: center; }
+
+  .body { padding: 24px; border-top: 1px solid var(--line); flex: 1; }
+  h2 { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 4px; }
+  .tag { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+  .body > p { margin-bottom: 16px; max-width: 60ch; }
+  code { font-family: "IBM Plex Mono", monospace; font-size: .9em; }
+  dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; font-size: 14px; }
+  dt { font-family: "IBM Plex Mono", monospace; color: var(--muted); font-size: 12px; padding-top: 2px; }
+  dd { margin: 0; }
+
+  footer { margin-top: 48px; color: var(--muted); font-size: 14px; max-width: 72ch; }
+  footer b { color: var(--text); font-weight: 500; }
+</style>
+</head>
+<body>
+
+<!-- Shared marks. Every mark draws in currentColor so it flips black/white with its container. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- IBM-style 8 horizontal bars, 8u bar / 4u gap -->
+    <mask id="stripes" maskUnits="userSpaceOnUse" x="0" y="0" width="120" height="96">
+      <rect y="0"  width="120" height="8" fill="#fff"/>
+      <rect y="12" width="120" height="8" fill="#fff"/>
+      <rect y="24" width="120" height="8" fill="#fff"/>
+      <rect y="36" width="120" height="8" fill="#fff"/>
+      <rect y="48" width="120" height="8" fill="#fff"/>
+      <rect y="60" width="120" height="8" fill="#fff"/>
+      <rect y="72" width="120" height="8" fill="#fff"/>
+      <rect y="84" width="120" height="8" fill="#fff"/>
+    </mask>
+
+    <!-- 01 Stripe Monogram: L + C cut by 8 bars, solid live dot -->
+    <symbol id="m1" viewBox="0 0 120 120">
+      <g transform="translate(0 12)" fill="currentColor" mask="url(#stripes)">
+        <rect x="6" y="0" width="18" height="96"/>
+        <rect x="6" y="72" width="36" height="24"/>
+        <path d="M101.2 26.8 A30 30 0 1 0 101.2 69.2" fill="none" stroke="currentColor" stroke-width="18"/>
+      </g>
+      <circle cx="108" cy="60" r="7" fill="currentColor"/>
+    </symbol>
+
+    <!-- 02 Merge: four lanes converge into one node -->
+    <symbol id="m2" viewBox="0 0 120 120">
+      <g fill="none" stroke="currentColor" stroke-width="10" stroke-linejoin="round">
+        <path d="M8 22 H40 L78 60"/>
+        <path d="M8 46 H56 L70 60"/>
+        <path d="M8 74 H56 L70 60"/>
+        <path d="M8 98 H40 L78 60"/>
+      </g>
+      <circle cx="94" cy="60" r="18" fill="currentColor"/>
+    </symbol>
+
+    <!-- 03 Radar: three 270° arcs + sweep beam + origin -->
+    <symbol id="m3" viewBox="0 0 120 120">
+      <g fill="none" stroke="currentColor" stroke-width="8">
+        <path d="M78 60 A18 18 0 1 1 60 42"/>
+        <path d="M94 60 A34 34 0 1 1 60 26"/>
+        <path d="M110 60 A50 50 0 1 1 60 10"/>
+        <path d="M60 60 L95.4 24.6" stroke-linecap="round"/>
+      </g>
+      <circle cx="60" cy="60" r="9" fill="currentColor"/>
+    </symbol>
+
+    <!-- 04 Overlap: two workspaces, shared square is solid -->
+    <symbol id="m4" viewBox="0 0 120 120">
+      <g fill="none" stroke="currentColor" stroke-width="10">
+        <rect x="10" y="10" width="62" height="62"/>
+        <rect x="48" y="48" width="62" height="62"/>
+      </g>
+      <rect x="48" y="48" width="24" height="24" fill="currentColor"/>
+    </symbol>
+
+    <!-- 05 Stripe Lock: shackle + body made of code lines, last line has a cursor gap -->
+    <symbol id="m5" viewBox="0 0 120 120">
+      <path d="M38 52 V36 A22 22 0 0 1 82 36 V52" fill="none" stroke="currentColor" stroke-width="11"/>
+      <g fill="currentColor">
+        <rect x="22" y="56" width="76" height="11"/>
+        <rect x="22" y="71" width="76" height="11"/>
+        <rect x="22" y="86" width="76" height="11"/>
+        <rect x="22" y="101" width="40" height="11"/>
+        <rect x="68" y="101" width="30" height="11"/>
+      </g>
+    </symbol>
+
+    <!-- 06 Hub: six bars around an empty room, one is a live dot -->
+    <symbol id="m6" viewBox="0 0 120 120">
+      <g fill="currentColor" transform="translate(60 60)">
+        <rect x="-8" y="-54" width="16" height="38" rx="3"/>
+        <rect x="-8" y="-54" width="16" height="38" rx="3" transform="rotate(120)"/>
+        <rect x="-8" y="-54" width="16" height="38" rx="3" transform="rotate(180)"/>
+        <rect x="-8" y="-54" width="16" height="38" rx="3" transform="rotate(240)"/>
+        <rect x="-8" y="-54" width="16" height="38" rx="3" transform="rotate(300)"/>
+        <circle cx="0" cy="-44" r="10" transform="rotate(60)"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Live Collab · Brand exploration · v2</div>
+    <h1><b>6 arah logo</b> untuk Live Collab</h1>
+    <p>Semua hitam-putih, font IBM Plex Sans, grid kotak ala Carbon. Sentuhan IBM dipakai secukupnya: garis horizontal (8 bar), sudut tegas, dan satu titik sebagai sinyal "live". Tiap kartu menampilkan mark besar, lockup di latar terang dan gelap, lalu tes ukuran kecil sampai 16px.</p>
+  </header>
+
+  <main class="grid">
+
+    <!-- 01 -->
+    <article class="card">
+      <div class="hero"><span class="num">01</span><span class="rec">Rekomendasi</span>
+        <svg viewBox="0 0 120 120" role="img" aria-label="Stripe Monogram"><use href="#m1"/></svg></div>
+      <div class="lockups">
+        <div class="lockup light"><svg viewBox="0 0 120 120"><use href="#m1"/></svg><div class="word">live <span>collab</span></div></div>
+        <div class="lockup dark"><svg viewBox="0 0 120 120"><use href="#m1"/></svg><div class="word">live <span>collab</span></div></div>
+      </div>
+      <div class="sizes">
+        <figure><svg width="64" height="64" viewBox="0 0 120 120"><use href="#m1"/></svg><figcaption>64</figcaption></figure>
+        <figure><svg width="32" height="32" viewBox="0 0 120 120"><use href="#m1"/></svg><figcaption>32</figcaption></figure>
+        <figure><svg width="16" height="16" viewBox="0 0 120 120"><use href="#m1"/></svg><figcaption>16</figcaption></figure>
+        <figure><div class="app"><svg width="40" height="40" viewBox="0 0 120 120"><use href="#m1"/></svg></div><figcaption>app icon</figcaption></figure>
+      </div>
+      <div class="body">
+        <h2>Stripe Monogram</h2>
+        <div class="tag">L + C · 8 bar · titik live</div>
+        <p>Huruf L dan C dipotong 8 garis horizontal, mirip cara IBM menggambar logonya. Tiap garis adalah satu lane kerja: jalan sejajar, berdekatan, tapi tidak saling tabrak. Di mulut huruf C ada satu titik solid yang tidak ikut terpotong. Itu sinyal "live": saat ini, ketika semua orang bisa saling lihat.</p>
+        <dl>
+          <dt>Garis</dt><dd>Orang dan agent Bob kerja paralel di lane masing-masing</dd>
+          <dt>Titik</dt><dd>Status live yang dibagikan ke seluruh tim</dd>
+          <dt>Kuat</dt><dd>Paling terasa nyambung ke ekosistem IBM, tapi tetap monogram sendiri</dd>
+          <dt>Risiko</dt><dd>Di 16px garisnya mulai menyatu, jadi favicon sebaiknya pakai versi tanpa garis</dd>
+        </dl>
+      </div>
+    </article>
+
+    <!-- 02 -->
+    <article class="card">
+      <div class="hero"><span class="num">02</span>
+        <svg viewBox="0 0 120 120" role="img" aria-label="Merge"><use href="#m2"/></svg></div>
+      <div class="lockups">
+        <div class="lockup light"><svg viewBox="0 0 120 120"><use href="#m2"/></svg><div class="word">live <span>collab</span></div></div>
+        <div class="lockup dark"><svg viewBox="0 0 120 120"><use href="#m2"/></svg><div class="word">live <span>collab</span></div></div>
+      </div>
+      <div class="sizes">
+        <figure><svg width="64" height="64" viewBox="0 0 120 120"><use href="#m2"/></svg><figcaption>64</figcaption></figure>
+        <figure><svg width="32" height="32" viewBox="0 0 120 120"><use href="#m2"/></svg><figcaption>32</figcaption></figure>
+        <figure><svg width="16" height="16" viewBox="0 0 120 120"><use href="#m2"/></svg><figcaption>16</figcaption></figure>
+        <figure><div class="app"><svg width="40" height="40" viewBox="0 0 120 120"><use href="#m2"/></svg></div><figcaption>app icon</figcaption></figure>
+      </div>
+      <div class="body">
+        <h2>Merge</h2>
+        <div class="tag">4 lane · 1 titik temu</div>
+        <p>Empat garis mulai dari tempat berbeda lalu berbelok tegas ke satu titik. Empat itu tim kita (Core, Bob, App, Web), tapi juga cara kerja tim mana pun: banyak orang kerja bareng, hasilnya menyatu ke satu tempat tanpa konflik. Bentuknya mirip grafik git branch, jadi developer langsung paham tanpa perlu dijelaskan.</p>
+        <dl>
+          <dt>Garis</dt><dd>Kerja paralel yang tetap punya jalur masing-masing</dd>
+          <dt>Titik</dt><dd>Main branch, tempat semua kerjaan mendarat dengan aman</dd>
+          <dt>Kuat</dt><dd>Ceritanya paling cepat dipahami juri</dd>
+          <dt>Risiko</dt><dd>Visual "branch merge" cukup umum di tool dev lain</dd>
+        </dl>
+      </div>
+    </article>
+
+    <!-- 03 -->
+    <article class="card">
+      <div class="hero"><span class="num">03</span>
+        <svg viewBox="0 0 120 120" role="img" aria-label="Radar"><use href="#m3"/></svg></div>
+      <div class="lockups">
+        <div class="lockup light"><svg viewBox="0 0 120 120"><use href="#m3"/></svg><div class="word">live <span>collab</span></div></div>
+        <div class="lockup dark"><svg viewBox="0 0 120 120"><use href="#m3"/></svg><div class="word">live <span>collab</span></div></div>
+      </div>
+      <div class="sizes">
+        <figure><svg width="64" height="64" viewBox="0 0 120 120"><use href="#m3"/></svg><figcaption>64</figcaption></figure>
+        <figure><svg width="32" height="32" viewBox="0 0 120 120"><use href="#m3"/></svg><figcaption>32</figcaption></figure>
+        <figure><svg width="16" height="16" viewBox="0 0 120 120"><use href="#m3"/></svg><figcaption>16</figcaption></figure>
+        <figure><div class="app"><svg width="40" height="40" viewBox="0 0 120 120"><use href="#m3"/></svg></div><figcaption>app icon</figcaption></figure>
+      </div>
+      <div class="body">
+        <h2>Radar</h2>
+        <div class="tag">3 lingkar · 1 sapuan · codename "radar"</div>
+        <p>Diambil dari nama internal project, <code>radar</code>. Tiga lingkar adalah jangkauan: file kamu, tim kamu, seluruh repo. Garis sapuan menunjukkan sistem yang terus memantau siapa sedang edit apa. Kuadran kanan atas sengaja dibiarkan terbuka, seperti area yang sedang dipindai saat ini juga.</p>
+        <dl>
+          <dt>Lingkar</dt><dd>Kesadaran berlapis: diri sendiri, tim, codebase</dd>
+          <dt>Sapuan</dt><dd>Deteksi real-time sebelum terjadi tabrakan</dd>
+          <dt>Kuat</dt><dd>Sangat terbaca di ukuran kecil, cocok untuk ikon app</dd>
+          <dt>Risiko</dt><dd>Kurang menonjolkan sisi "collab", lebih ke "monitoring"</dd>
+        </dl>
+      </div>
+    </article>
+
+    <!-- 04 -->
+    <article class="card">
+      <div class="hero"><span class="num">04</span>
+        <svg viewBox="0 0 120 120" role="img" aria-label="Overlap"><use href="#m4"/></svg></div>
+      <div class="lockups">
+        <div class="lockup light"><svg viewBox="0 0 120 120"><use href="#m4"/></svg><div class="word">live <span>collab</span></div></div>
+        <div class="lockup dark"><svg viewBox="0 0 120 120"><use href="#m4"/></svg><div class="word">live <span>collab</span></div></div>
+      </div>
+      <div class="sizes">
+        <figure><svg width="64" height="64" viewBox="0 0 120 120"><use href="#m4"/></svg><figcaption>64</figcaption></figure>
+        <figure><svg width="32" height="32" viewBox="0 0 120 120"><use href="#m4"/></svg><figcaption>32</figcaption></figure>
+        <figure><svg width="16" height="16" viewBox="0 0 120 120"><use href="#m4"/></svg><figcaption>16</figcaption></figure>
+        <figure><div class="app"><svg width="40" height="40" viewBox="0 0 120 120"><use href="#m4"/></svg></div><figcaption>app icon</figcaption></figure>
+      </div>
+      <div class="body">
+        <h2>Overlap</h2>
+        <div class="tag">2 workspace · 1 area bersama</div>
+        <p>Dua kotak adalah dua workspace, masing-masing dengan Bob-nya sendiri. Di tempat keduanya bertemu, area itu dibuat solid. Di situlah Live Collab bekerja: file yang disentuh dua orang jadi jelas siapa pemiliknya, bukan area abu-abu tempat kode saling timpa. Kotak dan sudut tajam mengikuti grid Carbon.</p>
+        <dl>
+          <dt>Kotak</dt><dd>Workspace pribadi tiap developer</dd>
+          <dt>Solid</dt><dd>Wilayah bersama yang dijaga, bukan diperebutkan</dd>
+          <dt>Kuat</dt><dd>Paling "enterprise" dan tenang, cocok dengan gaya IBM</dd>
+          <dt>Risiko</dt><dd>Bentuknya sederhana, butuh wordmark kuat supaya punya karakter</dd>
+        </dl>
+      </div>
+    </article>
+
+    <!-- 05 -->
+    <article class="card">
+      <div class="hero"><span class="num">05</span>
+        <svg viewBox="0 0 120 120" role="img" aria-label="Stripe Lock"><use href="#m5"/></svg></div>
+      <div class="lockups">
+        <div class="lockup light"><svg viewBox="0 0 120 120"><use href="#m5"/></svg><div class="word">live <span>collab</span></div></div>
+        <div class="lockup dark"><svg viewBox="0 0 120 120"><use href="#m5"/></svg><div class="word">live <span>collab</span></div></div>
+      </div>
+      <div class="sizes">
+        <figure><svg width="64" height="64" viewBox="0 0 120 120"><use href="#m5"/></svg><figcaption>64</figcaption></figure>
+        <figure><svg width="32" height="32" viewBox="0 0 120 120"><use href="#m5"/></svg><figcaption>32</figcaption></figure>
+        <figure><svg width="16" height="16" viewBox="0 0 120 120"><use href="#m5"/></svg><figcaption>16</figcaption></figure>
+        <figure><div class="app"><svg width="40" height="40" viewBox="0 0 120 120"><use href="#m5"/></svg></div><figcaption>app icon</figcaption></figure>
+      </div>
+      <div class="body">
+        <h2>Stripe Lock</h2>
+        <div class="tag">gembok · baris kode · kursor</div>
+        <p>Badan gembok disusun dari baris-baris horizontal yang mirip baris kode, sekaligus mengingatkan pada garis IBM. Di baris terakhir ada celah kecil, seperti kursor yang sedang mengetik. Artinya: file dikunci selama seseorang sedang mengerjakannya, tapi tetap terlihat hidup dan tidak menghambat yang lain.</p>
+        <dl>
+          <dt>Gembok</dt><dd>Claim file, tidak ada lagi kode yang tertimpa</dd>
+          <dt>Celah</dt><dd>Kursor aktif, kerja masih berjalan</dd>
+          <dt>Kuat</dt><dd>Paling pas dengan fitur lock di demo</dd>
+          <dt>Risiko</dt><dd>Gembok bisa terbaca sebagai produk security, bukan kolaborasi</dd>
+        </dl>
+      </div>
+    </article>
+
+    <!-- 06 -->
+    <article class="card">
+      <div class="hero"><span class="num">06</span>
+        <svg viewBox="0 0 120 120" role="img" aria-label="Hub"><use href="#m6"/></svg></div>
+      <div class="lockups">
+        <div class="lockup light"><svg viewBox="0 0 120 120"><use href="#m6"/></svg><div class="word">live <span>collab</span></div></div>
+        <div class="lockup dark"><svg viewBox="0 0 120 120"><use href="#m6"/></svg><div class="word">live <span>collab</span></div></div>
+      </div>
+      <div class="sizes">
+        <figure><svg width="64" height="64" viewBox="0 0 120 120"><use href="#m6"/></svg><figcaption>64</figcaption></figure>
+        <figure><svg width="32" height="32" viewBox="0 0 120 120"><use href="#m6"/></svg><figcaption>32</figcaption></figure>
+        <figure><svg width="16" height="16" viewBox="0 0 120 120"><use href="#m6"/></svg><figcaption>16</figcaption></figure>
+        <figure><div class="app"><svg width="40" height="40" viewBox="0 0 120 120"><use href="#m6"/></svg></div><figcaption>app icon</figcaption></figure>
+      </div>
+      <div class="body">
+        <h2>Hub</h2>
+        <div class="tag">6 arah · ruang kosong di tengah · 1 yang live</div>
+        <p>Terinspirasi dari referensi asterisk. Enam batang menghadap keluar, masing-masing satu kontributor, dan semuanya berpusat ke ruang kosong di tengah: room bersama tempat status dibagikan. Satu batang diganti titik, yaitu orang yang sedang aktif sekarang. Kalau dianimasikan, titiknya bisa berpindah-pindah.</p>
+        <dl>
+          <dt>Batang</dt><dd>Kontributor, manusia maupun agent Bob</dd>
+          <dt>Tengah</dt><dd>Room server tempat semua status bertemu</dd>
+          <dt>Kuat</dt><dd>Paling hidup untuk animasi, misalnya titik berputar di intro video</dd>
+          <dt>Risiko</dt><dd>Paling dekat dengan referensi, jadi kurang unik</dd>
+        </dl>
+      </div>
+    </article>
+
+  </main>
+
+  <footer>
+    <p><b>Catatan soal IBM style:</b> garis horizontal cuma dipakai sebagai motif, bukan meniru logo IBM. Ini community project, bukan produk resmi IBM, jadi logonya tidak boleh terlihat seperti logo IBM. Setelah kamu pilih, aku bisa export SVG final, favicon 16/32, app icon .icns, dan versi animasi untuk intro video.</p>
+  </footer>
+</div>
+</body>
+</html>

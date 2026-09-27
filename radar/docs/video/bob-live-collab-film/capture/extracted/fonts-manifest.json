@@ -1,0 +1,389 @@
+{
+  "files": [
+    {
+      "file": "19cfc7226ec3afaa-s.woff2",
+      "family": "Inter",
+      "rawFamily": "Inter",
+      "subfamily": "Regular",
+      "postscript": "Inter-Regular",
+      "weight": 400,
+      "style": "normal",
+      "variationAxes": [
+        "wght"
+      ],
+      "identified": true,
+      "isIcon": false
+    },
+    {
+      "file": "21350d82a1f187e9-s.woff2",
+      "family": "Inter",
+      "rawFamily": "Inter",
+      "subfamily": "Regular",
+      "postscript": "Inter-Regular",
+      "weight": 400,
+      "style": "normal",
+      "variationAxes": [
+        "wght"
+      ],
+      "identified": true,
+      "isIcon": false
+    },
+    {
+      "file": "3d165c286d94e27c-s.woff2",
+      "family": "Source Serif 4",
+      "rawFamily": "Source Serif 4",
+      "subfamily": "Regular",
+      "postscript": "SourceSerif4-Regular",
+      "weight": 400,
+      "style": "normal",
+      "variationAxes": [
+        "wght"
+      ],
+      "identified": true,
+      "isIcon": false
+    },
+    {
+      "file": "591e43f23f51e5a5-s.woff2",
+      "family": "Source Serif 4",
+      "rawFamily": "Source Serif 4",
+      "subfamily": "Regular",
+      "postscript": "SourceSerif4-Regular",
+      "weight": 400,
+      "style": "normal",
+      "variationAxes": [
+        "wght"
+      ],
+      "identified": true,
+      "isIcon": false
+    },
+    {
+      "file": "7c21074d9bafed1b-s.woff2",
+      "family": "Source Serif 4",
+      "rawFamily": "Source Serif 4",
+      "subfamily": "Regular",
+      "postscript": "SourceSerif4-Regular",
+      "weight": 400,
+      "style": "normal",
+      "variationAxes": [
+        "wght"
+      ],
+      "identified": true,
+      "isIcon": false
+    },
+    {
+      "file": "8e9860b6e62d6359-s.woff2",
+      "family": "Inter",
+      "rawFamily": "Inter",
+      "subfamily": "Regular",
+      "postscript": "Inter-Regular",
+      "weight": 400,
+      "style": "normal",
+      "variationAxes": [
+        "wght"
+      ],
+      "identified": true,
+      "isIcon": false
+    },
+    {
+      "file": "916860560b9a2bc2-s.woff2",
+      "family": "Source Serif 4",
+      "rawFamily": "Source Serif 4",
+      "subfamily": "Regular",
+      "postscript": "SourceSerif4-Regular",
+      "weight": 400,
+      "style": "normal",
+      "variationAxes": [
+        "wght"
+      ],
+      "identified": true,
+      "isIcon": false
+    },
+    {
+      "file": "97ac91773d3121b2-s.p.woff2",
+      "family": "Source Serif 4",
+      "rawFamily": "Source Serif 4",
+      "subfamily": "Regular",
+      "postscript": "SourceSerif4-Regular",
+      "weight": 400,
+      "style": "normal",
+      "variationAxes": [
+        "wght"
+      ],
+      "identified": true,
+      "isIcon": false
+    },
+    {
+      "file": "ba9851c3c22cd980-s.woff2",
+      "family": "Inter",
+      "rawFamily": "Inter",
+      "subfamily": "Regular",
+      "postscript": "Inter-Regular",
+      "weight": 400,
+      "style": "normal",
+      "variationAxes": [
+        "wght"
+      ],
+      "identified": true,
+      "isIcon": false
+    },
+    {
+      "file": "c5fe6dc8356a8c31-s.woff2",
+      "family": "Inter",
+      "rawFamily": "Inter",
+      "subfamily": "Regular",
+      "postscript": "Inter-Regular",
+      "weight": 400,
+      "style": "normal",
+      "variationAxes": [
+        "wght"
+      ],
+      "identified": true,
+      "isIcon": false
+    },
+    {
+      "file": "df0a9ae256c0569c-s.woff2",
+      "family": "Inter",
+      "rawFamily": "Inter",
+      "subfamily": "Regular",
+      "postscript": "Inter-Regular",
+      "weight": 400,
+      "style": "normal",
+      "variationAxes": [
+        "wght"
+      ],
+      "identified": true,
+      "isIcon": false
+    },
+    {
+      "file": "e54d16b9f2c4535b-s.woff2",
+      "family": "Source Serif 4",
+      "rawFamily": "Source Serif 4",
+      "subfamily": "Regular",
+      "postscript": "SourceSerif4-Regular",
+      "weight": 400,
+      "style": "normal",
+      "variationAxes": [
+        "wght"
+      ],
+      "identified": true,
+      "isIcon": false
+    },
+    {
+      "file": "ibm-plex-mono-latin-400-normal.06ac09dc.woff2",
+      "family": "IBM Plex Mono",
+      "rawFamily": "IBM Plex Mono",
+      "subfamily": "Regular",
+      "postscript": "IBMPlexMono-Regular",
+      "weight": 400,
+      "style": "normal",
+      "variationAxes": [],
+      "identified": true,
+      "isIcon": false
+    },
+    {
+      "file": "ibm-plex-mono-latin-400-normal.e32cf7a4.woff",
+      "family": "IBM Plex Mono",
+      "rawFamily": "IBM Plex Mono",
+      "subfamily": "Regular",
+      "postscript": "IBMPlexMono-Regular",
+      "weight": 400,
+      "style": "normal",
+      "variationAxes": [],
+      "identified": true,
+      "isIcon": false
+    },
+    {
+      "file": "ibm-plex-mono-latin-ext-400-normal.9faee8e8.woff2",
+      "family": "IBM Plex Mono",
+      "rawFamily": "IBM Plex Mono",
+      "subfamily": "Regular",
+      "postscript": "IBMPlexMono-Regular",
+      "weight": 400,
+      "style": "normal",
+      "variationAxes": [],
+      "identified": true,
+      "isIcon": false
+    },
+    {
+      "file": "ibm-plex-mono-latin-ext-400-normal.f14ffb91.woff",
+      "family": "IBM Plex Mono",
+      "rawFamily": "IBM Plex Mono",
+      "subfamily": "Regular",
+      "postscript": "IBMPlexMono-Regular",
+      "weight": 400,
+      "style": "normal",
+      "variationAxes": [],
+      "identified": true,
+      "isIcon": false
+    },
+    {
+      "file": "ibm-plex-mono-latin-ext-500-normal.5a49cbe3.woff2",
+      "family": "IBM Plex Mono",
+      "rawFamily": "IBM Plex Mono Medium",
+      "subfamily": "Regular",
+      "postscript": "IBMPlexMono-Medium",
+      "weight": 500,
+      "style": "normal",
+      "variationAxes": [],
+      "identified": true,
+      "isIcon": false
+    },
+    {
+      "file": "ibm-plex-mono-latin-ext-500-normal.f9f2cfdc.woff",
+      "family": "IBM Plex Mono",
+      "rawFamily": "IBM Plex Mono Medium",
+      "subfamily": "Regular",
+      "postscript": "IBMPlexMono-Medium",
+      "weight": 500,
+      "style": "normal",
+      "variationAxes": [],
+      "identified": true,
+      "isIcon": false
+    },
+    {
+      "file": "ibm-plex-sans-latin-400-normal.13a15bcd.woff2",
+      "family": "IBM Plex Sans",
+      "rawFamily": "IBM Plex Sans",
+      "subfamily": "Regular",
+      "postscript": "IBMPlexSans-Regular",
+      "weight": 400,
+      "style": "normal",
+      "variationAxes": [],
+      "identified": true,
+      "isIcon": false
+    },
+    {
+      "file": "ibm-plex-sans-latin-400-normal.48b78688.woff",
+      "family": "IBM Plex Sans",
+      "rawFamily": "IBM Plex Sans",
+      "subfamily": "Regular",
+      "postscript": "IBMPlexSans-Regular",
+      "weight": 400,
+      "style": "normal",
+      "variationAxes": [],
+      "identified": true,
+      "isIcon": false
+    },
+    {
+      "file": "ibm-plex-sans-latin-ext-400-normal.20dd57fa.woff2",
+      "family": "IBM Plex Sans",
+      "rawFamily": "IBM Plex Sans",
+      "subfamily": "Regular",
+      "postscript": "IBMPlexSans-Regular",
+      "weight": 400,
+      "style": "normal",
+      "variationAxes": [],
+      "identified": true,
+      "isIcon": false
+    },
+    {
+      "file": "ibm-plex-sans-latin-ext-400-normal.40b9fc05.woff",
+      "family": "IBM Plex Sans",
+      "rawFamily": "IBM Plex Sans",
+      "subfamily": "Regular",
+      "postscript": "IBMPlexSans-Regular",
+      "weight": 400,
+      "style": "normal",
+      "variationAxes": [],
+      "identified": true,
+      "isIcon": false
+    },
+    {
+      "file": "ibm-plex-sans-latin-ext-500-normal.91b576dd.woff2",
+      "family": "IBM Plex Sans",
+      "rawFamily": "IBM Plex Sans Medium",
+      "subfamily": "Regular",
+      "postscript": "IBMPlexSans-Medium",
+      "weight": 500,
+      "style": "normal",
+      "variationAxes": [],
+      "identified": true,
+      "isIcon": false
+    },
+    {
+      "file": "ibm-plex-sans-latin-ext-500-normal.e617d40b.woff",
+      "family": "IBM Plex Sans",
+      "rawFamily": "IBM Plex Sans Medium",
+      "subfamily": "Regular",
+      "postscript": "IBMPlexSans-Medium",
+      "weight": 500,
+      "style": "normal",
+      "variationAxes": [],
+      "identified": true,
+      "isIcon": false
+    }
+  ],
+  "families": [
+    {
+      "family": "IBM Plex Mono",
+      "weights": [
+        400,
+        500
+      ],
+      "variable": false,
+      "fileCount": 6,
+      "files": [
+        "ibm-plex-mono-latin-400-normal.06ac09dc.woff2",
+        "ibm-plex-mono-latin-400-normal.e32cf7a4.woff",
+        "ibm-plex-mono-latin-ext-400-normal.9faee8e8.woff2",
+        "ibm-plex-mono-latin-ext-400-normal.f14ffb91.woff",
+        "ibm-plex-mono-latin-ext-500-normal.5a49cbe3.woff2",
+        "ibm-plex-mono-latin-ext-500-normal.f9f2cfdc.woff"
+      ]
+    },
+    {
+      "family": "IBM Plex Sans",
+      "weights": [
+        400,
+        500
+      ],
+      "variable": false,
+      "fileCount": 6,
+      "files": [
+        "ibm-plex-sans-latin-400-normal.13a15bcd.woff2",
+        "ibm-plex-sans-latin-400-normal.48b78688.woff",
+        "ibm-plex-sans-latin-ext-400-normal.20dd57fa.woff2",
+        "ibm-plex-sans-latin-ext-400-normal.40b9fc05.woff",
+        "ibm-plex-sans-latin-ext-500-normal.91b576dd.woff2",
+        "ibm-plex-sans-latin-ext-500-normal.e617d40b.woff"
+      ]
+    },
+    {
+      "family": "Inter",
+      "weights": [
+        400
+      ],
+      "variable": true,
+      "fileCount": 6,
+      "files": [
+        "19cfc7226ec3afaa-s.woff2",
+        "21350d82a1f187e9-s.woff2",
+        "8e9860b6e62d6359-s.woff2",
+        "ba9851c3c22cd980-s.woff2",
+        "c5fe6dc8356a8c31-s.woff2",
+        "df0a9ae256c0569c-s.woff2"
+      ]
+    },
+    {
+      "family": "Source Serif 4",
+      "weights": [
+        400
+      ],
+      "variable": true,
+      "fileCount": 6,
+      "files": [
+        "3d165c286d94e27c-s.woff2",
+        "591e43f23f51e5a5-s.woff2",
+        "7c21074d9bafed1b-s.woff2",
+        "916860560b9a2bc2-s.woff2",
+        "97ac91773d3121b2-s.p.woff2",
+        "e54d16b9f2c4535b-s.woff2"
+      ]
+    }
+  ],
+  "unidentified": [],
+  "meta": {
+    "generatedAt": "2026-09-27T08:23:48.861Z",
+    "tool": "fontkit"
+  }
+}

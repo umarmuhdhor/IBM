@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"></head>
+<body>
+<template>
+<style>
+@font-face{font-family:"Plex";font-weight:400;src:url("assets/fonts/ibm-plex-sans-latin-400-normal.woff2") format("woff2")}
+@font-face{font-family:"Plex";font-weight:500;src:url("assets/fonts/ibm-plex-sans-latin-500-normal.woff2") format("woff2")}
+@font-face{font-family:"Plex";font-weight:600;src:url("assets/fonts/ibm-plex-sans-latin-600-normal.woff2") format("woff2")}
+@font-face{font-family:"PlexMono";font-weight:400;src:url("assets/fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2")}
+@font-face{font-family:"PlexMono";font-weight:500;src:url("assets/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2")}
+#root{position:absolute;inset:0;overflow:hidden;color:#f4f4f4;font-family:"Plex",sans-serif}
+.it{font-family:"Plex",sans-serif;font-style:normal;font-weight:600;text-decoration:underline;text-decoration-color:#0f62fe;text-decoration-thickness:0.07em;text-underline-offset:0.14em;text-decoration-skip-ink:none}
+.dot{color:#0f62fe}
+#s11-wrap{position:absolute;left:0;right:0;top:170px;display:flex;flex-direction:column;align-items:center}
+#s11-mark{width:170px;height:170px;overflow:visible}
+.mb,#s11-dot{fill:#ffffff}
+#s11-white{position:absolute;inset:0;background:#f4f4f4;opacity:0}
+#s11-end{position:absolute;left:0;right:0;top:360px;display:flex;flex-direction:column;align-items:center;gap:30px;opacity:0}
+#s11-end svg{width:190px;height:190px}
+#s11-end .wm{font-size:84px;letter-spacing:-0.03em;color:#161616}
+#s11-end .wm b{font-weight:600}
+#s11-name{margin-top:26px;font-size:124px;font-weight:600;letter-spacing:-0.035em;white-space:nowrap}
+#s11-name span{display:inline-block}
+#s11-tag{margin-top:18px;font-size:46px;color:#a8a8a8}
+#s11-cta{margin-top:50px;display:flex;align-items:center;gap:26px}
+#s11-btn{font-size:32px;font-weight:500;background:#0f62fe;color:#fff;padding:16px 34px}
+#s11-url{font-family:"PlexMono",monospace;font-size:36px;color:#a6c8ff}
+#s11-team{margin-top:56px;display:flex;gap:20px}
+.chip{display:flex;align-items:center;gap:12px;font-size:28px;font-weight:500;border:3px solid var(--c);padding:8px 22px;border-radius:50px}
+.chip i{display:block;width:13px;height:13px;border-radius:50%;background:var(--c)}
+#s11-fine{margin-top:40px;font-size:22px;color:#8d8d8d}
+</style>
+<div data-hf-id="hf-ddfm" id="root" data-composition-id="s11" data-width="1920" data-height="1080">
+  <div data-hf-id="hf-4im7" id="s11-wrap">
+    <svg id="s11-mark" viewBox="0 0 120 120"><g transform="translate(60 60)">
+      <g transform="rotate(0)"><rect class="mb" x="-8" y="-54" width="16" height="38" rx="3"/></g>
+      <g transform="rotate(120)"><rect class="mb" x="-8" y="-54" width="16" height="38" rx="3"/></g>
+      <g transform="rotate(180)"><rect class="mb" x="-8" y="-54" width="16" height="38" rx="3"/></g>
+      <g transform="rotate(240)"><rect class="mb" x="-8" y="-54" width="16" height="38" rx="3"/></g>
+      <g transform="rotate(300)"><rect class="mb" x="-8" y="-54" width="16" height="38" rx="3"/></g>
+      <g transform="rotate(60)"><circle id="s11-ring" cx="0" cy="-44" r="10" fill="none" stroke="#be95ff" stroke-width="2.5"/><circle id="s11-dot" cx="0" cy="-44" r="10"/></g>
+    </g></svg>
+    <div data-hf-id="hf-d5qa" id="s11-name"></div>
+    <div data-hf-id="hf-ar1h" id="s11-tag">Every Bob, <span data-hf-id="hf-r4qb" class="it" style="color:#f4f4f4">on the same page</span><span data-hf-id="hf-6jgg" class="dot">.</span></div>
+    <div data-hf-id="hf-iccb" id="s11-cta"><span data-hf-id="hf-sqxd" id="s11-btn">Watch the live replay</span><span data-hf-id="hf-g0ls" id="s11-url" data-text="ibm-bob-live-collab.pages.dev"></span></div>
+    <div data-hf-id="hf-9nk4" id="s11-team"><span data-hf-id="hf-xd5q" class="chip" style="--c:#be95ff"><i data-hf-id="hf-wt6k"></i>Aarief</span><span data-hf-id="hf-kp7j" class="chip" style="--c:#78a9ff"><i data-hf-id="hf-zeb8"></i>Alief</span><span data-hf-id="hf-rkkn" class="chip" style="--c:#08bdba"><i data-hf-id="hf-y7e5"></i>Umar</span><span data-hf-id="hf-suy7" class="chip" style="--c:#ff7eb6"><i data-hf-id="hf-ylp6"></i>Imelda</span></div>
+    <div data-hf-id="hf-6t29" id="s11-fine">Community hackathon project · not an official IBM product</div>
+  </div>
+  <div id="s11-white"></div>
+  <div id="s11-end">
+    <svg viewBox="0 0 120 120"><g fill="#161616" transform="translate(60 60)"><rect x="-8" y="-54" width="16" height="38" rx="3"/><rect x="-8" y="-54" width="16" height="38" rx="3" transform="rotate(120)"/><rect x="-8" y="-54" width="16" height="38" rx="3" transform="rotate(180)"/><rect x="-8" y="-54" width="16" height="38" rx="3" transform="rotate(240)"/><rect x="-8" y="-54" width="16" height="38" rx="3" transform="rotate(300)"/><circle cx="0" cy="-44" r="10" transform="rotate(60)"/></g></svg>
+    <div class="wm"><b>live</b> collab</div>
+  </div>
+</div>
+<script>
+(function(){
+  const tl = gsap.timeline({ paused: true });
+  const name = document.getElementById("s11-name");
+  [..."IBM Bob Live Collab"].forEach(ch => { const s = document.createElement("span"); s.textContent = ch === " " ? " " : ch; name.appendChild(s); });
+  const url = document.getElementById("s11-url"); const txt = url.dataset.text;
+  const us = [...txt].map(ch => { const s = document.createElement("span"); s.textContent = ch; url.appendChild(s); return s; });
+  // The mark assembles like a team coming online: each bar opens out from the shared room.
+  gsap.set("#s11-ring", { opacity: 0 });
+  tl.fromTo(".mb", { scaleY: 0, y: 14, transformOrigin: "50% 100%" }, { scaleY: 1, y: 0, duration: 0.45, stagger: 0.14, ease: "back.out(2.2)" }, 0.1);
+  // Everyone at work: the bars pulse in turn.
+  tl.to(".mb", { scaleY: 0.72, fill: "#78a9ff", duration: 0.25, yoyo: true, repeat: 3, stagger: 0.12, ease: "sine.inOut" }, 1.05);
+  // The PM joins — the dot pops in with a ripple.
+  tl.fromTo("#s11-dot", { scale: 0, fill: "#be95ff", transformOrigin: "50% 50%" }, { scale: 1, duration: 0.45, ease: "back.out(3)" }, 2.35);
+  tl.fromTo("#s11-ring", { scale: 1, opacity: 1, transformOrigin: "50% 50%" }, { scale: 3.2, opacity: 0, duration: 0.9, ease: "power2.out", immediateRender: false }, 2.45);
+  tl.to("#s11-dot", { fill: "#ffffff", duration: 0.5 }, 3.4);
+  tl.fromTo("#s11-name span", { opacity: 0, y: 70, rotationX: -80, transformPerspective: 800 }, { opacity: 1, y: 0, rotationX: 0, duration: 0.55, stagger: 0.035, ease: "power3.out" }, 0.55);
+  tl.fromTo("#s11-tag", { opacity: 0, filter: "blur(14px)", y: 20 }, { opacity: 1, filter: "blur(0px)", y: 0, duration: 0.6, ease: "power3.out" }, 2.7);
+  tl.fromTo("#s11-btn", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2)" }, 4.9);
+  tl.fromTo(us, { opacity: 0 }, { opacity: 1, duration: 0.001, stagger: 1.1 / us.length, ease: "none" }, 5.1);
+  tl.fromTo("#s11-team .chip", { opacity: 0, y: 30, scale: 0.8 }, { opacity: 1, y: 0, scale: 1, duration: 0.45, stagger: 0.1, ease: "back.out(2)" }, 5.8);
+  tl.fromTo("#s11-fine", { opacity: 0 }, { opacity: 1, duration: 0.5 }, 6.3);
+  // Close: everything clears, the mark centres and grows until it covers the frame.
+  tl.to(["#s11-name", "#s11-tag", "#s11-cta", "#s11-team", "#s11-fine"], { opacity: 0, y: -20, duration: 0.4, stagger: 0.03, ease: "power2.in" }, 7.55);
+  tl.to("#s11-mark", { y: 285, scale: 1.6, duration: 0.5, ease: "power3.inOut" }, 7.7);
+  tl.to("#s11-mark", { scale: 16, duration: 0.55, ease: "power3.in" }, 8.2);
+  tl.to("#s11-white", { opacity: 1, duration: 0.25, ease: "power1.in" }, 8.5);
+  tl.fromTo("#s11-end", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.35, ease: "power3.out" }, 8.75);
+  window.__timelines["s11"] = tl;
+})();
+</script>
+</template>
+</body></html>

@@ -1,0 +1,340 @@
+{
+  "typography": [
+    {
+      "role": "display",
+      "fontFamily": "Inter",
+      "fontSize": "68px",
+      "fontWeight": "500",
+      "lineHeight": "71.4px",
+      "letterSpacing": "-2.38px",
+      "color": "#F4F4F4",
+      "sampleText": "Your team's Bobs,working together"
+    },
+    {
+      "role": "heading",
+      "fontFamily": "Inter",
+      "fontSize": "36px",
+      "fontWeight": "700",
+      "lineHeight": "41.4px",
+      "letterSpacing": "-0.9px",
+      "color": "#F4F4F4",
+      "sampleText": "Three people, three Bobs, one repo"
+    },
+    {
+      "role": "heading-3",
+      "fontFamily": "Inter",
+      "fontSize": "24px",
+      "fontWeight": "700",
+      "lineHeight": "36px",
+      "letterSpacing": "-0.48px",
+      "color": "#F4F4F4",
+      "sampleText": "Visible"
+    },
+    {
+      "role": "heading-3",
+      "fontFamily": "Inter",
+      "fontSize": "18px",
+      "fontWeight": "600",
+      "lineHeight": "27px",
+      "letterSpacing": "-0.18px",
+      "color": "#F4F4F4",
+      "sampleText": "One file, one Bob"
+    },
+    {
+      "role": "body",
+      "fontFamily": "Inter",
+      "fontSize": "17px",
+      "fontWeight": "400",
+      "lineHeight": "26.35px",
+      "letterSpacing": "normal",
+      "color": "#A8A8A8",
+      "sampleText": "One live workspace for every teammate's IBM Bob. Shared lock"
+    },
+    {
+      "role": "link",
+      "fontFamily": "Inter",
+      "fontSize": "15px",
+      "fontWeight": "600",
+      "lineHeight": "22.5px",
+      "letterSpacing": "-0.15px",
+      "color": "#F4F4F4",
+      "sampleText": "IBM Bob Live Collab"
+    },
+    {
+      "role": "code",
+      "fontFamily": "IBM Plex Mono",
+      "fontSize": "13px",
+      "fontWeight": "400",
+      "lineHeight": "34px",
+      "letterSpacing": "normal",
+      "color": "#F4F4F4",
+      "sampleText": "00000000001export async function joinLobby(ctx, lobbyId, tic"
+    },
+    {
+      "role": "label",
+      "fontFamily": "IBM Plex Mono",
+      "fontSize": "11px",
+      "fontWeight": "400",
+      "lineHeight": "16.5px",
+      "letterSpacing": "normal",
+      "color": "#78A9FF",
+      "sampleText": "●Andi · coder"
+    }
+  ],
+  "spacing": {
+    "observed": [
+      4,
+      5,
+      6,
+      8,
+      10,
+      12,
+      14,
+      16,
+      18,
+      20,
+      24,
+      28,
+      32,
+      48,
+      200
+    ],
+    "baseUnit": 4
+  },
+  "radius": [
+    "6px",
+    "9px",
+    "10px",
+    "14px"
+  ],
+  "shadows": [
+    {
+      "value": "rgba(0, 0, 0, 0.45) 0px 24px 60px 0px",
+      "count": 1
+    }
+  ],
+  "buttons": [
+    {
+      "label": "Watch the live replayDownload for macOS",
+      "background": "transparent",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#F4F4F4",
+      "padding": "0px",
+      "borderRadius": "0px",
+      "border": "0px solid rgb(244, 244, 244)",
+      "boxShadow": "none",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "46px"
+    },
+    {
+      "label": "Watch the live replay",
+      "background": "#F4F4F4",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#0E0E10",
+      "padding": "0px 24px",
+      "borderRadius": "10px",
+      "border": "0px solid rgb(14, 14, 16)",
+      "boxShadow": "none",
+      "fontSize": "15px",
+      "fontWeight": "600",
+      "height": "46px"
+    },
+    {
+      "label": "Download for macOS",
+      "background": "transparent",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#F4F4F4",
+      "padding": "0px 24px",
+      "borderRadius": "10px",
+      "border": "1px solid rgb(57, 57, 57)",
+      "boxShadow": "none",
+      "fontSize": "15px",
+      "fontWeight": "600",
+      "height": "46px"
+    },
+    {
+      "label": "Approve",
+      "background": "#0F62FE",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#FFFFFF",
+      "padding": "5px 12px",
+      "borderRadius": "6px",
+      "border": "1px solid rgb(15, 98, 254)",
+      "boxShadow": "none",
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "height": "30px"
+    },
+    {
+      "label": "Andi",
+      "background": "transparent",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#A8A8A8",
+      "padding": "0px 12px",
+      "borderRadius": "0px",
+      "border": "",
+      "boxShadow": "none",
+      "fontSize": "13.5px",
+      "fontWeight": "500",
+      "height": "44px"
+    },
+    {
+      "label": "Copy",
+      "background": "#1E1E20",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#A8A8A8",
+      "padding": "0px 12px",
+      "borderRadius": "7px",
+      "border": "1px solid rgb(57, 57, 57)",
+      "boxShadow": "none",
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "height": "30px"
+    }
+  ],
+  "cards": [
+    {
+      "label": "card",
+      "background": "#161616",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#F4F4F4",
+      "padding": "0px",
+      "borderRadius": "14px",
+      "border": "1px solid rgb(42, 42, 45)",
+      "boxShadow": "rgba(0, 0, 0, 0.45) 0px 24px 60px 0px",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "411px"
+    },
+    {
+      "label": "card",
+      "background": "#1E1E20",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#F4F4F4",
+      "padding": "10px 12px",
+      "borderRadius": "10px",
+      "border": "",
+      "boxShadow": "none",
+      "fontSize": "13px",
+      "fontWeight": "400",
+      "height": "96px"
+    }
+  ],
+  "nav": {
+    "label": "navigation",
+    "background": "#0E0E10",
+    "backgroundImage": "",
+    "backdropFilter": "",
+    "color": "#F4F4F4",
+    "padding": "0px 4.05368px 0px 4.09394px",
+    "borderRadius": "14px",
+    "border": "1px solid rgba(42, 42, 45, 0.07)",
+    "boxShadow": "none",
+    "fontSize": "16px",
+    "fontWeight": "400",
+    "height": "79.8594px"
+  },
+  "chips": [
+    {
+      "label": "locked · Alice",
+      "background": "#78A9FF",
+      "color": "#04122B",
+      "padding": "5px 8px",
+      "borderRadius": "999px",
+      "border": "0px solid rgb(4, 18, 43)",
+      "boxShadow": "none",
+      "fontSize": "10px",
+      "fontWeight": "400",
+      "height": "20px"
+    },
+    {
+      "label": "PM",
+      "background": "#FF7EB6",
+      "color": "#2A0716",
+      "padding": "3px 6px",
+      "borderRadius": "4px",
+      "border": "0px solid rgb(42, 7, 22)",
+      "boxShadow": "none",
+      "fontSize": "10px",
+      "fontWeight": "400",
+      "height": "16px"
+    },
+    {
+      "label": "A",
+      "background": "#262626",
+      "color": "#F4F4F4",
+      "padding": "1px 5px",
+      "borderRadius": "6px",
+      "border": "1px solid rgba(0, 0, 0, 0)",
+      "boxShadow": "none",
+      "fontSize": "11px",
+      "fontWeight": "400",
+      "height": "22px"
+    },
+    {
+      "label": "A",
+      "background": "transparent",
+      "color": "#F4F4F4",
+      "padding": "1px 5px",
+      "borderRadius": "6px",
+      "border": "1px solid rgb(244, 244, 244)",
+      "boxShadow": "none",
+      "fontSize": "11px",
+      "fontWeight": "400",
+      "height": "22px"
+    }
+  ],
+  "statCells": [
+    {
+      "background": "transparent",
+      "borderRadius": "0px",
+      "border": "0px solid rgb(244, 244, 244)",
+      "boxShadow": "none",
+      "numberFontSize": "28px",
+      "numberFontWeight": "600",
+      "numberColor": "#F4F4F4"
+    }
+  ],
+  "tabs": [
+    {
+      "label": "AndiMission ControlBudi",
+      "background": "transparent",
+      "color": "#F4F4F4",
+      "padding": "0px 10px",
+      "borderRadius": "0px",
+      "border": "",
+      "boxShadow": "none",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "45px"
+    },
+    {
+      "label": "Andi",
+      "background": "transparent",
+      "color": "#A8A8A8",
+      "padding": "0px 12px",
+      "borderRadius": "0px",
+      "border": "",
+      "boxShadow": "none",
+      "fontSize": "13.5px",
+      "fontWeight": "500",
+      "height": "44px"
+    }
+  ],
+  "backgrounds": [
+    {
+      "value": "radial-gradient(circle, rgba(244, 244, 244, 0.06) 1px, rgba(0, 0, 0, 0) 1.3px)",
+      "area": 2914128
+    }
+  ],
+  "glass": []
+}

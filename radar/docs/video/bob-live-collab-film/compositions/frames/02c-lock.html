@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"></head>
+<body>
+<template>
+<style>
+@font-face{font-family:"Plex";font-weight:400;src:url("assets/fonts/ibm-plex-sans-latin-400-normal.woff2") format("woff2")}
+@font-face{font-family:"Plex";font-weight:500;src:url("assets/fonts/ibm-plex-sans-latin-500-normal.woff2") format("woff2")}
+@font-face{font-family:"Plex";font-weight:600;src:url("assets/fonts/ibm-plex-sans-latin-600-normal.woff2") format("woff2")}
+@font-face{font-family:"PlexMono";font-weight:400;src:url("assets/fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2")}
+@font-face{font-family:"PlexMono";font-weight:500;src:url("assets/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2")}
+#root{position:absolute;inset:0;overflow:hidden;color:#f4f4f4;font-family:"Plex",sans-serif}
+#k-shake{position:absolute;inset:0}
+.kick{position:absolute;left:120px;top:84px;font-family:"PlexMono",monospace;font-size:26px;font-weight:500;letter-spacing:0.14em;color:#a6c8ff}
+.ul{position:relative;display:inline-block}
+.ul::after{content:"";position:absolute;left:0;right:0;bottom:-0.02em;height:0.075em;background:#0f62fe;transform:scaleX(var(--u,1));transform-origin:left}
+.dot{color:#0f62fe}
+#k-t{position:absolute;left:120px;top:140px;font-size:92px;font-weight:600;letter-spacing:-0.03em;line-height:1.12;white-space:nowrap}
+#k-t .w{display:inline-block;margin-right:24px}
+#k-file{position:absolute;left:120px;top:420px;width:660px;background:#1e1e20;border:2px solid #393939;border-radius:14px;overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,0.6)}
+#k-file .bar{height:50px;background:#161616;border-bottom:2px solid #393939;display:flex;align-items:center;gap:10px;padding:0 20px;font-size:20px;color:#a8a8a8}
+#k-file .bar s{display:block;width:13px;height:13px;border-radius:50%;background:#4a4a4a}
+#k-lock{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:19px;font-weight:600;color:#78a9ff;border:2px solid #78a9ff;padding:3px 14px;border-radius:20px}
+.code{font-family:"PlexMono",monospace;font-size:24px;line-height:1.9;padding:18px 24px;white-space:pre;color:#d0d0d0}
+.code .n{color:#6f6f6f;display:inline-block;width:40px}
+.k{color:#be95ff}.f{color:#78a9ff}
+#k-rq{position:absolute;left:1180px;top:430px;width:620px;background:#161616;border:2px solid #08bdba;border-radius:10px;padding:18px 24px;font-family:"PlexMono",monospace;font-size:24px;line-height:1.6}
+#k-rq b{display:flex;align-items:center;gap:10px;font-family:"Plex",sans-serif;font-size:24px;font-weight:600;margin-bottom:6px}
+#k-rq b i{display:block;width:12px;height:12px;border-radius:50%;background:#08bdba}
+#k-blk{position:absolute;left:806px;top:430px;width:350px;background:#a2191f;color:#fff;border-radius:10px;padding:20px 26px;box-shadow:0 30px 80px rgba(0,0,0,0.7);z-index:4}
+#k-blk small{display:block;font-family:"PlexMono",monospace;font-size:20px;color:#ffd7d9}
+#k-blk strong{display:block;font-size:32px;line-height:1.2;font-weight:600;letter-spacing:-0.01em;margin-top:4px}
+#k-rl{position:absolute;left:1180px;top:640px;width:620px;border:2px dashed #be95ff;background:rgba(190,149,255,0.08);border-radius:10px;padding:16px 24px}
+#k-rl h5{margin:0 0 8px;font-size:22px;font-weight:600;color:#be95ff}
+#k-rl div{font-family:"PlexMono",monospace;font-size:23px;line-height:1.75;color:#c6c6c6}
+#k-rl .ok{color:#42be65}
+#k-chips{position:absolute;left:120px;top:880px;display:flex;gap:22px}
+.tch{display:flex;align-items:center;gap:14px;font-size:28px;font-weight:500;border:2px solid #393939;background:rgba(14,14,16,0.85);padding:12px 22px 12px 12px;border-radius:8px}
+.tch .bb{font-family:"PlexMono",monospace;font-size:20px;font-weight:500;background:#0f62fe;color:#fff;padding:6px 12px;border-radius:4px}
+#k-flash{position:absolute;inset:0;background:#fa4d56;opacity:0}
+</style>
+<div data-hf-id="hf-mf93" id="root" data-composition-id="s02c" data-width="1920" data-height="1080">
+  <div data-hf-id="hf-gbmd" id="k-shake">
+    <div data-hf-id="hf-tgvp" class="kick" id="k-kick">SOLUTION 02 · LOCKED FILES</div>
+    <div data-hf-id="hf-9wtj" id="k-t"><span data-hf-id="hf-0tsn" class="w">No</span><span data-hf-id="hf-rpws" class="w">one</span><span data-hf-id="hf-gj0q" class="w">overwrites</span><br data-hf-id="hf-x5px"><span data-hf-id="hf-fr20" class="w"><span data-hf-id="hf-wwh5" class="ul" id="k-u1" style="--u:0">someone else's work</span><span data-hf-id="hf-6jgg" class="dot">.</span></span></div>
+    <div data-hf-id="hf-owx3" id="k-file">
+      <div data-hf-id="hf-pi7f" class="bar"><s data-hf-id="hf-dljm"></s><s data-hf-id="hf-tzme"></s><s data-hf-id="hf-udxf"></s>src/checkout.ts<span data-hf-id="hf-he99" id="k-lock">🔒 Alief · T1</span></div>
+      <div data-hf-id="hf-m8fl" class="code"><span data-hf-id="hf-e3y0" class="n">1</span><span data-hf-id="hf-0pve" class="k">export function</span> <span data-hf-id="hf-nut7" class="f">calculateTotal</span>(cart) {
+<span data-hf-id="hf-cx0x" class="n">2</span>  <span data-hf-id="hf-5jgn" class="k">const</span> sum = cart.items.reduce(add, 0)
+<span data-hf-id="hf-dbby" class="n">3</span>  <span data-hf-id="hf-lumi" class="k">return</span> sum - promo
+<span data-hf-id="hf-c4ev" class="n">4</span>}</div>
+    </div>
+    <div data-hf-id="hf-v3xo" id="k-rq"><b data-hf-id="hf-d5r5"><i data-hf-id="hf-wt6k"></i>Umar's Bob</b>apply_diff → src/checkout.ts</div>
+    <div data-hf-id="hf-g7mu" id="k-blk"><small data-hf-id="hf-cnee">hook · PreToolUse · lock_guard</small><strong data-hf-id="hf-4r80">Blocked. Alief owns this file.</strong></div>
+    <div data-hf-id="hf-rt13" id="k-rl"><h5 data-hf-id="hf-6vgp">Bob rules · when blocked</h5>
+      <div data-hf-id="hf-z71k" id="k-r1">✗ retry the same edit</div>
+      <div data-hf-id="hf-hupq" id="k-r2">✗ go around it through the shell</div>
+      <div data-hf-id="hf-mu8y" id="k-r3" class="ok">✓ explain, then ask the PM for access</div>
+    </div>
+    <div data-hf-id="hf-n4fu" id="k-chips">
+      <div data-hf-id="hf-d5oa" class="tch" id="k-c1"><span data-hf-id="hf-wtsy" class="bb">IBM Bob · Hook</span>PreToolUse checks every write</div>
+      <div data-hf-id="hf-9mj9" class="tch" id="k-c2"><span data-hf-id="hf-y8t4" class="bb">IBM Bob · Rules</span>ask, not force</div>
+    </div>
+  </div>
+  <div data-hf-id="hf-tkux" id="k-flash"></div>
+</div>
+<script>
+(function(){
+  const tl = gsap.timeline({ paused: true });
+  gsap.set(["#k-t .w", "#k-file", "#k-rq", "#k-blk", "#k-rl", ".tch"], { opacity: 0 });
+  // Beat 1 — "And no one can overwrite someone else's work."
+  tl.fromTo("#k-kick", { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.4, ease: "power3.out" }, 0.1);
+  tl.fromTo("#k-t .w", { opacity: 0, filter: "blur(18px)", y: 24 }, { opacity: 1, filter: "blur(0px)", y: 0, duration: 0.45, stagger: 0.07, ease: "power3.out" }, 0.3);
+  tl.fromTo("#k-file", { opacity: 0, y: 80 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0.8);
+  tl.fromTo("#k-lock", { scale: 0 }, { scale: 1, duration: 0.4, ease: "back.out(2.6)" }, 1.5);
+  tl.to("#k-u1", { "--u": 1, duration: 0.45, ease: "power2.out" }, 2.2);
+  // Beat 2 — "Bob's PreToolUse hook blocks the edit before it lands."
+  tl.fromTo("#k-rq", { opacity: 0, x: 200 }, { opacity: 1, x: 0, duration: 0.5, ease: "power3.out" }, 3.0);
+  tl.fromTo("#k-c1", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.45, ease: "back.out(1.8)" }, 3.6);
+  tl.to("#k-rq", { x: -70, duration: 0.55, ease: "power2.in" }, 4.8);
+  tl.fromTo("#k-blk", { opacity: 0, scale: 2, rotation: -8 }, { opacity: 1, scale: 1, rotation: -2, duration: 0.3, ease: "power4.in" }, 5.1);
+  tl.to("#k-rq", { x: 0, borderColor: "#fa4d56", duration: 0.5, ease: "back.out(2)" }, 5.4);
+  tl.fromTo("#k-flash", { opacity: 0 }, { opacity: 0.28, duration: 0.05 }, 5.4);
+  tl.to("#k-flash", { opacity: 0, duration: 0.5, ease: "power2.out" }, 5.45);
+  tl.fromTo("#k-shake", { x: 0 }, { x: 14, duration: 0.05, yoyo: true, repeat: 5, ease: "none" }, 5.42);
+  tl.to("#k-lock", { scale: 1.25, duration: 0.15, yoyo: true, repeat: 1 }, 5.5);
+  // Beat 3 — "and Bob's rules make it ask, not force."
+  tl.to("#k-blk", { y: -40, scale: 0.9, duration: 0.5, ease: "power2.inOut" }, 7.4);
+  tl.fromTo("#k-rl", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 7.8);
+  tl.fromTo("#k-c2", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.45, ease: "back.out(1.8)" }, 8.1);
+  tl.fromTo(["#k-r1", "#k-r2"], { opacity: 0.3 }, { opacity: 1, duration: 0.25, stagger: 0.3 }, 8.3);
+  tl.fromTo("#k-r3", { opacity: 0.3 }, { opacity: 1, scale: 1.04, transformOrigin: "left center", duration: 0.3, ease: "back.out(2)" }, 9.4);
+  tl.to(["#k-r1", "#k-r2"], { opacity: 0.4, textDecoration: "line-through", duration: 0.2 }, 10.05);
+  tl.to(["#k-shake", "#k-kick"], { opacity: 0, filter: "blur(16px)", scale: 0.96, duration: 0.35, ease: "power2.in" }, 10.6);
+  window.__timelines["s02c"] = tl;
+})();
+</script>
+</template>
+</body></html>

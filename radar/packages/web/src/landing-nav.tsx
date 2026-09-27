@@ -29,7 +29,7 @@ export function LandingNav({
     <header className="lp-nav" data-scrolled={scrolled}>
       <a href="/" className="lp-wordmark">
         {/* Plain <img>: static export has no image optimizer. */}
-        <img src="/brand/bob-crew.png" alt="" width={28} height={28} />
+        <img src="/brand/logo/live-collab-mark-white.svg" alt="" width={28} height={28} />
         {title}
       </a>
       <nav aria-label="Primary" className="lp-nav-links">

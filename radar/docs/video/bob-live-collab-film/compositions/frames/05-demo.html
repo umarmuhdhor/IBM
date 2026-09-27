@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"></head>
+<body>
+<template>
+<style>
+@font-face{font-family:"Plex";font-weight:400;src:url("assets/fonts/ibm-plex-sans-latin-400-normal.woff2") format("woff2")}
+@font-face{font-family:"Plex";font-weight:500;src:url("assets/fonts/ibm-plex-sans-latin-500-normal.woff2") format("woff2")}
+@font-face{font-family:"Plex";font-weight:600;src:url("assets/fonts/ibm-plex-sans-latin-600-normal.woff2") format("woff2")}
+@font-face{font-family:"PlexMono";font-weight:400;src:url("assets/fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2")}
+@font-face{font-family:"PlexMono";font-weight:500;src:url("assets/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2")}
+#root{position:absolute;inset:0;overflow:hidden;color:#f4f4f4;font-family:"Plex",sans-serif}
+#d-world{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0}
+.it{font-family:"Plex",sans-serif;font-style:normal;font-weight:600;text-decoration:underline;text-decoration-color:#0f62fe;text-decoration-thickness:0.07em;text-underline-offset:0.14em;text-decoration-skip-ink:none}
+.mono{font-family:"PlexMono",monospace}
+.win{position:absolute;background:#1c1c1e;border:2px solid #393939;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 30px 90px rgba(0,0,0,0.6)}
+.bar{height:36px;flex:none;display:flex;align-items:center;gap:8px;padding:0 12px;background:#161616;border-bottom:1px solid #393939;font-size:13px;color:#8d8d8d}
+.bar s{display:block;width:11px;height:11px;border-radius:50%;background:#4a4a4a}
+.who{margin-left:auto;display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px;color:#f4f4f4}
+.who i{display:block;width:10px;height:10px;border-radius:50%;background:var(--c)}
+.who small{font-weight:400;color:#a8a8a8;font-size:13px}
+.body{flex:1;display:flex;min-height:0}
+.act{width:40px;flex:none;background:#161616;border-right:1px solid #393939;display:flex;flex-direction:column;align-items:center;gap:14px;padding-top:12px}
+.act i{display:block;width:18px;height:18px;border:2px solid #555;border-radius:4px}
+.act i.on{border-color:#78a9ff;background:rgba(120,169,255,0.2)}
+.exp{width:200px;flex:none;background:#181818;border-right:1px solid #393939;padding:10px 0;font-size:13px;color:#c6c6c6}
+.exp h6{margin:0 0 6px;padding:0 12px;font-size:11px;letter-spacing:0.08em;color:#8d8d8d;font-weight:600}
+.f{display:flex;align-items:center;gap:6px;height:26px;padding:0 10px 0 var(--p,24px);white-space:nowrap}
+.lock{margin-left:auto;font-size:11px;border:1px solid var(--c);color:var(--c);padding:0 7px;border-radius:9px;line-height:17px}
+.ed{flex:1;min-width:0;display:flex;flex-direction:column;background:#131313;position:relative;overflow:hidden}
+.tabs{height:34px;flex:none;display:flex;background:#161616;border-bottom:1px solid #393939;font-size:13px}
+.tab{padding:0 14px;display:flex;align-items:center;color:#8d8d8d;border-right:1px solid #393939}
+.tab.cur{color:#f4f4f4;background:#131313;box-shadow:inset 0 2px 0 var(--c)}
+.code{font-family:"PlexMono",monospace;font-size:13px;line-height:1.8;padding:10px 0;color:#d0d0d0;white-space:pre}
+.ln{display:block;padding-left:10px}
+.ln b{display:inline-block;width:30px;text-align:right;color:#5a5a5a;font-weight:400;margin-right:14px}
+.ai{background:var(--bg-ai)}
+.k{color:#be95ff}.s{color:#42be65}.fn{color:#78a9ff}
+.aipill{position:absolute;right:10px;top:7px;z-index:2;font-family:"PlexMono",monospace;font-size:11px;color:var(--c);border:1px solid var(--c);padding:1px 8px;border-radius:9px;background:#131313}
+.chat{flex:none;display:flex;flex-direction:column;background:#161616;border-left:1px solid #393939}
+.hd{height:44px;flex:none;display:flex;align-items:center;padding:0 12px;gap:8px;border-bottom:1px solid #393939;font-weight:600;font-size:14px;position:relative}
+.bm{width:22px;height:22px;border-radius:6px;background:linear-gradient(135deg,#0f62fe,#8a3ffc);display:grid;place-items:center;font-size:12px;color:#fff}
+.mode{margin-left:auto;font-size:12px;font-weight:500;border:1px solid #393939;border-radius:4px;padding:4px 8px;color:#c6c6c6;display:flex;gap:6px;align-items:center;position:relative}
+.mode .on{color:#f4f4f4}
+.menu{position:absolute;right:12px;top:40px;width:220px;background:#262626;border:1px solid #393939;z-index:5;font-size:13px;font-weight:400;box-shadow:0 10px 30px rgba(0,0,0,0.5);display:none}
+.menu div{padding:7px 10px;color:#c6c6c6}
+.menu .sel{background:rgba(15,98,254,0.45);color:#fff}
+.msgs{flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:9px;padding:12px;overflow:hidden;min-height:0}
+.m{font-size:13px;line-height:1.5;display:none;flex:none}
+.u{background:#262626;border-left:3px solid var(--c);padding:8px 10px;color:#f4f4f4}
+.att{display:inline-block;font-family:"PlexMono",monospace;font-size:11px;border:1px solid #393939;padding:1px 7px;margin-bottom:5px;color:#c6c6c6}
+.bob{color:#c6c6c6}
+.bob::before{content:"Bob";display:block;font-size:11px;font-weight:600;color:#8d8d8d;letter-spacing:0.05em;margin-bottom:2px}
+.tr{font-family:"PlexMono",monospace;font-size:12px;line-height:1.5;border:1px solid #393939;background:#1a1a1c;padding:6px 9px;color:#a8a8a8;position:relative}
+.tr b{font-weight:400;color:#a6c8ff}
+.tr .st{position:absolute;right:9px;top:6px;width:13px;height:13px}
+.spin{display:block;width:13px;height:13px;border:2px solid #555;border-top-color:#a6c8ff;border-radius:50%}
+.chk{display:none;color:#42be65;font-size:13px;line-height:13px}
+.hook b{color:#f1c21b}
+.bad{border-color:#fa4d56;background:rgba(250,77,86,0.14);color:#ffd7d9}
+.bad b{color:#ff8389}
+.rule{border-style:dashed;border-color:#be95ff;color:#e8daff}
+.rule b{color:#be95ff}
+.plan{border:1px solid #393939;background:#1a1a1c;padding:10px}
+.plan h5{margin:0 0 8px;font-size:14px;font-weight:600}
+.task{border:1px solid #393939;border-top:3px solid var(--c);padding:6px 8px;margin-bottom:7px;background:#1e1e20}
+.task strong{display:block;font-size:13px;font-weight:600}
+.task span{display:block;font-family:"PlexMono",monospace;font-size:11px;color:#a8a8a8}
+.btns{display:flex;gap:8px;margin-top:4px}
+.btn{font-size:12px;font-weight:500;padding:5px 12px;border:1px solid #393939;color:#c6c6c6}
+.pri{background:#0f62fe;border-color:#0f62fe;color:#fff}
+.ok{display:none;font-size:12px;font-weight:500;color:#42be65}
+.inp{flex:none;margin:0 12px 12px;border:1px solid #393939;min-height:62px;padding:9px 10px;font-size:13px;line-height:1.5;color:#f4f4f4;background:#1e1e20}
+.ph{color:#8d8d8d}
+.status{height:26px;flex:none;background:#0043ce;color:#fff;font-family:"PlexMono",monospace;font-size:11px;display:flex;align-items:center;gap:16px;padding:0 12px}
+.pdf{flex:1;background:#2b2b2b;padding:10px;overflow:hidden}
+.bf{width:680px;transform:scale(0.4118);transform-origin:0 0;background:#fff;color:#161616;font-family:"Plex",sans-serif;font-size:12.5px;line-height:1.5;padding:44px 52px 36px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.bf .top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #161616;padding-bottom:14px}
+.bf .client{font-weight:600;font-size:13px;letter-spacing:.02em}
+.bf .client small{display:block;font-weight:400;color:#6f6f6f;font-size:11px;letter-spacing:0}
+.bf .meta{font-family:"PlexMono",monospace;font-size:10.5px;color:#525252;text-align:right;line-height:1.6}
+.bf .status{display:inline-block;margin-top:4px;background:#defbe6;color:#0e6027;font-family:"Plex",sans-serif;font-weight:600;font-size:10.5px;padding:2px 8px;border-radius:2px}
+.bf h1{font-size:22px;font-weight:600;letter-spacing:-.01em;margin:20px 0 4px;line-height:1.25}
+.bf .lede{color:#525252;margin:0 0 18px}
+.bf h2{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#0f62fe;margin:18px 0 6px}
+.bf p{margin:0}
+.bf ul{margin:0;padding-left:18px}
+.bf li{margin:2px 0}
+.bf table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:4px}
+.bf th{text-align:left;font-weight:600;background:#f4f4f4;border-bottom:1px solid #c6c6c6;padding:6px 8px}
+.bf td{border-bottom:1px solid #e0e0e0;padding:7px 8px;vertical-align:top}
+.bf td.id{font-family:"PlexMono",monospace;color:#525252;width:34px}
+.bf td.area{font-family:"PlexMono",monospace;font-size:10.5px;color:#525252;width:120px}
+.bf .two{display:grid;grid-template-columns:1fr 1fr;gap:0 28px}
+.bf .note{border-left:3px solid #0f62fe;background:#edf5ff;padding:8px 12px;margin-top:6px}
+.bf .foot{display:flex;justify-content:space-between;margin-top:26px;padding-top:10px;border-top:1px solid #e0e0e0;font-size:10px;color:#8d8d8d}
+.pmexp{position:absolute;left:0;top:0;right:0;bottom:0;background:#181818;z-index:3;padding:10px 0;font-size:13px;color:#c6c6c6}
+.pmexp h6{margin:0 0 6px;padding:0 12px;font-size:11px;letter-spacing:0.08em;color:#8d8d8d;font-weight:600}
+.toast{position:absolute;right:14px;width:320px;background:#262626;border:1px solid #393939;border-left:4px solid var(--c);padding:10px 12px;font-size:13px;line-height:1.45;z-index:6;box-shadow:0 12px 30px rgba(0,0,0,0.5);opacity:0}
+.toast small{display:block;font-size:11px;font-weight:600;color:var(--c);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:2px}
+.chipw{position:absolute;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;border:2px solid var(--c);padding:5px 12px;border-radius:30px;background:rgba(14,14,16,0.9);opacity:0;z-index:8}
+.chipw i{display:block;width:9px;height:9px;border-radius:50%;background:var(--c)}
+.cursor{position:absolute;left:0;top:0;width:22px;height:30px;z-index:20;opacity:0}
+.flash{position:absolute;inset:0;border:4px solid #fa4d56;background:rgba(250,77,86,0.25);opacity:0;pointer-events:none;z-index:9}
+#d-cap{position:absolute;left:0;right:0;margin:0 auto;width:fit-content;bottom:12px;white-space:nowrap;display:flex;align-items:center;gap:14px;font-size:30px;font-weight:600;letter-spacing:-0.01em;padding:14px 26px;background:rgba(14,14,16,0.82);border:2px solid #393939;border-radius:50px;opacity:0}
+#d-cap i{display:block;width:14px;height:14px;border-radius:50%;background:var(--c,#0f62fe)}
+#d-cap em{font-style:normal;font-weight:600;text-decoration:underline;text-decoration-color:#0f62fe;text-decoration-thickness:3px;text-underline-offset:6px}
+.bb{font-family:"PlexMono",monospace;font-size:18px;font-weight:500;letter-spacing:0.02em;background:#0f62fe;color:#fff;padding:5px 11px;border-radius:4px}
+</style>
+<div data-hf-id="hf-fvbf" id="root" data-composition-id="s05" data-width="1920" data-height="1080">
+<div data-hf-id="hf-rynk" id="d-world">
+
+  <!-- ===== Aarief · PM ===== -->
+  <div data-hf-id="hf-to11" class="win" id="w-pm" style="left:40px;top:40px;width:760px;height:1000px;--c:#be95ff">
+    <div data-hf-id="hf-a7uv" class="bar"><s data-hf-id="hf-dljm"></s><s data-hf-id="hf-tzme"></s><s data-hf-id="hf-udxf"></s>toko-demo — Bob IDE<span data-hf-id="hf-i6z7" class="who"><i data-hf-id="hf-wt6k"></i>Aarief <small data-hf-id="hf-nnab">PM</small></span></div>
+    <div data-hf-id="hf-2t3w" class="body">
+      <div data-hf-id="hf-szf0" class="act"><i data-hf-id="hf-zeb8"></i><i data-hf-id="hf-y7e5"></i><i data-hf-id="hf-l5u7" class="on"></i></div>
+      <div data-hf-id="hf-0dc4" class="ed" style="flex:none;width:300px">
+        <div data-hf-id="hf-5rmk" class="tabs"><div data-hf-id="hf-bxat" class="tab cur" id="pm-tab" style="--c:#be95ff">brief.pdf</div></div>
+        <div data-hf-id="hf-030s" class="pdf" id="pm-pdf"><div data-hf-id="hf-lfpk" class="bf">
+  <div data-hf-id="hf-sijt" class="top">
+    <div data-hf-id="hf-udx1" class="client">TOKO DEMO<small data-hf-id="hf-rnr5">Client brief · e-commerce storefront</small></div>
+    <div data-hf-id="hf-5ovb" class="meta">BRF-TD-014 · v1.2<br data-hf-id="hf-tzer">Issued 22 Sep 2026<br data-hf-id="hf-udps"><span data-hf-id="hf-vz2x" class="status">Approved for sprint</span></div>
+  </div>
+  <h1 data-hf-id="hf-7zj2">Sprint brief: promo codes at checkout and a live cart total</h1>
+  <p data-hf-id="hf-q13x" class="lede">Two small storefront features for this sprint. Both touch the checkout total, so ownership must be clear.</p>
+  <h2 data-hf-id="hf-mcnl">1 · Background</h2>
+  <p data-hf-id="hf-iqxg">Customers ask for promo codes at checkout, and the header shows only an item count. Shoppers can't see what they'll pay until the last step.</p>
+  <h2 data-hf-id="hf-ufdy">2 · Scope</h2>
+  <table data-hf-id="hf-2j5r">
+    <tr data-hf-id="hf-p3r7"><th data-hf-id="hf-5fyc">ID</th><th data-hf-id="hf-je95">Feature</th><th data-hf-id="hf-9ebf">Acceptance criteria</th><th data-hf-id="hf-9tgo">Area</th></tr>
+    <tr data-hf-id="hf-ddj7"><td data-hf-id="hf-k5o7" class="id">F1</td><td data-hf-id="hf-54xx"><b data-hf-id="hf-qj1e">Promo code at checkout</b></td><td data-hf-id="hf-t9cp"><ul data-hf-id="hf-ovcc"><li data-hf-id="hf-ipxt">A valid code applies its discount</li><li data-hf-id="hf-807j">An invalid code shows an inline error</li><li data-hf-id="hf-w7p3">The order total recalculates at once</li></ul></td><td data-hf-id="hf-prn5" class="area">checkout, promo</td></tr>
+    <tr data-hf-id="hf-cz86"><td data-hf-id="hf-jrd6" class="id">F2</td><td data-hf-id="hf-ug9s"><b data-hf-id="hf-g19d">Live cart total in header</b></td><td data-hf-id="hf-u1yr"><ul data-hf-id="hf-kqbo"><li data-hf-id="hf-q3re">Badge updates on add and remove</li><li data-hf-id="hf-qn0x">Shows the discounted total</li><li data-hf-id="hf-7hng">Formatted in IDR</li></ul></td><td data-hf-id="hf-ae62" class="area">header, cart badge</td></tr>
+  </table>
+  <div data-hf-id="hf-9yku" class="two">
+    <div data-hf-id="hf-yeow"><h2 data-hf-id="hf-pxqx">3 · Constraints</h2><div data-hf-id="hf-l2qn" class="note">The header total must read from checkout's <b data-hf-id="hf-vbgs">calculateTotal()</b>. One source of truth for the price.</div></div>
+    <div data-hf-id="hf-y7yw"><h2 data-hf-id="hf-5j75">4 · Out of scope</h2><ul data-hf-id="hf-jjel"><li data-hf-id="hf-emqs">Payment provider changes</li><li data-hf-id="hf-4ttb">Admin UI for creating codes</li></ul></div>
+  </div>
+  <div data-hf-id="hf-jr6a" class="two">
+    <div data-hf-id="hf-x11t"><h2 data-hf-id="hf-18x2">5 · Timeline</h2><ul data-hf-id="hf-jxpm"><li data-hf-id="hf-6ebi">Kick-off: Monday</li><li data-hf-id="hf-243z">Review and demo: Friday</li></ul></div>
+    <div data-hf-id="hf-xfcu"><h2 data-hf-id="hf-pnjz">6 · Team</h2><ul data-hf-id="hf-lx8r"><li data-hf-id="hf-wh7v">PM: Aarief</li><li data-hf-id="hf-ytps">Engineers: Alief, Umar</li></ul></div>
+  </div>
+  <div data-hf-id="hf-mlgk" class="foot"><span data-hf-id="hf-bdgf">Synthetic sample for demo purposes</span><span data-hf-id="hf-1g1x">Page 1 of 1</span></div>
+        </div></div>
+        <div data-hf-id="hf-vsdf" class="pmexp" id="pm-exp"><h6 data-hf-id="hf-lad0">EXPLORER</h6>
+          <div data-hf-id="hf-qgvk" class="f" style="--p:10px">▾ TOKO-DEMO</div>
+          <div data-hf-id="hf-ev8w" class="f" style="--p:18px">▾ docs</div>
+          <div data-hf-id="hf-swf8" class="f" id="pm-f-brief" style="--p:34px">▤ brief.pdf</div>
+          <div data-hf-id="hf-5s4b" class="f" style="--p:18px">▾ src</div>
+          <div data-hf-id="hf-azby" class="f" style="--p:34px">checkout.ts</div>
+          <div data-hf-id="hf-x2fd" class="f" style="--p:34px">promo.ts</div>
+          <div data-hf-id="hf-5k73" class="f" style="--p:34px">Header.tsx</div>
+          <div data-hf-id="hf-ll4n" class="f" style="--p:34px">cartBadge.ts</div>
+          <div data-hf-id="hf-rl70" class="f" style="--p:18px">▸ .bob</div>
+        </div>
+      </div>
+      <div data-hf-id="hf-ke86" class="chat" style="width:420px">
+        <div data-hf-id="hf-9mfb" class="hd"><span data-hf-id="hf-qc60" class="bm">B</span>Bob
+          <span data-hf-id="hf-b1fx" class="mode" id="pm-mode"><span data-hf-id="hf-sws4" id="pm-mode-a">◐ Code ▾</span><span data-hf-id="hf-rhlq" id="pm-mode-b" class="on" style="display:none">◐ Live Collab PM Lead ▾</span></span>
+          <div data-hf-id="hf-rghe" class="menu" id="pm-menu"><div data-hf-id="hf-vhwx">Ask</div><div data-hf-id="hf-lpwz">Plan</div><div data-hf-id="hf-b11x">Code</div><div data-hf-id="hf-xbhe">Advanced</div><div data-hf-id="hf-0pkk" class="sel">◐ Live Collab PM Lead</div></div>
+        </div>
+        <div data-hf-id="hf-1w6y" class="msgs">
+          <div data-hf-id="hf-nt23" class="m u" id="pm-u1" style="--c:#be95ff"><span data-hf-id="hf-whhe" class="att">▤ brief.pdf</span><div data-hf-id="hf-acaa">Read brief.pdf and split it into tasks for Alief and Umar. One owner per file.</div></div>
+          <div data-hf-id="hf-db8j" class="m bob" id="pm-b1">Reading brief.pdf. I found 2 features: promo codes and a header cart total.</div>
+          <div data-hf-id="hf-jl7f" class="m tr" id="pm-t1"><b data-hf-id="hf-qmsj">⧉ mcp · radar.team_status</b><br data-hf-id="hf-x5px">2 coders online: Alief, Umar<span data-hf-id="hf-7km0" class="st"><span data-hf-id="hf-jggx" class="spin"></span><span data-hf-id="hf-gxgc" class="chk">✓</span></span></div>
+          <div data-hf-id="hf-tl6b" class="m tr" id="pm-t2"><b data-hf-id="hf-xb0d">⧉ mcp · radar.propose_plan</b><br data-hf-id="hf-rsrt">2 tasks · 4 files · waiting for approval<span data-hf-id="hf-vwj4" class="st"><span data-hf-id="hf-5hrp" class="spin"></span><span data-hf-id="hf-oi1g" class="chk">✓</span></span></div>
+          <div data-hf-id="hf-ni7f" class="m plan" id="pm-plan"><h5 data-hf-id="hf-outs">Plan · <span data-hf-id="hf-1vxx" class="it">needs your approval</span></h5>
+            <div data-hf-id="hf-m961" class="task" id="pm-r1" style="--c:#78a9ff"><strong data-hf-id="hf-6dp2">T1 · Promo codes at checkout</strong><span data-hf-id="hf-fyfa">Alief · src/checkout.ts, src/promo.ts</span></div>
+            <div data-hf-id="hf-m348" class="task" id="pm-r2" style="--c:#08bdba"><strong data-hf-id="hf-c27j">T2 · Cart total in header</strong><span data-hf-id="hf-30vv">Umar · src/Header.tsx, src/cartBadge.ts</span></div>
+            <div data-hf-id="hf-95sm" class="btns" id="pm-btns"><span data-hf-id="hf-97l4" class="btn pri" id="pm-approve">Approve</span><span data-hf-id="hf-emr7" class="btn">Edit</span></div>
+            <div data-hf-id="hf-u93v" class="ok" id="pm-ok">✓ Approved by Aarief</div>
+          </div>
+          <div data-hf-id="hf-t1es" class="m bob" id="pm-b2">Plan approved. Tasks sent, and each file is locked to its owner.</div>
+        </div>
+        <div data-hf-id="hf-od88" class="inp" id="pm-inp"><span data-hf-id="hf-35mz" class="ph" id="pm-ph">Ask Bob…</span><span data-hf-id="hf-2yf9" id="pm-att" class="att" style="display:none">▤ brief.pdf</span> <span data-hf-id="hf-22nb" id="pm-typed" data-text="Read brief.pdf and split it into tasks for Alief and Umar. One owner per file."></span></div>
+      </div>
+    </div>
+    <div data-hf-id="hf-flqn" class="status">radar · connected · 3 members<span data-hf-id="hf-8cog" style="margin-left:auto" id="pm-stat">mode: pm-lead · read + mcp only</span></div>
+    <div data-hf-id="hf-6wjs" class="toast" id="pm-toast" style="--c:#ff7eb6;top:52px"><small data-hf-id="hf-ml4i">Needs you</small>Umar's Bob requests <b data-hf-id="hf-v4hs">checkout.ts</b>, held by Alief for T1.<div data-hf-id="hf-5u2b" class="btns"><span data-hf-id="hf-uwkt" class="btn pri" id="pm-queue">Queue after T1</span><span data-hf-id="hf-v6b1" class="btn">Deny</span></div></div>
+  </div>
+
+  <!-- ===== Alief · coder ===== -->
+  <div data-hf-id="hf-wnu9" class="win" id="w-al" style="left:840px;top:40px;width:1040px;height:480px;--c:#78a9ff;--bg-ai:rgba(120,169,255,0.08)">
+    <div data-hf-id="hf-tkrr" class="bar"><s data-hf-id="hf-us8g"></s><s data-hf-id="hf-s039"></s><s data-hf-id="hf-seea"></s>toko-demo — Bob IDE<span data-hf-id="hf-nu06" class="who"><i data-hf-id="hf-ylp6"></i>Alief <small data-hf-id="hf-wqqh">coder</small></span></div>
+    <div data-hf-id="hf-6g9g" class="body">
+      <div data-hf-id="hf-6esk" class="act"><i data-hf-id="hf-j2zz" class="on"></i><i data-hf-id="hf-0l8b"></i><i data-hf-id="hf-0zjc"></i></div>
+      <div data-hf-id="hf-oa9x" class="exp"><h6 data-hf-id="hf-bb3g">TOKO-DEMO</h6>
+        <div data-hf-id="hf-dx2r" class="f" style="--p:10px">▾ src</div>
+        <div data-hf-id="hf-6qsh" class="f">checkout.ts<span data-hf-id="hf-dged" class="lock lk" style="--c:#78a9ff">Alief · you</span></div>
+        <div data-hf-id="hf-t18c" class="f">promo.ts<span data-hf-id="hf-2bvd" class="lock lk" style="--c:#78a9ff">Alief · you</span></div>
+        <div data-hf-id="hf-xgau" class="f">Header.tsx<span data-hf-id="hf-gb6a" class="lock lk" style="--c:#08bdba">🔒 Umar</span></div>
+        <div data-hf-id="hf-sreq" class="f">cartBadge.ts<span data-hf-id="hf-7xli" class="lock lk" style="--c:#08bdba">🔒 Umar</span></div>
+        <div data-hf-id="hf-4ew2" class="f" style="--p:10px">▾ .bob</div>
+        <div data-hf-id="hf-liez" class="f">custom_modes.yaml</div><div data-hf-id="hf-qnth" class="f">settings.json</div><div data-hf-id="hf-dthi" class="f">mcp.json</div><div data-hf-id="hf-218q" class="f">rules-coder/</div>
+      </div>
+      <div data-hf-id="hf-npoz" class="ed">
+        <div data-hf-id="hf-ias4" class="tabs"><div data-hf-id="hf-xxhz" class="tab cur" style="--c:#78a9ff">checkout.ts</div></div>
+        <span data-hf-id="hf-cgsm" class="aipill" id="al-pill" style="--c:#78a9ff;opacity:0">Alief · Bob coder writing</span>
+        <div data-hf-id="hf-nu74" class="code" id="al-code"><span data-hf-id="hf-r53g" class="ln ai"><b data-hf-id="hf-t4n0">1</b><span data-hf-id="hf-vj3t" class="k">import</span> { applyPromo } <span data-hf-id="hf-0rzw" class="k">from</span> <span data-hf-id="hf-xqu6" class="s">'./promo'</span></span><span data-hf-id="hf-smev" class="ln"><b data-hf-id="hf-rxpx">2</b> </span><span data-hf-id="hf-s3wk" class="ln ai"><b data-hf-id="hf-sc0y">3</b><span data-hf-id="hf-0pve" class="k">export function</span> <span data-hf-id="hf-vfvb" class="fn">calculateTotal</span>(cart, code) {</span><span data-hf-id="hf-s7f4" class="ln ai"><b data-hf-id="hf-ubk3">4</b>  <span data-hf-id="hf-5jgn" class="k">const</span> subtotal = cart.items.reduce(sum, 0)</span><span data-hf-id="hf-z2b1" class="ln ai"><b data-hf-id="hf-upv4">5</b>  <span data-hf-id="hf-ui93" class="k">const</span> discount = code ? <span data-hf-id="hf-t9au" class="fn">applyPromo</span>(code, subtotal) : 0</span><span data-hf-id="hf-r8ln" class="ln ai"><b data-hf-id="hf-tiy1">6</b>  <span data-hf-id="hf-lumi" class="k">return</span> subtotal - discount</span><span data-hf-id="hf-6ze2" class="ln ai"><b data-hf-id="hf-tx92">7</b>}</span></div>
+      </div>
+      <div data-hf-id="hf-5qc0" class="chat" style="width:400px">
+        <div data-hf-id="hf-c5bb" class="hd"><span data-hf-id="hf-rjao" class="bm">B</span>Bob <span data-hf-id="hf-e5vc" class="mode"><span data-hf-id="hf-r0bm" id="al-mode-a">◐ Code ▾</span><span data-hf-id="hf-t3c8" id="al-mode-b" class="on" style="display:none;color:#78a9ff">◐ Live Collab Coder ▾</span></span></div>
+        <div data-hf-id="hf-pc66" class="msgs">
+          <div data-hf-id="hf-f9hk" class="m tr hook" id="al-h1"><b data-hf-id="hf-lje5">⚓ hook · SessionStart · brief</b><br data-hf-id="hf-szow">You: Alief · T1 Promo codes<br data-hf-id="hf-sldv">Umar owns Header.tsx, cartBadge.ts</div>
+          <div data-hf-id="hf-5epw" class="m u" id="al-u1" style="--c:#78a9ff">Start my task.</div>
+          <div data-hf-id="hf-dsgr" class="m tr" id="al-t1"><b data-hf-id="hf-8ta6">⧉ mcp · radar.my_tasks</b><br data-hf-id="hf-qluq">T1 · checkout.ts, promo.ts<span data-hf-id="hf-upm1" class="st"><span data-hf-id="hf-6oos" class="spin"></span><span data-hf-id="hf-nb4d" class="chk">✓</span></span></div>
+          <div data-hf-id="hf-8p14" class="m bob" id="al-b1">Adding promo support to calculateTotal() in checkout.ts.</div>
+          <div data-hf-id="hf-3ubx" class="m tr hook" id="al-h2"><b data-hf-id="hf-yrlk">⚓ PreToolUse · lock_guard → allowed</b><br data-hf-id="hf-q7jp">write_file src/checkout.ts · you own it</div>
+          <div data-hf-id="hf-mabd" class="m tr" id="al-note" style="border-color:#08bdba"><b data-hf-id="hf-ljqh" style="color:#08bdba">lock held</b><br data-hf-id="hf-regs">Umar's Bob asked for checkout.ts · queued #1</div>
+        </div>
+        <div data-hf-id="hf-9ve7" class="inp"><span data-hf-id="hf-pk5h" class="ph">Ask Bob…</span></div>
+      </div>
+    </div>
+    <div data-hf-id="hf-l5gv" class="status">radar · connected · 3 members<span data-hf-id="hf-s5kr" style="margin-left:auto">mode: coder</span></div>
+    <div data-hf-id="hf-ndic" class="toast" id="al-toast" style="--c:#be95ff;bottom:36px"><small data-hf-id="hf-s4fb">New task from Aarief</small>T1 · Promo codes at checkout</div>
+  </div>
+
+  <!-- ===== Umar · coder ===== -->
+  <div data-hf-id="hf-9nfi" class="win" id="w-um" style="left:840px;top:560px;width:1040px;height:480px;--c:#08bdba;--bg-ai:rgba(8,189,186,0.09)">
+    <div data-hf-id="hf-t6gq" class="bar"><s data-hf-id="hf-sspb"></s><s data-hf-id="hf-t70c"></s><s data-hf-id="hf-qev5"></s>toko-demo — Bob IDE<span data-hf-id="hf-4x4m" class="who"><i data-hf-id="hf-zsm9"></i>Umar <small data-hf-id="hf-mwx9">coder</small></span></div>
+    <div data-hf-id="hf-59cd" class="body">
+      <div data-hf-id="hf-57vh" class="act"><i data-hf-id="hf-iooy" class="on"></i><i data-hf-id="hf-06xa"></i><i data-hf-id="hf-26gf"></i></div>
+      <div data-hf-id="hf-5ra1" class="exp"><h6 data-hf-id="hf-l8qs">TOKO-DEMO</h6>
+        <div data-hf-id="hf-4xsj" class="f" style="--p:10px">▾ src</div>
+        <div data-hf-id="hf-xnq5" class="f" id="um-f-co">checkout.ts<span data-hf-id="hf-e5v8" class="lock lk" style="--c:#78a9ff">🔒 Alief</span></div>
+        <div data-hf-id="hf-ncvo" class="f">promo.ts<span data-hf-id="hf-6de4" class="lock lk" style="--c:#78a9ff">🔒 Alief</span></div>
+        <div data-hf-id="hf-0ukq" class="f">Header.tsx<span data-hf-id="hf-x7xp" class="lock lk" style="--c:#08bdba">Umar · you</span></div>
+        <div data-hf-id="hf-gili" class="f">cartBadge.ts<span data-hf-id="hf-y6u9" class="lock lk" style="--c:#08bdba">Umar · you</span></div>
+        <div data-hf-id="hf-epmu" class="f" style="--p:10px">▾ .bob</div>
+        <div data-hf-id="hf-3qd7" class="f">custom_modes.yaml</div><div data-hf-id="hf-u8g9" class="f">settings.json</div><div data-hf-id="hf-3e6i" class="f">mcp.json</div><div data-hf-id="hf-agem" class="f">rules-coder/</div>
+      </div>
+      <div data-hf-id="hf-2hir" class="ed">
+        <div data-hf-id="hf-h3v1" class="tabs"><div data-hf-id="hf-hqdq" class="tab cur" style="--c:#08bdba">Header.tsx</div><div data-hf-id="hf-h0bp" class="tab" id="um-tab2" style="display:none">checkout.ts 🔒</div></div>
+        <span data-hf-id="hf-clod" class="aipill" id="um-pill" style="--c:#08bdba;opacity:0">Umar · Bob coder writing</span>
+        <div data-hf-id="hf-indb" class="code" id="um-code"><span data-hf-id="hf-el91" class="ln ai"><b data-hf-id="hf-dmic">1</b><span data-hf-id="hf-anv1" class="k">import</span> { calculateTotal } <span data-hf-id="hf-ytro" class="k">from</span> <span data-hf-id="hf-gjc7" class="s">'./checkout'</span></span><span data-hf-id="hf-4o86" class="ln ai"><b data-hf-id="hf-mt2h">2</b><span data-hf-id="hf-bus4" class="k">import</span> { cartCount } <span data-hf-id="hf-xmul" class="k">from</span> <span data-hf-id="hf-js14" class="s">'./cartBadge'</span></span><span data-hf-id="hf-oupj" class="ln"><b data-hf-id="hf-nwee">3</b> </span><span data-hf-id="hf-y5qp" class="ln ai"><b data-hf-id="hf-0683">4</b><span data-hf-id="hf-ycv2" class="k">export function</span> Header({ cart, code }) {</span><span data-hf-id="hf-10za" class="ln ai"><b data-hf-id="hf-zl1k">5</b>  <span data-hf-id="hf-u3y2" class="k">const</span> total = <span data-hf-id="hf-3ytz" class="fn">calculateTotal</span>(cart, code)</span><span data-hf-id="hf-s6ca" class="ln ai"><b data-hf-id="hf-w1st">6</b>  <span data-hf-id="hf-2gpa" class="k">return</span> &lt;header&gt;Cart ({cartCount(cart)}) · {total}&lt;/header&gt;</span><span data-hf-id="hf-b3vy" class="ln ai"><b data-hf-id="hf-nybe">7</b>}</span></div>
+      </div>
+      <div data-hf-id="hf-r2aw" class="chat" style="width:400px">
+        <div data-hf-id="hf-br0a" class="hd"><span data-hf-id="hf-qcdl" class="bm">B</span>Bob <span data-hf-id="hf-d1qo" class="mode"><span data-hf-id="hf-mwi5" id="um-mode-a">◐ Code ▾</span><span data-hf-id="hf-ercl" id="um-mode-b" class="on" style="display:none;color:#08bdba">◐ Live Collab Coder ▾</span></span></div>
+        <div data-hf-id="hf-pqh7" class="msgs">
+          <div data-hf-id="hf-kso4" class="m tr hook" id="um-h1"><b data-hf-id="hf-bg9t">⚓ hook · SessionStart · brief</b><br data-hf-id="hf-r05r">You: Umar · T2 Cart total<br data-hf-id="hf-p0mm">Alief owns checkout.ts, promo.ts</div>
+          <div data-hf-id="hf-rnyl" class="m u" id="um-u1" style="--c:#08bdba">Start my task.</div>
+          <div data-hf-id="hf-o4vo" class="m tr" id="um-t1"><b data-hf-id="hf-oi02">⧉ mcp · radar.my_tasks</b><br data-hf-id="hf-ombl">T2 · Header.tsx, cartBadge.ts<span data-hf-id="hf-v3x2" class="st"><span data-hf-id="hf-6adr" class="spin"></span><span data-hf-id="hf-npfe" class="chk">✓</span></span></div>
+          <div data-hf-id="hf-dlh5" class="m tr hook" id="um-h2"><b data-hf-id="hf-2hhs">⚓ PreToolUse · lock_guard → allowed</b><br data-hf-id="hf-qsyj">write_file src/Header.tsx · you own it</div>
+          <div data-hf-id="hf-tozk" class="m u" id="um-u2" style="--c:#08bdba">Header needs the discounted total. Update calculateTotal() in checkout.ts.</div>
+          <div data-hf-id="hf-xkw3" class="m tr" id="um-t2"><b data-hf-id="hf-nfuy">✎ apply_diff · src/checkout.ts</b><br data-hf-id="hf-r79k">calculateTotal(cart) → calculateTotal(cart, code)</div>
+          <div data-hf-id="hf-vob1" class="m tr bad" id="um-block"><b data-hf-id="hf-rh8i">⚓ hook · PreToolUse · lock_guard → blocked</b><br data-hf-id="hf-q0ch">checkout.ts is locked by Alief (T1)</div>
+          <div data-hf-id="hf-f2a0" class="m tr rule" id="um-rule"><b data-hf-id="hf-9xbd">§ rules · rules-coder/01-radar.md</b><br data-hf-id="hf-qeni"><span data-hf-id="hf-jmtw" id="um-r1">✗ don't retry the edit</span><br data-hf-id="hf-p7qf"><span data-hf-id="hf-ys1k" id="um-r2">✗ don't edit through the shell</span><br data-hf-id="hf-pm1g"><span data-hf-id="hf-5skv" id="um-r3">✓ ask why_blocked first</span></div>
+          <div data-hf-id="hf-ovm0" class="m tr" id="um-t3"><b data-hf-id="hf-3172">⧉ mcp · radar.why_blocked</b><br data-hf-id="hf-of4d">held by Alief · T1 Promo codes · editing now<span data-hf-id="hf-twzz" class="st"><span data-hf-id="hf-7hau" class="spin"></span><span data-hf-id="hf-tqxn" class="chk">✓</span></span></div>
+          <div data-hf-id="hf-wv73" class="m bob" id="um-b1">I can't edit checkout.ts. Alief's Bob holds it for T1. I won't retry or work around the lock. I'll ask the PM for it and keep going on Header.tsx.</div>
+          <div data-hf-id="hf-k9bh" class="m tr" id="um-t4"><b data-hf-id="hf-gwzl">⧉ mcp · radar.request_file</b><br data-hf-id="hf-otfe">checkout.ts · queued for PM<span data-hf-id="hf-ubb0" class="st"><span data-hf-id="hf-72zt" class="spin"></span><span data-hf-id="hf-u58o" class="chk">✓</span></span></div>
+          <div data-hf-id="hf-7bz2" class="m bob" id="um-b2">Queued #1. Header.tsx already passes the code through. Continuing.</div>
+        </div>
+        <div data-hf-id="hf-elov" class="inp"><span data-hf-id="hf-8gri" class="ph" id="um-ph">Ask Bob…</span><span data-hf-id="hf-7ff5" id="um-typed" data-text="Header needs the discounted total. Update calculateTotal() in checkout.ts."></span></div>
+      </div>
+    </div>
+    <div data-hf-id="hf-kr5u" class="status">radar · connected · 3 members<span data-hf-id="hf-88aj" style="margin-left:auto">mode: coder</span></div>
+    <div data-hf-id="hf-1fi2" class="toast" id="um-toast" style="--c:#be95ff;bottom:36px"><small data-hf-id="hf-v2fb">New task from Aarief</small>T2 · Cart total in header</div>
+    <div data-hf-id="hf-k39n" class="flash" id="um-flash"></div>
+  </div>
+
+  <!-- flying task chips -->
+  <div data-hf-id="hf-dkbf" class="chipw" id="fly1" style="--c:#78a9ff;left:520px;top:640px"><i data-hf-id="hf-2krg"></i>T1 → Alief</div>
+  <div data-hf-id="hf-lrlw" class="chipw" id="fly2" style="--c:#08bdba;left:520px;top:700px"><i data-hf-id="hf-oz7w"></i>T2 → Umar</div>
+  <svg data-hf-id="hf-8u36" class="cursor" id="d-cursor" viewBox="0 0 22 30"><path data-hf-id="hf-m8a9" d="M2 2 L2 24 L8 18 L12 28 L16 26 L12 16 L20 16 Z" fill="#fff" stroke="#161616" stroke-width="1.5" /></svg>
+</div>
+<div data-hf-id="hf-67u9" id="d-cap" style="--c:#be95ff"><i data-hf-id="hf-okwv"></i><span data-hf-id="hf-gdks" id="d-cap-t">custom mode <em data-hf-id="hf-tk9d">pm-lead</em> · read + mcp only</span></div>
+</div>
+<script>
+(function(){
+  const tl = gsap.timeline({ paused: true });
+  const W = 1920, H = 1080;
+  const cam = (r, s) => { const k = s || Math.min(W / r.w, H / r.h) * 0.94; return { x: W / 2 - (r.x + r.w / 2) * k, y: H / 2 - (r.y + r.h / 2) * k, scale: k }; };
+  const move = (t, r, d, ease, s) => tl.to("#d-world", Object.assign(cam(r, s), { duration: d, ease: ease || "power3.inOut" }), t);
+  const show = (sel, t, disp) => { tl.set(sel, { display: disp || "block" }, t); tl.fromTo(sel, { opacity: 0, y: 12, filter: "blur(6px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.4, ease: "power3.out" }, t); };
+  const done = (id, t0, t1) => { tl.to("#" + id + " .spin", { rotation: 360 * Math.max(1, Math.floor((t1 - t0) / 0.6)), duration: t1 - t0, ease: "none" }, t0); tl.set("#" + id + " .spin", { display: "none" }, t1); tl.set("#" + id + " .chk", { display: "block" }, t1); };
+  const typeInto = (id, t, d) => { const el = document.getElementById(id); const txt = el.dataset.text; el.textContent = ""; const spans = [...txt].map(c => { const s = document.createElement("span"); s.textContent = c; s.style.opacity = "0"; el.appendChild(s); return s; }); tl.to(spans, { opacity: 1, duration: 0.001, stagger: d / spans.length, ease: "none" }, t); return spans; };
+  const lines = (sel, t, step) => tl.fromTo(sel + " .ln", { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: step * 0.9, stagger: step, ease: "steps(18)" }, t);
+  const toast = (sel, t, t2) => { tl.fromTo(sel, { opacity: 0, x: 40 }, { opacity: 1, x: 0, duration: 0.45, ease: "back.out(1.8)" }, t); if (t2) tl.to(sel, { opacity: 0, x: 40, duration: 0.3 }, t2); };
+  const cap = (t, html, color, t2, top) => { tl.set("#d-cap-t", { innerHTML: html }, t); tl.set("#d-cap", { "--c": color, top: top ? 12 : "auto", bottom: top ? "auto" : 12 }, t); tl.fromTo("#d-cap", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, t); if (t2) tl.to("#d-cap", { opacity: 0, y: 10, duration: 0.3 }, t2); };
+  const click = (t, x, y) => { tl.to("#d-cursor", { x: x, y: y, duration: 0.9, ease: "power2.inOut" }, t - 1); tl.to("#d-cursor", { scale: 0.8, duration: 0.08, yoyo: true, repeat: 1 }, t); };
+
+  const PM = { x: 40, y: 40, w: 760, h: 1000 }, AL = { x: 840, y: 40, w: 1040, h: 480 }, UM = { x: 840, y: 560, w: 1040, h: 480 };
+  const ALL = { x: 0, y: 0, w: 1920, h: 1080 }; const WIDE = 0.84;
+
+  // Initial state: only Aarief's window exists; the coders arrive at the zoom-out.
+  gsap.set("#d-world", cam(ALL, 0.55));
+  gsap.set(["#w-al", "#w-um"], { opacity: 0 });
+  gsap.set(".lk", { opacity: 0 });
+  gsap.set(["#al-code .ln", "#um-code .ln"], { clipPath: "inset(0 100% 0 0)" });
+  gsap.set(["#pm-tab", "#pm-pdf"], { opacity: 0 });
+
+  /* ===== 05 · The brief (VO local 0.5 → 23.2) ===== */
+  move(0, PM, 1.8, "expo.out");
+  // "It starts with the PM" — Aarief opens the brief from the explorer first.
+  tl.set("#d-cursor", { x: 330, y: 620, scale: 1 }, 0.6);
+  tl.to("#d-cursor", { opacity: 1, duration: 0.3 }, 0.7);
+  tl.to("#pm-f-brief", { backgroundColor: "rgba(255,255,255,0.08)", duration: 0.15 }, 1.6);   // hover
+  click(2.0, 150, 168);
+  tl.to("#pm-f-brief", { backgroundColor: "rgba(15,98,254,0.45)", duration: 0.08 }, 2.0);
+  tl.fromTo("#pm-tab", { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.25 }, 2.15);
+  tl.to("#pm-exp", { x: -300, opacity: 0, duration: 0.35, ease: "power3.in" }, 2.15);
+  tl.fromTo("#pm-pdf", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 2.3);
+  tl.to("#d-cursor", { opacity: 0, duration: 0.25 }, 2.4);
+  move(2.6, { x: 83, y: 112, w: 300, h: 330 }, 1.2);                    // "client brief" → the whole page
+  move(5.1, { x: 88, y: 236, w: 290, h: 95 }, 1.5);                     // "only Aarief knows" → the scope table
+  move(8.6, { x: 250, y: 50, w: 700, h: 394 }, 1.2);                   // "switches" → mode dropdown
+  tl.set("#pm-menu", { display: "block" }, 10.9);                     // "custom mode"
+  tl.fromTo("#pm-menu", { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.25 }, 10.9);
+  tl.set("#pm-menu", { display: "none" }, 12.3);
+  tl.set("#pm-mode-a", { display: "none" }, 12.3);
+  tl.set("#pm-mode-b", { display: "inline" }, 12.3);
+  tl.fromTo("#pm-mode", { scale: 1 }, { scale: 1.15, duration: 0.15, yoyo: true, repeat: 1, borderColor: "#be95ff" }, 12.3);
+  cap(13, "<span class=\"bb\">IBM Bob · Custom mode</span> <em>pm-lead</em>", "#be95ff");
+  move(14.8, { x: 40, y: 760, w: 760, h: 428 }, 1.2);                  // "read and plan" → status bar
+  tl.fromTo("#pm-stat", { color: "#ffffff" }, { color: "#f1c21b", duration: 0.3, yoyo: true, repeat: 3 }, 16.4);
+  tl.to("#d-cap", { opacity: 0, duration: 0.3 }, 16.2);
+  cap(17.3, "Bob <em>can't</em> touch the code", "#be95ff", 18.8);    // "touch the code"
+  move(18.6, { x: 330, y: 560, w: 520, h: 480 }, 1.2);                // "Then … asks Bob" → prompt box
+  tl.set("#pm-ph", { display: "none" }, 19.2);
+  tl.set("#pm-att", { display: "inline-block" }, 19.3);
+  tl.fromTo("#pm-att", { scale: 0.6, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.3, ease: "back.out(2)" }, 19.3);
+  typeInto("pm-typed", 19.6, 3.4);
+  tl.set(["#pm-att", "#pm-typed"], { display: "none" }, 23.6);
+  tl.set("#pm-ph", { display: "inline" }, 23.6);
+  show("#pm-u1", 23.6);
+
+  /* ===== 06 · The plan (VO local 25 → 40.8) ===== */
+  move(24.2, { x: 360, y: 260, w: 460, h: 780 }, 1.3);
+  show("#pm-b1", 25.2);
+  show("#pm-t1", 25.5); done("pm-t1", 25.5, 26.6);                     // "checks who's online"
+  show("#pm-t2", 27.1); done("pm-t2", 27.1, 29.2);                     // "proposes a plan"
+  cap(30.2, "<span class=\"bb\">IBM Bob · MCP</span> our <em>radar-mcp</em> server", "#78a9ff", 33.6, true);
+  show("#pm-plan", 29.6);
+  tl.fromTo(["#pm-r1", "#pm-r2"], { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.4, stagger: 0.9, ease: "power3.out" }, 32.1);   // "Every task"
+  tl.fromTo(["#pm-r1 span", "#pm-r2 span"], { color: "#a8a8a8" }, { color: "#f4f4f4", duration: 0.25, yoyo: true, repeat: 3 }, 36);     // "exactly one person"
+  move(37.6, { x: 400, y: 640, w: 400, h: 330 }, 1.1);                // "Nothing moves" → Approve
+  tl.set("#d-cursor", { x: 720, y: 980, scale: 1 }, 37);
+  tl.to("#d-cursor", { opacity: 1, duration: 0.3 }, 37.8);
+  click(39.8, 470, 868);
+  tl.to("#pm-approve", { scale: 0.92, duration: 0.08, yoyo: true, repeat: 1 }, 39.8);
+  tl.set("#pm-btns", { display: "none" }, 40.05);
+  tl.set("#pm-ok", { display: "block" }, 40.05);
+  tl.fromTo("#pm-ok", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(2)" }, 40.05);
+  tl.to("#d-cursor", { opacity: 0, duration: 0.3 }, 40.8);
+  show("#pm-b2", 40.9);
+  tl.to(".lk", { opacity: 1, duration: 0.3, stagger: 0.05 }, 41.2);
+
+  /* ===== 07 · Zoom out (VO local 43 → 50.9) ===== */
+  move(43.2, ALL, 3.2, "expo.inOut", WIDE);
+  tl.fromTo(["#w-al", "#w-um"], { opacity: 0, x: 120 }, { opacity: 1, x: 0, duration: 1.2, stagger: 0.25, ease: "power3.out" }, 44.3);
+  tl.fromTo("#fly1", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.3 }, 45.2);
+  tl.fromTo("#fly2", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.3 }, 45.4);
+  tl.to("#fly1", { x: 820, duration: 1.3, ease: "power1.inOut" }, 45.5);
+  tl.to("#fly1", { y: -520, duration: 1.3, ease: "power3.out" }, 45.5);
+  tl.to("#fly2", { x: 820, duration: 1.3, ease: "power1.inOut" }, 45.7);
+  tl.to("#fly2", { y: 40, duration: 1.3, ease: "power3.out" }, 45.7);
+  tl.to(["#fly1", "#fly2"], { opacity: 0, scale: 0.4, duration: 0.25 }, 47);
+  toast("#al-toast", 47, 51.5); toast("#um-toast", 47.2, 51.6);
+  tl.fromTo(["#w-pm .who", "#w-al .who", "#w-um .who"], { scale: 1 }, { scale: 1.25, duration: 0.2, yoyo: true, repeat: 1, stagger: 0.2 }, 48.6);   // "own account"
+  cap(48.8, "one repo · <em>three</em> Bobs", "#0f62fe", 52.5);
+
+  /* ===== 08 · Build (VO local 53 → 71.7) ===== */
+  move(53.6, AL, 1.4);
+  tl.set("#al-mode-a", { display: "none" }, 54.2); tl.set("#al-mode-b", { display: "inline" }, 54.2);
+  tl.set("#um-mode-a", { display: "none" }, 54.4); tl.set("#um-mode-b", { display: "inline" }, 54.4);
+  cap(55, "<span class=\"bb\">IBM Bob · Custom mode</span> <em>coder</em>", "#78a9ff", 57.6);
+  show("#al-h1", 56.6); show("#um-h1", 56.8);                           // "session starts"
+  cap(58, "<span class=\"bb\">IBM Bob · Hook</span> <em>SessionStart</em> briefs each Bob", "#f1c21b", 61.6);
+  tl.fromTo("#al-h1", { borderColor: "#393939" }, { borderColor: "#f1c21b", duration: 0.3, yoyo: true, repeat: 3 }, 59.4);
+  move(62, UM, 1.3);                                                  // pan down to Umar
+  show("#al-u1", 63.2); show("#um-u1", 63.3);
+  show("#al-t1", 64.7); done("al-t1", 64.7, 65.6);                      // "pulls the task"
+  show("#um-t1", 64.9); done("um-t1", 64.9, 65.8);
+  show("#al-b1", 66.2);
+  move(66.6, { x: 820, y: 20, w: 1080, h: 1040 }, 1.4);              // wide on both coders, "gets to work"
+  tl.to(["#al-pill", "#um-pill"], { opacity: 1, duration: 0.3 }, 67.2);
+  lines("#al-code", 67.3, 0.7);
+  lines("#um-code", 67.6, 0.7);
+  show("#al-h2", 68.4); show("#um-h2", 68.6);                           // "every edit is checked"
+  cap(69, "<span class=\"bb\">IBM Bob · Hook</span> every write checked against the <em>lock</em>", "#f1c21b", 73);
+  tl.to(["#al-pill", "#um-pill"], { opacity: 0, duration: 0.3 }, 73);
+
+  /* ===== 09 · Near-miss (VO local 74 → 103.8) ===== */
+  move(73.6, { x: 1300, y: 560, w: 580, h: 480 }, 1.3);              // Umar's chat
+  tl.set("#um-ph", { display: "none" }, 74.4);
+  typeInto("um-typed", 74.5, 3);
+  tl.set("#um-typed", { display: "none" }, 77.9);
+  tl.set("#um-ph", { display: "inline" }, 77.9);
+  show("#um-u2", 77.9);
+  show("#um-t2", 80.8);                                                // "But that's Alief's file"
+  tl.set("#um-tab2", { display: "flex" }, 80.8);
+  tl.fromTo("#um-f-co", { backgroundColor: "rgba(120,169,255,0)" }, { backgroundColor: "rgba(120,169,255,0.25)", duration: 0.3, yoyo: true, repeat: 3 }, 81);
+  move(82.6, { x: 1440, y: 700, w: 460, h: 340 }, 1.4);              // tighten — "before the edit lands"
+  show("#um-block", 85.9);                                             // "blocks it"
+  tl.fromTo("#um-flash", { opacity: 0 }, { opacity: 1, duration: 0.05 }, 85.9);
+  tl.to("#um-flash", { opacity: 0, duration: 0.9, ease: "power2.out" }, 86);
+  tl.fromTo("#d-world", { rotation: 0 }, { rotation: 0.4, duration: 0.05, yoyo: true, repeat: 5, ease: "none" }, 85.95);
+  cap(86.2, "<span class=\"bb\">IBM Bob · Hook</span> <em>PreToolUse</em> → blocked", "#fa4d56", 90);   // held frame 86–87.6
+  show("#um-rule", 87.6);                                              // "rules kick in"
+  tl.fromTo("#um-r1", { opacity: 0.35 }, { opacity: 1, duration: 0.3 }, 89.3);
+  tl.fromTo("#um-r2", { opacity: 0.35 }, { opacity: 1, duration: 0.3 }, 91.2);
+  tl.fromTo("#um-r3", { opacity: 0.35 }, { opacity: 1, duration: 0.3 }, 93.6);
+  cap(90.4, "<span class=\"bb\">IBM Bob · Rules</span> <em>no retry, no shell</em>", "#be95ff", 93.4);
+  show("#um-t3", 93.8); done("um-t3", 93.8, 94.8);                      // "calls why_blocked"
+  cap(94, "<span class=\"bb\">IBM Bob · MCP</span> radar-mcp · <em>why_blocked</em>", "#78a9ff", 97.4);
+  show("#um-b1", 95.4);                                                // "explains"
+  show("#um-t4", 97.7); done("um-t4", 97.7, 98.6);                      // "asks the PM"
+  move(98.4, { x: 40, y: 40, w: 760, h: 430 }, 1.6, "expo.inOut");   // swoop to Aarief
+  toast("#pm-toast", 99.3);
+  tl.set("#d-cursor", { x: 650, y: 330 }, 99);
+  tl.to("#d-cursor", { opacity: 1, duration: 0.3 }, 99.6);
+  click(100.9, 520, 150);                                              // "decides"
+  tl.to("#pm-queue", { scale: 0.92, duration: 0.08, yoyo: true, repeat: 1 }, 100.9);
+  tl.to("#pm-toast", { borderLeftColor: "#42be65", duration: 0.3 }, 101);
+  cap(103.4, "no conflict · <em>no broken build</em>", "#42be65");
+  tl.to("#d-cursor", { opacity: 0, duration: 0.3 }, 101.5);
+  move(101.6, ALL, 2.2, "power2.inOut", WIDE);                              // "No conflict. No broken build."
+  show("#al-note", 102.4); show("#um-b2", 102.8);
+  // Exit: whip up into the primitives.
+  tl.to("#d-cap", { opacity: 0, duration: 0.3 }, 104.6);
+  tl.to("#d-world", { y: -900, filter: "blur(18px)", opacity: 0, duration: 0.6, ease: "power3.in" }, 104.9);
+  window.__timelines["s05"] = tl;
+})();
+</script>
+</template>
+</body></html>

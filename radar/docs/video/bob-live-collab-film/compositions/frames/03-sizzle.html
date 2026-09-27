@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"></head>
+<body>
+<template>
+<style>
+@font-face{font-family:"Plex";font-weight:400;src:url("assets/fonts/ibm-plex-sans-latin-400-normal.woff2") format("woff2")}
+@font-face{font-family:"Plex";font-weight:500;src:url("assets/fonts/ibm-plex-sans-latin-500-normal.woff2") format("woff2")}
+@font-face{font-family:"Plex";font-weight:600;src:url("assets/fonts/ibm-plex-sans-latin-600-normal.woff2") format("woff2")}
+@font-face{font-family:"PlexMono";font-weight:400;src:url("assets/fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2")}
+@font-face{font-family:"PlexMono";font-weight:500;src:url("assets/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2")}
+#root{position:absolute;inset:0;overflow:hidden;color:#f4f4f4;font-family:"Plex",sans-serif}
+.it{font-family:"Plex",sans-serif;font-style:normal;font-weight:600;text-decoration:underline;text-decoration-color:#0f62fe;text-decoration-thickness:0.07em;text-underline-offset:0.14em;text-decoration-skip-ink:none}
+#s03-cam{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0}
+.plane{position:absolute;width:720px;height:405px;border:3px solid #393939;border-radius:12px;overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,0.65);background:#0e0e10}
+.plane img{display:block;width:100%;height:100%;object-fit:cover;object-position:top}
+#s03-p1{left:226px;top:50px}
+#s03-p2{left:974px;top:50px}
+#s03-p3{left:226px;top:483px}
+#s03-p4{left:974px;top:483px}
+#s03-words{position:absolute;left:0;right:0;top:922px;display:flex;justify-content:center;gap:36px;font-size:84px;font-weight:600;letter-spacing:-0.035em;text-shadow:0 10px 40px rgba(0,0,0,0.85)}
+#s03-words span{display:block}
+.dot{color:#0f62fe}
+#s03-black{position:absolute;inset:0;background:#0e0e10;opacity:0}
+</style>
+<div data-hf-id="hf-3azd" id="root" data-composition-id="s03" data-width="1920" data-height="1080">
+  <div data-hf-id="hf-dex1" id="s03-cam">
+    <div data-hf-id="hf-khr4" class="plane" id="s03-p1"><img data-hf-id="hf-epqf" src="assets/img/scroll-000.png" alt=""></div>
+    <div data-hf-id="hf-vd8r" class="plane" id="s03-p2"><img data-hf-id="hf-m217" src="assets/img/scroll-035.png" alt=""></div>
+    <div data-hf-id="hf-rf4q" class="plane" id="s03-p3"><img data-hf-id="hf-0j5u" src="assets/img/scroll-070.png" alt=""></div>
+    <div data-hf-id="hf-8nf1" class="plane" id="s03-p4"><img data-hf-id="hf-0rmv" src="assets/img/scroll-088.png" alt=""></div>
+  </div>
+  <div data-hf-id="hf-42wb" id="s03-words"><span data-hf-id="hf-rp93" id="s03-w1">Visible<span data-hf-id="hf-6jgg" class="dot">.</span></span><span data-hf-id="hf-2sji" id="s03-w2">Locked<span data-hf-id="hf-3zzs" class="dot">.</span></span><span data-hf-id="hf-0q84" id="s03-w3" class="it">Human-approved<span data-hf-id="hf-2t2p" class="dot">.</span></span></div>
+  <div data-hf-id="hf-c5qh" id="s03-black"></div>
+</div>
+<script>
+(function(){
+  const tl = gsap.timeline({ paused: true });
+  const P = ["#s03-p1", "#s03-p2", "#s03-p3", "#s03-p4"];
+  const C = [[586, 252], [1334, 252], [586, 685], [1334, 685]];
+  const K = 1.22;
+  // Camera move that grows one screen in place and pulls it a little toward centre.
+  const focus = (i, t) => {
+    const [cx, cy] = C[i];
+    tl.to("#s03-cam", { x: cx + (960 - cx) * 0.3 - cx * K, y: cy + (470 - cy) * 0.3 - cy * K, scale: K, duration: 0.9, ease: "power3.inOut" }, t);
+    P.forEach((p, j) => tl.to(p, { opacity: j === i ? 1 : 0.32, filter: j === i ? "blur(0px)" : "blur(3px)", borderColor: j === i ? "#0f62fe" : "#393939", duration: 0.6, ease: "power2.out" }, t));
+  };
+  // The four screens share one frame; they rise in one by one, half a second apart.
+  tl.fromTo(P, { y: 320, opacity: 0 }, { y: 0, opacity: 1, duration: 0.8, stagger: 0.5, ease: "power3.out" }, 0);
+  // Words sit at 28% and light on their cue.
+  tl.fromTo("#s03-words span[id]", { opacity: 0, y: 60, filter: "blur(16px)" }, { opacity: 0.28, y: 0, filter: "blur(0px)", duration: 0.5, stagger: 0.08, ease: "power3.out" }, 0.9);
+  // "Every Bob is visible" → Mission Control.
+  tl.to("#s03-w1", { opacity: 1, scale: 1.04, duration: 0.3 }, 1.35);
+  focus(1, 2.0);
+  // "Every file has one owner" → the near-miss section.
+  tl.to("#s03-w1", { opacity: 0.28, scale: 1, duration: 0.3 }, 3.25);
+  tl.to("#s03-w2", { opacity: 1, scale: 1.04, duration: 0.3 }, 3.3);
+  focus(2, 3.3);
+  // "And every decision goes past a human" → the primitives.
+  tl.to("#s03-w2", { opacity: 0.28, scale: 1, duration: 0.3 }, 4.75);
+  tl.to("#s03-w3", { opacity: 1, scale: 1.04, duration: 0.3 }, 4.8);
+  focus(3, 4.8);
+  // Push through into black.
+  tl.to("#s03-cam", { x: 1334 - 1334 * 2.4, y: 685 - 685 * 2.4, scale: 2.4, duration: 0.6, ease: "power3.in" }, 7.1);
+  tl.to("#s03-words", { opacity: 0, scale: 1.2, filter: "blur(20px)", duration: 0.45, ease: "power2.in" }, 7.1);
+  tl.to("#s03-black", { opacity: 1, duration: 0.4, ease: "power2.in" }, 7.35);
+  window.__timelines["s03"] = tl;
+})();
+</script>
+</template>
+</body></html>

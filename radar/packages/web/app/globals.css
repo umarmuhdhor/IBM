@@ -190,7 +190,7 @@ body {
 .lp-halftone {
   position: absolute;
   inset: 0;
-  background: url('/brand/bob-crew-halftone.svg') no-repeat 50% 64% / min(80vh, 780px);
+  background: url('/brand/live-collab-halftone.svg') no-repeat 50% 64% / min(80vh, 780px);
   -webkit-mask-image: radial-gradient(ellipse at 50% 60%, #000 35%, transparent 72%);
   mask-image: radial-gradient(ellipse at 50% 60%, #000 35%, transparent 72%);
   opacity: 0.18;
@@ -274,7 +274,7 @@ body {
   border-radius: 999px;
   background: rgba(14, 14, 16, 0.88);
 }
-/* Bob crew halftone behind the demo card (like the globe in the reference), fading at its edges. */
+/* Live Collab mark halftone behind the demo card (like the globe in the reference), fading at its edges. */
 .lp-demo-halftone {
   position: absolute;
   top: 50%;
@@ -283,7 +283,7 @@ body {
   width: min(1040px, 160vw);
   aspect-ratio: 1;
   transform: translate(-50%, -46%);
-  background: url('/brand/bob-crew-halftone.svg') no-repeat center / contain;
+  background: url('/brand/live-collab-halftone.svg') no-repeat center / contain;
   -webkit-mask-image: radial-gradient(closest-side, #000 55%, transparent 100%);
   mask-image: radial-gradient(closest-side, #000 55%, transparent 100%);
   opacity: 0.16;

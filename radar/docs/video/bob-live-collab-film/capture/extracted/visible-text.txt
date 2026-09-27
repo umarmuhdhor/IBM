@@ -1,0 +1,129 @@
+[a] Skip to content
+[a] IBM Bob Live Collab
+[a] bob_sessions
+[a] Download
+[span] Your team's Bobs,
+[span] working together
+[p] One live workspace for every teammate's IBM Bob. Shared locks, a queue, and a PM who approves before anything risky lands.
+[a] Watch the live replay
+[a] Download for macOS
+[p] Replay runs in your browser, no login · macOS build is arm64, unsigned
+[span] northlight/abyssal-drift-server · session/lobby-join-race
+[span] export async function joinLobby(ctx, lobbyId, ticket) {
+[span] const lobby = await ctx.get(lobbyId);
+[span] locked · Budi
+[span] const slot = pickOpenSlot(lobby, ticket);
+[span] Budi · agent
+[span] if (!slot) return { refusal: "lobby full" };
+[span] return reserveSlot(ctx, lobby, slot, ticket);
+[span] Alice · agent
+[div] Bob → PM · approval needed
+[b] Alice
+[p] finished lines 3–5.
+[b] Budi
+[p] is queued on the same block. Hand the lock to Budi?
+[span] ✓ Approved by PM
+[p] Lock moves to Budi. His queued edit lands.
+[p] Live Collab
+[h2] Three people, three Bobs, one repo
+[p] Each teammate keeps their own Bob. Live Collab shares locks, tasks and hook traces, and asks a human before anything risky lands.
+[span] toko-demo · live
+[button] Andi
+[button] Mission Control
+[button] Budi
+[p] Files & locks
+[li] checkout.ts
+[li] routes.ts
+[li] theme.css
+[li] Header.tsx
+[p] Team
+[span] Andi · coder
+[span] Budi · coder
+[span] Citra · pm-lead
+[p] Needs you
+[div] Budi's Bob asks for checkout.ts
+[div] Held by Andi for T-1. Queue Budi and continue Header.tsx meanwhile.
+[div] ✓ auto-applied
+[div] Plan P-1 · tasks for toko-demo
+[div] Proposed by the pm-lead Bob. A human approved it before any lock was reserved.
+[div] ✓ approved
+[span] Replay of the recorded session · no login · no API key
+[a] Watch full replay
+[dt] near-miss caught by a hook
+[dt] decisions, each shown to a human
+[dt] merge conflicts
+[dt] median time to a decision
+[dd] 2.9 s
+[p] From the recorded toko-demo session shown in the replay.
+[p] How it works
+[h2] How three Bobs share one repo
+[code] lock_guard
+[h3] One file, one Bob
+[p] A PreToolUse hook checks the shared lock table before any write. Andi holds checkout.ts, so no other Bob can overwrite it.
+[code] radar.why_blocked
+[h3] A near-miss explains itself
+[p] The blocked Bob calls an MCP tool and tells its human, in one sentence, who holds the file and what to do next.
+[code] pm-lead
+[h3] PM Bob proposes, a human decides
+[p] The pm-lead mode can only read and propose. Plans and conflicts land in Needs you, where a person clicks Approve or Deny.
+[code] radar-mcp
+[h3] Every teammate keeps their own Bob
+[p] Each person runs IBM Bob on their own machine. Live Collab syncs locks, tasks and hook traces between them in real time.
+[h3] Visible
+[p] Every Bob shows its owner, file and last hook on one screen.
+[h3] Locked
+[p] A file has one holder. Others queue or switch files, never merge by accident.
+[h3] Human-approved
+[p] Agents suggest. A person approves the plan before work starts.
+[p] Near-miss
+[h2] Catch the near-miss before it merges.
+[p] Two Bobs reach for the same file. The hook stops the second one, the Bob says why, and its human keeps working on something else.
+[p] Blocked, then queued
+[p] lock_guard stops the write before it lands. Budi's Bob waits at position 1 and moves on to Header.tsx.
+[a] See it in the replay →
+[span] budi · coder
+[span] apply_diff src/checkout/checkout.ts
+[span] hook
+[span] PreToolUse · lock_guard → blocked
+[span] held by
+[span] andi · T-1 coupon
+[span] mcp
+[span] radar.why_blocked → "held by Andi for T-1"
+[span] decision
+[span] queued · position 1
+[span] budi · coder
+[span] continues src/ui/Header.tsx
+[p] IBM Bob
+[h2] Built on IBM Bob primitives
+[a] Browse the bob_sessions/ evidence →
+[span] mode
+[code] coder · pm-lead
+[p] Two custom modes. coder edits and runs; pm-lead only reads and proposes.
+[span] hook
+[code] 5 hooks
+[p] SessionStart, UserPromptSubmit, PreToolUse, PostToolUse, Stop. Locks and briefs run here.
+[span] mcp
+[code] radar-mcp
+[p] MCP tools such as radar.why_blocked, so a Bob can read team state and explain itself.
+[p] Get started
+[h2] Install in three steps
+[p] Grab the
+[code] .dmg
+[p] , let macOS open it, then join your team from Bob IDE.
+[a] Download .dmg
+[a] Watch the replay first →
+[p] Download
+[p] The latest
+[code] .dmg
+[p] from
+[a] GitHub Releases
+[p] Allow the unsigned app
+[p] System Settings → Privacy & Security → Open Anyway, or run:
+[code] xattr -dr com.apple.quarantine "/Applications/IBM Bob Live Collab.app"
+[button] Copy
+[p] Join your team
+[p] Paste the invite, choose the folder, then open it in Bob IDE and trust the workspace.
+[p] Community hackathon project, not an official IBM product.
+[p] · built on Orca (MIT)
+[a] GitHub repo
+[a] bob_sessions
