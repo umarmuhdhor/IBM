@@ -29413,11 +29413,13 @@ var CHECK_REASONS = [
   "in_review_by_other",
   "committing",
   "pm_readonly",
-  "ignored_path"
+  "ignored_path",
+  "outside_range"
 ];
 
 // ../common/src/schemas.ts
 var PathSchema = external_exports.string().min(1).max(1024);
+var LineRangeSchema = external_exports.object({ start: external_exports.number().int().positive(), end: external_exports.number().int().positive() }).refine((r) => r.end >= r.start, { message: "end must be >= start" });
 var MemberIdSchema = external_exports.string().min(1).max(64);
 var TaskIdSchema = external_exports.string().min(1).max(64);
 var EpochMsSchema = external_exports.number().int().nonnegative();
@@ -29455,7 +29457,10 @@ var ERROR_CODES = [
   "TERM_FRAME_TOO_LARGE"
 ];
 var ErrorCodeSchema = external_exports.enum(ERROR_CODES);
-var ErrorRes = external_exports.object({ error: external_exports.object({ code: ErrorCodeSchema, message: external_exports.string() }) });
+var ErrorReasonSchema = external_exports.enum(["signed-out", "workspace-closed"]);
+var ErrorRes = external_exports.object({
+  error: external_exports.object({ code: ErrorCodeSchema, message: external_exports.string(), reason: ErrorReasonSchema.optional() })
+});
 var HealthRes = external_exports.object({
   ok: external_exports.boolean(),
   workspace: external_exports.string(),
@@ -29468,13 +29473,16 @@ var LockHolder = external_exports.object({
   taskId: TaskIdSchema,
   taskTitle: external_exports.string(),
   state: LockStateSchema,
-  sinceMs: external_exports.number().nonnegative().optional()
+  sinceMs: external_exports.number().nonnegative().optional(),
+  range: LineRangeSchema.optional()
 });
 var LockCheckReq = external_exports.object({
   paths: external_exports.array(PathSchema).min(1).max(100),
   tool: external_exports.string().min(1).max(128),
   sessionId: external_exports.string().max(256).nullable().optional(),
-  clientTs: EpochMsSchema
+  clientTs: EpochMsSchema,
+  /** Lines each path's edit touches (D-alief-17). A path without an entry is a whole-file edit. */
+  lines: external_exports.record(PathSchema, external_exports.array(LineRangeSchema).max(200)).optional()
 });
 var LockCheckResult = external_exports.object({
   path: PathSchema,
@@ -29581,7 +29589,8 @@ var TeamRes = external_exports.object({
       taskId: TaskIdSchema,
       memberId: MemberIdSchema,
       state: LockStateSchema,
-      queue: external_exports.array(TaskIdSchema)
+      queue: external_exports.array(TaskIdSchema),
+      range: LineRangeSchema.optional()
     })
   ),
   openRequests: external_exports.number().int().nonnegative(),
@@ -29803,7 +29812,8 @@ var LockViewSchema = external_exports.object({
   taskId: TaskIdSchema,
   memberId: MemberIdSchema,
   state: LockStateSchema,
-  queue: external_exports.array(TaskIdSchema)
+  queue: external_exports.array(TaskIdSchema),
+  range: LineRangeSchema.optional()
 });
 var AllocationViewSchema = external_exports.object({
   taskId: TaskIdSchema,
@@ -29893,7 +29903,7 @@ var RadarEventSchema = external_exports.discriminatedUnion("type", [
   ),
   event("sync.applied", external_exports.object({ path: PathSchema, version: external_exports.number().int().nonnegative(), memberId: MemberIdSchema, latencyMs: external_exports.number() })),
   event("lock.reserved", external_exports.object({ path: PathSchema, taskId: TaskIdSchema, memberId: MemberIdSchema, source: AllocationSourceSchema })),
-  event("lock.acquired", external_exports.object({ path: PathSchema, taskId: TaskIdSchema, memberId: MemberIdSchema, auto: external_exports.boolean() })),
+  event("lock.acquired", external_exports.object({ path: PathSchema, taskId: TaskIdSchema, memberId: MemberIdSchema, auto: external_exports.boolean(), range: LineRangeSchema.optional() })),
   event("lock.review", external_exports.object({ path: PathSchema, taskId: TaskIdSchema })),
   event("lock.released", external_exports.object({ path: PathSchema, taskId: TaskIdSchema })),
   event(
@@ -29917,7 +29927,8 @@ var RadarEventSchema = external_exports.discriminatedUnion("type", [
       holderMemberId: MemberIdSchema,
       holderTaskId: TaskIdSchema,
       via: BlockViaSchema,
-      requestId: external_exports.string().nullable()
+      requestId: external_exports.string().nullable(),
+      holderRange: LineRangeSchema.optional()
     })
   ),
   event("hook.failopen", external_exports.object({ memberId: MemberIdSchema, paths: external_exports.array(PathSchema), errorKind: external_exports.string() })),
@@ -38136,6 +38147,190 @@ var my_tasks_default = defineTool({
   }
 });
 
+// ../common/src/term.ts
+var TermId = external_exports.string().min(1).max(64);
+var FrameData = external_exports.string().max(Math.ceil(TERM_FRAME_MAX_BYTES / 3) * 4);
+var msg = (t, d) => external_exports.object({ t: external_exports.literal(t), id: external_exports.string().optional(), d });
+var TermMessageSchema = external_exports.discriminatedUnion("t", [
+  msg("term.share", external_exports.object({ termId: TermId, title: external_exports.string().max(200), agent: external_exports.string().min(1), cols: external_exports.number().int().positive(), rows: external_exports.number().int().positive() })),
+  msg("term.unshare", external_exports.object({ termId: TermId })),
+  msg(
+    "term.list",
+    external_exports.object({
+      terms: external_exports.array(
+        external_exports.object({
+          termId: TermId,
+          member: MemberIdSchema,
+          title: external_exports.string(),
+          agent: external_exports.string(),
+          viewers: external_exports.array(MemberIdSchema),
+          guest: MemberIdSchema.optional()
+        })
+      )
+    })
+  ),
+  msg("term.subscribe", external_exports.object({ termId: TermId })),
+  msg("term.unsubscribe", external_exports.object({ termId: TermId })),
+  msg("term.need_snapshot", external_exports.object({ termId: TermId })),
+  msg("term.snapshot", external_exports.object({ termId: TermId, seq: external_exports.number().int().nonnegative(), data: external_exports.string().max(262144) })),
+  msg("term.frame", external_exports.object({ termId: TermId, seq: external_exports.number().int().nonnegative(), data: FrameData, ts: external_exports.number() })),
+  msg("term.resize", external_exports.object({ termId: TermId, cols: external_exports.number().int().positive(), rows: external_exports.number().int().positive() })),
+  msg("term.ended", external_exports.object({ termId: TermId, reason: external_exports.enum(["unshared", "host_offline"]) })),
+  msg("term.ack", external_exports.object({ termId: TermId, seq: external_exports.number().int().nonnegative(), viewerTs: external_exports.number() })),
+  msg("term.input.request", external_exports.object({ termId: TermId, guest: MemberIdSchema })),
+  msg("term.input.grant", external_exports.object({ termId: TermId, guest: MemberIdSchema, until: external_exports.number() })),
+  msg("term.input.revoke", external_exports.object({ termId: TermId, guest: MemberIdSchema, until: external_exports.number() })),
+  msg("term.input", external_exports.object({ termId: TermId, guest: MemberIdSchema, data: external_exports.string().max(4096) }))
+]);
+
+// ../common/src/ws.ts
+var msg2 = (t, d) => external_exports.object({ t: external_exports.literal(t), id: external_exports.string().optional(), d });
+var Version = external_exports.number().int().nonnegative();
+var WsClientKindSchema = external_exports.enum(["sync", "mc", "app"]);
+var FileRejectReasonSchema = external_exports.enum(["held_by_other", "committing", "pm_readonly", "conflict", "too_large", "binary"]);
+var ServerFile = external_exports.object({ version: Version, hash: external_exports.string().nullable(), content: external_exports.string().nullable(), deleted: external_exports.boolean() });
+var LockChangedData = external_exports.object({
+  path: PathSchema,
+  state: LockStateViewSchema,
+  taskId: TaskIdSchema.nullable(),
+  memberId: MemberIdSchema.nullable(),
+  queue: external_exports.array(TaskIdSchema),
+  range: LineRangeSchema.optional()
+});
+var CoreWsMessageSchema = external_exports.discriminatedUnion("t", [
+  msg2(
+    "hello",
+    external_exports.object({
+      token: external_exports.string().min(1),
+      client: WsClientKindSchema,
+      clientVersion: external_exports.string(),
+      knownVersions: external_exports.record(external_exports.string(), Version).optional()
+    })
+  ),
+  msg2("welcome", external_exports.object({ principal: PrincipalSchema, serverTime: EpochMsSchema, workspace: external_exports.string() })),
+  msg2(
+    "snapshot",
+    external_exports.object({
+      files: external_exports.array(external_exports.object({ path: PathSchema, version: Version, hash: external_exports.string().nullable(), content: external_exports.string().nullable(), deleted: external_exports.boolean() })),
+      locks: external_exports.array(external_exports.object({ path: PathSchema, taskId: TaskIdSchema, memberId: MemberIdSchema, state: LockStateSchema, queue: external_exports.array(TaskIdSchema), range: LineRangeSchema.optional() })),
+      cursor: external_exports.number().int().nonnegative()
+    })
+  ),
+  msg2("state", StateRes),
+  msg2("file.update", external_exports.object({ path: PathSchema, baseVersion: Version, content: external_exports.string(), hash: external_exports.string(), clientTs: EpochMsSchema })),
+  msg2("file.delete", external_exports.object({ path: PathSchema, baseVersion: Version, clientTs: EpochMsSchema })),
+  msg2(
+    "file.ack",
+    external_exports.object({
+      id: external_exports.string().optional(),
+      path: PathSchema,
+      version: Version,
+      hash: external_exports.string(),
+      /** D-alief-17: the server merged this save with a teammate's edit; `content` is the result to write back. */
+      merged: external_exports.boolean().optional(),
+      content: external_exports.string().optional()
+    })
+  ),
+  msg2(
+    "file.changed",
+    external_exports.object({
+      path: PathSchema,
+      version: Version,
+      content: external_exports.string().nullable(),
+      hash: external_exports.string().nullable(),
+      deleted: external_exports.boolean(),
+      by: MemberIdSchema,
+      taskId: TaskIdSchema.nullable(),
+      serverTs: EpochMsSchema
+    })
+  ),
+  msg2("file.applied", external_exports.object({ path: PathSchema, version: Version, serverTs: EpochMsSchema, appliedTs: EpochMsSchema })),
+  msg2(
+    "file.rejected",
+    external_exports.object({
+      id: external_exports.string().optional(),
+      path: PathSchema,
+      reason: FileRejectReasonSchema,
+      holder: LockHolder.nullable().optional(),
+      server: ServerFile
+    })
+  ),
+  msg2("lock.changed", LockChangedData),
+  msg2("event", RadarEventSchema),
+  msg2("notice", external_exports.object({ level: external_exports.enum(["info", "warn"]), message: external_exports.string() })),
+  msg2("proposal.new", external_exports.object({ proposal: ProposalItem })),
+  msg2("proposal.decided", external_exports.object({ proposal: ProposalItem })),
+  msg2("heartbeat", external_exports.object({ ts: EpochMsSchema })),
+  msg2("error", external_exports.object({ code: external_exports.string(), message: external_exports.string() }))
+]);
+var WsMessageSchema = external_exports.union([CoreWsMessageSchema, TermMessageSchema]);
+
+// ../common/src/line-range.ts
+function rangeText(r) {
+  return r.start === r.end ? `line ${r.start}` : `lines ${r.start}\u2013${r.end}`;
+}
+
+// ../common/src/events.ts
+var WITA_OFFSET_MS = 8 * 60 * 60 * 1e3;
+
+// ../common/src/hash.ts
+var encoder = new TextEncoder();
+
+// ../common/src/invite.ts
+var Invite = external_exports.object({
+  v: external_exports.literal(1),
+  server: external_exports.string().url(),
+  workspace: external_exports.string().min(1),
+  member: external_exports.string().min(1),
+  token: external_exports.string().min(1)
+});
+
+// ../common/src/join-code.ts
+var JOIN_CODE_TTL_HOURS_MAX = 720;
+var AdminJoinCodeReq = external_exports.object({
+  member: external_exports.string().min(1).max(64).optional(),
+  owner: external_exports.boolean().optional(),
+  ttlHours: external_exports.number().int().min(1).max(JOIN_CODE_TTL_HOURS_MAX).optional()
+}).refine((r) => !(r.owner && r.member), { message: "An owner code cannot belong to a member." });
+var AdminJoinCodeRes = external_exports.object({
+  /** null for an open code and for an owner code. */
+  member: external_exports.string().nullable(),
+  /** true for an owner code (Mission Control). Absent from servers before D-alief-11. */
+  owner: external_exports.boolean().optional(),
+  code: external_exports.string(),
+  expiresAt: external_exports.number().int()
+});
+var JoinReq = external_exports.object({
+  code: external_exports.string().min(1).max(32),
+  name: external_exports.string().trim().min(1).max(100).optional(),
+  role: external_exports.enum(["coder", "pm"]).optional()
+});
+var JoinMemberRes = external_exports.object({
+  workspace: external_exports.string(),
+  member: external_exports.string(),
+  role: external_exports.enum(["coder", "pm"]),
+  invite: external_exports.string()
+});
+var JoinOwnerRes = external_exports.object({
+  workspace: external_exports.string(),
+  member: external_exports.null(),
+  role: external_exports.literal("mc"),
+  token: external_exports.string()
+});
+var JoinRes = external_exports.union([JoinMemberRes, JoinOwnerRes]);
+var OpenWorkspaceReq = external_exports.object({
+  workspace: external_exports.string().trim().min(1).max(64),
+  owner: external_exports.object({ name: external_exports.string().trim().min(1).max(100), role: external_exports.enum(["coder", "pm"]) })
+});
+var OpenWorkspaceRes = external_exports.object({
+  workspace: external_exports.string(),
+  member: external_exports.string(),
+  invite: external_exports.string(),
+  mcToken: external_exports.string(),
+  code: external_exports.string(),
+  expiresAt: external_exports.number().int()
+});
+
 // src/tools/coder/why_blocked.ts
 var why_blocked_default = defineTool({
   name: "why_blocked",
@@ -38149,7 +38344,8 @@ var why_blocked_default = defineTool({
     const holder = block.holder;
     const sinceMin = Math.round(holder.sinceMs / 6e4);
     const lines = [];
-    lines.push(`${block.path} dipegang ${holder.memberName} (${holder.taskId} ${holder.taskTitle}) sejak ${sinceMin} menit.`);
+    const what = holder.range ? `${block.path} ${rangeText(holder.range)}` : block.path;
+    lines.push(`${what} dipegang ${holder.memberName} (${holder.taskId} ${holder.taskTitle}) sejak ${sinceMin} menit.`);
     if (block.requestId) {
       lines.push(`Permintaanmu ${block.requestId} \u2014 status: ${block.requestStatus}.`);
     } else {
@@ -38223,151 +38419,6 @@ var submit_task_default = defineTool({
 
 // src/tools/coder/index.ts
 var CODER_TOOLS = [my_tasks_default, why_blocked_default, request_file_default, team_activity_default, submit_task_default];
-
-// ../common/src/term.ts
-var TermId = external_exports.string().min(1).max(64);
-var FrameData = external_exports.string().max(Math.ceil(TERM_FRAME_MAX_BYTES / 3) * 4);
-var msg = (t, d) => external_exports.object({ t: external_exports.literal(t), id: external_exports.string().optional(), d });
-var TermMessageSchema = external_exports.discriminatedUnion("t", [
-  msg("term.share", external_exports.object({ termId: TermId, title: external_exports.string().max(200), agent: external_exports.string().min(1), cols: external_exports.number().int().positive(), rows: external_exports.number().int().positive() })),
-  msg("term.unshare", external_exports.object({ termId: TermId })),
-  msg(
-    "term.list",
-    external_exports.object({
-      terms: external_exports.array(
-        external_exports.object({
-          termId: TermId,
-          member: MemberIdSchema,
-          title: external_exports.string(),
-          agent: external_exports.string(),
-          viewers: external_exports.array(MemberIdSchema),
-          guest: MemberIdSchema.optional()
-        })
-      )
-    })
-  ),
-  msg("term.subscribe", external_exports.object({ termId: TermId })),
-  msg("term.unsubscribe", external_exports.object({ termId: TermId })),
-  msg("term.need_snapshot", external_exports.object({ termId: TermId })),
-  msg("term.snapshot", external_exports.object({ termId: TermId, seq: external_exports.number().int().nonnegative(), data: external_exports.string().max(262144) })),
-  msg("term.frame", external_exports.object({ termId: TermId, seq: external_exports.number().int().nonnegative(), data: FrameData, ts: external_exports.number() })),
-  msg("term.resize", external_exports.object({ termId: TermId, cols: external_exports.number().int().positive(), rows: external_exports.number().int().positive() })),
-  msg("term.ended", external_exports.object({ termId: TermId, reason: external_exports.enum(["unshared", "host_offline"]) })),
-  msg("term.ack", external_exports.object({ termId: TermId, seq: external_exports.number().int().nonnegative(), viewerTs: external_exports.number() })),
-  msg("term.input.request", external_exports.object({ termId: TermId, guest: MemberIdSchema })),
-  msg("term.input.grant", external_exports.object({ termId: TermId, guest: MemberIdSchema, until: external_exports.number() })),
-  msg("term.input.revoke", external_exports.object({ termId: TermId, guest: MemberIdSchema, until: external_exports.number() })),
-  msg("term.input", external_exports.object({ termId: TermId, guest: MemberIdSchema, data: external_exports.string().max(4096) }))
-]);
-
-// ../common/src/ws.ts
-var msg2 = (t, d) => external_exports.object({ t: external_exports.literal(t), id: external_exports.string().optional(), d });
-var Version = external_exports.number().int().nonnegative();
-var WsClientKindSchema = external_exports.enum(["sync", "mc", "app"]);
-var FileRejectReasonSchema = external_exports.enum(["held_by_other", "committing", "pm_readonly", "conflict", "too_large", "binary"]);
-var ServerFile = external_exports.object({ version: Version, hash: external_exports.string().nullable(), content: external_exports.string().nullable(), deleted: external_exports.boolean() });
-var LockChangedData = external_exports.object({
-  path: PathSchema,
-  state: LockStateViewSchema,
-  taskId: TaskIdSchema.nullable(),
-  memberId: MemberIdSchema.nullable(),
-  queue: external_exports.array(TaskIdSchema)
-});
-var CoreWsMessageSchema = external_exports.discriminatedUnion("t", [
-  msg2(
-    "hello",
-    external_exports.object({
-      token: external_exports.string().min(1),
-      client: WsClientKindSchema,
-      clientVersion: external_exports.string(),
-      knownVersions: external_exports.record(external_exports.string(), Version).optional()
-    })
-  ),
-  msg2("welcome", external_exports.object({ principal: PrincipalSchema, serverTime: EpochMsSchema, workspace: external_exports.string() })),
-  msg2(
-    "snapshot",
-    external_exports.object({
-      files: external_exports.array(external_exports.object({ path: PathSchema, version: Version, hash: external_exports.string().nullable(), content: external_exports.string().nullable(), deleted: external_exports.boolean() })),
-      locks: external_exports.array(external_exports.object({ path: PathSchema, taskId: TaskIdSchema, memberId: MemberIdSchema, state: LockStateSchema, queue: external_exports.array(TaskIdSchema) })),
-      cursor: external_exports.number().int().nonnegative()
-    })
-  ),
-  msg2("state", StateRes),
-  msg2("file.update", external_exports.object({ path: PathSchema, baseVersion: Version, content: external_exports.string(), hash: external_exports.string(), clientTs: EpochMsSchema })),
-  msg2("file.delete", external_exports.object({ path: PathSchema, baseVersion: Version, clientTs: EpochMsSchema })),
-  msg2("file.ack", external_exports.object({ id: external_exports.string().optional(), path: PathSchema, version: Version, hash: external_exports.string() })),
-  msg2(
-    "file.changed",
-    external_exports.object({
-      path: PathSchema,
-      version: Version,
-      content: external_exports.string().nullable(),
-      hash: external_exports.string().nullable(),
-      deleted: external_exports.boolean(),
-      by: MemberIdSchema,
-      taskId: TaskIdSchema.nullable(),
-      serverTs: EpochMsSchema
-    })
-  ),
-  msg2("file.applied", external_exports.object({ path: PathSchema, version: Version, serverTs: EpochMsSchema, appliedTs: EpochMsSchema })),
-  msg2(
-    "file.rejected",
-    external_exports.object({
-      id: external_exports.string().optional(),
-      path: PathSchema,
-      reason: FileRejectReasonSchema,
-      holder: LockHolder.nullable().optional(),
-      server: ServerFile
-    })
-  ),
-  msg2("lock.changed", LockChangedData),
-  msg2("event", RadarEventSchema),
-  msg2("notice", external_exports.object({ level: external_exports.enum(["info", "warn"]), message: external_exports.string() })),
-  msg2("proposal.new", external_exports.object({ proposal: ProposalItem })),
-  msg2("proposal.decided", external_exports.object({ proposal: ProposalItem })),
-  msg2("heartbeat", external_exports.object({ ts: EpochMsSchema })),
-  msg2("error", external_exports.object({ code: external_exports.string(), message: external_exports.string() }))
-]);
-var WsMessageSchema = external_exports.union([CoreWsMessageSchema, TermMessageSchema]);
-
-// ../common/src/events.ts
-var WITA_OFFSET_MS = 8 * 60 * 60 * 1e3;
-
-// ../common/src/hash.ts
-var encoder = new TextEncoder();
-
-// ../common/src/invite.ts
-var Invite = external_exports.object({
-  v: external_exports.literal(1),
-  server: external_exports.string().url(),
-  workspace: external_exports.string().min(1),
-  member: external_exports.string().min(1),
-  token: external_exports.string().min(1)
-});
-
-// ../common/src/join-code.ts
-var JOIN_CODE_TTL_HOURS_MAX = 720;
-var AdminJoinCodeReq = external_exports.object({
-  member: external_exports.string().min(1).max(64).optional(),
-  ttlHours: external_exports.number().int().min(1).max(JOIN_CODE_TTL_HOURS_MAX).optional()
-});
-var AdminJoinCodeRes = external_exports.object({
-  /** null for an open code. */
-  member: external_exports.string().nullable(),
-  code: external_exports.string(),
-  expiresAt: external_exports.number().int()
-});
-var JoinReq = external_exports.object({
-  code: external_exports.string().min(1).max(32),
-  name: external_exports.string().trim().min(1).max(100).optional(),
-  role: external_exports.enum(["coder", "pm"]).optional()
-});
-var JoinRes = external_exports.object({
-  workspace: external_exports.string(),
-  member: external_exports.string(),
-  role: external_exports.enum(["coder", "pm"]),
-  invite: external_exports.string()
-});
 
 // src/tools/pm/team_status.ts
 var team_status_default = defineTool({

@@ -846,7 +846,8 @@ var require_ignore = __commonJS({
 // src/lock_guard.ts
 var lock_guard_exports = {};
 __export(lock_guard_exports, {
-  LOCK_GUARD_BUDGET_MS: () => LOCK_GUARD_BUDGET_MS
+  LOCK_GUARD_BUDGET_MS: () => LOCK_GUARD_BUDGET_MS,
+  linesFor: () => linesFor
 });
 module.exports = __toCommonJS(lock_guard_exports);
 
@@ -884,7 +885,8 @@ var CHECK_REASONS = [
   "in_review_by_other",
   "committing",
   "pm_readonly",
-  "ignored_path"
+  "ignored_path",
+  "outside_range"
 ];
 
 // ../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/classic/external.js
@@ -20557,6 +20559,7 @@ function date4(params) {
 
 // ../common/src/schemas.ts
 var PathSchema = external_exports.string().min(1).max(1024);
+var LineRangeSchema = external_exports.object({ start: external_exports.number().int().positive(), end: external_exports.number().int().positive() }).refine((r) => r.end >= r.start, { message: "end must be >= start" });
 var MemberIdSchema = external_exports.string().min(1).max(64);
 var TaskIdSchema = external_exports.string().min(1).max(64);
 var EpochMsSchema = external_exports.number().int().nonnegative();
@@ -20594,7 +20597,10 @@ var ERROR_CODES = [
   "TERM_FRAME_TOO_LARGE"
 ];
 var ErrorCodeSchema = external_exports.enum(ERROR_CODES);
-var ErrorRes = external_exports.object({ error: external_exports.object({ code: ErrorCodeSchema, message: external_exports.string() }) });
+var ErrorReasonSchema = external_exports.enum(["signed-out", "workspace-closed"]);
+var ErrorRes = external_exports.object({
+  error: external_exports.object({ code: ErrorCodeSchema, message: external_exports.string(), reason: ErrorReasonSchema.optional() })
+});
 var HealthRes = external_exports.object({
   ok: external_exports.boolean(),
   workspace: external_exports.string(),
@@ -20607,13 +20613,16 @@ var LockHolder = external_exports.object({
   taskId: TaskIdSchema,
   taskTitle: external_exports.string(),
   state: LockStateSchema,
-  sinceMs: external_exports.number().nonnegative().optional()
+  sinceMs: external_exports.number().nonnegative().optional(),
+  range: LineRangeSchema.optional()
 });
 var LockCheckReq = external_exports.object({
   paths: external_exports.array(PathSchema).min(1).max(100),
   tool: external_exports.string().min(1).max(128),
   sessionId: external_exports.string().max(256).nullable().optional(),
-  clientTs: EpochMsSchema
+  clientTs: EpochMsSchema,
+  /** Lines each path's edit touches (D-alief-17). A path without an entry is a whole-file edit. */
+  lines: external_exports.record(PathSchema, external_exports.array(LineRangeSchema).max(200)).optional()
 });
 var LockCheckResult = external_exports.object({
   path: PathSchema,
@@ -20720,7 +20729,8 @@ var TeamRes = external_exports.object({
       taskId: TaskIdSchema,
       memberId: MemberIdSchema,
       state: LockStateSchema,
-      queue: external_exports.array(TaskIdSchema)
+      queue: external_exports.array(TaskIdSchema),
+      range: LineRangeSchema.optional()
     })
   ),
   openRequests: external_exports.number().int().nonnegative(),
@@ -20942,7 +20952,8 @@ var LockViewSchema = external_exports.object({
   taskId: TaskIdSchema,
   memberId: MemberIdSchema,
   state: LockStateSchema,
-  queue: external_exports.array(TaskIdSchema)
+  queue: external_exports.array(TaskIdSchema),
+  range: LineRangeSchema.optional()
 });
 var AllocationViewSchema = external_exports.object({
   taskId: TaskIdSchema,
@@ -21032,7 +21043,7 @@ var RadarEventSchema = external_exports.discriminatedUnion("type", [
   ),
   event("sync.applied", external_exports.object({ path: PathSchema, version: external_exports.number().int().nonnegative(), memberId: MemberIdSchema, latencyMs: external_exports.number() })),
   event("lock.reserved", external_exports.object({ path: PathSchema, taskId: TaskIdSchema, memberId: MemberIdSchema, source: AllocationSourceSchema })),
-  event("lock.acquired", external_exports.object({ path: PathSchema, taskId: TaskIdSchema, memberId: MemberIdSchema, auto: external_exports.boolean() })),
+  event("lock.acquired", external_exports.object({ path: PathSchema, taskId: TaskIdSchema, memberId: MemberIdSchema, auto: external_exports.boolean(), range: LineRangeSchema.optional() })),
   event("lock.review", external_exports.object({ path: PathSchema, taskId: TaskIdSchema })),
   event("lock.released", external_exports.object({ path: PathSchema, taskId: TaskIdSchema })),
   event(
@@ -21056,7 +21067,8 @@ var RadarEventSchema = external_exports.discriminatedUnion("type", [
       holderMemberId: MemberIdSchema,
       holderTaskId: TaskIdSchema,
       via: BlockViaSchema,
-      requestId: external_exports.string().nullable()
+      requestId: external_exports.string().nullable(),
+      holderRange: LineRangeSchema.optional()
     })
   ),
   event("hook.failopen", external_exports.object({ memberId: MemberIdSchema, paths: external_exports.array(PathSchema), errorKind: external_exports.string() })),
@@ -21252,7 +21264,8 @@ var LockChangedData = external_exports.object({
   state: LockStateViewSchema,
   taskId: TaskIdSchema.nullable(),
   memberId: MemberIdSchema.nullable(),
-  queue: external_exports.array(TaskIdSchema)
+  queue: external_exports.array(TaskIdSchema),
+  range: LineRangeSchema.optional()
 });
 var CoreWsMessageSchema = external_exports.discriminatedUnion("t", [
   msg2(
@@ -21269,14 +21282,25 @@ var CoreWsMessageSchema = external_exports.discriminatedUnion("t", [
     "snapshot",
     external_exports.object({
       files: external_exports.array(external_exports.object({ path: PathSchema, version: Version, hash: external_exports.string().nullable(), content: external_exports.string().nullable(), deleted: external_exports.boolean() })),
-      locks: external_exports.array(external_exports.object({ path: PathSchema, taskId: TaskIdSchema, memberId: MemberIdSchema, state: LockStateSchema, queue: external_exports.array(TaskIdSchema) })),
+      locks: external_exports.array(external_exports.object({ path: PathSchema, taskId: TaskIdSchema, memberId: MemberIdSchema, state: LockStateSchema, queue: external_exports.array(TaskIdSchema), range: LineRangeSchema.optional() })),
       cursor: external_exports.number().int().nonnegative()
     })
   ),
   msg2("state", StateRes),
   msg2("file.update", external_exports.object({ path: PathSchema, baseVersion: Version, content: external_exports.string(), hash: external_exports.string(), clientTs: EpochMsSchema })),
   msg2("file.delete", external_exports.object({ path: PathSchema, baseVersion: Version, clientTs: EpochMsSchema })),
-  msg2("file.ack", external_exports.object({ id: external_exports.string().optional(), path: PathSchema, version: Version, hash: external_exports.string() })),
+  msg2(
+    "file.ack",
+    external_exports.object({
+      id: external_exports.string().optional(),
+      path: PathSchema,
+      version: Version,
+      hash: external_exports.string(),
+      /** D-alief-17: the server merged this save with a teammate's edit; `content` is the result to write back. */
+      merged: external_exports.boolean().optional(),
+      content: external_exports.string().optional()
+    })
+  ),
   msg2(
     "file.changed",
     external_exports.object({
@@ -21310,6 +21334,83 @@ var CoreWsMessageSchema = external_exports.discriminatedUnion("t", [
   msg2("error", external_exports.object({ code: external_exports.string(), message: external_exports.string() }))
 ]);
 var WsMessageSchema = external_exports.union([CoreWsMessageSchema, TermMessageSchema]);
+
+// ../common/src/line-range.ts
+function mergeRanges(ranges) {
+  const sorted = [...ranges].sort((a, b) => a.start - b.start || a.end - b.end);
+  const out = [];
+  for (const r of sorted) {
+    const last = out[out.length - 1];
+    if (last && r.start <= last.end + 1) last.end = Math.max(last.end, r.end);
+    else out.push({ ...r });
+  }
+  return out;
+}
+function splitLines(text) {
+  return text.split("\n");
+}
+var SEARCH_BLOCK = /<<<<<<< SEARCH\r?\n(?::start_line:\s*(\d+)\s*\r?\n)?(?::end_line:\s*\d+\s*\r?\n)?(?:-------\r?\n)?([\s\S]*?)\r?\n=======/g;
+function lineAt(text, idx) {
+  let n = 1;
+  for (let k = text.indexOf("\n"); k !== -1 && k < idx; k = text.indexOf("\n", k + 1)) n++;
+  return n;
+}
+function applyDiffLines(diff, content) {
+  const out = [];
+  let found = false;
+  for (const m of diff.matchAll(SEARCH_BLOCK)) {
+    found = true;
+    const search = m[2] ?? "";
+    const count = splitLines(search).length;
+    if (m[1]) {
+      const start2 = Number(m[1]);
+      out.push({ start: start2, end: start2 + count - 1 });
+      continue;
+    }
+    if (content === null || search === "") return null;
+    const idx = content.indexOf(search);
+    if (idx === -1) return null;
+    const start = lineAt(content, idx);
+    out.push({ start, end: start + count - 1 });
+  }
+  return found ? mergeRanges(out) : null;
+}
+function searchLines(input2, content) {
+  const search = input2.search;
+  if (typeof search !== "string" || search === "" || content === null) return null;
+  let re;
+  try {
+    const flags = `g${input2.ignore_case === true ? "i" : ""}${input2.use_regex === true ? "m" : ""}`;
+    re = new RegExp(input2.use_regex === true ? search : search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), flags);
+  } catch {
+    return null;
+  }
+  const out = [];
+  for (const m of content.matchAll(re)) {
+    if (m[0] === "") continue;
+    const start = lineAt(content, m.index);
+    out.push({ start, end: lineAt(content, m.index + m[0].length - 1) });
+  }
+  return mergeRanges(out);
+}
+function touchedLines(tool, input2, content) {
+  switch (tool) {
+    case "apply_diff":
+      return typeof input2.diff === "string" ? applyDiffLines(input2.diff, content) : null;
+    case "insert_content": {
+      const line = Number(input2.line);
+      if (!Number.isInteger(line) || line < 0) return null;
+      if (line > 0) return [{ start: line, end: line }];
+      if (content === null) return null;
+      const end = splitLines(content).length + (content.endsWith("\n") ? 0 : 1);
+      return [{ start: end, end }];
+    }
+    case "search_and_replace":
+      return searchLines(input2, content);
+    default:
+      return null;
+  }
+}
 
 // ../common/src/paths.ts
 var PathOutsideWorkspaceError = class extends Error {
@@ -21460,11 +21561,14 @@ var Invite = external_exports.object({
 var JOIN_CODE_TTL_HOURS_MAX = 720;
 var AdminJoinCodeReq = external_exports.object({
   member: external_exports.string().min(1).max(64).optional(),
+  owner: external_exports.boolean().optional(),
   ttlHours: external_exports.number().int().min(1).max(JOIN_CODE_TTL_HOURS_MAX).optional()
-});
+}).refine((r) => !(r.owner && r.member), { message: "An owner code cannot belong to a member." });
 var AdminJoinCodeRes = external_exports.object({
-  /** null for an open code. */
+  /** null for an open code and for an owner code. */
   member: external_exports.string().nullable(),
+  /** true for an owner code (Mission Control). Absent from servers before D-alief-11. */
+  owner: external_exports.boolean().optional(),
   code: external_exports.string(),
   expiresAt: external_exports.number().int()
 });
@@ -21473,11 +21577,30 @@ var JoinReq = external_exports.object({
   name: external_exports.string().trim().min(1).max(100).optional(),
   role: external_exports.enum(["coder", "pm"]).optional()
 });
-var JoinRes = external_exports.object({
+var JoinMemberRes = external_exports.object({
   workspace: external_exports.string(),
   member: external_exports.string(),
   role: external_exports.enum(["coder", "pm"]),
   invite: external_exports.string()
+});
+var JoinOwnerRes = external_exports.object({
+  workspace: external_exports.string(),
+  member: external_exports.null(),
+  role: external_exports.literal("mc"),
+  token: external_exports.string()
+});
+var JoinRes = external_exports.union([JoinMemberRes, JoinOwnerRes]);
+var OpenWorkspaceReq = external_exports.object({
+  workspace: external_exports.string().trim().min(1).max(64),
+  owner: external_exports.object({ name: external_exports.string().trim().min(1).max(100), role: external_exports.enum(["coder", "pm"]) })
+});
+var OpenWorkspaceRes = external_exports.object({
+  workspace: external_exports.string(),
+  member: external_exports.string(),
+  invite: external_exports.string(),
+  mcToken: external_exports.string(),
+  code: external_exports.string(),
+  expiresAt: external_exports.number().int()
 });
 
 // ../common/src/config.ts
@@ -21679,21 +21802,44 @@ async function sendActivity(cfg, fields) {
 }
 
 // src/lock_guard.ts
+var import_node_fs3 = require("node:fs");
+var import_node_path3 = require("node:path");
 var LOCK_GUARD_BUDGET_MS = 1200;
 var MAX_SAVED_MESSAGE = 2e3;
+function readText(root, path) {
+  try {
+    return (0, import_node_fs3.readFileSync)((0, import_node_path3.join)(root, path), "utf8");
+  } catch {
+    return null;
+  }
+}
+function linesFor(hook, tool, root) {
+  const out = {};
+  if (hook.paths.length !== 1) return out;
+  const path = hook.paths[0];
+  const lines = touchedLines(tool, hook.input, readText(root, path));
+  if (lines) out[path] = lines;
+  return out;
+}
 async function main() {
   const ctx = await loadContext("lock_guard");
   if (!ctx) return;
   const { cfg, hook, started } = ctx;
   const tool = hook.tool ?? "";
   if (!EDIT_TOOLS_REGEX.test(tool) || hook.paths.length === 0) return;
+  let lines = {};
+  try {
+    lines = linesFor(hook, tool, cfg.root);
+  } catch (err) {
+    logLine(cfg.root, "lock_guard", `lines unknown: ${String(err)}`);
+  }
   let res;
   try {
     res = await radarFetch(
       cfg,
       "POST",
       "/v1/locks/check",
-      { paths: hook.paths, tool, sessionId: hook.sessionId, clientTs: Date.now() },
+      { paths: hook.paths, tool, sessionId: hook.sessionId, clientTs: Date.now(), ...Object.keys(lines).length > 0 ? { lines } : {} },
       Math.max(100, Math.min(HOOK_SERVER_TIMEOUT_MS, LOCK_GUARD_BUDGET_MS - (Date.now() - started)))
     );
   } catch (err) {
@@ -21727,5 +21873,6 @@ async function main() {
 main().catch(() => void 0).finally(() => process.exit(0));
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
-  LOCK_GUARD_BUDGET_MS
+  LOCK_GUARD_BUDGET_MS,
+  linesFor
 });

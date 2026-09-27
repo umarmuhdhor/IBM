@@ -883,7 +883,8 @@ var CHECK_REASONS = [
   "in_review_by_other",
   "committing",
   "pm_readonly",
-  "ignored_path"
+  "ignored_path",
+  "outside_range"
 ];
 
 // ../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/classic/external.js
@@ -20556,6 +20557,7 @@ function date4(params) {
 
 // ../common/src/schemas.ts
 var PathSchema = external_exports.string().min(1).max(1024);
+var LineRangeSchema = external_exports.object({ start: external_exports.number().int().positive(), end: external_exports.number().int().positive() }).refine((r) => r.end >= r.start, { message: "end must be >= start" });
 var MemberIdSchema = external_exports.string().min(1).max(64);
 var TaskIdSchema = external_exports.string().min(1).max(64);
 var EpochMsSchema = external_exports.number().int().nonnegative();
@@ -20593,7 +20595,10 @@ var ERROR_CODES = [
   "TERM_FRAME_TOO_LARGE"
 ];
 var ErrorCodeSchema = external_exports.enum(ERROR_CODES);
-var ErrorRes = external_exports.object({ error: external_exports.object({ code: ErrorCodeSchema, message: external_exports.string() }) });
+var ErrorReasonSchema = external_exports.enum(["signed-out", "workspace-closed"]);
+var ErrorRes = external_exports.object({
+  error: external_exports.object({ code: ErrorCodeSchema, message: external_exports.string(), reason: ErrorReasonSchema.optional() })
+});
 var HealthRes = external_exports.object({
   ok: external_exports.boolean(),
   workspace: external_exports.string(),
@@ -20606,13 +20611,16 @@ var LockHolder = external_exports.object({
   taskId: TaskIdSchema,
   taskTitle: external_exports.string(),
   state: LockStateSchema,
-  sinceMs: external_exports.number().nonnegative().optional()
+  sinceMs: external_exports.number().nonnegative().optional(),
+  range: LineRangeSchema.optional()
 });
 var LockCheckReq = external_exports.object({
   paths: external_exports.array(PathSchema).min(1).max(100),
   tool: external_exports.string().min(1).max(128),
   sessionId: external_exports.string().max(256).nullable().optional(),
-  clientTs: EpochMsSchema
+  clientTs: EpochMsSchema,
+  /** Lines each path's edit touches (D-alief-17). A path without an entry is a whole-file edit. */
+  lines: external_exports.record(PathSchema, external_exports.array(LineRangeSchema).max(200)).optional()
 });
 var LockCheckResult = external_exports.object({
   path: PathSchema,
@@ -20719,7 +20727,8 @@ var TeamRes = external_exports.object({
       taskId: TaskIdSchema,
       memberId: MemberIdSchema,
       state: LockStateSchema,
-      queue: external_exports.array(TaskIdSchema)
+      queue: external_exports.array(TaskIdSchema),
+      range: LineRangeSchema.optional()
     })
   ),
   openRequests: external_exports.number().int().nonnegative(),
@@ -20941,7 +20950,8 @@ var LockViewSchema = external_exports.object({
   taskId: TaskIdSchema,
   memberId: MemberIdSchema,
   state: LockStateSchema,
-  queue: external_exports.array(TaskIdSchema)
+  queue: external_exports.array(TaskIdSchema),
+  range: LineRangeSchema.optional()
 });
 var AllocationViewSchema = external_exports.object({
   taskId: TaskIdSchema,
@@ -21031,7 +21041,7 @@ var RadarEventSchema = external_exports.discriminatedUnion("type", [
   ),
   event("sync.applied", external_exports.object({ path: PathSchema, version: external_exports.number().int().nonnegative(), memberId: MemberIdSchema, latencyMs: external_exports.number() })),
   event("lock.reserved", external_exports.object({ path: PathSchema, taskId: TaskIdSchema, memberId: MemberIdSchema, source: AllocationSourceSchema })),
-  event("lock.acquired", external_exports.object({ path: PathSchema, taskId: TaskIdSchema, memberId: MemberIdSchema, auto: external_exports.boolean() })),
+  event("lock.acquired", external_exports.object({ path: PathSchema, taskId: TaskIdSchema, memberId: MemberIdSchema, auto: external_exports.boolean(), range: LineRangeSchema.optional() })),
   event("lock.review", external_exports.object({ path: PathSchema, taskId: TaskIdSchema })),
   event("lock.released", external_exports.object({ path: PathSchema, taskId: TaskIdSchema })),
   event(
@@ -21055,7 +21065,8 @@ var RadarEventSchema = external_exports.discriminatedUnion("type", [
       holderMemberId: MemberIdSchema,
       holderTaskId: TaskIdSchema,
       via: BlockViaSchema,
-      requestId: external_exports.string().nullable()
+      requestId: external_exports.string().nullable(),
+      holderRange: LineRangeSchema.optional()
     })
   ),
   event("hook.failopen", external_exports.object({ memberId: MemberIdSchema, paths: external_exports.array(PathSchema), errorKind: external_exports.string() })),
@@ -21251,7 +21262,8 @@ var LockChangedData = external_exports.object({
   state: LockStateViewSchema,
   taskId: TaskIdSchema.nullable(),
   memberId: MemberIdSchema.nullable(),
-  queue: external_exports.array(TaskIdSchema)
+  queue: external_exports.array(TaskIdSchema),
+  range: LineRangeSchema.optional()
 });
 var CoreWsMessageSchema = external_exports.discriminatedUnion("t", [
   msg2(
@@ -21268,14 +21280,25 @@ var CoreWsMessageSchema = external_exports.discriminatedUnion("t", [
     "snapshot",
     external_exports.object({
       files: external_exports.array(external_exports.object({ path: PathSchema, version: Version, hash: external_exports.string().nullable(), content: external_exports.string().nullable(), deleted: external_exports.boolean() })),
-      locks: external_exports.array(external_exports.object({ path: PathSchema, taskId: TaskIdSchema, memberId: MemberIdSchema, state: LockStateSchema, queue: external_exports.array(TaskIdSchema) })),
+      locks: external_exports.array(external_exports.object({ path: PathSchema, taskId: TaskIdSchema, memberId: MemberIdSchema, state: LockStateSchema, queue: external_exports.array(TaskIdSchema), range: LineRangeSchema.optional() })),
       cursor: external_exports.number().int().nonnegative()
     })
   ),
   msg2("state", StateRes),
   msg2("file.update", external_exports.object({ path: PathSchema, baseVersion: Version, content: external_exports.string(), hash: external_exports.string(), clientTs: EpochMsSchema })),
   msg2("file.delete", external_exports.object({ path: PathSchema, baseVersion: Version, clientTs: EpochMsSchema })),
-  msg2("file.ack", external_exports.object({ id: external_exports.string().optional(), path: PathSchema, version: Version, hash: external_exports.string() })),
+  msg2(
+    "file.ack",
+    external_exports.object({
+      id: external_exports.string().optional(),
+      path: PathSchema,
+      version: Version,
+      hash: external_exports.string(),
+      /** D-alief-17: the server merged this save with a teammate's edit; `content` is the result to write back. */
+      merged: external_exports.boolean().optional(),
+      content: external_exports.string().optional()
+    })
+  ),
   msg2(
     "file.changed",
     external_exports.object({
@@ -21459,11 +21482,14 @@ var Invite = external_exports.object({
 var JOIN_CODE_TTL_HOURS_MAX = 720;
 var AdminJoinCodeReq = external_exports.object({
   member: external_exports.string().min(1).max(64).optional(),
+  owner: external_exports.boolean().optional(),
   ttlHours: external_exports.number().int().min(1).max(JOIN_CODE_TTL_HOURS_MAX).optional()
-});
+}).refine((r) => !(r.owner && r.member), { message: "An owner code cannot belong to a member." });
 var AdminJoinCodeRes = external_exports.object({
-  /** null for an open code. */
+  /** null for an open code and for an owner code. */
   member: external_exports.string().nullable(),
+  /** true for an owner code (Mission Control). Absent from servers before D-alief-11. */
+  owner: external_exports.boolean().optional(),
   code: external_exports.string(),
   expiresAt: external_exports.number().int()
 });
@@ -21472,11 +21498,30 @@ var JoinReq = external_exports.object({
   name: external_exports.string().trim().min(1).max(100).optional(),
   role: external_exports.enum(["coder", "pm"]).optional()
 });
-var JoinRes = external_exports.object({
+var JoinMemberRes = external_exports.object({
   workspace: external_exports.string(),
   member: external_exports.string(),
   role: external_exports.enum(["coder", "pm"]),
   invite: external_exports.string()
+});
+var JoinOwnerRes = external_exports.object({
+  workspace: external_exports.string(),
+  member: external_exports.null(),
+  role: external_exports.literal("mc"),
+  token: external_exports.string()
+});
+var JoinRes = external_exports.union([JoinMemberRes, JoinOwnerRes]);
+var OpenWorkspaceReq = external_exports.object({
+  workspace: external_exports.string().trim().min(1).max(64),
+  owner: external_exports.object({ name: external_exports.string().trim().min(1).max(100), role: external_exports.enum(["coder", "pm"]) })
+});
+var OpenWorkspaceRes = external_exports.object({
+  workspace: external_exports.string(),
+  member: external_exports.string(),
+  invite: external_exports.string(),
+  mcToken: external_exports.string(),
+  code: external_exports.string(),
+  expiresAt: external_exports.number().int()
 });
 
 // ../common/src/config.ts
