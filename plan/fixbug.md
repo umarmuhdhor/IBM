@@ -28,14 +28,14 @@ Rules for session B:
 - [ ] 5. **(B)** Old member seats stop piling up: rejoining reuses or replaces the seat. The owner gets a remove-member action (server endpoint plus app button), and the removed member sees a calm notice.
 - [ ] 6. **(B)** Owner recovery without the CLI: a coder reclaims ownership with a fresh owner code, kept secure.
 - [x] 7. Escape in the "Share a different folder?" confirmation closes only the confirmation. Also "Stop sharing?". (951be715)
-- [ ] 8. **(A)** One "X is sharing …" card, not two.
-- [ ] 9. **(A)** Quitting mid-upload resumes cleanly on the next start (tested on prod).
+- [x] 8. **(A)** One "X is sharing …" card, not two. (c5d1b784)
+- [ ] 9. **(A)** Quitting mid-upload resumes cleanly on the next start (tested on prod). Code: 23b7d3c6; prod test pending.
 - [ ] 10. **(A)** Bob IDE steps for hooks and radar-mcp after a folder switch are written down. Alief runs them in Bob IDE.
 
 ## Extra fixes
 
 - [x] Server calls in `app/src/main/radar/server-fetch.ts` go through the main HTTP client, not bare `fetch`. (12a5b848)
-- [ ] The app's `rejected` notice is a list that clears once the file syncs, not a single string that stays forever (silent-failure-hunter finding 2).
+- [x] The app's `rejected` notice is a list that clears once the file syncs, not a single string that stays forever (silent-failure-hunter finding 2). (d8859df9, 55302886)
 
 ## Phase gates
 
@@ -54,3 +54,16 @@ Rules for session B:
 - [ ] Apps, e2e driver and local wrangler stopped; ports 8787 and 7788 are free.
 - [ ] E2E members and folders removed from prod; `toko-demo` is ready for a fresh Share.
 - [ ] Final report to Alief.
+
+## Bug 10: Bob IDE steps for Alief after a folder switch
+
+Run these after session A deploys and posts the prod version. They check that hooks and radar-mcp follow the owner to the new folder.
+
+1. In the app, open folder **X** and click Share. Then open folder **Y** (a throwaway folder with a few text files) and use Multiplayer → "Share a different folder…" → "Replace with Y". Wait for "Y is shared · N files".
+2. If a notice says `.bob/` already has other files, click "Back up .bob and install the Bob kit". Check that `Y/.bob.bak-<time>/` exists and `Y/.bob/settings.json` is the Live Collab one.
+3. Click "Open in IBM Bob". In Bob IDE, trust the folder.
+4. Hooks: pick the mode **Live Collab Coder** and start a new task. The first lines of the context should be the `[Radar]` brief: "You are A (coder)." and the workspace should be **Y**, not X.
+5. radar-mcp: open the MCP servers list. `radar` should be connected. If it shows an error or X's path, restart it once. Then ask Bob "What are my tasks?"; `my_tasks` should answer for workspace Y.
+6. Locks: from a second app (teammate), lock `Y/<file>` lines 1–5. Ask Bob in Y to edit line 2. It should be refused with "lines 1–5 are locked by …", and `why_blocked` should name the teammate.
+7. Old folder X: in a Bob window still on X, send a prompt. The brief should say the workspace is no longer shared, not show X's old tasks.
+8. Say "bob selesai" after each step you want captured. Session A saves the Bob window as evidence.
