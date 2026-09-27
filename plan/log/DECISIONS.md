@@ -540,3 +540,13 @@ Format:
 - Batasan yang dicatat: rentang tidak bergeser saat ada sisipan di atasnya; commit task mengambil isi file penuh, jadi baris rekan yang digabung ikut ter-commit oleh task pemegang (sama dengan catatan `transferNow`); member yang mengedit di luar rentang tidak mendapat kunci sendiri.
 - Alternatif yang ditolak: tabel `lock_range` terpisah dengan banyak pemegang per file (I1, antrean, dan sekitar 10 pemanggil `getLock` harus diubah, terlalu besar sebelum deadline); kunci rentang dari sync tanpa hook (edit manual di luar Bob tetap mengunci seluruh file, perilaku lama); menolak semua update basi (dua orang di satu file tidak bisa bekerja bersamaan).
 - Dampak: Umar (`lock_guard` mengirim `lines`), Aarief (label kunci di app), Imelda (teks landing dan `/demo` sekarang benar; usulan penyesuaian kalau ada beda dicatat di log fase 12j).
+
+## D-alief-18 · 27 Sep 2026 · fase 12k · Teks untuk user dalam bahasa Inggris (amandemen R5 §1)
+
+- Konteks: app, landing, dan demo berbahasa Inggris, tetapi server masih mengirim pesan error, notifikasi, brief Bob, dan laporan sesi dalam bahasa Indonesia ("Task T-2 tidak ada.", "Giliranmu: …"). Juri dan user melihat dua bahasa bercampur.
+- Keputusan:
+  1. Semua teks server yang dibaca user atau Bob (pesan `RadarError`, notifikasi, `suggestion`, brief `start`/`prompt`, laporan sesi Markdown, pesan blokir) memakai bahasa Inggris. Feed `common/src/events.ts` sudah berbahasa Inggris.
+  2. Nilai wire dan enum tidak berubah (`bebas`, `dipegang`, `dipesan`, `review`, `terbuka`, `dikerjakan`, `selesai`, `antre`, `pindahkan`, `pecah`, `ditolak`, …). Ini kontrak R2/R3, bukan teks tampilan.
+  3. Mock server (`radar/scripts/mock`) mengikuti teks yang sama supaya lane lain melihat hal yang sama.
+  4. Tes `server/test/language.test.ts` menolak literal string di `server/src` dan `common/src/events.ts` yang berbunyi seperti kalimat bahasa Indonesia (dua kata Indonesia umum atau lebih).
+- Dampak: R5 §1 baris "Bahasa teks" diubah. Klien tidak mem-parse teks ini, jadi tidak ada perubahan kontrak. Output tool radar-mcp (`mcp/src`, lane Umar) masih berbahasa Indonesia; usulan terjemahan dicatat di log fase 12k.
