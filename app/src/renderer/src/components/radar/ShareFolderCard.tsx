@@ -372,6 +372,10 @@ export function ShareFolderCard({
 
   // Why: the server has one workspace; a teammate can share only after the owner stops.
   if (connection && connection.role !== 'mc' && !endedNotice(sync, connectionFailure)) {
+    // The teammate's workspace card below already names the workspace; a second card only repeats it.
+    if (sync.folder) {
+      return null
+    }
     return (
       <section
         aria-label="Multiplayer"

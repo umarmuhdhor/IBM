@@ -223,6 +223,20 @@ it("a teammate sees who is sharing instead of a Share button that always fails",
   useRadarStore.setState({ state: null })
 })
 
+it('a joined teammate gets no extra "is sharing" card above their workspace card (fase 12k bug 8)', async () => {
+  status.folder = '/Users/me/live-collab/my-app'
+  const { container } = render(
+    <ShareFolderCard
+      connection={{ server: owner.server, workspace: 'my-app', member: 'B', role: 'coder' }}
+      folder="/Users/me/live-collab/my-app"
+      sharedCode={null}
+      onConnectionChange={vi.fn()}
+      onShared={vi.fn()}
+    />
+  )
+  await waitFor(() => expect(container.textContent).toBe(''))
+})
+
 it('after a restart the owner is told where to make a new join code', async () => {
   status.folder = '/Users/me/my-app'
   render(
