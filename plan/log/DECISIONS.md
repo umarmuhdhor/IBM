@@ -589,3 +589,26 @@ Format:
 - Alasan: token kursi owner hanya ada di folder yang dibagikan di Mac pemilik, jadi itu bukti kepemilikan yang sudah ada tanpa rahasia baru. Menukar kode di main process menjaga kode owner tetap di luar UI.
 - Alternatif yang ditolak: reclaim dengan token Mission Control lama (token itu sudah dicabut, dan menerima token yang dicabut membuka celah); menampilkan kode owner baru di layar (bisa terlihat di rekaman demo atau tangkapan layar); reclaim yang memutus Mission Control yang sedang aktif (dua perangkat bisa saling merebut terus).
 - Dampak: Aarief (tombol baru di kartu Share), Umar dan Imelda tidak terpengaruh.
+
+## D-umar-06 · 27 Sep 2026 · fase 15 · Satu PM per room, task berisi langkah yang dicentang coder
+
+- Konteks: permintaan Umar: hanya satu PM per room; PM membagi pekerjaan ke coder dengan tabrakan minimal; coder
+  menandai bagian yang selesai dan PM melihatnya. Ditulis lewat IBM Bob IDE (bukti `bob_sessions/uaai_umar_task16`–`21`).
+- Keputusan:
+  1. `POST /v1/join` menolak peran `pm` bila sudah ada member aktif lain berperan `pm` (409 "This room already has
+     a PM (<nama>). Join as a coder."), di jalur kursi baru dan kursi dipakai ulang. Owner yang membuka workspace
+     tidak dibatasi (ia member pertama).
+  2. **Kontrak (aditif, lintas lane Core atas permintaan langsung):** `PlanTask.steps` (≤ 12, default `[]`),
+     `TaskView`/`TaskItem`/`TeamRes.tasks` `.steps: {text, done}[]`, event `task.step {taskId, index, done, by}`,
+     `StepReq`/`StepRes`, `PLAN_MAX_STEPS_PER_TASK = 12`.
+  3. **Server:** skema v7 tabel `task_step`; `POST /v1/tasks/:id/steps` hanya coder pemilik task, hanya saat
+     `terbuka`/`dikerjakan`. Rencana tetap disetujui Mission Control; pembagian file tanpa overlap tetap dijaga
+     `PlanPayload`.
+  4. **Bob:** tool coder `complete_step`; PM `propose_plan` menerima steps, `team_status` menampilkan x/y. Rules
+     `pm-lead` mewajibkan 3–6 langkah per task.
+  5. **App:** tab My tasks (coder) dan Tasks (PM/Mission Control), centang lewat main process dengan token coder.
+- Alternatif yang ditolak: PM menerapkan rencana sendiri tanpa Mission Control (mengubah model persetujuan yang
+  dipakai demo); langkah disimpan sebagai JSON di kolom `task` (butuh ALTER dan update seluruh baris untuk satu
+  centang).
+- Dampak: Alief (review kontrak + deploy server v7), Aarief (tab baru di app), Imelda (replay bisa menampilkan
+  event `task.step`; kalimat feed belum ada, event diabaikan feed).

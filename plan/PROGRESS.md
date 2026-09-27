@@ -24,6 +24,7 @@ Waktu dalam WITA. Setiap lane **hanya mengedit baris fasenya sendiri** (supaya m
 | 12 | Hardening & P1 | Alief | lane/core | [~] | Sab 26 19:15 | | SV-09, SY-07, MA-06, SY-06, BC-05, UI-06, IN-02 + body cap/rate limit, 520 test hijau, uji beban 5 anggota p95 219 ms; SV-10/BC-06 dipotong (D-alief-08); deploy Sab 21:30; sisa tag `v0.3.0-freeze` + bug E2E | log/fase-12.md |
 | 13 | Eksperimen A/B | Umar | lane/bob | [ ] | | | | log/fase-13.md |
 | 14 | Submission | Semua | lane masing-masing | [ ] | | | | log/fase-14.md |
+| 15 | PM tunggal + task berlangkah (lewat IBM Bob) | Umar | fitur_PM | [x] | Min 27 16:00 | Min 27 17:15 | Satu PM per room (409), steps di plan/state, `POST /v1/tasks/:id/steps`, Bob `complete_step`, tab My tasks/Tasks di app; 6 task Bob IDE (26.33 Bobcoin), E2E lokal + gerbang UI Approve | log/fase-15-pm-tasks.md |
 
 ## Gate & milestone
 
