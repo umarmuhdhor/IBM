@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import type { RadarState } from '@radar/ui'
 import type { RadarSyncStatus } from '../../../../shared/radar-join'
@@ -234,4 +234,15 @@ it('after a restart the owner is told where to make a new join code', async () =
     />
   )
   expect(await screen.findByText(/click Make code under Invite teammates/)).toBeTruthy()
+})
+
+it('drops the "Copied" note when another device takes over as owner', async () => {
+  status.folder = '/Users/me/my-app'
+  const props = { folder: null, sharedCode: code, onConnectionChange: vi.fn(), onShared: vi.fn() }
+  render(<ShareFolderCard connection={owner} {...props} />)
+  fireEvent.click(await screen.findByRole('button', { name: 'Copy code' }))
+  expect(await screen.findByText(/Copied K7QM-3XPA/)).toBeTruthy()
+  act(() => useRadarStore.setState({ connectionFailure: 'signed-out' }))
+  expect(await screen.findByText(/Another device took over as owner/)).toBeTruthy()
+  expect(screen.queryByText(/Copied K7QM-3XPA/)).toBeNull()
 })

@@ -47,16 +47,21 @@ export function ShareFolderCard({
   const [busy, setBusy] = useState(false)
   const [replacing, setReplacing] = useState(false)
   const [stopping, setStopping] = useState(false)
-  const [note, setNote] = useState<{ text: string; key: string; error: boolean } | null>(null)
-  const message = note && note.key === noteKey(connection) ? note.text : null
-  const invalid = message !== null && note?.error === true
-  const setMessage = (text: string | null, error = false, key = noteKey(connection)) =>
-    setNote(text === null ? null : { text, key, error })
   const owner = connection?.role === 'mc'
+  // D-alief-15: the Mission Control token stopped working, so Stop sharing and codes would only fail.
+  const ownerEnded =
+    owner && (connectionFailure === 'signed-out' || connectionFailure === 'workspace-closed')
+  // Why: notes about sharing (e.g. "Copied …") do not carry over once another device took over.
+  const currentKey = `${noteKey(connection)}${ownerEnded ? '/ended' : ''}`
+  const [note, setNote] = useState<{ text: string; key: string; error: boolean } | null>(null)
+  const message = note && note.key === currentKey ? note.text : null
+  const invalid = message !== null && note?.error === true
+  const setMessage = (text: string | null, error = false, key = currentKey) =>
+    setNote(text === null ? null : { text, key, error })
   // Only offer the open folder when it is not the one already shared.
   const openFolder = folder && folder !== sync.folder ? folder : null
 
-  const copy = async (code: string, key = noteKey(connection)) => {
+  const copy = async (code: string, key = currentKey) => {
     try {
       await window.api.radar.copyText(code)
       setMessage(`Copied ${code}. Send it to your teammate.`, false, key)
@@ -125,9 +130,6 @@ export function ShareFolderCard({
     </p>
   )
 
-  // D-alief-15: the Mission Control token stopped working, so Stop sharing and codes would only fail.
-  const ownerEnded =
-    owner && (connectionFailure === 'signed-out' || connectionFailure === 'workspace-closed')
   if (ownerEnded) {
     return (
       <section
