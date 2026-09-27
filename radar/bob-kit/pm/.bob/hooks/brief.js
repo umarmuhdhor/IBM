@@ -871,6 +871,7 @@ var REVIEW_VERDICTS = ["setujui", "setujui_beri_tahu", "kembalikan"];
 var DECISION_OPTIONS = ["antre", "pindahkan", "pecah"];
 var CHECK_REASONS = [
   "own",
+  "pm_doc",
   "grabbed",
   "held_by_other",
   "reserved_by_other",
