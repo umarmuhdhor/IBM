@@ -41,6 +41,7 @@ let base: string;
 const seen: Rec[] = [];
 let noBlockYet = false;
 let submitConflict = false;
+const STEP_RES = { taskId: 'T-2', steps: [{ text: 'Buat komponen', done: false }, { text: 'Tulis tes', done: true }, { text: 'Review PR', done: false }, { text: 'Deploy', done: false }, { text: 'Update docs', done: false }] };
 
 beforeAll(async () => {
   http = createServer((req, res) => {
@@ -63,6 +64,7 @@ beforeAll(async () => {
           : send(201, { requestId: 'R-4', status: 'terbuka', duplicate: false });
       }
       if (url.startsWith('/v1/activity')) return send(200, ACTIVITY);
+      if (url === '/v1/tasks/T-2/steps') return send(200, STEP_RES);
       if (url === '/v1/tasks/T-2/submit') {
         return submitConflict
           ? send(409, { error: { code: 'nothing_changed', message: 'Task T-2 belum mengubah file apa pun.' } })
@@ -104,11 +106,11 @@ async function call(name: string, args: Record<string, unknown> = {}, config: Lo
 }
 
 describe('radar-mcp coder tools (BC-07, R3 §7)', () => {
-  it('registers exactly the 5 coder tools, each with a description for the model', async () => {
+  it('registers exactly the 6 coder tools, each with a description for the model', async () => {
     const client = await connect(cfg(base));
     const { tools } = await client.listTools();
     await client.close();
-    expect(tools.map((t) => t.name).sort()).toEqual(['my_tasks', 'request_file', 'submit_task', 'team_activity', 'why_blocked']);
+    expect(tools.map((t) => t.name).sort()).toEqual(['complete_step', 'my_tasks', 'request_file', 'submit_task', 'team_activity', 'why_blocked']);
     for (const t of tools) expect(t.description?.length ?? 0).toBeGreaterThan(20);
   });
 
@@ -122,7 +124,7 @@ describe('radar-mcp coder tools (BC-07, R3 §7)', () => {
     expect(text).toContain('src/ui/theme.css');
     expect(text).toContain('src/checkout/checkout.ts');
     expect(text).toMatch(/T-1/); // waiting for T-1
-    expect(lines.length).toBeLessThanOrEqual(12);
+    expect(lines.length).toBeLessThanOrEqual(30);
   });
 
   it('why_blocked: holder, task, request and suggestion', async () => {
@@ -208,6 +210,15 @@ describe('radar-mcp coder tools (BC-07, R3 §7)', () => {
     } finally {
       TASKS.tasks.splice(0, TASKS.tasks.length, ...saved);
     }
+  });
+
+  it('complete_step: POST /v1/tasks/:id/steps with index and done, reports progress', async () => {
+    const { text, isError } = await call('complete_step', { task_id: 'T-2', step: 2, done: true });
+    expect(isError).toBe(false);
+    expect(seen[0]).toMatchObject({ method: 'POST', url: '/v1/tasks/T-2/steps', body: { index: 1, done: true } });
+    expect(text).toContain('T-2');
+    expect(text).toMatch(/langkah 2\/5/);
+    expect(text).toContain('selesai');
   });
 
   it('submit_task: a 409 from the server becomes a readable error, not a crash', async () => {

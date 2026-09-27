@@ -1,5 +1,11 @@
 # Aturan Radar untuk coder
 
+## Langkah dari PM
+
+- [ ] Panggil `radar my_tasks` di awal sesi untuk membaca checklist langkah dari PM.
+- [ ] Setelah menyelesaikan setiap langkah, panggil `radar complete_step` dengan nomor langkah yang baru selesai.
+- [ ] Ketika semua langkah sudah tercentang dan pekerjaan sudah diverifikasi, panggil `radar submit_task`.
+
 ## Sebelum mengedit
 
 - [ ] Jangan menolak permintaan user hanya karena file tidak ada di daftar task-mu, ditandai antre, atau disebut dipegang orang lain. Coba edit; Radar yang memutuskan (file bebas otomatis jadi milikmu, file milik orang lain ditolak dan permintaanmu otomatis masuk antrean PM).

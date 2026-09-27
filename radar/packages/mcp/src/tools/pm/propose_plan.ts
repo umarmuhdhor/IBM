@@ -21,6 +21,7 @@ export default defineTool({
         owner: z.string().min(1).describe('ID anggota seperti A atau B (bukan nama)'),
         files: z.array(z.string().min(1)).max(20),
         queued_files: z.array(z.string().min(1)).max(20).optional(),
+        steps: z.array(z.string().min(1).max(200)).max(12).optional().describe('Checklist langkah kecil yang bisa dicentang coder (3–6 langkah)'),
       }),
     ).min(1).max(8),
   },
@@ -34,6 +35,7 @@ export default defineTool({
         ownerId: t.owner,
         files: t.files,
         queuedFiles: t.queued_files ?? [],
+        steps: t.steps ?? [],
       })),
     };
 
