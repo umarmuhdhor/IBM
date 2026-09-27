@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"></head>
+<body>
+<template>
+<style>
+@font-face{font-family:"Plex";font-weight:400;src:url("assets/fonts/ibm-plex-sans-latin-400-normal.woff2") format("woff2")}
+@font-face{font-family:"Plex";font-weight:500;src:url("assets/fonts/ibm-plex-sans-latin-500-normal.woff2") format("woff2")}
+@font-face{font-family:"Plex";font-weight:600;src:url("assets/fonts/ibm-plex-sans-latin-600-normal.woff2") format("woff2")}
+@font-face{font-family:"PlexMono";font-weight:400;src:url("assets/fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2")}
+@font-face{font-family:"PlexMono";font-weight:500;src:url("assets/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2")}
+#root{position:absolute;inset:0;overflow:hidden;color:#f4f4f4;font-family:"Plex",sans-serif}
+#w-shake{position:absolute;inset:0}
+.kick{position:absolute;left:120px;top:84px;font-family:"PlexMono",monospace;font-size:26px;font-weight:500;letter-spacing:0.14em;color:#ff8389}
+.ttl{position:absolute;left:120px;top:140px;font-size:92px;font-weight:600;letter-spacing:-0.03em;line-height:1.1;white-space:nowrap}
+.ttl .w{display:inline-block;margin-right:24px}
+.ul{position:relative;display:inline-block}
+.ul::after{content:"";position:absolute;left:0;right:0;bottom:-0.02em;height:0.075em;background:#0f62fe;transform:scaleX(var(--u,1));transform-origin:left}
+.dot{color:#0f62fe}
+#w-board{position:absolute;left:120px;top:340px;width:1680px}
+.row{position:absolute;left:0;width:1680px;height:150px;background:#161616;border:2px solid #262626;border-radius:12px}
+.row .own{position:absolute;left:28px;top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:14px;font-size:34px;font-weight:600}
+.row .own i{display:block;width:16px;height:16px;border-radius:50%;background:var(--c)}
+.row .own small{font-size:22px;font-weight:400;color:#a8a8a8}
+.card{position:absolute;width:280px;height:74px;border:2px solid #393939;border-top:5px solid var(--c);background:#1e1e20;border-radius:6px;padding:8px 16px;box-shadow:0 20px 50px rgba(0,0,0,0.5);z-index:3}
+.card b{display:block;font-size:22px;font-weight:600}
+.card span{display:block;font-family:"PlexMono",monospace;font-size:17px;color:#a8a8a8}
+.bar{position:absolute;left:640px;top:40px;height:70px;width:900px;border-radius:6px;transform-origin:left;display:flex;align-items:center;padding:0 22px;font-family:"PlexMono",monospace;font-size:24px;white-space:nowrap;overflow:hidden}
+#w-albar{background:rgba(120,169,255,0.85);color:#0e0e10;font-weight:500}
+#w-umbar{background:repeating-linear-gradient(135deg,rgba(8,189,186,0.18) 0 16px,rgba(8,189,186,0.05) 16px 32px);border:2px dashed #08bdba;color:#08bdba;gap:16px}
+.clock{display:block;width:34px;height:34px;border:3px solid #08bdba;border-radius:50%;position:relative;flex:none}
+.clock::after{content:"";position:absolute;left:13px;top:4px;width:3px;height:12px;background:#08bdba;transform-origin:1.5px 11px;transform:rotate(var(--r,0deg))}
+#w-q{position:absolute;left:640px;top:54px;font-family:"PlexMono",monospace;font-size:28px;color:#a8a8a8}
+#w-big{position:absolute;left:0;right:0;top:400px;text-align:center;font-size:190px;font-weight:600;letter-spacing:-0.04em;line-height:1}
+#w-big span{display:inline-block;margin:0 22px}
+.cursor{position:absolute;left:0;top:0;width:34px;height:46px;z-index:10;opacity:0}
+</style>
+<div id="root" data-composition-id="s01" data-width="1920" data-height="1080">
+  <div id="w-shake">
+    <div class="kick" id="w-kick">PROBLEM 01</div>
+    <div class="ttl" id="w-t1"><span class="w">How</span><span class="w">a</span><span class="w">sprint</span><span class="w"><span class="ul" id="w-u1" style="--u:0">really</span></span><span class="w">goes<span class="dot">.</span></span></div>
+    <div class="ttl" id="w-t2"><span class="w">Tasks,</span><span class="w">split</span><span class="w">by</span><span class="w"><span class="ul" id="w-u2" style="--u:0">hand</span><span class="dot">.</span></span></div>
+    <div class="ttl" id="w-t3"><span class="w">Half</span><span class="w">the</span><span class="w">team</span><span class="w">is</span><span class="w"><span class="ul" id="w-u3" style="--u:0">waiting</span><span class="dot">.</span></span></div>
+    <div id="w-board">
+      <div class="row" id="w-r0" style="top:0;--c:#be95ff"><div class="own"><i></i>Aarief <small>PM</small></div><div id="w-q">who's on what?</div></div>
+      <div class="row" id="w-r1" style="top:174px;--c:#78a9ff"><div class="own"><i></i>Alief <small>coder</small></div><div class="bar" id="w-albar">coding src/checkout.ts</div></div>
+      <div class="row" id="w-r2" style="top:348px;--c:#08bdba"><div class="own" id="w-umown"><i></i>Umar <small>coder</small></div><div class="bar" id="w-umbar"><span class="clock" id="w-clock"></span><span id="w-wait">waiting on Alief's code…</span></div></div>
+      <div class="card" id="w-c1" style="--c:#78a9ff;left:1280px;top:-230px"><b>Promo codes</b><span>checkout.ts</span></div>
+      <div class="card" id="w-c2" style="--c:#08bdba;left:1300px;top:-140px"><b>Cart total</b><span>needs calculateTotal()</span></div>
+      <svg class="cursor" id="w-cur" viewBox="0 0 22 30"><path d="M2 2 L2 24 L8 18 L12 28 L16 26 L12 16 L20 16 Z" fill="#fff" stroke="#161616" stroke-width="1.5" /></svg>
+    </div>
+    <div id="w-big"><span id="w-b1">Hours,</span><span id="w-b2"><span class="ul" id="w-u4" style="--u:0">gone</span><span class="dot">.</span></span></div>
+  </div>
+</div>
+<script>
+(function(){
+  const tl = gsap.timeline({ paused: true });
+  const blurIn = (els, t, st) => tl.fromTo(els, { opacity: 0, filter: "blur(18px)", y: 24 }, { opacity: 1, filter: "blur(0px)", y: 0, duration: 0.5, ease: "power3.out", stagger: st || 0.07 }, t);
+  const blurOut = (els, t) => tl.to(els, { opacity: 0, filter: "blur(16px)", y: -18, duration: 0.3, ease: "power2.in", stagger: 0.03 }, t);
+  gsap.set(["#w-t2 .w", "#w-t3 .w", "#w-big span[id]"], { opacity: 0 });
+  gsap.set(".row", { opacity: 0 });
+  gsap.set(["#w-c1", "#w-c2"], { opacity: 0 });
+  gsap.set(["#w-albar", "#w-umbar"], { scaleX: 0 });
+  gsap.set(["#w-wait", "#w-q"], { opacity: 0 });
+
+  // Beat 1 — "Here is how a sprint really goes."
+  tl.fromTo("#w-kick", { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.4, ease: "power3.out" }, 0.1);
+  blurIn("#w-t1 .w", 0.35);
+  tl.to("#w-u1", { "--u": 1, duration: 0.4, ease: "power2.out" }, 1.6);
+  blurOut("#w-t1 .w", 2.55);
+
+  // Beat 2 — "Tasks get split by hand": the board appears, a cursor drags each card into a lane.
+  tl.fromTo(".row", { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 0.5, stagger: 0.1, ease: "power3.out" }, 2.6);
+  blurIn("#w-t2 .w", 2.8);
+  tl.fromTo(["#w-c1", "#w-c2"], { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.4, stagger: 0.12, ease: "back.out(2)" }, 2.9);
+  tl.set("#w-cur", { x: 1500, y: -160 }, 2.9);
+  tl.to("#w-cur", { opacity: 1, duration: 0.2 }, 3.0);
+  tl.to("#w-cur", { x: 1400, y: -200, duration: 0.3, ease: "power2.out" }, 3.05);
+  tl.to("#w-c1", { left: 340, top: 212, rotation: -2, duration: 0.65, ease: "power2.inOut" }, 3.35);
+  tl.to("#w-cur", { x: 460, y: 242, duration: 0.65, ease: "power2.inOut" }, 3.35);
+  tl.to("#w-c1", { rotation: 0, duration: 0.2 }, 4.0);
+  tl.to("#w-u2", { "--u": 1, duration: 0.4, ease: "power2.out" }, 4.2);
+  tl.to("#w-cur", { x: 1420, y: -110, duration: 0.45, ease: "power2.inOut" }, 4.05);
+  tl.to("#w-c2", { left: 340, top: 386, rotation: 2, duration: 0.6, ease: "power2.inOut" }, 4.55);
+  tl.to("#w-cur", { x: 480, y: 416, duration: 0.6, ease: "power2.inOut" }, 4.55);
+  tl.to("#w-c2", { rotation: 0, duration: 0.2 }, 5.15);
+  tl.to("#w-cur", { opacity: 0, duration: 0.25 }, 5.2);
+
+  // Beat 3 — "half the team sits waiting on someone else's code."
+  blurOut("#w-t2 .w", 5.25);
+  blurIn("#w-t3 .w", 5.5);
+  tl.to("#w-albar", { scaleX: 1, duration: 3.2, ease: "none" }, 5.45);
+  tl.to("#w-umbar", { scaleX: 1, duration: 3.0, ease: "none" }, 5.7);
+  tl.to("#w-wait", { opacity: 1, duration: 0.3 }, 6.5);
+  tl.fromTo("#w-clock", { "--r": "0deg" }, { "--r": "1080deg", duration: 3.0, ease: "none" }, 5.7);
+  tl.to("#w-umown", { opacity: 0.45, duration: 0.4 }, 6.6);
+  tl.to("#w-u3", { "--u": 1, duration: 0.4, ease: "power2.out" }, 6.55);
+  tl.fromTo("#w-q", { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.4 }, 7.1);
+
+  // Beat 4 — "Hours, gone."
+  blurOut("#w-t3 .w", 8.6);
+  tl.to(["#w-board", "#w-kick"], { opacity: 0.12, filter: "blur(8px)", duration: 0.5, ease: "power2.out" }, 8.6);
+  tl.fromTo("#w-b1", { opacity: 0, scale: 1.4, filter: "blur(20px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.45, ease: "power3.out" }, 8.75);
+  tl.fromTo("#w-b2", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" }, 9.85);
+  tl.to("#w-u4", { "--u": 1, duration: 0.35, ease: "power2.out" }, 10.05);
+  tl.fromTo("#w-shake", { x: 0 }, { x: 10, duration: 0.05, yoyo: true, repeat: 3, ease: "none" }, 9.9);
+  tl.to("#w-big", { opacity: 0, filter: "blur(16px)", scale: 0.92, duration: 0.3, ease: "power2.in" }, 10.5);
+  window.__timelines["s01"] = tl;
+})();
+</script>
+</template>
+</body></html>

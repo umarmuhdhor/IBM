@@ -27,7 +27,7 @@ mode: collaborative
 - duration: 9s
 - blueprint: kinetic-type-beats
 - transition_in: cut
-- status: built
+- status: animated
 - src: compositions/frames/01-collision.html
 - voiceover: "Your whole team codes with AI now. Everyone brings their own Bob. And sooner or later, two of them reach for the same file."
 
@@ -39,7 +39,7 @@ Hook in outcome language: the pain is a broken build, not a feature. Words swap 
 - duration: 9s
 - blueprint: ticker-takeover
 - transition_in: cut
-- status: built
+- status: animated
 - src: compositions/frames/02-takeover.html
 - voiceover: "IBM Bob Live Collab turns every teammate's Bob into one team. Shared locks, a queue, and a PM who approves before anything risky lands."
 
@@ -51,7 +51,7 @@ Value claim lands in beat 2. Copy is the site's own hero line and sub-line. Coll
 - duration: 12s
 - blueprint: camera-journey
 - transition_in: whip
-- status: built
+- status: animated
 - src: compositions/frames/03-sizzle.html
 - voiceover: "Every Bob is visible. Every file has one owner. And every decision goes past a human."
 
@@ -63,7 +63,7 @@ Motion-designer showcase: tilted 3D planes of the captured site, motion-blur leg
 - duration: 4s
 - blueprint: titlecard-reveal
 - transition_in: crossfade
-- status: built
+- status: animated
 - src: compositions/frames/04-slowdown.html
 - voiceover: "Let's watch it happen, step by step."
 
@@ -75,7 +75,7 @@ The gear change. Near-still; one slide-up crossfade.
 - duration: 24s
 - blueprint: prompt-type-submit-generate
 - transition_in: zoom-in
-- status: built
+- status: animated
 - src: compositions/frames/05-brief.html
 - voiceover: "It starts with the PM. Aarief has the client brief, and right now, only Aarief knows the project. Aarief switches Bob IDE to our custom mode, PM Lead. In this mode, Bob can read and plan, but it can't touch the code. Then Aarief asks Bob to split the brief for Alief and Umar."
 
@@ -87,8 +87,8 @@ Camera punch-ins follow the VO: dropdown on "custom mode", status bar `mode: pm-
 - duration: 18s
 - blueprint: agent-progress-theater
 - transition_in: continuous
-- status: built
-- src: compositions/frames/06-plan.html
+- status: animated
+- src: compositions/frames/05-demo.html
 - voiceover: "Bob checks who's online and proposes a plan through our MCP server, radar-mcp. Every task gets an owner, and every file belongs to exactly one person. Nothing moves until a human approves."
 
 Receipt cascade; file rows get owner-coloured lock chips as the plan lands. Press-spring on Approve, SFX click.
@@ -99,8 +99,8 @@ Receipt cascade; file rows get owner-coloured lock chips as the plan lands. Pres
 - duration: 10s
 - blueprint: zoom-out-workspace-reveal
 - transition_in: continuous
-- status: built
-- src: compositions/frames/07-zoomout.html
+- status: animated
+- src: compositions/frames/05-demo.html
 - voiceover: "Now zoom out. Each task lands in that coder's own Bob IDE, with their own account and their own context."
 
 The zoom-out is the engine. Windows labelled with owner dot + name + mode.
@@ -111,8 +111,8 @@ The zoom-out is the engine. Windows labelled with owner dot + name + mode.
 - duration: 26s
 - blueprint: spatial-pan-stations
 - transition_in: continuous
-- status: built
-- src: compositions/frames/08-build.html
+- status: animated
+- src: compositions/frames/05-demo.html
 - voiceover: "Alief and Umar switch to Coder mode. The moment a session starts, a hook hands each Bob a short brief: your task, your files, and who owns the rest. Bob pulls the task through MCP and gets to work, and every edit is checked against the lock before it's written."
 
 ## Frame 9 — Near-miss (112–148, ~36s)
@@ -121,8 +121,8 @@ The zoom-out is the engine. Windows labelled with owner dot + name + mode.
 - duration: 36s
 - blueprint: camera-journey
 - transition_in: continuous
-- status: built
-- src: compositions/frames/09-nearmiss.html
+- status: animated
+- src: compositions/frames/05-demo.html
 - voiceover: "Then it happens. Umar asks Bob to change calculateTotal, in checkout.ts. But that's Alief's file. Before the edit lands, our PreToolUse hook blocks it. Now the rules kick in: Bob doesn't retry, and it doesn't sneak around the lock through the shell. It calls why_blocked, explains who holds the file, and asks the PM for access. Aarief decides. No conflict. No broken build."
 
 Callback to F01: same file, same two coders, opposite outcome. Held frame on the block. SFX: error thud, then soft confirm on Queue.
@@ -133,7 +133,7 @@ Callback to F01: same file, same two coders, opposite outcome. Held frame on the
 - duration: 13s
 - blueprint: grid-card-assemble
 - transition_in: whip
-- status: built
+- status: animated
 - src: compositions/frames/10-primitives.html
 - voiceover: "All of this runs on Bob's own features. Custom modes set the roles. Hooks enforce the locks. MCP lets Bob explain itself. Rules tell Bob what to do when it's blocked. And we built it all with Bob."
 
@@ -143,7 +143,7 @@ Callback to F01: same file, same two coders, opposite outcome. Held frame on the
 - duration: 9s
 - blueprint: logo-assemble-lockup
 - transition_in: crossfade
-- status: built
+- status: animated
 - src: compositions/frames/11-cta.html
 - voiceover: "IBM Bob Live Collab. Every Bob, on the same page. Watch the live replay at the link below."
 

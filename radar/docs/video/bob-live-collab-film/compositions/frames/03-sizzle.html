@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"></head>
+<body>
+<template>
+<style>
+@font-face{font-family:"Plex";font-weight:400;src:url("assets/fonts/ibm-plex-sans-latin-400-normal.woff2") format("woff2")}
+@font-face{font-family:"Plex";font-weight:500;src:url("assets/fonts/ibm-plex-sans-latin-500-normal.woff2") format("woff2")}
+@font-face{font-family:"Plex";font-weight:600;src:url("assets/fonts/ibm-plex-sans-latin-600-normal.woff2") format("woff2")}
+@font-face{font-family:"PlexMono";font-weight:400;src:url("assets/fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2")}
+@font-face{font-family:"PlexMono";font-weight:500;src:url("assets/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2")}
+#root{position:absolute;inset:0;overflow:hidden;color:#f4f4f4;font-family:"Plex",sans-serif}
+.it{font-family:"Plex",sans-serif;font-style:normal;font-weight:600;text-decoration:underline;text-decoration-color:#0f62fe;text-decoration-thickness:0.07em;text-underline-offset:0.14em;text-decoration-skip-ink:none}
+#s03-stage{position:absolute;inset:0;perspective:1800px;perspective-origin:50% 40%}
+#s03-cam{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-style:preserve-3d}
+.plane{position:absolute;width:1280px;height:720px;border:3px solid #393939;border-radius:14px;overflow:hidden;box-shadow:0 60px 140px rgba(0,0,0,0.7);background:#0e0e10}
+.plane img{display:block;width:100%;height:100%;object-fit:cover}
+#s03-p1{left:320px;top:120px}
+#s03-p2{left:-520px;top:240px}
+#s03-p3{left:1180px;top:260px}
+#s03-p4{left:320px;top:900px}
+#s03-words{position:absolute;left:0;right:0;top:840px;display:flex;justify-content:center;gap:36px;font-size:96px;font-weight:600;letter-spacing:-0.035em;text-shadow:0 10px 40px rgba(0,0,0,0.85)}
+#s03-words span{display:block}
+.dot{color:#0f62fe}
+#s03-black{position:absolute;inset:0;background:#0e0e10;opacity:0}
+</style>
+<div data-hf-id="hf-3azd" id="root" data-composition-id="s03" data-width="1920" data-height="1080">
+  <div data-hf-id="hf-a2ua" id="s03-stage"><div data-hf-id="hf-dex1" id="s03-cam">
+    <div data-hf-id="hf-vd8r" class="plane" id="s03-p2"><img data-hf-id="hf-m217" src="assets/img/scroll-035.png" alt=""></div>
+    <div data-hf-id="hf-rf4q" class="plane" id="s03-p3"><img data-hf-id="hf-0j5u" src="assets/img/scroll-070.png" alt=""></div>
+    <div data-hf-id="hf-8nf1" class="plane" id="s03-p4"><img data-hf-id="hf-0rmv" src="assets/img/scroll-088.png" alt=""></div>
+    <div data-hf-id="hf-khr4" class="plane" id="s03-p1"><img data-hf-id="hf-epqf" src="assets/img/scroll-000.png" alt=""></div>
+  </div></div>
+  <div data-hf-id="hf-42wb" id="s03-words"><span data-hf-id="hf-rp93" id="s03-w1">Visible<span data-hf-id="hf-6jgg" class="dot">.</span></span><span data-hf-id="hf-2sji" id="s03-w2">Locked<span data-hf-id="hf-3zzs" class="dot">.</span></span><span data-hf-id="hf-0q84" id="s03-w3" class="it">Human-approved<span data-hf-id="hf-2t2p" class="dot">.</span></span></div>
+  <div data-hf-id="hf-c5qh" id="s03-black"></div>
+</div>
+<script>
+(function(){
+  const tl = gsap.timeline({ paused: true });
+  // Planes sit in 3D; the camera flies a multi-leg journey across them.
+  gsap.set("#s03-p1", { rotationX: 12, z: 0 });
+  gsap.set("#s03-p2", { rotationY: 38, z: -300 });
+  gsap.set("#s03-p3", { rotationY: -38, z: -300 });
+  gsap.set("#s03-p4", { rotationX: 58, z: -200 });
+  tl.fromTo("#s03-cam", { z: -1600, rotationX: 24, rotationY: -18, y: 200, filter: "blur(10px)" }, { z: -250, rotationX: 10, rotationY: 0, y: 0, filter: "blur(0px)", duration: 1.4, ease: "expo.out" }, 0);
+  // Leg 1 — swing left toward Mission Control on "visible".
+  tl.to("#s03-cam", { x: 620, rotationY: -22, z: -120, duration: 1.2, ease: "power3.inOut" }, 1.9);
+  // Leg 2 — whip right to the near-miss section on "one owner".
+  tl.to("#s03-cam", { x: -640, rotationY: 22, z: -120, duration: 1.1, ease: "power3.inOut" }, 3.9);
+  // Leg 3 — dive down to the primitives on "human".
+  tl.to("#s03-cam", { x: 0, y: -420, rotationY: 0, rotationX: 36, z: -60, duration: 1.3, ease: "power3.inOut" }, 6.6);
+  // The triad: each word lights on its cue, the others sit at 28%.
+  tl.fromTo("#s03-words span[id]", { opacity: 0, y: 60, filter: "blur(16px)" }, { opacity: 0.28, y: 0, filter: "blur(0px)", duration: 0.5, stagger: 0.08, ease: "power3.out" }, 1.4);
+  tl.to("#s03-w1", { opacity: 1, scale: 1.04, duration: 0.3 }, 2.5);
+  tl.to("#s03-w1", { opacity: 0.28, scale: 1, duration: 0.3 }, 4.4);
+  tl.to("#s03-w2", { opacity: 1, scale: 1.04, duration: 0.3 }, 4.5);
+  tl.to("#s03-w2", { opacity: 0.28, scale: 1, duration: 0.3 }, 7.6);
+  tl.to("#s03-w3", { opacity: 1, scale: 1.04, duration: 0.3 }, 7.7);
+  // Push through into black.
+  tl.to("#s03-cam", { z: 900, duration: 0.8, ease: "power3.in" }, 9.1);
+  tl.to("#s03-words", { opacity: 0, scale: 1.3, filter: "blur(20px)", duration: 0.6, ease: "power2.in" }, 9.2);
+  tl.to("#s03-black", { opacity: 1, duration: 0.5, ease: "power2.in" }, 9.45);
+  window.__timelines["s03"] = tl;
+})();
+</script>
+</template>
+</body></html>

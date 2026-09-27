@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"></head>
+<body>
+<template>
+<style>
+@font-face{font-family:"Plex";font-weight:400;src:url("assets/fonts/ibm-plex-sans-latin-400-normal.woff2") format("woff2")}
+@font-face{font-family:"Plex";font-weight:500;src:url("assets/fonts/ibm-plex-sans-latin-500-normal.woff2") format("woff2")}
+@font-face{font-family:"Plex";font-weight:600;src:url("assets/fonts/ibm-plex-sans-latin-600-normal.woff2") format("woff2")}
+@font-face{font-family:"PlexMono";font-weight:400;src:url("assets/fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2")}
+@font-face{font-family:"PlexMono";font-weight:500;src:url("assets/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2")}
+#root{position:absolute;inset:0;overflow:hidden;color:#f4f4f4;font-family:"Plex",sans-serif}
+#s04-veil{position:absolute;inset:0;background:#0e0e10}
+.it{font-family:"Plex",sans-serif;font-style:normal;font-weight:600;text-decoration:underline;text-decoration-color:#0f62fe;text-decoration-thickness:0.07em;text-underline-offset:0.14em;text-decoration-skip-ink:none}
+.dot{color:#0f62fe}
+#s04-t{position:absolute;left:0;right:0;top:420px;text-align:center;font-size:136px;font-weight:600;letter-spacing:-0.035em}
+#s04-t .w{display:inline-block;margin:0 16px}
+#s04-s{position:absolute;left:0;right:0;top:620px;text-align:center;font-family:"PlexMono",monospace;font-size:32px;letter-spacing:0.12em;color:#a8a8a8}
+</style>
+<div data-hf-id="hf-h6so" id="root" data-composition-id="s04" data-width="1920" data-height="1080">
+  <div data-hf-id="hf-zp9h" id="s04-veil"></div>
+  <div data-hf-id="hf-qqrv" id="s04-t"><span data-hf-id="hf-683r" class="w">Let's</span><span data-hf-id="hf-9o9p" class="w">slow</span><span data-hf-id="hf-cqxh" class="w">it</span><span data-hf-id="hf-fr20" class="w"><span data-hf-id="hf-z1qe" class="it">down</span><span data-hf-id="hf-6jgg" class="dot">.</span></span></div>
+  <div data-hf-id="hf-fazb" id="s04-s">ONE BRIEF · TWO CODERS · ONE NEAR-MISS</div>
+</div>
+<script>
+(function(){
+  const tl = gsap.timeline({ paused: true });
+  tl.fromTo("#s04-veil", { opacity: 1 }, { opacity: 0, duration: 1.2, ease: "power1.out" }, 0);
+  tl.fromTo("#s04-t .w", { opacity: 0, y: 40, filter: "blur(18px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.7, stagger: 0.14, ease: "power3.out" }, 0.6);
+  tl.fromTo("#s04-s", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, 1.7);
+  // Hand-off: the whole line sinks away as we zoom into the first window.
+  tl.to(["#s04-t", "#s04-s"], { scale: 0.85, opacity: 0, filter: "blur(12px)", duration: 0.5, ease: "power2.in" }, 3.45);
+  window.__timelines["s04"] = tl;
+})();
+</script>
+</template>
+</body></html>

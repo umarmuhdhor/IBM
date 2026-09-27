@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"></head>
+<body>
+<template>
+<style>
+@font-face{font-family:"Plex";font-weight:400;src:url("assets/fonts/ibm-plex-sans-latin-400-normal.woff2") format("woff2")}
+@font-face{font-family:"Plex";font-weight:500;src:url("assets/fonts/ibm-plex-sans-latin-500-normal.woff2") format("woff2")}
+@font-face{font-family:"Plex";font-weight:600;src:url("assets/fonts/ibm-plex-sans-latin-600-normal.woff2") format("woff2")}
+@font-face{font-family:"PlexMono";font-weight:400;src:url("assets/fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2")}
+@font-face{font-family:"PlexMono";font-weight:500;src:url("assets/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2")}
+#root{position:absolute;inset:0;overflow:hidden;color:#f4f4f4;font-family:"Plex",sans-serif}
+.it{font-family:"Plex",sans-serif;font-style:normal;font-weight:600;text-decoration:underline;text-decoration-color:#0f62fe;text-decoration-thickness:0.07em;text-underline-offset:0.14em;text-decoration-skip-ink:none}
+.dot{color:#0f62fe}
+#s10-h{position:absolute;left:100px;top:100px;font-size:96px;font-weight:600;letter-spacing:-0.03em}
+#s10-h .w{display:inline-block;margin-right:22px}
+#s10-grid{position:absolute;left:100px;right:100px;top:310px;display:grid;grid-template-columns:repeat(4,1fr);gap:28px}
+.card{border:2px solid #393939;border-top:6px solid var(--c);background:#161616;padding:30px;height:500px;position:relative}
+.card:nth-child(even){top:26px}
+.lbl{font-family:"PlexMono",monospace;font-size:20px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--c)}
+.t{font-size:52px;font-weight:600;letter-spacing:-0.02em;margin:18px 0 22px}
+.l{font-family:"PlexMono",monospace;font-size:24px;line-height:1.75;color:#c6c6c6}
+#s10-kit{position:absolute;left:760px;top:470px;width:400px;height:120px;display:flex;align-items:center;justify-content:center;gap:18px;font-family:"PlexMono",monospace;font-size:48px;color:#a6c8ff;border:3px solid #0f62fe;border-radius:70px;background:#161616;opacity:0}
+#s10-foot{position:absolute;left:0;right:0;top:640px;text-align:center;font-size:40px;color:#a8a8a8;opacity:0}
+</style>
+<div data-hf-id="hf-8k65" id="root" data-composition-id="s10" data-width="1920" data-height="1080">
+  <div data-hf-id="hf-dbeo" id="s10-h"><span data-hf-id="hf-gnlk" class="w">Built</span><span data-hf-id="hf-mx6p" class="w">on</span><span data-hf-id="hf-5wul" class="w">Bob's</span><span data-hf-id="hf-4mtl" class="w it">own</span><span data-hf-id="hf-i8jj" class="w">features<span data-hf-id="hf-6jgg" class="dot">.</span></span></div>
+  <div data-hf-id="hf-l4uo" id="s10-grid">
+    <div data-hf-id="hf-su4g" class="card" id="s10-c1" style="--c:#be95ff"><div data-hf-id="hf-9u2x" class="lbl">◐ Custom modes</div><div data-hf-id="hf-vexh" class="t">Roles</div><div data-hf-id="hf-obi0" class="l">pm-lead · plans<br data-hf-id="hf-x5px">coder · builds</div></div>
+    <div data-hf-id="hf-1ty3" class="card" id="s10-c2" style="--c:#f1c21b"><div data-hf-id="hf-lper" class="lbl">⚓ Hooks</div><div data-hf-id="hf-9cru" class="t">Enforcement</div><div data-hf-id="hf-9sd2" class="l">SessionStart<br data-hf-id="hf-rsrt">UserPromptSubmit<br data-hf-id="hf-szow">PreToolUse<br data-hf-id="hf-sldv">PostToolUse<br data-hf-id="hf-qluq">Stop</div></div>
+    <div data-hf-id="hf-jzso" class="card" id="s10-c3" style="--c:#78a9ff"><div data-hf-id="hf-sm6t" class="lbl">⧉ MCP</div><div data-hf-id="hf-1byx" class="t">A voice</div><div data-hf-id="hf-isj6" class="l">propose_plan<br data-hf-id="hf-q7jp">why_blocked<br data-hf-id="hf-regs">request_file<br data-hf-id="hf-r05r">my_tasks</div></div>
+    <div data-hf-id="hf-0q1i" class="card" id="s10-c4" style="--c:#42be65"><div data-hf-id="hf-8k2c" class="lbl">§ Rules</div><div data-hf-id="hf-yygi" class="t">Manners</div><div data-hf-id="hf-hebx" class="l">✗ retry<br data-hf-id="hf-p0mm">✗ shell tricks<br data-hf-id="hf-ombl">✓ why_blocked<br data-hf-id="hf-qsyj">✓ move on</div></div>
+  </div>
+  <div data-hf-id="hf-b64e" id="s10-kit">▤ .bob/</div>
+  <div data-hf-id="hf-ri2m" id="s10-foot">one kit per workspace · built <span data-hf-id="hf-ot1w" class="it" style="color:#f4f4f4">with</span> Bob</div>
+</div>
+<script>
+(function(){
+  const tl = gsap.timeline({ paused: true });
+  tl.fromTo("#s10-h .w", { opacity: 0, y: -60, filter: "blur(16px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.55, stagger: 0.08, ease: "power3.out" }, 0.2);
+  // One card per VO clause, alternating directions.
+  const c = [["#s10-c1", 3.3, -80], ["#s10-c2", 5.5, 80], ["#s10-c3", 8.5, -80], ["#s10-c4", 10.45, 80]];
+  c.forEach(([s, t, y]) => tl.fromTo(s, { opacity: 0, y: y, rotationX: 40, transformPerspective: 1200 }, { opacity: 1, y: 0, rotationX: 0, duration: 0.7, ease: "back.out(1.4)" }, t));
+  c.forEach(([s, t]) => tl.fromTo(s + " .t", { scale: 1.2 }, { scale: 1, duration: 0.5, ease: "power2.out" }, t + 0.1));
+  // "we built it all with Bob" — the cards collapse into one .bob/ kit.
+  tl.to("#s10-h", { opacity: 0, y: -40, duration: 0.4, ease: "power2.in" }, 13.4);
+  tl.to(".card", { x: (i) => [656, 247, -162, -571][i], y: (i) => [-30, -56, -30, -56][i], scale: 0.2, opacity: 0, duration: 0.7, ease: "power4.in", stagger: 0.04 }, 13.6);
+  tl.fromTo("#s10-kit", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(2.4)" }, 14.2);
+  tl.fromTo("#s10-foot", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4 }, 14.5);
+  window.__timelines["s10"] = tl;
+})();
+</script>
+</template>
+</body></html>

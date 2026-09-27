@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"></head>
+<body>
+<template>
+<style>
+@font-face{font-family:"Plex";font-weight:400;src:url("assets/fonts/ibm-plex-sans-latin-400-normal.woff2") format("woff2")}
+@font-face{font-family:"Plex";font-weight:500;src:url("assets/fonts/ibm-plex-sans-latin-500-normal.woff2") format("woff2")}
+@font-face{font-family:"Plex";font-weight:600;src:url("assets/fonts/ibm-plex-sans-latin-600-normal.woff2") format("woff2")}
+@font-face{font-family:"PlexMono";font-weight:400;src:url("assets/fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2")}
+@font-face{font-family:"PlexMono";font-weight:500;src:url("assets/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2")}
+#root{position:absolute;inset:0;overflow:hidden;color:#f4f4f4;font-family:"Plex",sans-serif}
+.kick{position:absolute;left:120px;top:84px;font-family:"PlexMono",monospace;font-size:26px;font-weight:500;letter-spacing:0.14em;color:#a6c8ff}
+.ul{position:relative;display:inline-block}
+.ul::after{content:"";position:absolute;left:0;right:0;bottom:-0.02em;height:0.075em;background:#0f62fe;transform:scaleX(var(--u,1));transform-origin:left}
+.dot{color:#0f62fe}
+#p-mascot{position:absolute;left:120px;top:150px;width:170px;height:170px}
+#p-head{position:absolute;left:120px;top:350px;font-size:150px;font-weight:600;letter-spacing:-0.035em;line-height:1.14;transform-origin:0 0;white-space:nowrap}
+#p-head .ln{display:block}
+#p-stage{position:absolute;left:0;top:0;width:1920px;height:1080px}
+.doc{position:absolute;left:120px;top:330px;width:400px;height:470px;background:#f4f4f4;color:#161616;border-radius:6px;padding:26px 28px;box-shadow:0 30px 80px rgba(0,0,0,0.6)}
+.doc b{display:block;font-size:26px;font-weight:600}
+.doc small{display:block;font-family:"PlexMono",monospace;font-size:16px;color:#6f6f6f;margin:4px 0 22px}
+.doc .l{height:12px;background:#c6c6c6;border-radius:3px;margin:12px 0}
+.doc .own{position:absolute;left:28px;bottom:22px;display:flex;align-items:center;gap:10px;font-size:20px;font-weight:600}
+.doc .own i{display:block;width:12px;height:12px;border-radius:50%;background:#be95ff}
+.task{position:absolute;top:330px;width:560px;height:470px;background:#161616;border:2px solid #393939;border-top:8px solid var(--c);border-radius:8px;padding:24px 28px}
+.task h4{margin:0;font-size:34px;font-weight:600;letter-spacing:-0.01em}
+.task .who{display:flex;align-items:center;gap:10px;font-size:24px;color:#c6c6c6;margin:8px 0 22px}
+.task .who i{display:block;width:12px;height:12px;border-radius:50%;background:var(--c)}
+.file{display:flex;align-items:center;justify-content:space-between;height:58px;border-bottom:1px solid #262626;font-family:"PlexMono",monospace;font-size:24px}
+.lk{font-family:"Plex",sans-serif;font-size:19px;font-weight:600;color:var(--c);border:2px solid var(--c);padding:2px 14px;border-radius:20px}
+.prog{position:absolute;left:28px;right:28px;bottom:28px;height:46px;background:#262626;border-radius:6px;overflow:hidden}
+.prog .fill{position:absolute;left:0;top:0;bottom:0;width:100%;background:var(--c);transform-origin:left;transform:scaleX(0)}
+.prog span{position:absolute;left:16px;top:9px;font-family:"PlexMono",monospace;font-size:20px;color:#f4f4f4;mix-blend-mode:difference}
+#p-chips{position:absolute;left:120px;top:870px;display:flex;gap:22px}
+.tch{display:flex;align-items:center;gap:14px;font-size:28px;font-weight:500;border:2px solid #393939;background:rgba(14,14,16,0.85);padding:12px 22px 12px 12px;border-radius:8px}
+.tch .bb{font-family:"PlexMono",monospace;font-size:20px;font-weight:500;background:#0f62fe;color:#fff;padding:6px 12px;border-radius:4px}
+#p-par{position:absolute;left:640px;top:270px;font-family:"PlexMono",monospace;font-size:26px;letter-spacing:0.12em;color:#42be65}
+</style>
+<div id="root" data-composition-id="s02b" data-width="1920" data-height="1080">
+  <div class="kick" id="p-kick">SOLUTION 01 · WORK IN PARALLEL</div>
+  <img id="p-mascot" src="assets/img/bob-crew.png" alt="">
+  <div id="p-head"><span class="ln" id="p-a">Your team's Bobs,</span><span class="ln" id="p-b"><span class="ul" id="p-u1" style="--u:0">working together</span><span class="dot">.</span></span></div>
+  <div id="p-stage">
+    <div class="doc" id="p-doc"><b>Sprint brief</b><small>brief.pdf · BRF-TD-014</small><div class="l" style="width:90%"></div><div class="l" style="width:75%"></div><div class="l" style="width:84%"></div><div class="l" style="width:60%"></div><div class="l" style="width:88%"></div><div class="l" style="width:70%"></div><div class="own"><i></i>Aarief · PM</div></div>
+    <div class="task" id="p-t1" style="left:620px;--c:#78a9ff"><h4>T1 · Promo codes</h4><div class="who"><i></i>Alief · coder</div>
+      <div class="file"><span>src/checkout.ts</span><span class="lk" id="p-l1">Alief</span></div>
+      <div class="file"><span>src/promo.ts</span><span class="lk" id="p-l2">Alief</span></div>
+      <div class="prog"><div class="fill" id="p-f1"></div><span>building</span></div></div>
+    <div class="task" id="p-t2" style="left:1240px;--c:#08bdba"><h4>T2 · Cart total</h4><div class="who"><i></i>Umar · coder</div>
+      <div class="file"><span>src/Header.tsx</span><span class="lk" id="p-l3">Umar</span></div>
+      <div class="file"><span>src/cartBadge.ts</span><span class="lk" id="p-l4">Umar</span></div>
+      <div class="prog"><div class="fill" id="p-f2"></div><span>building</span></div></div>
+    <div id="p-par">▶ BOTH AT ONCE, NO WAITING</div>
+    <div id="p-chips">
+      <div class="tch" id="p-c1"><span class="bb">IBM Bob · Custom mode</span>PM Lead plans, never edits</div>
+      <div class="tch" id="p-c2"><span class="bb">IBM Bob · MCP</span>our radar-mcp server</div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  const tl = gsap.timeline({ paused: true });
+  gsap.set(["#p-doc", "#p-t1", "#p-t2", "#p-par", ".tch", ".lk"], { opacity: 0 });
+  // Beat 1 — "IBM Bob Live Collab puts your team's Bobs to work together."
+  tl.fromTo("#p-kick", { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.4, ease: "power3.out" }, 0.1);
+  tl.fromTo("#p-a", { x: -1700, skewX: -12 }, { x: 0, skewX: 0, duration: 0.55, ease: "power4.out" }, 0.25);
+  tl.fromTo("#p-b", { x: -1900, skewX: -12 }, { x: 0, skewX: 0, duration: 0.6, ease: "power4.out" }, 0.35);
+  tl.fromTo("#p-mascot", { scale: 0, rotation: -25, y: 60 }, { scale: 1, rotation: 0, y: 0, duration: 0.7, ease: "back.out(2.2)" }, 0.9);
+  tl.to("#p-mascot", { y: -10, duration: 1, ease: "sine.inOut", yoyo: true, repeat: 1 }, 1.6);
+  tl.to("#p-u1", { "--u": 1, duration: 0.5, ease: "power2.out" }, 3.9);
+  // The headline docks small at the top; the stage takes over.
+  tl.to("#p-mascot", { opacity: 0, scale: 0.6, duration: 0.35, ease: "power2.in" }, 4.35);
+  tl.to("#p-head", { scale: 0.34, x: 0, y: -200, duration: 0.6, ease: "power3.inOut" }, 4.4);
+  // Beat 2 — "A PM Lead mode in Bob splits the brief."
+  tl.fromTo("#p-doc", { opacity: 0, y: 80 }, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, 4.6);
+  tl.fromTo("#p-c1", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.45, ease: "back.out(1.8)" }, 5.1);
+  tl.fromTo("#p-t1", { opacity: 0, x: -480, scale: 0.6 }, { opacity: 1, x: 0, scale: 1, duration: 0.7, ease: "power3.out" }, 6.7);
+  tl.fromTo("#p-t2", { opacity: 0, x: -1100, scale: 0.6 }, { opacity: 1, x: 0, scale: 1, duration: 0.8, ease: "power3.out" }, 6.85);
+  // Beat 3 — "our radar-mcp server gives every file one owner."
+  tl.fromTo("#p-c2", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.45, ease: "back.out(1.8)" }, 8.1);
+  tl.fromTo(["#p-l1", "#p-l3", "#p-l2", "#p-l4"], { opacity: 0, scale: 0.5 }, { opacity: 1, scale: 1, duration: 0.35, stagger: 0.25, ease: "back.out(2.5)" }, 9.9);
+  // Beat 4 — "and everyone builds in parallel."
+  tl.fromTo("#p-par", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4 }, 11.8);
+  tl.to(["#p-f1", "#p-f2"], { scaleX: 0.78, duration: 1.8, ease: "power1.inOut" }, 11.8);
+  tl.to("#p-doc", { boxShadow: "0 0 0 4px #be95ff, 0 30px 80px rgba(0,0,0,0.6)", duration: 0.3 }, 12.0);
+  // Exit — slide left into the next solution.
+  tl.to(["#p-stage", "#p-head", "#p-kick"], { x: -400, opacity: 0, filter: "blur(18px)", duration: 0.4, ease: "power3.in" }, 13.6);
+  window.__timelines["s02b"] = tl;
+})();
+</script>
+</template>
+</body></html>

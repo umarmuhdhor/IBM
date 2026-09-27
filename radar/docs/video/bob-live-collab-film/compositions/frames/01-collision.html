@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"></head>
+<body>
+<template>
+<style>
+@font-face{font-family:"Plex";font-weight:400;src:url("assets/fonts/ibm-plex-sans-latin-400-normal.woff2") format("woff2")}
+@font-face{font-family:"Plex";font-weight:500;src:url("assets/fonts/ibm-plex-sans-latin-500-normal.woff2") format("woff2")}
+@font-face{font-family:"Plex";font-weight:600;src:url("assets/fonts/ibm-plex-sans-latin-600-normal.woff2") format("woff2")}
+@font-face{font-family:"PlexMono";font-weight:400;src:url("assets/fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2")}
+@font-face{font-family:"PlexMono";font-weight:500;src:url("assets/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2")}
+#root{position:absolute;inset:0;overflow:hidden;color:#f4f4f4;font-family:"Plex",sans-serif}
+#s01-shake{position:absolute;inset:0}
+#s01-dot{position:absolute;left:942px;top:522px;width:36px;height:36px;border-radius:50%;background:#fa4d56}
+.s01-line{position:absolute;left:0;right:0;top:430px;text-align:center;font-size:120px;font-weight:600;letter-spacing:-0.03em;line-height:1}
+.s01-line .w{display:inline-block;margin-right:28px}
+.it{font-family:"Plex",sans-serif;font-style:normal;font-weight:600;text-decoration:underline;text-decoration-color:#0f62fe;text-decoration-thickness:0.07em;text-underline-offset:0.14em;text-decoration-skip-ink:none}
+.dot-a{color:#0f62fe}.dot-r{color:#fa4d56}
+#s01-chips{position:absolute;left:0;right:0;top:620px;display:flex;justify-content:center;gap:24px}
+.chip{display:flex;align-items:center;gap:12px;font-size:34px;font-weight:500;border:3px solid var(--c);padding:10px 26px;border-radius:60px;background:rgba(0,0,0,0.35)}
+.chip i{display:block;width:16px;height:16px;border-radius:50%;background:var(--c)}
+#s01-head{position:absolute;left:120px;top:250px;font-size:170px;font-weight:600;letter-spacing:-0.035em;line-height:1.12}
+#s01-head div{display:block}
+#s01-code{position:absolute;left:1040px;top:230px;width:780px;background:#1e1e20;border:2px solid #393939;border-radius:16px;overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,0.6)}
+#s01-code .bar{height:48px;background:#161616;border-bottom:2px solid #393939;display:flex;align-items:center;gap:10px;padding:0 20px;font-size:20px;color:#a8a8a8}
+#s01-code .bar s{display:block;width:13px;height:13px;border-radius:50%;background:#4a4a4a}
+.code{font-family:"PlexMono",monospace;font-size:28px;line-height:1.8;padding:22px 28px;white-space:pre;color:#d0d0d0}
+.code .n{color:#6f6f6f;display:inline-block;width:46px}
+.k{color:#be95ff}.f{color:#78a9ff}
+.car{display:inline-block;width:5px;height:34px;vertical-align:-6px;background:var(--c)}
+.tag{display:inline-block;font-size:18px;font-family:"PlexMono",monospace;color:#161616;background:var(--c);padding:2px 10px;border-radius:6px;vertical-align:8px;margin-left:6px}
+#s01-conflict{position:absolute;left:560px;top:780px;background:#a2191f;color:#fff;font-family:"PlexMono",monospace;font-size:40px;font-weight:500;padding:22px 40px;box-shadow:0 20px 60px rgba(0,0,0,0.6)}
+#s01-flash{position:absolute;inset:0;background:#fa4d56;opacity:0}
+</style>
+<div data-hf-id="hf-q5mn" id="root" data-composition-id="s01" data-width="1920" data-height="1080">
+  <div data-hf-id="hf-loco" id="s01-shake">
+    <div data-hf-id="hf-67x3" id="s01-dot"></div>
+    <div data-hf-id="hf-d61d" class="s01-line" id="s01-l1"><span data-hf-id="hf-civn" class="w">Your</span><span data-hf-id="hf-g5hd" class="w">team</span><span data-hf-id="hf-1ex6" class="w">codes</span><span data-hf-id="hf-vjqo" class="w">with</span><span data-hf-id="hf-npep" class="w it">AI</span></div>
+    <div data-hf-id="hf-jbr6" class="s01-line" id="s01-l2"><span data-hf-id="hf-muix" class="w">Everyone</span><span data-hf-id="hf-im8l" class="w">brings</span><span data-hf-id="hf-kdtg" class="w">their</span><span data-hf-id="hf-8h94" class="w">own</span><span data-hf-id="hf-5zau" class="w it">Bob</span></div>
+    <div data-hf-id="hf-0e27" id="s01-chips">
+      <div data-hf-id="hf-kxzv" class="chip" style="--c:#be95ff"><i data-hf-id="hf-wt6k"></i>Aarief</div>
+      <div data-hf-id="hf-xlck" class="chip" style="--c:#78a9ff"><i data-hf-id="hf-zeb8"></i>Alief</div>
+      <div data-hf-id="hf-gkeq" class="chip" style="--c:#08bdba"><i data-hf-id="hf-y7e5"></i>Umar</div>
+    </div>
+    <div data-hf-id="hf-fboo" id="s01-head"><div data-hf-id="hf-0got" id="s01-h1">Two Bobs.</div><div data-hf-id="hf-fa2o" id="s01-h2"><span data-hf-id="hf-p9pg" class="it">One file</span><span data-hf-id="hf-3jib" class="dot-r">.</span></div></div>
+    <div data-hf-id="hf-3dj5" id="s01-code">
+      <div data-hf-id="hf-pi7f" class="bar"><s data-hf-id="hf-dljm"></s><s data-hf-id="hf-tzme"></s><s data-hf-id="hf-udxf"></s>src/checkout.ts</div>
+      <div data-hf-id="hf-h1fa" class="code"><span data-hf-id="hf-e3y0" class="n">1</span><span data-hf-id="hf-0pve" class="k">export function</span> <span data-hf-id="hf-nut7" class="f">calculateTotal</span>(cart) {
+<span data-hf-id="hf-cx0x" class="n">2</span>  <span data-hf-id="hf-5jgn" class="k">const</span> sum = cart.items.reduce(add, 0)
+<span data-hf-id="hf-dbby" class="n">3</span>  <span data-hf-id="hf-lumi" class="k">return</span> <span data-hf-id="hf-wlhf" id="s01-ta">sum - promo</span><span data-hf-id="hf-7ju2" class="car" style="--c:#78a9ff"></span><span data-hf-id="hf-mhon" class="tag" style="--c:#78a9ff">Alief</span>
+<span data-hf-id="hf-c4ev" class="n">4</span>  <span data-hf-id="hf-2gpa" class="k">return</span> <span data-hf-id="hf-1aud" id="s01-tb">formatIDR(sum)</span><span data-hf-id="hf-rd9o" class="car" style="--c:#08bdba"></span><span data-hf-id="hf-i99b" class="tag" style="--c:#08bdba">Umar</span>
+<span data-hf-id="hf-cipw" class="n">5</span>}</div>
+    </div>
+    <div data-hf-id="hf-gwwj" id="s01-conflict">CONFLICT (content): Merge conflict in src/checkout.ts</div>
+  </div>
+  <div data-hf-id="hf-3i84" id="s01-flash"></div>
+</div>
+<script>
+(function(){
+  const tl = gsap.timeline({ paused: true });
+  const blurIn = (els, t, st) => tl.fromTo(els, { opacity: 0, filter: "blur(18px)", y: 24 }, { opacity: 1, filter: "blur(0px)", y: 0, duration: 0.5, ease: "power3.out", stagger: st || 0.08 }, t);
+  const blurOut = (els, t) => tl.to(els, { opacity: 0, filter: "blur(16px)", y: -18, duration: 0.3, ease: "power2.in", stagger: 0.03 }, t);
+  // Beat 0 — a lone red dot breathes (the film's seed).
+  tl.fromTo("#s01-dot", { scale: 0 }, { scale: 1, duration: 0.45, ease: "back.out(3)" }, 0.05);
+  tl.to("#s01-dot", { scale: 1.35, duration: 0.12, ease: "sine.inOut", yoyo: true, repeat: 1 }, 0.5);
+  // Beat 1 — the dot shoots off, the line blurs in word by word.
+  tl.to("#s01-dot", { x: 520, scale: 0.5, opacity: 0, duration: 0.4, ease: "power3.in" }, 0.75);
+  blurIn("#s01-l1 .w", 0.8);
+  blurOut("#s01-l1 .w", 2.75);
+  // Beat 2 — everyone brings their own Bob; owner chips pop.
+  blurIn("#s01-l2 .w", 2.95);
+  tl.fromTo("#s01-chips .chip", { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.45, ease: "back.out(2.5)", stagger: 0.12 }, 3.5);
+  blurOut(["#s01-l2 .w", "#s01-chips .chip"], 5.05);
+  // Beat 3 — two Bobs, one file: headline left, code card slides in, two carets race.
+  blurIn(["#s01-h1", "#s01-h2"], 5.3, 0.25);
+  tl.fromTo("#s01-code", { x: 900, rotation: 8, opacity: 0 }, { x: 0, rotation: 2, opacity: 1, duration: 0.7, ease: "expo.out" }, 5.45);
+  tl.fromTo("#s01-ta", { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 1.6, ease: "steps(11)" }, 6.0);
+  tl.fromTo("#s01-tb", { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 1.6, ease: "steps(14)" }, 6.1);
+  tl.fromTo(".car", { opacity: 1 }, { opacity: 0.2, duration: 0.25, yoyo: true, repeat: 5, ease: "steps(1)" }, 6.0);
+  // Beat 4 — the collision on "same file": red flash, slam, shake.
+  tl.fromTo("#s01-flash", { opacity: 0 }, { opacity: 0.35, duration: 0.06 }, 7.55);
+  tl.to("#s01-flash", { opacity: 0, duration: 0.5, ease: "power2.out" }, 7.61);
+  tl.fromTo("#s01-conflict", { scale: 2.4, opacity: 0, rotation: -12 }, { scale: 1, opacity: 1, rotation: -3, duration: 0.35, ease: "power4.in" }, 7.5);
+  tl.fromTo("#s01-shake", { x: 0 }, { x: 18, duration: 0.05, yoyo: true, repeat: 7, ease: "none" }, 7.85);
+  tl.to("#s01-code", { rotation: 5, y: 16, duration: 0.3, ease: "power2.out" }, 7.85);
+  tl.to("#s01-shake", { scale: 1.04, duration: 1.6, ease: "power1.out" }, 7.9);
+  window.__timelines["s01"] = tl;
+})();
+</script>
+</template>
+</body></html>

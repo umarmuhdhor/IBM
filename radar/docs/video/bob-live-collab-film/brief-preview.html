@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><title>Brief preview</title>
+<style>
+@font-face{font-family:"Plex";font-weight:400;src:url("assets/fonts/ibm-plex-sans-latin-400-normal.woff2") format("woff2")}
+@font-face{font-family:"Plex";font-weight:500;src:url("assets/fonts/ibm-plex-sans-latin-500-normal.woff2") format("woff2")}
+@font-face{font-family:"Plex";font-weight:600;src:url("assets/fonts/ibm-plex-sans-latin-600-normal.woff2") format("woff2")}
+@font-face{font-family:"PlexMono";font-weight:400;src:url("assets/fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2")}
+body{margin:0;background:#262626;display:flex;justify-content:center;padding:40px 0}
+.sheet{width:680px;background:#fff;color:#161616;font-family:"Plex",sans-serif;font-size:12.5px;line-height:1.5;padding:44px 52px 36px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #161616;padding-bottom:14px}
+.client{font-weight:600;font-size:13px;letter-spacing:.02em}
+.client small{display:block;font-weight:400;color:#6f6f6f;font-size:11px;letter-spacing:0}
+.meta{font-family:"PlexMono",monospace;font-size:10.5px;color:#525252;text-align:right;line-height:1.6}
+.status{display:inline-block;margin-top:4px;background:#defbe6;color:#0e6027;font-family:"Plex";font-weight:600;font-size:10.5px;padding:2px 8px;border-radius:2px}
+h1{font-size:22px;font-weight:600;letter-spacing:-.01em;margin:20px 0 4px;line-height:1.25}
+.lede{color:#525252;margin:0 0 18px}
+h2{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#0f62fe;margin:18px 0 6px}
+p{margin:0}
+ul{margin:0;padding-left:18px}
+li{margin:2px 0}
+table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:4px}
+th{text-align:left;font-weight:600;background:#f4f4f4;border-bottom:1px solid #c6c6c6;padding:6px 8px}
+td{border-bottom:1px solid #e0e0e0;padding:7px 8px;vertical-align:top}
+td.id{font-family:"PlexMono",monospace;color:#525252;width:34px}
+td.area{font-family:"PlexMono",monospace;font-size:10.5px;color:#525252;width:120px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:0 28px}
+.note{border-left:3px solid #0f62fe;background:#edf5ff;padding:8px 12px;margin-top:6px}
+.foot{display:flex;justify-content:space-between;margin-top:26px;padding-top:10px;border-top:1px solid #e0e0e0;font-size:10px;color:#8d8d8d}
+</style></head>
+<body>
+<div class="sheet">
+  <div class="top">
+    <div class="client">TOKO DEMO<small>Client brief · e-commerce storefront</small></div>
+    <div class="meta">BRF-TD-014 · v1.2<br>Issued 22 Sep 2026<br><span class="status">Approved for sprint</span></div>
+  </div>
+
+  <h1>Sprint brief: promo codes at checkout and a live cart total</h1>
+  <p class="lede">Two small storefront features for this sprint. Both touch the checkout total, so ownership must be clear.</p>
+
+  <h2>1 · Background</h2>
+  <p>Customers ask for promo codes at checkout, and the header shows only an item count. Shoppers can't see what they'll pay until the last step.</p>
+
+  <h2>2 · Scope</h2>
+  <table>
+    <tr><th>ID</th><th>Feature</th><th>Acceptance criteria</th><th>Area</th></tr>
+    <tr><td class="id">F1</td><td><b>Promo code at checkout</b></td><td><ul><li>A valid code applies its discount</li><li>An invalid code shows an inline error</li><li>The order total recalculates at once</li></ul></td><td class="area">checkout, promo</td></tr>
+    <tr><td class="id">F2</td><td><b>Live cart total in header</b></td><td><ul><li>Badge updates on add and remove</li><li>Shows the discounted total</li><li>Formatted in IDR</li></ul></td><td class="area">header, cart badge</td></tr>
+  </table>
+
+  <div class="two">
+    <div>
+      <h2>3 · Constraints</h2>
+      <div class="note">The header total must read from checkout's <b>calculateTotal()</b>. One source of truth for the price.</div>
+    </div>
+    <div>
+      <h2>4 · Out of scope</h2>
+      <ul><li>Payment provider changes</li><li>Admin UI for creating codes</li></ul>
+    </div>
+  </div>
+
+  <div class="two">
+    <div>
+      <h2>5 · Timeline</h2>
+      <ul><li>Kick-off: Monday</li><li>Review and demo: Friday</li></ul>
+    </div>
+    <div>
+      <h2>6 · Team</h2>
+      <ul><li>PM: Aarief</li><li>Engineers: Alief, Umar</li></ul>
+    </div>
+  </div>
+
+  <div class="foot"><span>Synthetic sample for demo purposes</span><span>Page 1 of 1</span></div>
+</div>
+</body></html>
