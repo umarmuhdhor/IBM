@@ -1,4 +1,4 @@
-// Proposals and the human decision (R3 §2.12–2.14). Only Mission Control may decide (MA-07).
+// Proposals and the human decision (R3 §2.12–2.14). The PM or Mission Control decides (D-umar-08).
 import { DecisionReq, ProposalCreateReq, ProposalsQuery, type ProposalsRes } from '@radar/common';
 import type { Hono } from 'hono';
 import { ctxOf, type WorkspaceDeps } from '../../deps';
@@ -23,8 +23,9 @@ export function registerProposalRoutes(app: Hono, deps: WorkspaceDeps): void {
   });
 
   app.post('/v1/proposals/:id/decision', async (c) => {
-    requireRole(deps.db, c.req.header('authorization'), ['mc']);
+    // The PM approves plans in the app; Mission Control stays able to decide (a room without a PM, or the PM away).
+    const who = requireRole(deps.db, c.req.header('authorization'), ['pm', 'mc']);
     const req = parseWith(DecisionReq, await readJson(c.req.raw));
-    return c.json(await decideProposalFlow(deps, c.req.param('id'), req));
+    return c.json(await decideProposalFlow(deps, c.req.param('id'), req, who.kind === 'mc' ? 'mc' : who.memberId));
   });
 }

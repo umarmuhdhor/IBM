@@ -2,11 +2,12 @@ import { useState } from 'react'
 import { DecisionCard, FeedItem, ReviewCard, TaskCard } from '@radar/ui'
 import type { FeedKind, ProposalView, RadarState, TaskView } from '@radar/ui'
 import { getRadarViewModel } from './radar-view-model'
+import { serverMessage } from './CoderTaskCard'
 import { NotificationsPanel } from './NotificationsPanel'
 import { repoRows } from './radar-lanes'
 import { SharedRepoList } from './SharedRepoList'
 
-type Props = { state: RadarState; canDecide: boolean; now: number }
+type Props = { state: RadarState; canDecide: boolean; now: number; readOnlyNote?: string }
 
 const KIND_TITLE: Record<string, string> = { plan: 'Plan', decision: 'Decision', review: 'Review' }
 
@@ -47,7 +48,7 @@ function feedKind(type: string): FeedKind {
   return 'info'
 }
 
-export function MissionControlView({ state, canDecide, now }: Props) {
+export function MissionControlView({ state, canDecide, now, readOnlyNote = 'Only Mission Control can decide.' }: Props) {
   const model = getRadarViewModel(state)
   const [decidingId, setDecidingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -57,9 +58,9 @@ export function MissionControlView({ state, canDecide, now }: Props) {
   const decide = (id: string, approve: boolean) => {
     setError(null)
     setDecidingId(id)
-    void window.api.radar.decide(id, approve, '').catch(() => {
+    void window.api.radar.decide(id, approve, '').catch((err: unknown) => {
       setDecidingId(null)
-      setError('Decision failed. Retry after checking the connection.')
+      setError(serverMessage(err, 'Decision failed. Retry after checking the connection.'))
     })
   }
 
@@ -103,7 +104,7 @@ export function MissionControlView({ state, canDecide, now }: Props) {
               <DecisionCard key={proposal.id} title={proposalTitle(proposal)} reason={proposal.reason} readOnly={!canDecide} status={activeDecisionId === proposal.id ? 'deciding' : 'pending'} onApprove={() => decide(proposal.id, true)} onDeny={() => decide(proposal.id, false)} />
             )
           })}
-          {!canDecide && model.needsYou > 0 && <p className="text-xs text-muted-foreground">Only Mission Control can decide.</p>}
+          {!canDecide && model.needsYou > 0 && <p className="text-xs text-muted-foreground">{readOnlyNote}</p>}
         </section>
         <section aria-label="Shared repo" className="space-y-2">
           <h3 className="text-sm font-semibold">Shared repo</h3>

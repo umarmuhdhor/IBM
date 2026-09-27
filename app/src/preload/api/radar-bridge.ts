@@ -17,6 +17,8 @@ export type RadarApi = {
   cancelTask: (id: string) => Promise<void>
   setTaskStep: (id: string, index: number, done: boolean) => Promise<void>
   submitTask: (id: string, summary: string) => Promise<void>
+  activateTask: (id: string) => Promise<void>
+  mySeat: () => Promise<string | null>
   onUpdate: (callback: (update: RadarWsUpdate) => void) => () => void
 } & RadarJoinApi
 
@@ -35,6 +37,8 @@ export const radarApi: RadarApi = {
   cancelTask: (id) => ipcRenderer.invoke('radar:cancel-task', { id }),
   setTaskStep: (id, index, done) => ipcRenderer.invoke('radar:set-task-step', { id, index, done }),
   submitTask: (id, summary) => ipcRenderer.invoke('radar:submit-task', { id, summary }),
+  activateTask: (id) => ipcRenderer.invoke('radar:activate-task', { id }),
+  mySeat: () => ipcRenderer.invoke('radar:my-seat'),
   onUpdate: (callback) => {
     const listener = (_event: Electron.IpcRendererEvent, update: RadarWsUpdate): void =>
       callback(update)

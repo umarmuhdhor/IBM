@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { RadarConnectionSummary } from '../../../../shared/radar-connection'
 import type { RadarJoinCode } from '../../../../shared/radar-join'
 import { cn } from '@/lib/utils'
@@ -46,6 +46,21 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
     watch: 'Watch Bob'
   }
   const [watchedMemberId, setWatchedMemberId] = useState<string | null>(null)
+  const [ownerSeat, setOwnerSeat] = useState<string | null>(null)
+  // Why: the owner (Mission Control) is also a coder; their own seat comes from the shared folder.
+  useEffect(() => {
+    let live = true
+    if (connection?.role === 'mc') {
+      void window.api.radar.mySeat().then((seat) => live && setOwnerSeat(seat), () => live && setOwnerSeat(null))
+    }
+    return () => {
+      live = false
+    }
+  }, [connection?.role, connection?.workspace])
+  const seatId = connection?.role === 'coder' ? connection.member : connection?.role === 'mc' ? ownerSeat : null
+  const pm = state ? Object.values(state.members).find((member) => member.role === 'pm') : undefined
+  const canDecide = connection?.role === 'pm' || (connection?.role === 'mc' && !pm)
+  const decideNote = pm ? `${pm.name} (PM) approves plans and reviews.` : 'Only the PM or the owner can decide.'
   const [sharedCode, setSharedCode] = useState<RadarJoinCode | null>(null)
   // Why: codes made for a folder this app no longer shares are dead; a new share starts an empty list.
   const inviteKey = `${connection?.workspace ?? ''}/${sharedCode?.code ?? ''}`
@@ -167,13 +182,9 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
             </button>
           </div>
         ) : tab === 'tasks' ? (
-          <TaskBoardView
-            state={state}
-            role={connection?.role ?? null}
-            memberId={connection?.member ?? null}
-          />
+          <TaskBoardView state={state} role={connection?.role ?? null} seatId={seatId} />
         ) : tab === 'mission' ? (
-          <MissionControlView state={state} canDecide={connection?.role === 'mc'} now={now} />
+          <MissionControlView state={state} canDecide={canDecide} readOnlyNote={decideNote} now={now} />
         ) : tab === 'team' ? (
           <>
             {connection?.role === 'mc' && (
@@ -181,7 +192,7 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
                 <InviteCodesCard key={inviteKey} />
               </div>
             )}
-            <TeamPanel state={state} now={now} onWatch={watch} canRemove={connection?.role === 'mc'} />
+            <TeamPanel state={state} now={now} onWatch={watch} onOpenTasks={() => onTabChange('tasks')} canRemove={connection?.role === 'mc'} />
           </>
         ) : tab === 'watch' ? (
           watchedMemberId ? (

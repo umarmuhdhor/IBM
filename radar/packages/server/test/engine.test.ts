@@ -231,7 +231,7 @@ describe('role matrix for fase 05–06 endpoints (R3 §1)', () => {
       { method: 'GET', path: '/v1/proposals', allowed: ['C', 'mc'] },
       { method: 'GET', path: '/v1/tasks/T-9/diff', allowed: ['C', 'mc'] },
       { method: 'POST', path: '/v1/notify', body: { memberId: 'A', message: 'hai' }, allowed: ['C'] },
-      { method: 'POST', path: '/v1/proposals/P-9/decision', body: { approve: true }, allowed: ['mc'] },
+      { method: 'POST', path: '/v1/proposals/P-9/decision', body: { approve: true }, allowed: ['C', 'mc'] },
       { method: 'POST', path: '/v1/locks/revoke', body: { path: 'src/app.ts', reason: 'x' }, allowed: ['mc'] },
       { method: 'POST', path: '/v1/tasks/T-9/cancel', allowed: ['mc'] },
     ];

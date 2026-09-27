@@ -254,7 +254,7 @@ function rejectRequest(ctx: LockCtx, request: RequestRow, proposalId: string): v
   addNotification(ctx, { memberId: request.requester_member, kind: 'decision', message: `The PM declined your request for ${request.path}.`, ref: request.id });
 }
 
-// ---- decide (R3 §2.14, mc only) --------------------------------------------------------------------------------
+// ---- decide (R3 §2.14, the PM or Mission Control) --------------------------------------------------------------------------------
 
 function pendingOr409(db: Db, id: string): ProposalRow {
   const p = getProposal(db, id);
@@ -263,9 +263,9 @@ function pendingOr409(db: Db, id: string): ProposalRow {
   return p;
 }
 
-function decideNow(ctx: LockCtx, p: ProposalRow, status: 'disetujui' | 'ditolak', note: string | null): void {
-  if (!decideProposal(ctx.db, p.id, status, 'mc', ctx.now, note)) throw new RadarError(409, 'CONFLICT', `Proposal ${p.id} is already decided.`);
-  proposalDecided(ctx, p, status, 'mc', note);
+function decideNow(ctx: LockCtx, p: ProposalRow, status: 'disetujui' | 'ditolak', note: string | null, by: string): void {
+  if (!decideProposal(ctx.db, p.id, status, by, ctx.now, note)) throw new RadarError(409, 'CONFLICT', `Proposal ${p.id} is already decided.`);
+  proposalDecided(ctx, p, status, by, note);
 }
 
 
@@ -273,11 +273,11 @@ function decideNow(ctx: LockCtx, p: ProposalRow, status: 'disetujui' | 'ditolak'
  * Tx1 of a decision, synchronous and inside the caller's transaction: rejects, plans, decisions and `kembalikan`
  * finish here; an approved `setujui*` review returns its commit claim instead.
  */
-export function decideStart(ctx: LockCtx, id: string, req: DecisionReq): DecisionRes | { claim: CommitClaim } {
+export function decideStart(ctx: LockCtx, id: string, req: DecisionReq, by = 'mc'): DecisionRes | { claim: CommitClaim } {
   const note = req.note ?? null;
   const p = pendingOr409(ctx.db, id);
   if (!req.approve) {
-    decideNow(ctx, p, 'ditolak', note);
+    decideNow(ctx, p, 'ditolak', note, by);
     if (p.kind === 'decision') {
       const request = p.ref_id ? getRequest(ctx.db, p.ref_id) : null;
       if (request && (request.status === 'terbuka' || request.status === 'diusulkan')) rejectRequest(ctx, request, p.id);
@@ -285,27 +285,27 @@ export function decideStart(ctx: LockCtx, id: string, req: DecisionReq): Decisio
     return { proposalId: p.id, status: 'ditolak' };
   }
   if (p.kind === 'plan') {
-    decideNow(ctx, p, 'disetujui', note);
+    decideNow(ctx, p, 'disetujui', note, by);
     return { proposalId: p.id, status: 'disetujui', applied: applyPlan(ctx, p, storedPayload(p, PlanPayload)) };
   }
   if (p.kind === 'decision') {
     const request = p.ref_id ? getRequest(ctx.db, p.ref_id) : null;
     if (!request) throw new RadarError(404, 'NOT_FOUND', `There is no request ${p.ref_id ?? '?'}.`);
-    decideNow(ctx, p, 'disetujui', note);
+    decideNow(ctx, p, 'disetujui', note, by);
     return { proposalId: p.id, status: 'disetujui', applied: applyDecision(ctx, request, storedPayload(p, DecisionPayload), p.id, false) };
   }
   const review = storedPayload(p, ReviewPayload);
   const task = taskOr404(ctx.db, review.taskId);
   if (task.status !== 'review') throw new RadarError(409, 'CONFLICT', `Task ${task.id} is ${task.status}, not in review.`);
   if (review.verdict === 'kembalikan') {
-    decideNow(ctx, p, 'disetujui', note);
+    decideNow(ctx, p, 'disetujui', note, by);
     applyReviewRecord(ctx, p, task, review, null);
     returnTaskToWorking(ctx, task.id, 'mc');
     const msg = review.notes ? `Review ${task.id} dikembalikan: ${review.notes}` : `Review ${task.id} dikembalikan, lanjutkan perbaikan.`;
     addNotification(ctx, { memberId: task.owner_id, kind: 'review', message: msg, ref: task.id });
     return { proposalId: p.id, status: 'disetujui', applied: { taskId: task.id, verdict: 'kembalikan' } };
   }
-  return { claim: claimCommit(ctx, p, task, review, note) };
+  return { claim: claimCommit(ctx, p, task, review, note, by) };
 }
 
 /**
@@ -313,8 +313,8 @@ export function decideStart(ctx: LockCtx, id: string, req: DecisionReq): Decisio
  * commits between two transactions (R4 §6.3): Tx1 claims, the committer runs outside any transaction, Tx2
  * re-validates and finishes, or the claim is dropped and `commit.push_failed` recorded.
  */
-export async function decideProposalFlow(deps: WorkspaceDeps, id: string, req: DecisionReq): Promise<DecisionRes> {
-  const direct = deps.transact((uow) => decideStart(ctxOf(deps, uow), id, req));
+export async function decideProposalFlow(deps: WorkspaceDeps, id: string, req: DecisionReq, by = 'mc'): Promise<DecisionRes> {
+  const direct = deps.transact((uow) => decideStart(ctxOf(deps, uow), id, req, by));
   if (!('claim' in direct)) return direct;
 
   const { claim } = direct;
@@ -354,11 +354,13 @@ export interface CommitClaim {
   startedAt: number;
   review: ReviewPayload;
   note: string | null;
+  /** Who approved: 'mc' or the PM's member id. */
+  by: string;
   snapshot: CommitSnapshot;
 }
 
 /** R4 §6.3 Tx1: one active commit claim per workspace; the snapshot is taken from each touch's last version. */
-function claimCommit(ctx: LockCtx, p: ProposalRow, task: TaskRow, review: ReviewPayload, note: string | null): CommitClaim {
+function claimCommit(ctx: LockCtx, p: ProposalRow, task: TaskRow, review: ReviewPayload, note: string | null, by: string): CommitClaim {
   const busy = tasksWithCommitClaim(ctx.db).find((t) => commitClaimActive(t, ctx.now));
   if (busy) throw new RadarError(409, 'CONFLICT', `Another commit is running (${busy.id}); try again in a moment.`);
   setCommitClaim(ctx.db, task.id, ctx.now);
@@ -380,6 +382,7 @@ function claimCommit(ctx: LockCtx, p: ProposalRow, task: TaskRow, review: Review
     startedAt: ctx.now,
     review,
     note,
+    by,
     snapshot: {
       taskId: task.id,
       title: task.title,
@@ -412,7 +415,7 @@ export function finishCommit(ctx: LockCtx, claim: CommitClaim, result: CommitRes
   }
   setCommitSha(ctx.db, task.id, result.sha, ctx.now);
   setCommitClaim(ctx.db, task.id, null);
-  decideNow(ctx, p, 'disetujui', claim.note);
+  decideNow(ctx, p, 'disetujui', claim.note, claim.by);
   applyReviewRecord(ctx, p, task, claim.review, result.sha);
   const files = claim.snapshot.files.map((f) => f.path);
   closeTask(ctx, task, 'selesai', 'mc');

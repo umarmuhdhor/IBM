@@ -19,7 +19,7 @@ import { sha256Hex } from '../crypto';
 import type { WorkspaceDeps } from '../deps';
 import { findJoinCode } from '../db/repo/join-code';
 import { getMeta, setMeta } from '../db/repo/meta';
-import { getMember } from '../db/repo/member';
+import { getMember, offlineMemberNamed } from '../db/repo/member';
 import { insertMetric } from '../db/repo/metric';
 import { appendEvent } from '../services/events';
 import { exportEvents } from '../services/export';
@@ -118,7 +118,15 @@ export function createApp(deps: WorkspaceDeps): Hono {
         reuseSeatForCode(deps, hash, seat.memberId, req.name, req.role);
         memberId = seat.memberId;
       } else {
-        memberId = addMemberForCode(deps, hash, req.name, req.role);
+        // An offline seat with the same name is the same person coming back (their code proves the owner invited them).
+        const offline = offlineMemberNamed(deps.db, req.name);
+        // The owner's seat comes back only through the owner's own token (D-alief-21), never by name.
+        if (offline && offline.id !== getMeta(deps.db, 'owner_member')) {
+          reuseSeatForCode(deps, hash, offline.id, req.name, req.role);
+          memberId = offline.id;
+        } else {
+          memberId = addMemberForCode(deps, hash, req.name, req.role);
+        }
       }
     }
     const member = getMember(deps.db, memberId);

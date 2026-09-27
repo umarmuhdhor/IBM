@@ -1,3 +1,4 @@
+import { ChevronRight } from 'lucide-react'
 import { memberStatus } from '@radar/common'
 import { AgentTag, MemberChip } from '@radar/ui'
 import type { RadarState } from '@radar/ui'
@@ -7,11 +8,14 @@ import { cn } from '@/lib/utils'
 import { memberColorVar } from './member-color'
 import { RemoveSeatControl } from './RemoveSeatControl'
 import { lastPrompt, queueSpots, recentActivity, TASK_STATUS_TEXT } from './radar-lanes'
+import { TaskStatusLabel } from './TaskStatusLabel'
 
 type Props = {
   state: RadarState
   now: number
   onWatch: (memberId: string) => void
+  /** Opens the Tasks tab, where tasks are worked on and tracked. */
+  onOpenTasks?: () => void
   /** Mission Control may remove any seat except A, the owner's (D-alief-20). */
   canRemove?: boolean
 }
@@ -22,7 +26,7 @@ function baseName(path: string): string {
   return path.split('/').pop() ?? path
 }
 
-export function TeamPanel({ state, now, onWatch, canRemove = false }: Props) {
+export function TeamPanel({ state, now, onWatch, onOpenTasks, canRemove = false }: Props) {
   const activeWorktreeId = useAppStore((store) => store.activeWorktreeId)
   const getKnownWorktreeById = useAppStore((store) => store.getKnownWorktreeById)
   const activeWorktree = activeWorktreeId ? getKnownWorktreeById(activeWorktreeId) : null
@@ -67,10 +71,13 @@ export function TeamPanel({ state, now, onWatch, canRemove = false }: Props) {
               {own.length > 0 && (
                 <ul aria-label={`${member.name}'s tasks`} className="space-y-1">
                   {own.map((task) => (
-                    <li key={task.id} className="flex items-baseline gap-2 text-xs">
-                      <span className="shrink-0 font-mono text-muted-foreground">{task.id}</span>
-                      <span className="min-w-0 flex-1 [overflow-wrap:anywhere]">{task.title}</span>
-                      <span className={cn('shrink-0', task.status === 'review' ? 'text-[var(--lc-warn)]' : task.status === 'dikerjakan' ? 'text-[var(--lc-ok)]' : 'text-muted-foreground')}>{TASK_STATUS_TEXT[task.status]}</span>
+                    <li key={task.id}>
+                      <button type="button" onClick={onOpenTasks} disabled={!onOpenTasks} aria-label={`${task.id} ${task.title}, ${TASK_STATUS_TEXT[task.status]}. Open in Tasks`} className="flex w-full items-baseline gap-2 rounded-md px-1.5 py-1 text-left text-xs hover:bg-secondary disabled:pointer-events-none">
+                        <span className="shrink-0 font-mono text-muted-foreground">{task.id}</span>
+                        <span className="min-w-0 flex-1 [overflow-wrap:anywhere]">{task.title}</span>
+                        <TaskStatusLabel status={task.status} />
+                        {onOpenTasks && <ChevronRight aria-hidden="true" className="size-3 shrink-0 self-center text-muted-foreground" />}
+                      </button>
                     </li>
                   ))}
                 </ul>
@@ -95,7 +102,7 @@ export function TeamPanel({ state, now, onWatch, canRemove = false }: Props) {
                   </ol>
                 </div>
               )}
-              {!latest && own.length === 0 && <p className="text-xs text-muted-foreground">{member.role === 'pm' ? 'Plans and reviews from this Bob land in Mission Control under Needs you.' : 'No task or Bob activity yet.'}</p>}
+              {!latest && own.length === 0 && <p className="text-xs text-muted-foreground">{member.role === 'pm' ? 'Splits the work in Bob (PM Lead mode) and approves plans in the Tasks tab.' : 'No task or Bob activity yet.'}</p>}
             </article>
           )
         })}

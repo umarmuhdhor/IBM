@@ -378,7 +378,8 @@ function createApp(hub: MockHub, adminSecret: string): Hono {
   });
 
   app.post('/v1/proposals/:id/decision', async (c) => {
-    auth(c, ['mc']);
+    // D-umar-08: the PM or Mission Control decides.
+    auth(c, ['pm', 'mc']);
     const req = parse(DecisionReq, await body(c));
     return c.json(hub.decide(c.req.param('id'), req.approve, req.note));
   });

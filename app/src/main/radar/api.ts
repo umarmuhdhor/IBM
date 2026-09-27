@@ -1,6 +1,6 @@
 import { readRadarConnection } from './secure-store'
 import { serverFetch } from './server-fetch'
-import { errorMessage } from './join'
+import { errorMessage, sharedFolderSeat } from './join'
 
 function requireNonempty(value: string, field: string): string {
   if (typeof value !== 'string' || value.trim().length === 0) {
@@ -9,42 +9,46 @@ function requireNonempty(value: string, field: string): string {
   return value
 }
 
-async function postAsMissionControl(path: string, body: Record<string, unknown>): Promise<void> {
+type Seat = 'decider' | 'mc' | 'member'
+
+/**
+ * The token a request goes out with. 'decider': the PM or Mission Control (D-umar-08). 'member': the coder's own
+ * token, or for Mission Control the shared folder's own seat, since the owner is also a coder (D-umar-08).
+ */
+function tokenFor(seat: Seat): { server: string; token: string } {
   const connection = readRadarConnection()
-  if (!connection || connection.role !== 'mc') {
-    throw new Error('Mission Control connection is required')
+  if (!connection) {
+    throw new Error('Join a Live Collab workspace first.')
   }
-  const url = new URL(path, connection.server)
-  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-    throw new Error('Invalid Live Collab server URL')
+  if (seat === 'mc' && connection.role === 'mc') {
+    return connection
   }
-  const response = await serverFetch(url.toString(), {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${connection.token}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(10_000)
-  })
-  if (!response.ok) {
-    throw new Error(`Live Collab request failed (${response.status})`)
+  if (seat === 'decider' && (connection.role === 'mc' || connection.role === 'pm')) {
+    return connection
   }
+  if (seat === 'member') {
+    if (connection.role === 'coder') {
+      return connection
+    }
+    const own = connection.role === 'mc' ? sharedFolderSeat(connection) : null
+    if (own) {
+      return { server: connection.server, token: own.token }
+    }
+    throw new Error('Only a coder works on tasks.')
+  }
+  throw new Error(seat === 'mc' ? 'Mission Control connection is required' : 'Only the PM or the owner decides.')
 }
 
-async function postAsMember(path: string, body: Record<string, unknown>): Promise<void> {
-  const connection = readRadarConnection()
-  if (!connection || connection.role !== 'coder') {
-    throw new Error('Coder connection is required')
-  }
-  const url = new URL(path, connection.server)
+async function post(seat: Seat, path: string, body: Record<string, unknown>): Promise<void> {
+  const { server, token } = tokenFor(seat)
+  const url = new URL(path, server)
   if (url.protocol !== 'http:' && url.protocol !== 'https:') {
     throw new Error('Invalid Live Collab server URL')
   }
   const response = await serverFetch(url.toString(), {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${connection.token}`,
+      Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(body),
@@ -55,11 +59,24 @@ async function postAsMember(path: string, body: Record<string, unknown>): Promis
   }
 }
 
+/** The member id this app works as: the coder itself, or the owner's own seat for Mission Control. */
+export function mySeat(): string | null {
+  const connection = readRadarConnection()
+  if (!connection) {
+    return null
+  }
+  if (connection.role === 'coder') {
+    return connection.member
+  }
+  return connection.role === 'mc' ? (sharedFolderSeat(connection)?.member || null) : null
+}
+
 export function decideProposal(id: string, approve: boolean, note: string): Promise<void> {
   if (typeof approve !== 'boolean') {
     throw new Error('Invalid decision')
   }
-  return postAsMissionControl(
+  return post(
+    'decider',
     `/v1/proposals/${encodeURIComponent(requireNonempty(id, 'proposal'))}/decision`,
     {
       approve,
@@ -69,14 +86,15 @@ export function decideProposal(id: string, approve: boolean, note: string): Prom
 }
 
 export function revokeLock(path: string, reason: string): Promise<void> {
-  return postAsMissionControl('/v1/locks/revoke', {
+  return post('mc', '/v1/locks/revoke', {
     path: requireNonempty(path, 'path'),
     reason: requireNonempty(reason, 'reason')
   })
 }
 
 export function cancelTask(id: string): Promise<void> {
-  return postAsMissionControl(
+  return post(
+    'mc',
     `/v1/tasks/${encodeURIComponent(requireNonempty(id, 'task'))}/cancel`,
     {}
   )
@@ -89,15 +107,22 @@ export function setTaskStep(id: string, index: number, done: boolean): Promise<v
   if (typeof done !== 'boolean') {
     throw new Error('Invalid done value')
   }
-  return postAsMember(
+  return post(
+    'member',
     `/v1/tasks/${encodeURIComponent(requireNonempty(id, 'task'))}/steps`,
     { index, done }
   )
 }
 
 export function submitTask(id: string, summary: string): Promise<void> {
-  return postAsMember(
+  return post(
+    'member',
     `/v1/tasks/${encodeURIComponent(requireNonempty(id, 'task'))}/submit`,
     { summary: requireNonempty(summary, 'summary') }
   )
+}
+
+/** Makes the task the one this coder's Bob works on, so its first edit lands in it. */
+export function activateTask(id: string): Promise<void> {
+  return post('member', `/v1/tasks/${encodeURIComponent(requireNonempty(id, 'task'))}/activate`, {})
 }

@@ -6,7 +6,7 @@ import type { BobActivityItem, RadarState, TaskStatus } from '@radar/ui'
 
 export const TASK_STATUS_TEXT: Record<TaskStatus, string> = {
   draf: 'draft',
-  terbuka: 'open',
+  terbuka: 'to do',
   dikerjakan: 'in progress',
   review: 'in review',
   selesai: 'done',

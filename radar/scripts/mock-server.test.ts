@@ -67,7 +67,7 @@ describe('mock REST (R3 §2, fase 02 Verifikasi)', () => {
 
   it('enforces the authorization matrix', async () => {
     const m = await start({ instant: true });
-    expect((await call(m, 'POST', '/v1/proposals/P-2/decision', 'tok-c', { approve: true })).status).toBe(403);
+    expect((await call(m, 'POST', '/v1/proposals/P-2/decision', 'tok-a', { approve: true })).status).toBe(403);
     expect((await call(m, 'GET', '/v1/state')).status).toBe(401);
     expect((await call(m, 'GET', '/v1/team', 'tok-a')).status).toBe(403);
     expect((await call(m, 'POST', '/v1/bob/activity', 'mc-dev', { kind: 'turn.end', sessionId: null, mode: 'coder' })).status).toBe(403);

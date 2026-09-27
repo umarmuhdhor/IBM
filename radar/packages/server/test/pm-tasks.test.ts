@@ -135,6 +135,24 @@ describe('plan with steps (B)', () => {
     ]);
   });
 
+  it('the PM approves the plan itself (D-umar-08); a coder cannot; the decision records the PM', { timeout: 20_000 }, async () => {
+    const { stub } = freshWorkspace();
+    const t = await seedTestWorkspace(stub);
+    const p = await call(stub, 'POST', '/v1/proposals', {
+      token: t.C,
+      body: { kind: 'plan', reason: 'split', payload: { goal: 'g', tasks: [{ ref: 't1', title: 'Login', ownerId: 'A', files: ['src/app.ts'], steps: ['a'] }] } },
+    });
+    expect(p.status).toBe(201);
+    const url = `/v1/proposals/${p.json.proposalId}/decision`;
+    expect((await call(stub, 'POST', url, { token: t.A, body: { approve: true } })).status).toBe(403);
+    const d = await call(stub, 'POST', url, { token: t.C, body: { approve: true } });
+    expect(d.status).toBe(200);
+    expect(d.json.status).toBe('disetujui');
+    const state = StateRes.parse((await call(stub, 'GET', '/v1/state', { token: t.mc })).json);
+    expect(state.tasks.map((x) => x.id)).toEqual(['T-1']);
+    expect(state.proposals.find((x) => x.id === p.json.proposalId)?.status).toBe('disetujui');
+  });
+
   it('tasks with no steps have steps: [] in the response', { timeout: 15_000 }, async () => {
     const { stub } = freshWorkspace();
     const t = await seedTestWorkspace(stub);

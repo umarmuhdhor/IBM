@@ -238,8 +238,8 @@ describe('Bob kit against the real server (PRD §15 up to review)', () => {
     expect(review.isError, review.text).toBe(false);
     const reviewId = proposalId(review.text);
 
-    // 8. The PM token cannot decide proposals (MA-07: only Mission Control approves), then Mission Control does.
-    const denied = await rest(tokens.C!, 'POST', `/v1/proposals/${reviewId}/decision`, { approve: true });
+    // 8. A coder token cannot decide proposals (MA-07, D-umar-08: the PM or Mission Control approves), then Mission Control does.
+    const denied = await rest(tokens.B!, 'POST', `/v1/proposals/${reviewId}/decision`, { approve: true });
     expect(denied.status).toBe(403);
     await approve(reviewId);
     const afterReview = await briefPrompt('B');
