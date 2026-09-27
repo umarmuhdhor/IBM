@@ -122,6 +122,49 @@ describe('lock_guard (PreToolUse, BC-04)', () => {
     expect(r.code).toBe(2);
   });
 
+  describe('line ranges (D-alief-17)', () => {
+    const file = Array.from({ length: 12 }, (_, i) => `line ${i + 1}`).join('\n') + '\n';
+    const withFile = () => {
+      mkdirSync(join(root, 'src/lines'), { recursive: true });
+      writeFileSync(join(root, 'src/lines/a.ts'), file);
+    };
+    const payload = (tool: string, input: Record<string, unknown>) => ({
+      ...prePayload(root, 'src/lines/a.ts', tool),
+      tool_input: { path: 'src/lines/a.ts', ...input },
+    });
+
+    it('apply_diff sends the SEARCH lines', async () => {
+      withFile();
+      server.requests.length = 0;
+      await run(payload('apply_diff', { diff: '<<<<<<< SEARCH\n:start_line:3\n-------\nline 3\nline 4\nline 5\n=======\nX\n>>>>>>> REPLACE' }));
+      expect(lockChecks()[0]?.body).toMatchObject({ lines: { 'src/lines/a.ts': [{ start: 3, end: 5 }] } });
+    });
+
+    it('apply_diff without start_line finds the SEARCH text in the file on disk', async () => {
+      withFile();
+      server.requests.length = 0;
+      await run(payload('apply_diff', { diff: '<<<<<<< SEARCH\nline 10\n=======\nX\n>>>>>>> REPLACE' }));
+      expect(lockChecks()[0]?.body).toMatchObject({ lines: { 'src/lines/a.ts': [{ start: 10, end: 10 }] } });
+    });
+
+    it('insert_content and search_and_replace send their lines', async () => {
+      withFile();
+      server.requests.length = 0;
+      await run(payload('insert_content', { line: 4, content: 'x\n' }));
+      await run(payload('search_and_replace', { search: 'line 7', replace: 'seven' }));
+      const [ins, sar] = lockChecks();
+      expect(ins?.body).toMatchObject({ lines: { 'src/lines/a.ts': [{ start: 4, end: 4 }] } });
+      expect(sar?.body).toMatchObject({ lines: { 'src/lines/a.ts': [{ start: 7, end: 7 }] } });
+    });
+
+    it('write_file is a whole-file edit: no lines sent', async () => {
+      withFile();
+      server.requests.length = 0;
+      await run(payload('write_file', { content: 'new\n' }));
+      expect((lockChecks()[0]?.body as { lines?: unknown }).lines).toBeUndefined();
+    });
+  });
+
   it('allows paths outside the workspace without asking the server', async () => {
     server.requests.length = 0;
     const r = await run(prePayload(root, '/etc/hosts', 'write_file'));
