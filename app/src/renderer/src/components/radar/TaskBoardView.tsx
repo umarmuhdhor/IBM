@@ -59,13 +59,13 @@ export function TaskBoardView({ state, role, seatId }: Props) {
   const plans = Object.values(state.proposals).filter((p) => p.kind === 'plan' && p.status === 'menunggu')
   // D-umar-10: the owner is normally the PM, so Mission Control decides when its own seat is the PM.
   const decides = role === 'pm' || (role === 'mc' && (!pm || pm.id === seatId))
-  const readOnlyNote = decides ? null : pm ? `Waiting for ${pm.name} (PM) to approve.` : 'The owner approves plans in Mission Control.'
+  const readOnlyNote = decides ? null : pm ? `Waiting for ${pm.name} (PM) to approve.` : 'The owner approves plans in Overview.'
   const mine = seatId ? tasks.filter((task) => task.ownerId === seatId) : []
   const showMine = role === 'coder' || (role === 'mc' && seatId !== null && state.members[seatId]?.role === 'coder')
   const showTeam = role === 'pm' || role === 'mc'
   const coders = Object.values(state.members).filter((member) => member.role === 'coder')
   const awaitingReview = showTeam ? getRadarViewModel(state).awaitingReview : []
-  const reviewNote = decides ? null : pm ? `Waiting for ${pm.name} (PM) to review.` : 'The owner reviews in Mission Control.'
+  const reviewNote = decides ? null : pm ? `Waiting for ${pm.name} (PM) to review.` : 'The owner reviews in Overview.'
 
   return (
     <div className="mx-auto max-w-3xl space-y-8 p-4">
@@ -85,7 +85,7 @@ export function TaskBoardView({ state, role, seatId }: Props) {
         <section aria-label="Ready for review" className="space-y-3">
           <SectionHeading
             title={`Ready for review · ${awaitingReview.length}`}
-            hint={decides ? 'Your Bob (PM Lead) reviews the diff and proposes a verdict. You approve it in Mission Control.' : undefined}
+            hint={decides ? 'Your Bob (PM Lead) reviews the diff and proposes a verdict. You approve it in Overview.' : undefined}
           />
           {awaitingReview.map((task) => (
             <AskBobReviewCard key={task.id} task={task} state={state} readOnlyNote={reviewNote} />

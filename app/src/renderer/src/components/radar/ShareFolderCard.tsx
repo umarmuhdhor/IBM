@@ -159,7 +159,7 @@ export function ShareFolderCard({
   if (ownerEnded) {
     return (
       <section
-        aria-label="Multiplayer"
+        aria-label="Share a folder"
         className="space-y-3 rounded-lg border border-border bg-card p-4"
       >
         <div className="space-y-1">
@@ -283,7 +283,7 @@ export function ShareFolderCard({
   if (owner) {
     return (
       <section
-        aria-label="Multiplayer"
+        aria-label="Share a folder"
         className="space-y-3 rounded-lg border border-border bg-card p-4"
       >
         <div className="space-y-1">
@@ -379,10 +379,10 @@ export function ShareFolderCard({
     }
     return (
       <section
-        aria-label="Multiplayer"
+        aria-label="Share a folder"
         className="space-y-1 rounded-lg border border-border bg-card p-4"
       >
-        <h3 className="text-sm font-semibold">Multiplayer</h3>
+        <h3 className="text-sm font-semibold">Share a folder</h3>
         <p className="text-xs text-muted-foreground">
           {ownerName ?? 'The owner'} is sharing {connection.workspace}. Ask them to stop sharing
           first, then you can share your own folder.
@@ -393,11 +393,11 @@ export function ShareFolderCard({
 
   return (
     <section
-      aria-label="Multiplayer"
+      aria-label="Share a folder"
       className="space-y-3 rounded-lg border border-border bg-card p-4"
     >
       <div className="space-y-1">
-        <h3 className="text-sm font-semibold">Multiplayer</h3>
+        <h3 className="text-sm font-semibold">Share a folder</h3>
         <p className="text-xs text-muted-foreground">
           {openFolder
             ? `Share ${folderName(openFolder)} and get a code for your team. The folder stays where it is and syncs live.`

@@ -7,7 +7,7 @@ import type { RadarPanelTab } from './radar-panel-tab'
 type PreviousView = Exclude<TopLevelView, 'live-collab'>
 
 type LiveCollabPageStore = {
-  /** Last tab used; session memory only, so a fresh launch opens Multiplayer. */
+  /** Last tab used; session memory only, so a fresh launch opens Overview (share/join cards when not connected). */
   tab: RadarPanelTab
   connection: RadarConnectionSummary | null
   previousView: PreviousView
@@ -16,7 +16,7 @@ type LiveCollabPageStore = {
 }
 
 export const useLiveCollabPageStore = create<LiveCollabPageStore>()((set) => ({
-  tab: 'multiplayer',
+  tab: 'mission',
   connection: null,
   previousView: 'terminal',
   setTab: (tab) => set({ tab }),
