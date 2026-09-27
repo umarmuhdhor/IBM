@@ -78,20 +78,20 @@ describe('short join code (IN-03, D-alief-09)', () => {
     expect(made.member).toBeNull();
 
     expect((await call(stub, 'POST', '/v1/join', { body: { code: made.code } })).status).toBe(422);
-    const joined = await call(stub, 'POST', '/v1/join', { body: { code: made.code, name: '  Sari ', role: 'pm' } });
+    const joined = await call(stub, 'POST', '/v1/join', { body: { code: made.code, name: '  Sari ', role: 'coder' } });
     expect(joined.status).toBe(200);
     const res = JoinMemberRes.parse(joined.json);
     expect(res.member).toBe('D'); // A–C are seeded; the first free id
-    expect(res.role).toBe('pm');
+    expect(res.role).toBe('coder');
     const created = await mc.next((m) => m.t === 'event' && m.d?.type === 'member.created');
-    expect(created.d.payload).toMatchObject({ memberId: res.member, name: 'Sari', role: 'pm' });
+    expect(created.d.payload).toMatchObject({ memberId: res.member, name: 'Sari', role: 'coder' });
     const token = decodeInvite(res.invite).token;
     const state = (await call(stub, 'GET', '/v1/state', { token })).json;
-    expect(state.members).toContainEqual(expect.objectContaining({ id: res.member, name: 'Sari', role: 'pm' }));
+    expect(state.members).toContainEqual(expect.objectContaining({ id: res.member, name: 'Sari', role: 'coder' }));
 
     // second use by the same person (same name, any case): same member and role, the old device is signed out
-    const again = JoinMemberRes.parse((await call(stub, 'POST', '/v1/join', { body: { code: made.code, name: 'sari', role: 'coder' } })).json);
-    expect(again).toMatchObject({ member: res.member, role: 'pm' });
+    const again = JoinMemberRes.parse((await call(stub, 'POST', '/v1/join', { body: { code: made.code, name: 'sari', role: 'pm' } })).json);
+    expect(again).toMatchObject({ member: res.member, role: 'coder' });
     expect((await call(stub, 'GET', '/v1/state', { token })).status).toBe(401);
   });
 

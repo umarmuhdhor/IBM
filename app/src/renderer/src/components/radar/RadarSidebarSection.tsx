@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Files, Settings2, Share2 } from 'lucide-react'
+import { LayoutDashboard, Users, Files, Settings2, Share2, ListChecks } from 'lucide-react'
 import type { RadarPanelTab } from './radar-panel-tab'
 
 type Props = {
@@ -9,6 +9,7 @@ type Props = {
 const ITEMS = [
   // D-alief-12: open a folder, then Multiplayer shares it and gives you a code.
   { tab: 'multiplayer', label: 'Multiplayer', icon: Share2 },
+  { tab: 'tasks', label: 'Tasks', icon: ListChecks },
   { tab: 'mission', label: 'Mission Control', icon: LayoutDashboard },
   { tab: 'team', label: 'Team', icon: Users },
   { tab: 'files', label: 'Files & locks', icon: Files },

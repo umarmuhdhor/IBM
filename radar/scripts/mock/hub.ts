@@ -515,6 +515,7 @@ export class MockHub {
       adhoc: t.adhoc,
       baseCommit: this.baseCommit.get(t.id) ?? null,
       editCount: t.editCount,
+      steps: t.steps ?? [],
       files: [...paths].map((path) => {
         const l = this.state.locks[path];
         if (l?.taskId === t.id) return { path, lock: l.state, queuePos: 0 };
@@ -626,6 +627,7 @@ export class MockHub {
         status: t.status,
         files: this.taskItem(t).files.map((f) => f.path),
         editCount: t.editCount,
+        steps: t.steps ?? [],
       })),
       locks: Object.values(this.state.locks),
       openRequests: Object.values(this.state.requests).filter((r) => r.status === 'terbuka').length,

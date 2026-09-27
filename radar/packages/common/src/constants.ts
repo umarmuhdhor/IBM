@@ -41,6 +41,7 @@ export const EDIT_TOOLS_REGEX = /^(write_file|apply_diff|search_and_replace|inse
 
 // Limits used by schemas and the reducer (R3 §2.16, §2.24, §4.1, §6).
 export const PLAN_MAX_TASKS = 8;
+export const PLAN_MAX_STEPS_PER_TASK = 12;
 export const PLAN_MAX_FILES_PER_TASK = 20;
 export const NOTIFY_MAX_CHARS = 200;
 export const ACTIVITY_TEXT_MAX_CHARS = 200;

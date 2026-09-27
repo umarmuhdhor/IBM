@@ -5,5 +5,6 @@ import whyBlocked from './why_blocked.js';
 import requestFile from './request_file.js';
 import teamActivity from './team_activity.js';
 import submitTask from './submit_task.js';
+import completeStep from './complete_step.js';
 
-export const CODER_TOOLS: readonly ToolDef[] = [myTasks, whyBlocked, requestFile, teamActivity, submitTask];
+export const CODER_TOOLS: readonly ToolDef[] = [myTasks, whyBlocked, requestFile, teamActivity, submitTask, completeStep];

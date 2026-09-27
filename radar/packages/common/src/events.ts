@@ -27,6 +27,7 @@ export const EVENT_TYPES = [
   'task.created',
   'task.status',
   'task.submitted',
+  'task.step',
   'request.created',
   'request.decided',
   'proposal.created',
@@ -160,6 +161,7 @@ function sentence(ev: RadarEvent, names: FeedNames): string | null {
       return `Pushing ${ev.payload.taskId} failed: ${ev.payload.error}`;
     case 'bob.said':
       return `${who(ev.payload.memberId)}'s Bob: ${ev.payload.text}`;
+    case 'task.step':
     case 'sync.applied':
     case 'hook.failopen':
     case 'ai.edit':

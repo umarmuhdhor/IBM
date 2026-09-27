@@ -60,6 +60,11 @@ export type BobActivityKind = (typeof BOB_ACTIVITY_KINDS)[number];
 
 export type MemberStatus = 'idle' | 'writing' | 'blocked';
 
+export interface TaskStep {
+  text: string;
+  done: boolean;
+}
+
 // ---- View objects held by RadarState (R3 §6) ---------------------------------------------------------------
 
 export interface WorkspaceView {
@@ -96,6 +101,7 @@ export interface TaskView {
   editCount: number;
   commitSha: string | null;
   summary: string | null;
+  steps: TaskStep[];
 }
 
 export interface LockView {

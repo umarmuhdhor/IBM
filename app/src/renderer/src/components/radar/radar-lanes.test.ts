@@ -3,7 +3,7 @@ import type { RadarState } from '@radar/ui'
 import { lastPrompt, queueSpots, recentActivity, repoRows } from './radar-lanes'
 
 const member = { role: 'coder' as const, color: null, online: true, stale: false, activeTaskId: null, blocked: false, writingUntil: 0 }
-const task = { description: '', queuedFiles: [], adhoc: false, parentTaskId: null, editCount: 0, commitSha: null, summary: null }
+const task = { description: '', queuedFiles: [], adhoc: false, parentTaskId: null, editCount: 0, commitSha: null, summary: null, steps: [] }
 
 const state = {
   workspace: { id: 'w', name: 'toko-demo', headCommit: null, repoUrl: null },

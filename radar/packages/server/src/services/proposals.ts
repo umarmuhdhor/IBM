@@ -22,6 +22,7 @@ import { decideProposal, expirePendingReviews, getProposal, insertProposal, list
 import { getRequest, setRequestStatus, type RequestRow } from '../db/repo/request';
 import { insertReview } from '../db/repo/review';
 import { getTask, insertTask, setCommitClaim, setCommitSha, tasksWithCommitClaim, type TaskRow } from '../db/repo/task';
+import { insertSteps } from '../db/repo/task-step';
 import { touchesOf } from '../db/repo/touch';
 import type { Db } from '../db/sql';
 import { RadarError } from '../http/errors';
@@ -180,11 +181,12 @@ function applyPlan(ctx: LockCtx, p: ProposalRow, payload: PlanPayload): Record<s
       planProposalId: p.id,
       now: ctx.now,
     });
+    if (t.steps.length > 0) insertSteps(ctx.db, task.id, t.steps);
     appendEvent(ctx.db, ctx.uow, {
       ts: ctx.now,
       actor: 'mc',
       type: 'task.created',
-      payload: { taskId: task.id, title: task.title, description: task.description, ownerId: task.owner_id, status: 'terbuka', files: t.files, queuedFiles: t.queuedFiles, adhoc: false },
+      payload: { taskId: task.id, title: task.title, description: task.description, ownerId: task.owner_id, status: 'terbuka', files: t.files, queuedFiles: t.queuedFiles, adhoc: false, steps: t.steps.length > 0 ? t.steps : undefined },
     });
     return { plan: t, task };
   });

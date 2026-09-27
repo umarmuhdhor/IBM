@@ -5,12 +5,12 @@ import { createDb } from '../src/db/sql';
 import { freshWorkspace } from './helpers';
 
 describe('SQLite schema in the Durable Object (R2)', () => {
-  it('migrates on construction and records schema_version = 6', async () => {
+  it('migrates on construction and records schema_version = 7', async () => {
     const { stub } = freshWorkspace();
     const v = await runInDurableObject(stub, (_i, state) =>
       state.storage.sql.exec<{ value: string }>("SELECT value FROM meta WHERE key = 'schema_version'").toArray(),
     );
-    expect(v).toEqual([{ value: '6' }]);
+    expect(v).toEqual([{ value: '7' }]);
   });
 
   it('v1 → v2 recreates join_code with a nullable member_id (D-alief-10)', async () => {
@@ -26,7 +26,7 @@ describe('SQLite schema in the Durable Object (R2)', () => {
         notnull: sql.exec<{ notnull: number }>("SELECT \"notnull\" FROM pragma_table_info('join_code') WHERE name = 'member_id'").one().notnull,
       };
     });
-    expect(notNull).toEqual({ version: '6', notnull: 0 });
+    expect(notNull).toEqual({ version: '7', notnull: 0 });
   });
 
   it('v2 → v4 adds join_code.owner and open and keeps existing codes (D-alief-11, D-alief-13)', async () => {
@@ -44,7 +44,7 @@ describe('SQLite schema in the Durable Object (R2)', () => {
         rows: sql.exec<{ hash: string; owner: number; open: number }>('SELECT hash, owner, open FROM join_code').toArray(),
       };
     });
-    expect(after).toEqual({ version: '6', rows: [{ hash: 'h1', owner: 0, open: 1 }] });
+    expect(after).toEqual({ version: '7', rows: [{ hash: 'h1', owner: 0, open: 1 }] });
   });
 
   it('v3 → v4 marks every non-owner code open (D-alief-13)', async () => {
@@ -61,7 +61,7 @@ describe('SQLite schema in the Durable Object (R2)', () => {
         rows: sql.exec<{ hash: string; open: number }>('SELECT hash, open FROM join_code ORDER BY hash').toArray(),
       };
     });
-    expect(after).toEqual({ version: '6', rows: [{ hash: 'h1', open: 1 }, { hash: 'h2', open: 0 }] });
+    expect(after).toEqual({ version: '7', rows: [{ hash: 'h1', open: 1 }, { hash: 'h2', open: 0 }] });
   });
 
   it('v4 → v5 adds lock.start_line/end_line, NULL for existing locks (D-alief-17)', async () => {
@@ -81,7 +81,7 @@ describe('SQLite schema in the Durable Object (R2)', () => {
         rows: sql.exec<{ path: string; start_line: number | null; end_line: number | null }>('SELECT path, start_line, end_line FROM lock').toArray(),
       };
     });
-    expect(after).toEqual({ version: '6', rows: [{ path: 'a.ts', start_line: null, end_line: null }] });
+    expect(after).toEqual({ version: '7', rows: [{ path: 'a.ts', start_line: null, end_line: null }] });
   });
 
   it('v5 → v6 adds member.removed_at, NULL for existing members (D-alief-20)', async () => {
@@ -102,7 +102,7 @@ describe('SQLite schema in the Durable Object (R2)', () => {
         rows: sql.exec<{ id: string; removed_at: number | null }>('SELECT id, removed_at FROM member').toArray(),
       };
     });
-    expect(after).toEqual({ version: '6', rows: [{ id: 'A', removed_at: null }] });
+    expect(after).toEqual({ version: '7', rows: [{ id: 'A', removed_at: null }] });
   });
 
   it('enforces foreign keys (R2 §1)', async () => {
@@ -126,7 +126,7 @@ describe('SQLite schema in the Durable Object (R2)', () => {
         .sort(),
     );
     expect(names).toEqual(
-      ['ai_mark', 'allocation', 'block', 'counter', 'event', 'file', 'file_version', 'join_code', 'lock', 'member', 'meta', 'metric', 'notification', 'proposal', 'request', 'review', 'task', 'task_touch', 'token'].sort(),
+      ['ai_mark', 'allocation', 'block', 'counter', 'event', 'file', 'file_version', 'join_code', 'lock', 'member', 'meta', 'metric', 'notification', 'proposal', 'request', 'review', 'task', 'task_step', 'task_touch', 'token'].sort(),
     );
   });
 });

@@ -1,6 +1,6 @@
 // R2 §2, copied verbatim. Kept as a TS string (not schema.sql) because workerd and the vitest pool cannot
 // import a .sql file the same way (D-alief-03). Runs on every DO start; every statement is IF NOT EXISTS.
-export const SCHEMA_VERSION = '6';
+export const SCHEMA_VERSION = '7';
 
 export const SCHEMA_SQL = `
 -- Tanpa PRAGMA journal/transaksi: Durable Object mengatur sendiri. FK sudah ON secara default (§1).
@@ -216,5 +216,14 @@ CREATE TABLE IF NOT EXISTS ai_mark (                     -- BC-05: PostToolUse t
   path      TEXT NOT NULL,
   ts        INTEGER NOT NULL,                            -- berlaku AI_MARK_WINDOW_MS (10 s)
   PRIMARY KEY (member_id, path)
+);
+
+CREATE TABLE IF NOT EXISTS task_step (
+  task_id TEXT    NOT NULL REFERENCES task(id),
+  idx     INTEGER NOT NULL,
+  text    TEXT    NOT NULL,
+  done    INTEGER NOT NULL DEFAULT 0,
+  done_at INTEGER,
+  PRIMARY KEY (task_id, idx)
 );
 `;

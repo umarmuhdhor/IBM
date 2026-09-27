@@ -3,7 +3,7 @@
     "radar": {
       "command": "node",
       "args": ["${workspaceFolder}/.bob/radar-mcp.js", "--root", "${workspaceFolder}"],
-      "alwaysAllow": ["my_tasks", "why_blocked", "request_file", "team_activity", "submit_task"]
+      "alwaysAllow": ["my_tasks", "why_blocked", "request_file", "team_activity", "submit_task", "complete_step"]
     }
   }
 }

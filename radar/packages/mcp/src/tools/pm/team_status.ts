@@ -34,7 +34,11 @@ export default defineTool({
       (tasksByStatus[t.status] ??= []).push(t);
     }
     for (const [status, tasks] of Object.entries(tasksByStatus)) {
-      lines.push(`Task ${status}: ${tasks.map((t) => `${t.id} ${t.title}`).join(', ')}`);
+      lines.push(`Task ${status}: ${tasks.map((t) => {
+        if (t.steps.length === 0) return `${t.id} ${t.title}`;
+        const checked = t.steps.filter((s) => s.done).length;
+        return `${t.id} ${t.title} (${checked}/${t.steps.length} langkah)`;
+      }).join(', ')}`);
     }
 
     return lines.slice(0, 25).join('\n');

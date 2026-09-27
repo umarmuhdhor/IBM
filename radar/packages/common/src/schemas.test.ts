@@ -124,7 +124,7 @@ describe('events (R3 §5)', () => {
   it('EVENT_TYPES lists exactly the schema event types', () => {
     const schemaTypes = RadarEventSchema.options.map((o) => o.shape.type.value).sort();
     expect([...EVENT_TYPES].sort()).toEqual(schemaTypes);
-    expect(EVENT_TYPES).toHaveLength(36);
+    expect(EVENT_TYPES).toHaveLength(37);
   });
 
   it('parseRadarEvent returns null for unknown or malformed events', () => {

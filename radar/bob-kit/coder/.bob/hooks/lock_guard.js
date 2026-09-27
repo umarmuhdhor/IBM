@@ -861,6 +861,7 @@ var ACTIVITY_TIMEOUT_MS = 800;
 var TERM_FRAME_MAX_BYTES = 32768;
 var EDIT_TOOLS_REGEX = /^(write_file|apply_diff|search_and_replace|insert_content|office_edit)$/;
 var PLAN_MAX_TASKS = 8;
+var PLAN_MAX_STEPS_PER_TASK = 12;
 var PLAN_MAX_FILES_PER_TASK = 20;
 var NOTIFY_MAX_CHARS = 200;
 var ACTIVITY_TEXT_MAX_CHARS = 200;
@@ -20558,6 +20559,7 @@ function date4(params) {
 }
 
 // ../common/src/schemas.ts
+var TaskStepSchema = external_exports.object({ text: external_exports.string(), done: external_exports.boolean() });
 var PathSchema = external_exports.string().min(1).max(1024);
 var LineRangeSchema = external_exports.object({ start: external_exports.number().int().positive(), end: external_exports.number().int().positive() }).refine((r) => r.end >= r.start, { message: "end must be >= start" });
 var MemberIdSchema = external_exports.string().min(1).max(64);
@@ -20597,7 +20599,7 @@ var ERROR_CODES = [
   "TERM_FRAME_TOO_LARGE"
 ];
 var ErrorCodeSchema = external_exports.enum(ERROR_CODES);
-var ErrorReasonSchema = external_exports.enum(["signed-out", "workspace-closed"]);
+var ErrorReasonSchema = external_exports.enum(["signed-out", "workspace-closed", "removed"]);
 var ErrorRes = external_exports.object({
   error: external_exports.object({ code: ErrorCodeSchema, message: external_exports.string(), reason: ErrorReasonSchema.optional() })
 });
@@ -20660,7 +20662,8 @@ var TaskItem = external_exports.object({
   adhoc: external_exports.boolean(),
   baseCommit: external_exports.string().nullable(),
   editCount: external_exports.number().int().nonnegative(),
-  files: external_exports.array(TaskFileEntry)
+  files: external_exports.array(TaskFileEntry),
+  steps: external_exports.array(TaskStepSchema).default([])
 });
 var TasksQuery = external_exports.object({
   owner: external_exports.string().optional(),
@@ -20700,6 +20703,8 @@ var ActivityRes = external_exports.object({
     })
   )
 });
+var StepReq = external_exports.object({ index: external_exports.number().int().nonnegative(), done: external_exports.boolean() });
+var StepRes = external_exports.object({ taskId: TaskIdSchema, steps: external_exports.array(TaskStepSchema) });
 var SubmitReq = external_exports.object({ summary: external_exports.string().min(1).max(SUBMIT_SUMMARY_MAX_CHARS) });
 var SubmitRes = external_exports.object({ taskId: TaskIdSchema, status: external_exports.literal("review"), files: external_exports.array(PathSchema) });
 var TeamRes = external_exports.object({
@@ -20720,7 +20725,8 @@ var TeamRes = external_exports.object({
       ownerId: MemberIdSchema,
       status: TaskStatusSchema,
       files: external_exports.array(PathSchema),
-      editCount: external_exports.number().int().nonnegative()
+      editCount: external_exports.number().int().nonnegative(),
+      steps: external_exports.array(TaskStepSchema).default([])
     })
   ),
   locks: external_exports.array(
@@ -20768,7 +20774,8 @@ var PlanTask = external_exports.object({
   description: external_exports.string().max(2e3).default(""),
   ownerId: MemberIdSchema,
   files: external_exports.array(PathSchema).max(PLAN_MAX_FILES_PER_TASK),
-  queuedFiles: external_exports.array(PathSchema).max(PLAN_MAX_FILES_PER_TASK).default([])
+  queuedFiles: external_exports.array(PathSchema).max(PLAN_MAX_FILES_PER_TASK).default([]),
+  steps: external_exports.array(external_exports.string().trim().min(1).max(200)).max(PLAN_MAX_STEPS_PER_TASK).default([])
 });
 var PlanPayload = external_exports.object({
   goal: external_exports.string().min(1).max(500),
@@ -20945,7 +20952,8 @@ var TaskViewSchema = external_exports.object({
   parentTaskId: TaskIdSchema.nullable().default(null),
   editCount: external_exports.number().int().nonnegative(),
   commitSha: external_exports.string().nullable().default(null),
-  summary: external_exports.string().nullable().default(null)
+  summary: external_exports.string().nullable().default(null),
+  steps: external_exports.array(TaskStepSchema).default([])
 });
 var LockViewSchema = external_exports.object({
   path: PathSchema,
@@ -21017,6 +21025,7 @@ var RadarEventSchema = external_exports.discriminatedUnion("type", [
   event("member.online", memberOnly),
   event("member.offline", memberOnly),
   event("member.reconnected", memberOnly),
+  event("member.removed", memberOnly),
   event("member.stale", memberOnly.extend({ lastHeartbeat: EpochMsSchema.nullable() })),
   event(
     "file.changed",
@@ -21084,11 +21093,13 @@ var RadarEventSchema = external_exports.discriminatedUnion("type", [
       files: external_exports.array(PathSchema),
       queuedFiles: external_exports.array(PathSchema).default([]),
       adhoc: external_exports.boolean(),
-      parentTaskId: TaskIdSchema.nullable().optional()
+      parentTaskId: TaskIdSchema.nullable().optional(),
+      steps: external_exports.array(external_exports.string()).optional()
     })
   ),
   event("task.status", external_exports.object({ taskId: TaskIdSchema, from: TaskStatusSchema, to: TaskStatusSchema, by: external_exports.string() })),
   event("task.submitted", external_exports.object({ taskId: TaskIdSchema, summary: external_exports.string(), files: external_exports.array(PathSchema) })),
+  event("task.step", external_exports.object({ taskId: TaskIdSchema, index: external_exports.number().int().nonnegative(), done: external_exports.boolean(), by: MemberIdSchema })),
   event(
     "request.created",
     external_exports.object({
@@ -21565,6 +21576,7 @@ var AdminJoinCodeReq = external_exports.object({
   owner: external_exports.boolean().optional(),
   ttlHours: external_exports.number().int().min(1).max(JOIN_CODE_TTL_HOURS_MAX).optional()
 }).refine((r) => !(r.owner && r.member), { message: "An owner code cannot belong to a member." });
+var OWNER_RECLAIM_TTL_MS = 10 * 6e4;
 var AdminJoinCodeRes = external_exports.object({
   /** null for an open code and for an owner code. */
   member: external_exports.string().nullable(),

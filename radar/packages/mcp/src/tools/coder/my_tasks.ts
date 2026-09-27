@@ -12,6 +12,7 @@ interface Task {
   title: string;
   status: string;
   files: TaskFile[];
+  steps?: { text: string; done: boolean }[];
 }
 
 interface TasksResponse {
@@ -44,7 +45,14 @@ export default defineTool({
           lines.push(`  ${f.path} — bebas`);
         }
       }
+      if (task.steps && task.steps.length > 0) {
+        const checked = task.steps.filter((s) => s.done).length;
+        lines.push(`  Langkah (${checked}/${task.steps.length}):`);
+        task.steps.forEach((s, i) => {
+          lines.push(`  [${s.done ? 'x' : ' '}] ${i + 1}. ${s.text}`);
+        });
+      }
     }
-    return lines.slice(0, 12).join('\n');
+    return lines.slice(0, 30).join('\n');
   },
 });

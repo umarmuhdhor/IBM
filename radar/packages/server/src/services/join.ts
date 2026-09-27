@@ -7,7 +7,7 @@ import { insertToken, revokeTokens } from '../db/repo/access';
 import { claimJoinCode, deleteMemberJoinCodes } from '../db/repo/join-code';
 import { getMeta } from '../db/repo/meta';
 import { listTasks } from '../db/repo/task';
-import { getMember, insertMember, markRemoved, renameMember, reseatMember, seatIds } from '../db/repo/member';
+import { activePm, getMember, insertMember, markRemoved, renameMember, reseatMember, seatIds } from '../db/repo/member';
 import { ctxOf } from '../deps';
 import { closeTask } from './tasks';
 import { RadarError } from '../http/errors';
@@ -46,6 +46,10 @@ export function addMemberForCode(deps: WorkspaceDeps, codeHash: string, name: st
     const id = free ?? JOIN_MEMBER_IDS.find((m) => removed.has(m));
     if (!id) throw new RadarError(409, 'CONFLICT', `This workspace already has ${JOIN_MEMBER_IDS.length} members.`);
     const gitEmail = `${id.toLowerCase()}@users.noreply.radar`;
+    if (role === 'pm') {
+      const existing = activePm(deps.db);
+      if (existing) throw new RadarError(409, 'CONFLICT', `This room already has a PM (${existing.name}). Join as a coder.`);
+    }
     if (free) {
       const palette = Object.values(MEMBER_COLORS);
       const color = (MEMBER_COLORS as Record<string, string>)[id] ?? palette[JOIN_MEMBER_IDS.indexOf(id) % palette.length]!;
@@ -65,6 +69,10 @@ export function addMemberForCode(deps: WorkspaceDeps, codeHash: string, name: st
  */
 export function reuseSeatForCode(deps: WorkspaceDeps, codeHash: string, memberId: string, name: string, role: Role): void {
   deps.transact((uow) => {
+    if (role === 'pm') {
+      const existing = activePm(deps.db, memberId);
+      if (existing) throw new RadarError(409, 'CONFLICT', `This room already has a PM (${existing.name}). Join as a coder.`);
+    }
     renameMember(deps.db, memberId, name, role);
     claimJoinCode(deps.db, codeHash, memberId);
     appendEvent(deps.db, uow, { ts: deps.now(), actor: 'server', type: 'member.created', payload: { memberId, name, role } });

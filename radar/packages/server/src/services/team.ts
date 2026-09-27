@@ -8,6 +8,7 @@ import { listMembers } from '../db/repo/member';
 import { listProposals } from '../db/repo/proposal';
 import { listRequests } from '../db/repo/request';
 import { listTasks } from '../db/repo/task';
+import { listSteps } from '../db/repo/task-step';
 import type { Db } from '../db/sql';
 import type { Hub } from '../ws/hub';
 import { rowsToEvents } from './events';
@@ -46,6 +47,7 @@ export function buildTeam(db: Db, hub: Hub, now: number): TeamRes {
     status: t.status,
     files: filesByTask.get(t.id) ?? [],
     editCount: t.edit_count,
+    steps: listSteps(db, t.id),
   }));
 
   const locks = listLocks(db).map((l) => {

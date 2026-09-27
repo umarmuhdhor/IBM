@@ -265,6 +265,58 @@ describe('feedText', () => {
   });
 });
 
+describe('task.step', () => {
+  const ev = (id: number, type: string, payload: unknown, ts = T0 + id): RadarEvent =>
+    ({ id, ts, actor: 'server', type, payload }) as RadarEvent;
+
+  const withTask: RadarState = applyEvent(initialState(), ev(1, 'task.created', {
+    taskId: 'T-1',
+    title: 'do work',
+    ownerId: 'A',
+    status: 'dikerjakan',
+    files: [],
+    adhoc: false,
+    steps: ['step one', 'step two', 'step three'],
+  }));
+
+  it('task.created maps step strings to {text, done: false}', () => {
+    expect(withTask.tasks['T-1']?.steps).toEqual([
+      { text: 'step one', done: false },
+      { text: 'step two', done: false },
+      { text: 'step three', done: false },
+    ]);
+  });
+
+  it('task.created with no steps sets steps to []', () => {
+    const s = applyEvent(initialState(), ev(1, 'task.created', {
+      taskId: 'T-2',
+      title: 'bare',
+      ownerId: 'B',
+      status: 'terbuka',
+      files: [],
+      adhoc: false,
+    }));
+    expect(s.tasks['T-2']?.steps).toEqual([]);
+  });
+
+  it('task.step marks a step done', () => {
+    const s = applyEvent(withTask, ev(2, 'task.step', { taskId: 'T-1', index: 1, done: true, by: 'A' }));
+    expect(s.tasks['T-1']?.steps[1]).toEqual({ text: 'step two', done: true });
+    expect(s.tasks['T-1']?.steps[0]).toEqual({ text: 'step one', done: false });
+  });
+
+  it('task.step toggles a step back to undone', () => {
+    const done = applyEvent(withTask, ev(2, 'task.step', { taskId: 'T-1', index: 0, done: true, by: 'A' }));
+    const undone = applyEvent(done, ev(3, 'task.step', { taskId: 'T-1', index: 0, done: false, by: 'A' }));
+    expect(undone.tasks['T-1']?.steps[0]).toEqual({ text: 'step one', done: false });
+  });
+
+  it('task.step with out-of-range index returns state unchanged', () => {
+    const s = applyEvent(withTask, ev(2, 'task.step', { taskId: 'T-1', index: 99, done: true, by: 'A' }));
+    expect(s.tasks['T-1']?.steps).toEqual(withTask.tasks['T-1']?.steps);
+  });
+});
+
 describe('member.removed (D-alief-20)', () => {
   it('drops the seat from the team and says so in the feed', () => {
     const joined = applyEvent(initialState(), { id: 1, ts: T0, actor: 'server', type: 'member.created', payload: { memberId: 'B', name: 'Budi', role: 'coder' } });
