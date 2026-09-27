@@ -94,6 +94,16 @@ describe('TaskBoardView — coder role', () => {
     )
   })
 
+  it('a refused "Mark task done" shows the server sentence without the IPC prefix, plus what to do next', async () => {
+    submitTask.mockRejectedValueOnce(
+      new Error("Error invoking remote method 'radar:submit-task': Error: Task T-1 has not changed any file yet.")
+    )
+    render(<TaskBoardView state={state} role="coder" memberId="B" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Mark task done' }))
+    const alert = await screen.findByRole('alert')
+    expect(alert.textContent).toBe('Task T-1 has not changed any file yet. Edit its files in Bob first, then mark it done.')
+  })
+
   it('shows the coder empty state when there are no tasks', () => {
     const empty: RadarState = { ...state, tasks: {} }
     render(<TaskBoardView state={empty} role="coder" memberId="B" />)

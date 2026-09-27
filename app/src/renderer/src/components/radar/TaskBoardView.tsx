@@ -10,6 +10,12 @@ type Props = {
 
 const ACTIVE_STATUSES = new Set(['terbuka', 'dikerjakan'])
 
+// Why: Electron prefixes IPC errors with the channel name; keep only the server's sentence.
+function serverMessage(err: unknown, fallback: string): string {
+  const text = err instanceof Error ? err.message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '') : ''
+  return text || fallback
+}
+
 function taskProgress(task: TaskView): { checked: number; total: number } {
   const total = task.steps.length
   const checked = task.steps.filter((s) => s.done).length
@@ -29,7 +35,7 @@ function ProgressBar({ checked, total }: { checked: number; total: number }) {
       aria-label={`${checked} of ${total} steps done`}
       className="h-1.5 w-full overflow-hidden rounded-full bg-secondary"
     >
-      <div className="h-full bg-[var(--lc-ok)] transition-[width]" style={{ width: `${pct}%` }} />
+      <div className="h-full bg-[var(--lc-ok)]" style={{ width: `${pct}%` }} />
     </div>
   )
 }
@@ -47,7 +53,7 @@ function CoderTaskCard({ task }: { task: TaskView }) {
     void window.api.radar
       .setTaskStep(task.id, index, done)
       .catch((err: unknown) => {
-        setError(err instanceof Error ? err.message : 'Step update failed.')
+        setError(serverMessage(err, 'Step update failed. Check the connection and try again.'))
       })
       .finally(() => {
         setPending((prev) => {
@@ -65,7 +71,9 @@ function CoderTaskCard({ task }: { task: TaskView }) {
     void window.api.radar
       .submitTask(task.id, summary)
       .catch((err: unknown) => {
-        setError(err instanceof Error ? err.message : 'Submit failed.')
+        const message = serverMessage(err, 'Could not mark the task done. Check the connection and try again.')
+        // Why: the server refuses a task with no edits; say what to do next, not only what went wrong.
+        setError(/has not changed any file/.test(message) ? `${message} Edit its files in Bob first, then mark it done.` : message)
       })
       .finally(() => setSubmitting(false))
   }
@@ -193,7 +201,7 @@ export function TaskBoardView({ state, role, memberId }: Props) {
             <div key={coder.id} className="space-y-2">
               <h4 className="text-xs font-semibold text-muted-foreground">
                 {coder.name}
-                {totalSteps > 0 && <span className="ml-1 font-normal">{doneSteps}/{totalSteps}</span>}
+                {totalSteps > 0 && <span className="ml-1 font-normal tabular-nums">{doneSteps}/{totalSteps} steps</span>}
               </h4>
               {coderTasks.map((task) => (
                 <ReadonlyTaskCard key={task.id} task={task} />
