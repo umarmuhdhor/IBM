@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { DecisionCard, FeedItem, ReviewCard, TaskCard } from '@radar/ui'
 import type { FeedKind, ProposalView, RadarState, TaskView } from '@radar/ui'
+import { AskBobReviewCard } from './AskBobReviewCard'
 import { getRadarViewModel } from './radar-view-model'
 import { serverMessage } from './CoderTaskCard'
 import { NotificationsPanel } from './NotificationsPanel'
@@ -95,7 +96,7 @@ export function MissionControlView({ state, canDecide, now, readOnlyNote = 'Only
         <section aria-label="Needs you" className="space-y-2">
           <h3 className="text-sm font-semibold">Needs you · {model.needsYou}</h3>
           {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
-          {model.pending.length === 0 && <p className="text-xs text-muted-foreground">No decisions pending.</p>}
+          {model.needsYou === 0 && <p className="text-xs text-muted-foreground">No decisions pending.</p>}
           {model.pending.map((proposal) => {
             const payload = proposalPayload(proposal)
             return proposal.kind === 'review' ? (
@@ -104,7 +105,10 @@ export function MissionControlView({ state, canDecide, now, readOnlyNote = 'Only
               <DecisionCard key={proposal.id} title={proposalTitle(proposal)} reason={proposal.reason} readOnly={!canDecide} status={activeDecisionId === proposal.id ? 'deciding' : 'pending'} onApprove={() => decide(proposal.id, true)} onDeny={() => decide(proposal.id, false)} />
             )
           })}
-          {!canDecide && model.needsYou > 0 && <p className="text-xs text-muted-foreground">{readOnlyNote}</p>}
+          {model.awaitingReview.map((task) => (
+            <AskBobReviewCard key={task.id} task={task} state={state} readOnlyNote={canDecide ? null : readOnlyNote} />
+          ))}
+          {!canDecide && model.pending.length > 0 && <p className="text-xs text-muted-foreground">{readOnlyNote}</p>}
         </section>
         <section aria-label="Shared repo" className="space-y-2">
           <h3 className="text-sm font-semibold">Shared repo</h3>
