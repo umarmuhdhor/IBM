@@ -1,10 +1,12 @@
 // Local change detection (fase 04 step 4): chokidar (SYNC=watch) or a 1 s stat poller (SYNC=poll-1s),
 // both with a per-path debounce. Callbacks receive workspace-relative POSIX paths.
 import { existsSync, readdirSync, statSync, type Stats } from 'node:fs';
-import { basename, dirname, join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { watch, type FSWatcher } from 'chokidar';
-import { SYNC_DEBOUNCE_MS, tryWorkspaceRelative } from '@radar/common';
-import { isTmpName } from './writer.js';
+import { DIR_MARKER, isDirMarker, SYNC_DEBOUNCE_MS, tryWorkspaceRelative } from '@radar/common';
+import { isIgnored, isSyncedEntry, readLocal } from './writer.js';
+
+export { isIgnored };
 
 export type SyncMode = 'watch' | 'poll-1s';
 
@@ -36,22 +38,15 @@ export interface Watcher {
   close(): Promise<void>;
 }
 
-export function isIgnored(ignores: (rel: string) => boolean, rel: string, isDir: boolean | undefined): boolean {
-  if (rel === '') return false;
-  if (isTmpName(basename(rel))) return true;
-  if (ignores(rel)) return true;
-  // `ignore` only matches 'dist/' style rules against a path ending in '/'.
-  return isDir !== false && ignores(`${rel}/`);
-}
-
 const isGone = (err: unknown): boolean => {
   const code = (err as NodeJS.ErrnoException).code;
   return code === 'ENOENT' || code === 'ENOTDIR';
 };
 
 /**
- * Every non-ignored file under `root`, as sorted workspace-relative paths. A folder that vanished
- * mid-walk is skipped quietly; any other unreadable folder is skipped and reported to `onError`.
+ * Every non-ignored file under `root`, as sorted workspace-relative paths, plus `<folder>/.radar-dir` for
+ * each folder that holds nothing that syncs (fase 12k bug 1). A folder that vanished mid-walk is skipped
+ * quietly; any other unreadable folder is skipped and reported to `onError`.
  */
 export function listFiles(root: string, ignores: (rel: string) => boolean, onError: (err: unknown) => void = () => {}): string[] {
   const out: string[] = [];
@@ -63,14 +58,15 @@ export function listFiles(root: string, ignores: (rel: string) => boolean, onErr
       if (!isGone(err)) onError(err);
       return;
     }
+    let empty = true;
     for (const e of entries) {
       const rel = prefix ? `${prefix}/${e.name}` : e.name;
-      if (e.isDirectory()) {
-        if (!isIgnored(ignores, rel, true)) walk(join(dir, e.name), rel);
-      } else if (e.isFile() && !isIgnored(ignores, rel, false)) {
-        out.push(rel);
-      }
+      if (!isSyncedEntry(ignores, rel, e)) continue;
+      empty = false;
+      if (e.isDirectory()) walk(join(dir, e.name), rel);
+      else out.push(rel);
     }
+    if (empty && prefix) out.push(`${prefix}/${DIR_MARKER}`);
   };
   walk(root, '');
   return out.sort();
@@ -82,6 +78,10 @@ function createScanner(root: string, ignores: (rel: string) => boolean, onError:
   const scan = () => {
     const now = new Map<string, string>();
     for (const r of listFiles(root, ignores, onError)) {
+      if (isDirMarker(r)) {
+        now.set(r, 'empty folder');
+        continue;
+      }
       try {
         const st = statSync(join(root, r));
         now.set(r, `${st.mtimeMs}:${st.size}`);
@@ -110,6 +110,14 @@ export function createWatcher(o: WatcherOptions, deps: WatcherDeps = { watch }):
   const timers = new Map<string, NodeJS.Timeout>();
   let closed = false;
 
+  const exists = (rel: string): boolean => {
+    if (!isDirMarker(rel)) return existsSync(join(o.root, rel));
+    try {
+      return readLocal(o.root, rel, o.ignores).kind !== 'missing';
+    } catch {
+      return false;
+    }
+  };
   // Settle a path after the quiet period: a save-by-rename (unlink + add) ends as a change.
   const schedule = (rel: string) => {
     const prev = timers.get(rel);
@@ -119,7 +127,7 @@ export function createWatcher(o: WatcherOptions, deps: WatcherDeps = { watch }):
       setTimeout(() => {
         timers.delete(rel);
         if (closed) return;
-        if (existsSync(join(o.root, rel))) o.onChange(rel);
+        if (exists(rel)) o.onChange(rel);
         else o.onUnlink(rel);
       }, debounceMs),
     );
@@ -144,7 +152,12 @@ export function createWatcher(o: WatcherOptions, deps: WatcherDeps = { watch }):
       const r = rel(abs);
       if (r) schedule(r);
     };
-    w.on('add', onPath).on('change', onPath).on('unlink', onPath).on('error', onError);
+    // A new or removed folder settles as its empty-folder marker; the rescan catches a folder filling up.
+    const onDir = (abs: string) => {
+      const r = rel(abs);
+      if (r) schedule(`${r}/${DIR_MARKER}`);
+    };
+    w.on('add', onPath).on('change', onPath).on('unlink', onPath).on('addDir', onDir).on('unlinkDir', onDir).on('error', onError);
     // Duplicates of real events are harmless: the agent skips content whose hash it already knows.
     const rescanMs = o.rescanMs ?? WATCH_RESCAN_MS;
     const rescan =

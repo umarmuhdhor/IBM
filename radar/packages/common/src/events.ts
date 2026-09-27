@@ -1,6 +1,6 @@
 // Event catalog (R3 §5) and the plain-English feed sentences shown in Mission Control.
 import { rangeText } from './line-range.js';
-import { basename } from './paths.js';
+import { basename, dirMarkerFolder, isDirMarker } from './paths.js';
 import type { RadarEvent, RadarEventType } from './schemas.js';
 
 export const EVENT_TYPES = [
@@ -96,8 +96,10 @@ function sentence(ev: RadarEvent, names: FeedNames): string | null {
     case 'member.stale':
       return `${who(ev.payload.memberId)}'s computer stopped responding`;
     case 'file.changed':
+      if (isDirMarker(ev.payload.path)) return `${who(ev.payload.by)} adds the empty folder ${basename(dirMarkerFolder(ev.payload.path))}/`;
       return `${who(ev.payload.by)}'s Bob changes ${basename(ev.payload.path)}`;
     case 'file.deleted':
+      if (isDirMarker(ev.payload.path)) return `${who(ev.payload.by)} removes the empty folder ${basename(dirMarkerFolder(ev.payload.path))}/`;
       return `${who(ev.payload.by)}'s Bob deletes ${basename(ev.payload.path)}`;
     case 'file.rejected':
       if (ev.payload.holderMemberId && ev.payload.holderRange) {

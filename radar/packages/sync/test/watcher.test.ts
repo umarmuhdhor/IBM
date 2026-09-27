@@ -4,7 +4,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createIgnoreMatcherFromText } from '@radar/common';
-import { createWatcher, type Watcher } from '../src/watcher.js';
+import { createWatcher, listFiles, type Watcher } from '../src/watcher.js';
 import { cleanupDirs, sleep, tempDir, waitFor } from './helpers.js';
 
 const watchers: Watcher[] = [];
@@ -99,5 +99,34 @@ describe('watcher (poll-1s fallback)', () => {
     mkdirSync(join(root, 'src'));
     writeFileSync(join(root, 'src/b.ts'), 'b');
     await waitFor(() => changed.includes('a.ts') && changed.includes('src/b.ts'), 3000, 'poll changes');
+  });
+});
+
+describe('empty folders (fase 12k bug 1)', () => {
+  it('listFiles reports an empty folder as its marker path, and only while it is empty', () => {
+    const root = tempDir();
+    const matcher = createIgnoreMatcherFromText('');
+    const ignores = (rel: string) => matcher.ignores(rel);
+    mkdirSync(join(root, 'empty/deeper'), { recursive: true });
+    mkdirSync(join(root, 'full'));
+    writeFileSync(join(root, 'full/a.ts'), 'a');
+    // Finder drops .DS_Store into folders; an ignored file does not make a folder non-empty.
+    mkdirSync(join(root, 'finder'));
+    writeFileSync(join(root, 'finder/.DS_Store'), 'x');
+    // A real file with the marker's name is never synced, so it cannot fake a folder.
+    writeFileSync(join(root, 'full/.radar-dir'), 'x');
+    mkdirSync(join(root, 'node_modules/pkg'), { recursive: true });
+    expect(listFiles(root, ignores)).toEqual(['empty/deeper/.radar-dir', 'finder/.radar-dir', 'full/a.ts']);
+  });
+
+  it('the watcher reports a new empty folder and its removal', async () => {
+    const root = tempDir();
+    const { w, changed, unlinked } = start(root);
+    await w.ready;
+    mkdirSync(join(root, 'docs'));
+    await waitFor(() => changed.includes('docs/.radar-dir'), 4000, 'marker change');
+    const { rmdirSync } = await import('node:fs');
+    rmdirSync(join(root, 'docs'));
+    await waitFor(() => unlinked.includes('docs/.radar-dir'), 4000, 'marker unlink');
   });
 });
