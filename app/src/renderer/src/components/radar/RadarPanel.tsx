@@ -13,17 +13,10 @@ import { JoinWithCodeCard } from './JoinWithCodeCard'
 import { RadarSettingsPane } from './RadarSettingsPane'
 import { ShareFolderCard } from './ShareFolderCard'
 import { WatchBobView } from './WatchBobView'
+import { TaskBoardView } from './TaskBoardView'
 import type { RadarPanelTab } from './radar-panel-tab'
 
-const LABEL: Record<RadarPanelTab, string> = {
-  mission: 'Mission Control',
-  team: 'Team',
-  files: 'Files & locks',
-  multiplayer: 'Multiplayer',
-  settings: 'Settings',
-  watch: 'Watch Bob'
-}
-const TABS: RadarPanelTab[] = ['multiplayer', 'mission', 'team', 'files', 'settings']
+const TABS: RadarPanelTab[] = ['multiplayer', 'tasks', 'mission', 'team', 'files', 'settings']
 
 type Props = {
   tab: RadarPanelTab
@@ -42,6 +35,16 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
   const workspacePath = activeWorktreeId
     ? (getKnownWorktreeById(activeWorktreeId)?.path ?? null)
     : null
+  const tasksLabel = connection?.role === 'coder' ? 'My tasks' : 'Tasks'
+  const LABEL: Record<RadarPanelTab, string> = {
+    mission: 'Mission Control',
+    team: 'Team',
+    files: 'Files & locks',
+    multiplayer: 'Multiplayer',
+    tasks: tasksLabel,
+    settings: 'Settings',
+    watch: 'Watch Bob'
+  }
   const [watchedMemberId, setWatchedMemberId] = useState<string | null>(null)
   const [sharedCode, setSharedCode] = useState<RadarJoinCode | null>(null)
   // Why: codes made for a folder this app no longer shares are dead; a new share starts an empty list.
@@ -163,6 +166,12 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
               Open Multiplayer
             </button>
           </div>
+        ) : tab === 'tasks' ? (
+          <TaskBoardView
+            state={state}
+            role={connection?.role ?? null}
+            memberId={connection?.member ?? null}
+          />
         ) : tab === 'mission' ? (
           <MissionControlView state={state} canDecide={connection?.role === 'mc'} now={now} />
         ) : tab === 'team' ? (
