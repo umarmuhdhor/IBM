@@ -1,6 +1,6 @@
 // Agent paths the real server cannot be driven into: a fake WS server answers every update with an
 // unverifiable `conflict` (server file v0, no content), the half-written-read case of fase 04 step 6.
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { WebSocketServer, type WebSocket } from 'ws';
@@ -55,5 +55,71 @@ describe('unverifiable conflict (server v0, no content)', () => {
     expect(srv.updates).toHaveLength(4);
     writeFileSync(join(root, 'a.ts'), 'two');
     await waitFor(() => srv.updates.length === 8, 3000, 'fresh budget after a new edit');
+  });
+});
+
+describe('merged ack (D-alief-17)', () => {
+  it('writes the merged text from file.ack back to disk and does not echo it', async () => {
+    const { createHash } = await import('node:crypto');
+    const merged = 'alice 3\nbudi 10\n';
+    const hash = createHash('sha256').update(merged).digest('hex');
+    const updates: string[] = [];
+    wss = new WebSocketServer({ port: 0 });
+    wss.on('connection', (ws: WebSocket) => {
+      ws.on('message', (raw) => {
+        const text = raw.toString();
+        if (text === '{"t":"ping"}') return;
+        const m = JSON.parse(text) as { t: string; id?: string; d: { path: string } };
+        if (m.t === 'hello') {
+          ws.send(JSON.stringify({ t: 'welcome', d: { principal: { kind: 'member', memberId: 'B', role: 'coder' }, serverTime: Date.now(), workspace: 'toko-demo' } }));
+          ws.send(JSON.stringify({ t: 'snapshot', d: { files: [], locks: [], cursor: 0 } }));
+        } else if (m.t === 'file.update') {
+          updates.push(m.d.path);
+          ws.send(JSON.stringify({ t: 'file.ack', id: m.id, d: { id: m.id, path: m.d.path, version: 3, hash, merged: true, content: merged } }));
+        }
+      });
+    });
+    await new Promise<void>((r) => wss!.once('listening', () => r()));
+    const { port } = wss.address() as { port: number };
+    const root = tempDir();
+    const a = new SyncAgent({ root, server: `http://127.0.0.1:${port}`, token: 'rdr_test', member: 'B', debounceMs: 20, log: () => {}, notify: () => {}, ...FAST });
+    agents.push(a);
+    await a.start();
+    writeFileSync(join(root, 'a.ts'), 'budi 10\n');
+    await waitFor(() => readFileSync(join(root, 'a.ts'), 'utf8') === merged, 3000, 'merged text on disk');
+    expect(a.known.get('a.ts')).toEqual({ version: 3, hash });
+    await sleep(300);
+    expect(updates).toHaveLength(1);
+  });
+
+  it('keeps a newer local edit instead of overwriting it with the merged text', async () => {
+    const merged = 'alice 3\nbudi 10\n';
+    wss = new WebSocketServer({ port: 0 });
+    let sent = 0;
+    wss.on('connection', (ws: WebSocket) => {
+      ws.on('message', (raw) => {
+        const text = raw.toString();
+        if (text === '{"t":"ping"}') return;
+        const m = JSON.parse(text) as { t: string; id?: string; d: { path: string } };
+        if (m.t === 'hello') {
+          ws.send(JSON.stringify({ t: 'welcome', d: { principal: { kind: 'member', memberId: 'B', role: 'coder' }, serverTime: Date.now(), workspace: 'toko-demo' } }));
+          ws.send(JSON.stringify({ t: 'snapshot', d: { files: [], locks: [], cursor: 0 } }));
+        } else if (m.t === 'file.update' && sent++ === 0) {
+          // The user types again before the ack arrives.
+          writeFileSync(join(root, 'a.ts'), 'budi 10 and more\n');
+          ws.send(JSON.stringify({ t: 'file.ack', id: m.id, d: { id: m.id, path: m.d.path, version: 3, hash: 'h', merged: true, content: merged } }));
+        }
+      });
+    });
+    await new Promise<void>((r) => wss!.once('listening', () => r()));
+    const { port } = wss.address() as { port: number };
+    const root = tempDir();
+    const a = new SyncAgent({ root, server: `http://127.0.0.1:${port}`, token: 'rdr_test', member: 'B', debounceMs: 20, log: () => {}, notify: () => {}, ...FAST });
+    agents.push(a);
+    await a.start();
+    writeFileSync(join(root, 'a.ts'), 'budi 10\n');
+    await waitFor(() => sent >= 1, 3000, 'first update');
+    await sleep(300);
+    expect(readFileSync(join(root, 'a.ts'), 'utf8')).toBe('budi 10 and more\n');
   });
 });

@@ -504,6 +504,15 @@ export class SyncAgent extends EventEmitter {
     this.retries.delete(d.path);
     const fresh = this.known.set(d.path, { version: d.version, hash: d.hash });
     this.log('ack', `${d.path} v${d.version}${p ? ` ${Date.now() - p.sentAt}ms` : ''}${fresh ? '' : ' (stale)'}`);
+    // D-alief-17: the server merged this save with a teammate's lines. Write the result back, unless the user
+    // edited the file again meanwhile: that newer edit is sent next and the server checks it against the lines.
+    if (fresh && d.merged && d.content !== undefined && p && p.id === id) {
+      const local = readLocal(this.root, d.path);
+      if (local.kind === 'text' && local.hash === p.hash) {
+        atomicWrite(this.root, d.path, d.content);
+        this.log('ack.merged', `${d.path} v${d.version} merged with a teammate's edit`);
+      }
+    }
     this.emit('ack', d);
     // Settle check: the watcher can coalesce the last events of a burst, so re-read once nothing is in flight.
     if (!this.pending.has(d.path)) this.processPath(d.path);
