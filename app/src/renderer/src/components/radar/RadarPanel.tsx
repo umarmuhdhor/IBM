@@ -45,6 +45,14 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
   }
   const [watchedMemberId, setWatchedMemberId] = useState<string | null>(null)
   const [ownerSeat, setOwnerSeat] = useState<string | null>(null)
+  // Why: sharing returns before the sync agent writes `.radar/local.json`, so the first ask finds no seat; ask again
+  // when someone comes online (the owner's own seat joining is what makes the file exist).
+  const presenceKey = state
+    ? Object.values(state.members)
+        .map((member) => `${member.id}:${member.online ? 1 : 0}`)
+        .sort()
+        .join(',')
+    : ''
   // Why: the owner (Mission Control) is also a coder; their own seat comes from the shared folder.
   useEffect(() => {
     let live = true
@@ -54,7 +62,7 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
     return () => {
       live = false
     }
-  }, [connection?.role, connection?.workspace])
+  }, [connection?.role, connection?.workspace, presenceKey])
   const seatId = connection?.role === 'coder' ? connection.member : connection?.role === 'mc' ? ownerSeat : null
   const pm = state ? Object.values(state.members).find((member) => member.role === 'pm') : undefined
   // D-umar-10: the owner is normally the PM; Mission Control decides when its own seat is the PM, or when there is none.
