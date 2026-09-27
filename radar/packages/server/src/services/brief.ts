@@ -79,7 +79,7 @@ function pmStart(db: Db, m: MemberRow): string[] {
   const lines = [`You are ${m.id} (pm). Open requests: ${open.length}. Proposals waiting for a human decision: ${pending.length}.`];
   if (open.length > 0) lines.push(`Requests: ${open.slice(0, 4).map((r) => `${r.id} ${r.path} (${r.requester_member}→${r.holder_member})`).join(', ')}`);
   if (inReview.length > 0) lines.push(`Ready for review: ${inReview.map((t) => `${t.id} ${t.title}`).join(', ')}`);
-  lines.push('The PM does not write files. Propose with radar propose_*; a human approves in Mission Control.');
+  lines.push('The PM does not write code; it may add documents (.md, .txt) such as a brief. Propose with radar propose_*; a human approves in Mission Control.');
   return lines;
 }
 

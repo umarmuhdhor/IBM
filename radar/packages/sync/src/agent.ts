@@ -502,9 +502,10 @@ export class SyncAgent extends EventEmitter {
     const isPm = this.principal?.kind === 'member' && this.principal.role === 'pm';
     for (const rel of listFiles(this.root, (r) => this.matcher.ignores(r), (err) => this.log('scan.error', String(err)))) {
       this.dirty.delete(rel);
-      if (!this.known.get(rel) && ((isPm && !isPmDocPath(rel)) || this.resetSeen)) {
-        // A PM cannot write code; doc files (.md/.txt) are allowed through. A reset workspace must not be refilled with stale local files.
-        this.log('scan.skip', `${rel} local-only (${isPm ? 'pm-code' : 'after reset'})`);
+      const pmCode = isPm && !isPmDocPath(rel);
+      if (!this.known.get(rel) && (pmCode || this.resetSeen)) {
+        // A PM may only add documents (.md/.txt); a reset workspace must not be refilled with stale local files.
+        this.log('scan.skip', `${rel} local-only (${pmCode ? 'pm code' : 'after reset'})`);
         continue;
       }
       this.processPath(rel);
