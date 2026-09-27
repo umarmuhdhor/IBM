@@ -39,6 +39,12 @@ export const AdminJoinCodeReq = z
   .refine((r) => !(r.owner && r.member), { message: 'An owner code cannot belong to a member.' });
 export type AdminJoinCodeReq = z.infer<typeof AdminJoinCodeReq>;
 
+/**
+ * D-alief-21: an owner code from `POST /v1/owner/reclaim` lives this long. The app redeems it at once, so a short life
+ * keeps a leaked code from being useful.
+ */
+export const OWNER_RECLAIM_TTL_MS = 10 * 60_000;
+
 export const AdminJoinCodeRes = z.object({
   /** null for an open code and for an owner code. */
   member: z.string().nullable(),
