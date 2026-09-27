@@ -100,6 +100,10 @@ function sentence(ev: RadarEvent, names: FeedNames): string | null {
     case 'file.deleted':
       return `${who(ev.payload.by)}'s Bob deletes ${basename(ev.payload.path)}`;
     case 'file.rejected':
+      if (ev.payload.holderMemberId && ev.payload.holderRange) {
+        const r = ev.payload.holderRange;
+        return `${who(ev.payload.by)}'s change to ${basename(ev.payload.path)} is refused, ${rangeText(r)} ${r.start === r.end ? 'is' : 'are'} locked by ${who(ev.payload.holderMemberId)}`;
+      }
       return ev.payload.holderMemberId
         ? `${who(ev.payload.by)}'s change to ${basename(ev.payload.path)} is refused, ${who(ev.payload.holderMemberId)} holds it`
         : `${who(ev.payload.by)}'s change to ${basename(ev.payload.path)} is refused (${ev.payload.reason})`;

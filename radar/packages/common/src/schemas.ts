@@ -675,6 +675,7 @@ export const RadarEventSchema = z.discriminatedUnion('type', [
       reason: z.string(),
       holderMemberId: MemberIdSchema.nullable(),
       holderTaskId: TaskIdSchema.nullable(),
+      holderRange: LineRangeSchema.optional(),
     }),
   ),
   event('sync.applied', z.object({ path: PathSchema, version: z.number().int().nonnegative(), memberId: MemberIdSchema, latencyMs: z.number() })),

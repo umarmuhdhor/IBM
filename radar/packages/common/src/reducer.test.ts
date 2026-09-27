@@ -143,6 +143,8 @@ describe('reducer edge cases', () => {
     const texts = s.feed.map((f) => f.text.replace(/^\S+ /, ''));
     expect(texts).toContain('Alice now holds lines 3–5 of c.ts (T-1)');
     expect(texts).toContain("Budi's Bob is blocked on c.ts, lines 3–5 are locked by Alice");
+    const r = applyEvent(s, ev(5, 'file.rejected', { path: 'src/c.ts', by: 'B', reason: 'held_by_other', holderMemberId: 'A', holderTaskId: 'T-1', holderRange: { start: 3, end: 5 } }));
+    expect(r.feed.map((f) => f.text.replace(/^\S+ /, ''))).toContain("Budi's change to c.ts is refused, lines 3–5 are locked by Alice");
   });
 
   it('a finished task leaves every queue', () => {
