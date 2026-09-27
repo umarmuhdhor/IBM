@@ -72,12 +72,29 @@
 .inp{flex:none;margin:0 12px 12px;border:1px solid #393939;min-height:62px;padding:9px 10px;font-size:13px;line-height:1.5;color:#f4f4f4;background:#1e1e20}
 .ph{color:#8d8d8d}
 .status{height:26px;flex:none;background:#0043ce;color:#fff;font-family:"PlexMono",monospace;font-size:11px;display:flex;align-items:center;gap:16px;padding:0 12px}
-.pdf{flex:1;background:#2b2b2b;padding:16px;overflow:hidden}
-.sheet{background:#f4f4f4;color:#161616;padding:22px 18px;font-size:12.5px;line-height:1.6;height:100%}
-.sheet h3{margin:0 0 2px;font-size:17px}
-.sheet .sub{color:#6f6f6f;font-size:11px;margin-bottom:14px}
-.sheet h4{margin:14px 0 4px;font-size:12.5px}
-.sheet ul{margin:0;padding-left:16px}
+.pdf{flex:1;background:#2b2b2b;padding:10px;overflow:hidden}
+.bf{width:680px;transform:scale(0.4118);transform-origin:0 0;background:#fff;color:#161616;font-family:"Plex",sans-serif;font-size:12.5px;line-height:1.5;padding:44px 52px 36px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.bf .top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #161616;padding-bottom:14px}
+.bf .client{font-weight:600;font-size:13px;letter-spacing:.02em}
+.bf .client small{display:block;font-weight:400;color:#6f6f6f;font-size:11px;letter-spacing:0}
+.bf .meta{font-family:"PlexMono",monospace;font-size:10.5px;color:#525252;text-align:right;line-height:1.6}
+.bf .status{display:inline-block;margin-top:4px;background:#defbe6;color:#0e6027;font-family:"Plex",sans-serif;font-weight:600;font-size:10.5px;padding:2px 8px;border-radius:2px}
+.bf h1{font-size:22px;font-weight:600;letter-spacing:-.01em;margin:20px 0 4px;line-height:1.25}
+.bf .lede{color:#525252;margin:0 0 18px}
+.bf h2{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#0f62fe;margin:18px 0 6px}
+.bf p{margin:0}
+.bf ul{margin:0;padding-left:18px}
+.bf li{margin:2px 0}
+.bf table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:4px}
+.bf th{text-align:left;font-weight:600;background:#f4f4f4;border-bottom:1px solid #c6c6c6;padding:6px 8px}
+.bf td{border-bottom:1px solid #e0e0e0;padding:7px 8px;vertical-align:top}
+.bf td.id{font-family:"PlexMono",monospace;color:#525252;width:34px}
+.bf td.area{font-family:"PlexMono",monospace;font-size:10.5px;color:#525252;width:120px}
+.bf .two{display:grid;grid-template-columns:1fr 1fr;gap:0 28px}
+.bf .note{border-left:3px solid #0f62fe;background:#edf5ff;padding:8px 12px;margin-top:6px}
+.bf .foot{display:flex;justify-content:space-between;margin-top:26px;padding-top:10px;border-top:1px solid #e0e0e0;font-size:10px;color:#8d8d8d}
+.pmexp{position:absolute;left:0;top:0;right:0;bottom:0;background:#181818;z-index:3;padding:10px 0;font-size:13px;color:#c6c6c6}
+.pmexp h6{margin:0 0 6px;padding:0 12px;font-size:11px;letter-spacing:0.08em;color:#8d8d8d;font-weight:600}
 .toast{position:absolute;right:14px;width:320px;background:#262626;border:1px solid #393939;border-left:4px solid var(--c);padding:10px 12px;font-size:13px;line-height:1.45;z-index:6;box-shadow:0 12px 30px rgba(0,0,0,0.5);opacity:0}
 .toast small{display:block;font-size:11px;font-weight:600;color:var(--c);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:2px}
 .chipw{position:absolute;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;border:2px solid var(--c);padding:5px 12px;border-radius:30px;background:rgba(14,14,16,0.9);opacity:0;z-index:8}
@@ -98,13 +115,43 @@
     <div data-hf-id="hf-2t3w" class="body">
       <div data-hf-id="hf-szf0" class="act"><i data-hf-id="hf-zeb8"></i><i data-hf-id="hf-y7e5"></i><i data-hf-id="hf-l5u7" class="on"></i></div>
       <div data-hf-id="hf-0dc4" class="ed" style="flex:none;width:300px">
-        <div data-hf-id="hf-5rmk" class="tabs"><div data-hf-id="hf-1wq6" class="tab cur" style="--c:#be95ff">brief.pdf</div></div>
-        <div data-hf-id="hf-w4hm" class="pdf"><div data-hf-id="hf-cr6h" class="sheet">
-          <h3 data-hf-id="hf-ertc">toko-demo · Sprint brief</h3><div data-hf-id="hf-j21b" class="sub">Client brief · synthetic sample</div>
-          <h4 data-hf-id="hf-ouoi">Goal</h4><ul data-hf-id="hf-ovcc"><li data-hf-id="hf-hx97">Customers can enter a promo code at checkout.</li><li data-hf-id="hf-ex5t">The header shows the live cart total.</li></ul>
-          <h4 data-hf-id="hf-0izq">Notes</h4><ul data-hf-id="hf-kqbo"><li data-hf-id="hf-la21">Total must include the discount.</li><li data-hf-id="hf-hzy7">Ship Friday.</li></ul>
-          <h4 data-hf-id="hf-4ceg">Team</h4><ul data-hf-id="hf-jjel"><li data-hf-id="hf-q97x">Alief, Umar (coders)</li></ul>
+        <div data-hf-id="hf-5rmk" class="tabs"><div data-hf-id="hf-bxat" class="tab cur" id="pm-tab" style="--c:#be95ff">brief.pdf</div></div>
+        <div data-hf-id="hf-030s" class="pdf" id="pm-pdf"><div data-hf-id="hf-lfpk" class="bf">
+  <div data-hf-id="hf-sijt" class="top">
+    <div data-hf-id="hf-udx1" class="client">TOKO DEMO<small data-hf-id="hf-rnr5">Client brief · e-commerce storefront</small></div>
+    <div data-hf-id="hf-5ovb" class="meta">BRF-TD-014 · v1.2<br data-hf-id="hf-tzer">Issued 22 Sep 2026<br data-hf-id="hf-udps"><span data-hf-id="hf-vz2x" class="status">Approved for sprint</span></div>
+  </div>
+  <h1 data-hf-id="hf-7zj2">Sprint brief: promo codes at checkout and a live cart total</h1>
+  <p data-hf-id="hf-q13x" class="lede">Two small storefront features for this sprint. Both touch the checkout total, so ownership must be clear.</p>
+  <h2 data-hf-id="hf-mcnl">1 · Background</h2>
+  <p data-hf-id="hf-iqxg">Customers ask for promo codes at checkout, and the header shows only an item count. Shoppers can't see what they'll pay until the last step.</p>
+  <h2 data-hf-id="hf-ufdy">2 · Scope</h2>
+  <table data-hf-id="hf-2j5r">
+    <tr data-hf-id="hf-p3r7"><th data-hf-id="hf-5fyc">ID</th><th data-hf-id="hf-je95">Feature</th><th data-hf-id="hf-9ebf">Acceptance criteria</th><th data-hf-id="hf-9tgo">Area</th></tr>
+    <tr data-hf-id="hf-ddj7"><td data-hf-id="hf-k5o7" class="id">F1</td><td data-hf-id="hf-54xx"><b data-hf-id="hf-qj1e">Promo code at checkout</b></td><td data-hf-id="hf-t9cp"><ul data-hf-id="hf-ovcc"><li data-hf-id="hf-ipxt">A valid code applies its discount</li><li data-hf-id="hf-807j">An invalid code shows an inline error</li><li data-hf-id="hf-w7p3">The order total recalculates at once</li></ul></td><td data-hf-id="hf-prn5" class="area">checkout, promo</td></tr>
+    <tr data-hf-id="hf-cz86"><td data-hf-id="hf-jrd6" class="id">F2</td><td data-hf-id="hf-ug9s"><b data-hf-id="hf-g19d">Live cart total in header</b></td><td data-hf-id="hf-u1yr"><ul data-hf-id="hf-kqbo"><li data-hf-id="hf-q3re">Badge updates on add and remove</li><li data-hf-id="hf-qn0x">Shows the discounted total</li><li data-hf-id="hf-7hng">Formatted in IDR</li></ul></td><td data-hf-id="hf-ae62" class="area">header, cart badge</td></tr>
+  </table>
+  <div data-hf-id="hf-9yku" class="two">
+    <div data-hf-id="hf-yeow"><h2 data-hf-id="hf-pxqx">3 · Constraints</h2><div data-hf-id="hf-l2qn" class="note">The header total must read from checkout's <b data-hf-id="hf-vbgs">calculateTotal()</b>. One source of truth for the price.</div></div>
+    <div data-hf-id="hf-y7yw"><h2 data-hf-id="hf-5j75">4 · Out of scope</h2><ul data-hf-id="hf-jjel"><li data-hf-id="hf-emqs">Payment provider changes</li><li data-hf-id="hf-4ttb">Admin UI for creating codes</li></ul></div>
+  </div>
+  <div data-hf-id="hf-jr6a" class="two">
+    <div data-hf-id="hf-x11t"><h2 data-hf-id="hf-18x2">5 · Timeline</h2><ul data-hf-id="hf-jxpm"><li data-hf-id="hf-6ebi">Kick-off: Monday</li><li data-hf-id="hf-243z">Review and demo: Friday</li></ul></div>
+    <div data-hf-id="hf-xfcu"><h2 data-hf-id="hf-pnjz">6 · Team</h2><ul data-hf-id="hf-lx8r"><li data-hf-id="hf-wh7v">PM: Aarief</li><li data-hf-id="hf-ytps">Engineers: Alief, Umar</li></ul></div>
+  </div>
+  <div data-hf-id="hf-mlgk" class="foot"><span data-hf-id="hf-bdgf">Synthetic sample for demo purposes</span><span data-hf-id="hf-1g1x">Page 1 of 1</span></div>
         </div></div>
+        <div data-hf-id="hf-vsdf" class="pmexp" id="pm-exp"><h6 data-hf-id="hf-lad0">EXPLORER</h6>
+          <div data-hf-id="hf-qgvk" class="f" style="--p:10px">▾ TOKO-DEMO</div>
+          <div data-hf-id="hf-ev8w" class="f" style="--p:18px">▾ docs</div>
+          <div data-hf-id="hf-swf8" class="f" id="pm-f-brief" style="--p:34px">▤ brief.pdf</div>
+          <div data-hf-id="hf-5s4b" class="f" style="--p:18px">▾ src</div>
+          <div data-hf-id="hf-azby" class="f" style="--p:34px">checkout.ts</div>
+          <div data-hf-id="hf-x2fd" class="f" style="--p:34px">promo.ts</div>
+          <div data-hf-id="hf-5k73" class="f" style="--p:34px">Header.tsx</div>
+          <div data-hf-id="hf-ll4n" class="f" style="--p:34px">cartBadge.ts</div>
+          <div data-hf-id="hf-rl70" class="f" style="--p:18px">▸ .bob</div>
+        </div>
       </div>
       <div data-hf-id="hf-ke86" class="chat" style="width:420px">
         <div data-hf-id="hf-9mfb" class="hd"><span data-hf-id="hf-qc60" class="bm">B</span>Bob
@@ -239,10 +286,22 @@
   gsap.set(["#w-al", "#w-um"], { opacity: 0 });
   gsap.set(".lk", { opacity: 0 });
   gsap.set(["#al-code .ln", "#um-code .ln"], { clipPath: "inset(0 100% 0 0)" });
+  gsap.set(["#pm-tab", "#pm-pdf"], { opacity: 0 });
 
   /* ===== 05 · The brief (VO local 0.5 → 23.2) ===== */
   move(0, PM, 1.8, "expo.out");
-  move(3.4, { x: 60, y: 80, w: 360, h: 600 }, 1.4);                    // "client brief" → read the PDF
+  // "It starts with the PM" — Aarief opens the brief from the explorer first.
+  tl.set("#d-cursor", { x: 330, y: 620, scale: 1 }, 0.6);
+  tl.to("#d-cursor", { opacity: 1, duration: 0.3 }, 0.7);
+  tl.to("#pm-f-brief", { backgroundColor: "rgba(255,255,255,0.08)", duration: 0.15 }, 1.6);   // hover
+  click(2.0, 150, 168);
+  tl.to("#pm-f-brief", { backgroundColor: "rgba(15,98,254,0.45)", duration: 0.08 }, 2.0);
+  tl.fromTo("#pm-tab", { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.25 }, 2.15);
+  tl.to("#pm-exp", { x: -300, opacity: 0, duration: 0.35, ease: "power3.in" }, 2.15);
+  tl.fromTo("#pm-pdf", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 2.3);
+  tl.to("#d-cursor", { opacity: 0, duration: 0.25 }, 2.4);
+  move(2.6, { x: 83, y: 112, w: 300, h: 330 }, 1.2);                    // "client brief" → the whole page
+  move(5.1, { x: 88, y: 236, w: 290, h: 95 }, 1.5);                     // "only Aarief knows" → the scope table
   move(8.6, { x: 250, y: 50, w: 700, h: 394 }, 1.2);                   // "switches" → mode dropdown
   tl.set("#pm-menu", { display: "block" }, 10.9);                     // "custom mode"
   tl.fromTo("#pm-menu", { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.25 }, 10.9);
@@ -250,7 +309,7 @@
   tl.set("#pm-mode-a", { display: "none" }, 12.3);
   tl.set("#pm-mode-b", { display: "inline" }, 12.3);
   tl.fromTo("#pm-mode", { scale: 1 }, { scale: 1.15, duration: 0.15, yoyo: true, repeat: 1, borderColor: "#be95ff" }, 12.3);
-  cap(13, "custom mode <em>pm-lead</em>", "#be95ff");
+  cap(13, "<span class=\"bb\">IBM Bob · Custom mode</span> <em>pm-lead</em>", "#be95ff");
   move(14.8, { x: 40, y: 760, w: 760, h: 428 }, 1.2);                  // "read and plan" → status bar
   tl.fromTo("#pm-stat", { color: "#ffffff" }, { color: "#f1c21b", duration: 0.3, yoyo: true, repeat: 3 }, 16.4);
   tl.to("#d-cap", { opacity: 0, duration: 0.3 }, 16.2);
@@ -269,12 +328,12 @@
   show("#pm-b1", 25.2);
   show("#pm-t1", 25.5); done("pm-t1", 25.5, 26.6);                     // "checks who's online"
   show("#pm-t2", 27.1); done("pm-t2", 27.1, 29.2);                     // "proposes a plan"
-  cap(30.2, "MCP · <em>radar-mcp</em>", "#78a9ff", 33.6, true);
+  cap(30.2, "<span class=\"bb\">IBM Bob · MCP</span> our <em>radar-mcp</em> server", "#78a9ff", 33.6, true);
   show("#pm-plan", 29.6);
   tl.fromTo(["#pm-r1", "#pm-r2"], { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.4, stagger: 0.9, ease: "power3.out" }, 32.1);   // "Every task"
   tl.fromTo(["#pm-r1 span", "#pm-r2 span"], { color: "#a8a8a8" }, { color: "#f4f4f4", duration: 0.25, yoyo: true, repeat: 3 }, 36);     // "exactly one person"
   move(37.6, { x: 400, y: 640, w: 400, h: 330 }, 1.1);                // "Nothing moves" → Approve
-  tl.set("#d-cursor", { x: 720, y: 980 }, 37);
+  tl.set("#d-cursor", { x: 720, y: 980, scale: 1 }, 37);
   tl.to("#d-cursor", { opacity: 1, duration: 0.3 }, 37.8);
   click(39.8, 470, 868);
   tl.to("#pm-approve", { scale: 0.92, duration: 0.08, yoyo: true, repeat: 1 }, 39.8);
@@ -303,9 +362,9 @@
   move(53.6, AL, 1.4);
   tl.set("#al-mode-a", { display: "none" }, 54.2); tl.set("#al-mode-b", { display: "inline" }, 54.2);
   tl.set("#um-mode-a", { display: "none" }, 54.4); tl.set("#um-mode-b", { display: "inline" }, 54.4);
-  cap(55, "custom mode <em>coder</em>", "#78a9ff", 57.6);
+  cap(55, "<span class=\"bb\">IBM Bob · Custom mode</span> <em>coder</em>", "#78a9ff", 57.6);
   show("#al-h1", 56.6); show("#um-h1", 56.8);                           // "session starts"
-  cap(58, "hook · <em>SessionStart</em>", "#f1c21b", 61.6);
+  cap(58, "<span class=\"bb\">IBM Bob · Hook</span> <em>SessionStart</em> briefs each Bob", "#f1c21b", 61.6);
   tl.fromTo("#al-h1", { borderColor: "#393939" }, { borderColor: "#f1c21b", duration: 0.3, yoyo: true, repeat: 3 }, 59.4);
   move(62, UM, 1.3);                                                  // pan down to Umar
   show("#al-u1", 63.2); show("#um-u1", 63.3);
@@ -317,7 +376,7 @@
   lines("#al-code", 67.3, 0.7);
   lines("#um-code", 67.6, 0.7);
   show("#al-h2", 68.4); show("#um-h2", 68.6);                           // "every edit is checked"
-  cap(69, "every write checked against the lock", "#f1c21b", 73);
+  cap(69, "<span class=\"bb\">IBM Bob · Hook</span> every write checked against the <em>lock</em>", "#f1c21b", 73);
   tl.to(["#al-pill", "#um-pill"], { opacity: 0, duration: 0.3 }, 73);
 
   /* ===== 09 · Near-miss (VO local 74 → 103.8) ===== */
@@ -335,14 +394,14 @@
   tl.fromTo("#um-flash", { opacity: 0 }, { opacity: 1, duration: 0.05 }, 85.9);
   tl.to("#um-flash", { opacity: 0, duration: 0.9, ease: "power2.out" }, 86);
   tl.fromTo("#d-world", { rotation: 0 }, { rotation: 0.4, duration: 0.05, yoyo: true, repeat: 5, ease: "none" }, 85.95);
-  cap(86.2, "hook · <em>PreToolUse</em> → blocked", "#fa4d56", 90);   // held frame 86–87.6
+  cap(86.2, "<span class=\"bb\">IBM Bob · Hook</span> <em>PreToolUse</em> → blocked", "#fa4d56", 90);   // held frame 86–87.6
   show("#um-rule", 87.6);                                              // "rules kick in"
   tl.fromTo("#um-r1", { opacity: 0.35 }, { opacity: 1, duration: 0.3 }, 89.3);
   tl.fromTo("#um-r2", { opacity: 0.35 }, { opacity: 1, duration: 0.3 }, 91.2);
   tl.fromTo("#um-r3", { opacity: 0.35 }, { opacity: 1, duration: 0.3 }, 93.6);
-  cap(90.4, "rules · <em>no retry, no shell</em>", "#be95ff", 93.4);
+  cap(90.4, "<span class=\"bb\">IBM Bob · Rules</span> <em>no retry, no shell</em>", "#be95ff", 93.4);
   show("#um-t3", 93.8); done("um-t3", 93.8, 94.8);                      // "calls why_blocked"
-  cap(94, "MCP · <em>why_blocked</em>", "#78a9ff", 97.4);
+  cap(94, "<span class=\"bb\">IBM Bob · MCP</span> radar-mcp · <em>why_blocked</em>", "#78a9ff", 97.4);
   show("#um-b1", 95.4);                                                // "explains"
   show("#um-t4", 97.7); done("um-t4", 97.7, 98.6);                      // "asks the PM"
   move(98.4, { x: 40, y: 40, w: 760, h: 430 }, 1.6, "expo.inOut");   // swoop to Aarief
@@ -357,8 +416,8 @@
   move(101.6, ALL, 2.2, "power2.inOut", WIDE);                              // "No conflict. No broken build."
   show("#al-note", 102.4); show("#um-b2", 102.8);
   // Exit: whip up into the primitives.
-  tl.to("#d-cap", { opacity: 0, duration: 0.3 }, 106.6);
-  tl.to("#d-world", { y: -900, filter: "blur(18px)", opacity: 0, duration: 0.6, ease: "power3.in" }, 106.9);
+  tl.to("#d-cap", { opacity: 0, duration: 0.3 }, 104.6);
+  tl.to("#d-world", { y: -900, filter: "blur(18px)", opacity: 0, duration: 0.6, ease: "power3.in" }, 104.9);
   window.__timelines["s05"] = tl;
 })();
 </script>

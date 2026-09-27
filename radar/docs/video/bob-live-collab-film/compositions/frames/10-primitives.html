@@ -36,16 +36,18 @@
 <script>
 (function(){
   const tl = gsap.timeline({ paused: true });
-  tl.fromTo("#s10-h .w", { opacity: 0, y: -60, filter: "blur(16px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.55, stagger: 0.08, ease: "power3.out" }, 0.2);
-  // One card per VO clause, alternating directions.
-  const c = [["#s10-c1", 3.3, -80], ["#s10-c2", 5.5, 80], ["#s10-c3", 8.5, -80], ["#s10-c4", 10.45, 80]];
-  c.forEach(([s, t, y]) => tl.fromTo(s, { opacity: 0, y: y, rotationX: 40, transformPerspective: 1200 }, { opacity: 1, y: 0, rotationX: 0, duration: 0.7, ease: "back.out(1.4)" }, t));
-  c.forEach(([s, t]) => tl.fromTo(s + " .t", { scale: 1.2 }, { scale: 1, duration: 0.5, ease: "power2.out" }, t + 0.1));
-  // "we built it all with Bob" — the cards collapse into one .bob/ kit.
-  tl.to("#s10-h", { opacity: 0, y: -40, duration: 0.4, ease: "power2.in" }, 13.4);
-  tl.to(".card", { x: (i) => [656, 247, -162, -571][i], y: (i) => [-30, -56, -30, -56][i], scale: 0.2, opacity: 0, duration: 0.7, ease: "power4.in", stagger: 0.04 }, 13.6);
-  tl.fromTo("#s10-kit", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(2.4)" }, 14.2);
-  tl.fromTo("#s10-foot", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4 }, 14.5);
+  tl.fromTo("#s10-h .w", { opacity: 0, y: -60, filter: "blur(16px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.5, stagger: 0.06, ease: "power3.out" }, 0.05);
+  // One card per VO word: "Custom modes, hooks, MCP, and rules."
+  const c = [["#s10-c1", 0.3, -80], ["#s10-c2", 1.45, 80], ["#s10-c3", 1.95, -80], ["#s10-c4", 3.1, 80]];
+  c.forEach(([s, t, y]) => tl.fromTo(s, { opacity: 0, y: y, rotationX: 40, transformPerspective: 1200 }, { opacity: 1, y: 0, rotationX: 0, duration: 0.6, ease: "back.out(1.4)" }, t));
+  c.forEach(([s, t]) => tl.fromTo(s + " .t", { scale: 1.2 }, { scale: 1, duration: 0.45, ease: "power2.out" }, t + 0.1));
+  // "All of it runs on Bob's own features."
+  tl.fromTo("#s10-h .it", { scale: 1 }, { scale: 1.08, duration: 0.2, yoyo: true, repeat: 1, transformOrigin: "left bottom" }, 5.5);
+  // "And we built it all with Bob." — the cards collapse into one .bob/ kit.
+  tl.to("#s10-h", { opacity: 0, y: -40, duration: 0.4, ease: "power2.in" }, 6.4);
+  tl.to(".card", { x: (i) => [656, 247, -162, -571][i], y: (i) => [-30, -56, -30, -56][i], scale: 0.2, opacity: 0, duration: 0.6, ease: "power4.in", stagger: 0.04 }, 6.5);
+  tl.fromTo("#s10-kit", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(2.4)" }, 7.05);
+  tl.fromTo("#s10-foot", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4 }, 7.35);
   window.__timelines["s10"] = tl;
 })();
 </script>

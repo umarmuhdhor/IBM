@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <title>Live Collab</title>
+  <g fill="#FFFFFF" transform="translate(60 60)">
+    <rect x="-8" y="-54" width="16" height="38" rx="3"/>
+    <rect x="-8" y="-54" width="16" height="38" rx="3" transform="rotate(120)"/>
+    <rect x="-8" y="-54" width="16" height="38" rx="3" transform="rotate(180)"/>
+    <rect x="-8" y="-54" width="16" height="38" rx="3" transform="rotate(240)"/>
+    <rect x="-8" y="-54" width="16" height="38" rx="3" transform="rotate(300)"/>
+    <circle cx="0" cy="-44" r="10" transform="rotate(60)"/>
+  </g>
+</svg>

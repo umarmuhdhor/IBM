@@ -24,11 +24,11 @@
 <script>
 (function(){
   const tl = gsap.timeline({ paused: true });
-  tl.fromTo("#s04-veil", { opacity: 1 }, { opacity: 0, duration: 1.2, ease: "power1.out" }, 0);
-  tl.fromTo("#s04-t .w", { opacity: 0, y: 40, filter: "blur(18px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.7, stagger: 0.14, ease: "power3.out" }, 0.6);
-  tl.fromTo("#s04-s", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, 1.7);
+  tl.fromTo("#s04-veil", { opacity: 1 }, { opacity: 0, duration: 0.8, ease: "power1.out" }, 0);
+  tl.fromTo("#s04-t .w", { opacity: 0, y: 40, filter: "blur(18px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.6, stagger: 0.1, ease: "power3.out" }, 0.25);
+  tl.fromTo("#s04-s", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, 1.0);
   // Hand-off: the whole line sinks away as we zoom into the first window.
-  tl.to(["#s04-t", "#s04-s"], { scale: 0.85, opacity: 0, filter: "blur(12px)", duration: 0.5, ease: "power2.in" }, 3.45);
+  tl.to(["#s04-t", "#s04-s"], { scale: 0.85, opacity: 0, filter: "blur(12px)", duration: 0.45, ease: "power2.in" }, 2.75);
   window.__timelines["s04"] = tl;
 })();
 </script>
