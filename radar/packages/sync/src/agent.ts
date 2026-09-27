@@ -552,6 +552,13 @@ export class SyncAgent extends EventEmitter {
       this.log('recv.stale', `${path} v${d.version} ≤ known v${prev.version}`);
       return;
     }
+    // Our save of this path is in flight and the server handled this change first. Its answer to our save
+    // settles the file: a merged ack carries both edits, a reject carries the server file. Writing this change
+    // now would put the teammate's version over our edit and the next scan would send it back (prod e2e 12j).
+    if (this.pending.has(path)) {
+      this.log('recv.deferred', `${path} v${d.version} by ${d.by} (our save is in flight)`);
+      return;
+    }
     this.saveConflict(path, prev?.hash, d.hash);
     this.known.set(path, { version: d.version, hash: d.hash });
     atomicWrite(this.root, path, d.content);

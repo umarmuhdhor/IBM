@@ -1,6 +1,6 @@
 // Agent paths the real server cannot be driven into: a fake WS server answers every update with an
 // unverifiable `conflict` (server file v0, no content), the half-written-read case of fase 04 step 6.
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { WebSocketServer, type WebSocket } from 'ws';
@@ -121,5 +121,44 @@ describe('merged ack (D-alief-17)', () => {
     await waitFor(() => sent >= 1, 3000, 'first update');
     await sleep(300);
     expect(readFileSync(join(root, 'a.ts'), 'utf8')).toBe('budi 10 and more\n');
+  });
+
+  it('a teammate change that lands while our save is in flight does not undo our save (prod e2e 12j)', async () => {
+    const { createHash } = await import('node:crypto');
+    const sha = (s: string) => createHash('sha256').update(s).digest('hex');
+    const base = 'line 4\nline 12\n';
+    const alice = 'alice 4\nline 12\n';
+    const merged = 'alice 4\nbudi 12\n';
+    const contents: string[] = [];
+    wss = new WebSocketServer({ port: 0 });
+    wss.on('connection', (ws: WebSocket) => {
+      ws.on('message', (raw) => {
+        const text = raw.toString();
+        if (text === '{"t":"ping"}') return;
+        const m = JSON.parse(text) as { t: string; id?: string; d: { path: string; content: string } };
+        if (m.t === 'hello') {
+          ws.send(JSON.stringify({ t: 'welcome', d: { principal: { kind: 'member', memberId: 'B', role: 'coder' }, serverTime: Date.now(), workspace: 'toko-demo' } }));
+          ws.send(JSON.stringify({ t: 'snapshot', d: { files: [{ path: 'a.ts', version: 1, hash: sha(base), content: base, deleted: false }], locks: [], cursor: 0 } }));
+        } else if (m.t === 'file.update') {
+          contents.push(m.d.content);
+          if (contents.length > 1) return;
+          // Alice's save (v2) was processed first; ours (base v1) is merged into v3.
+          ws.send(JSON.stringify({ t: 'file.changed', d: { path: 'a.ts', version: 2, hash: sha(alice), content: alice, deleted: false, by: 'A', taskId: null, serverTs: Date.now() } }));
+          ws.send(JSON.stringify({ t: 'file.ack', id: m.id, d: { id: m.id, path: 'a.ts', version: 3, hash: sha(merged), merged: true, content: merged } }));
+        }
+      });
+    });
+    await new Promise<void>((r) => wss!.once('listening', () => r()));
+    const { port } = wss.address() as { port: number };
+    const root = tempDir();
+    const a = new SyncAgent({ root, server: `http://127.0.0.1:${port}`, token: 'rdr_test', member: 'B', debounceMs: 20, log: () => {}, notify: () => {}, ...FAST });
+    agents.push(a);
+    await a.start();
+    await waitFor(() => existsSync(join(root, 'a.ts')), 3000, 'snapshot on disk');
+    writeFileSync(join(root, 'a.ts'), 'line 4\nbudi 12\n');
+    await waitFor(() => readFileSync(join(root, 'a.ts'), 'utf8') === merged, 3000, 'merged text on disk');
+    await sleep(300);
+    expect(contents).toEqual(['line 4\nbudi 12\n']);
+    expect(a.known.get('a.ts')).toEqual({ version: 3, hash: sha(merged) });
   });
 });
