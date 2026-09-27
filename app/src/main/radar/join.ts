@@ -169,19 +169,21 @@ async function openInBob(): Promise<string | null> {
   })
 }
 
-export function registerRadarJoinIpc(): void {
-  // A member connection made earlier resumes syncing its folder once Electron is ready.
-  void app.whenReady().then(() => {
-    try {
-      const saved = readRadarConnection()
-      if (saved && saved.role === 'coder' && existsSync(workspaceFolder(saved.workspace))) {
-        startSyncAgent(saved.workspace, null)
-      }
-    } catch (error) {
-      // A locked keychain must not prevent the app from starting.
-      console.warn('[radar] could not resume sync:', error instanceof Error ? error.message : error)
+/** A coder or PM connection made earlier resumes syncing its folder; the owner resumes in open-folder. */
+export function resumeMemberSync(): void {
+  try {
+    const saved = readRadarConnection()
+    if (saved && saved.role !== 'mc' && existsSync(workspaceFolder(saved.workspace))) {
+      startSyncAgent(saved.workspace, null)
     }
-  })
+  } catch (error) {
+    // A locked keychain must not prevent the app from starting.
+    console.warn('[radar] could not resume sync:', error instanceof Error ? error.message : error)
+  }
+}
+
+export function registerRadarJoinIpc(): void {
+  void app.whenReady().then(resumeMemberSync)
   app.on('before-quit', () => stopSyncAgent())
   ipcMain.handle('radar:join-with-code', (_event, value: unknown) => {
     const field = (key: string): unknown =>

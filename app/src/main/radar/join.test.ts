@@ -1,3 +1,4 @@
+import type * as fs from 'node:fs'
 import { encodeInvite } from '@radar/common'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -10,7 +11,13 @@ const mocks = vi.hoisted(() => ({
   startSyncAgent: vi.fn(),
   stopSyncAgent: vi.fn(),
   ensureNodeForBob: vi.fn(async () => undefined),
-  moveAsideOldFolder: vi.fn((_folder: string): string | null => null)
+  moveAsideOldFolder: vi.fn((_folder: string): string | null => null),
+  existsSync: vi.fn((_path: string) => false)
+}))
+
+vi.mock('node:fs', async (importOriginal) => ({
+  ...(await importOriginal<typeof fs>()),
+  existsSync: mocks.existsSync
 }))
 
 vi.mock('electron', () => ({
@@ -38,7 +45,7 @@ vi.mock('./sync-agent', () => ({
   workspaceFolder: (workspace: string) => `/home/test/live-collab/${workspace}`
 }))
 
-const { createJoinCode, joinWithCode, serverOrigin } = await import('./join')
+const { createJoinCode, joinWithCode, resumeMemberSync, serverOrigin } = await import('./join')
 
 const SERVER = 'https://collab.example.dev'
 const invite = encodeInvite({
@@ -231,5 +238,30 @@ describe('serverOrigin', () => {
   it('falls back to the deployed server without LIVE_COLLAB_SERVER', () => {
     vi.stubEnv('LIVE_COLLAB_SERVER', '')
     expect(serverOrigin('')).toBe('https://live-collab.afindo-mi01.workers.dev')
+  })
+})
+
+describe('resumeMemberSync', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('resumes a PM as well as a coder after a restart', () => {
+    mocks.existsSync.mockReturnValue(true)
+    for (const role of ['coder', 'pm'] as const) {
+      mocks.startSyncAgent.mockClear()
+      mocks.readRadarConnection.mockReturnValue({ server: SERVER, workspace: 'toko-demo', member: 'C', role })
+      resumeMemberSync()
+      expect(mocks.startSyncAgent, role).toHaveBeenCalledWith('toko-demo', null)
+    }
+    mocks.existsSync.mockReturnValue(false)
+  })
+
+  it('leaves the owner to its own folder and skips a folder that is gone', () => {
+    mocks.readRadarConnection.mockReturnValue({ server: SERVER, workspace: 'w', member: null, role: 'mc' })
+    mocks.existsSync.mockReturnValue(true)
+    resumeMemberSync()
+    mocks.readRadarConnection.mockReturnValue({ server: SERVER, workspace: 'w', member: 'B', role: 'coder' })
+    mocks.existsSync.mockReturnValue(false)
+    resumeMemberSync()
+    expect(mocks.startSyncAgent).not.toHaveBeenCalled()
   })
 })
