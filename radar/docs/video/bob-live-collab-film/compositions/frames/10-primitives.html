@@ -44,10 +44,10 @@
   // "All of it runs on Bob's own features."
   tl.fromTo("#s10-h .it", { scale: 1 }, { scale: 1.08, duration: 0.2, yoyo: true, repeat: 1, transformOrigin: "left bottom" }, 5.5);
   // "And we built it all with Bob." — the cards collapse into one .bob/ kit.
-  tl.to("#s10-h", { opacity: 0, y: -40, duration: 0.4, ease: "power2.in" }, 6.4);
-  tl.to(".card", { x: (i) => [656, 247, -162, -571][i], y: (i) => [-30, -56, -30, -56][i], scale: 0.2, opacity: 0, duration: 0.6, ease: "power4.in", stagger: 0.04 }, 6.5);
-  tl.fromTo("#s10-kit", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(2.4)" }, 7.05);
-  tl.fromTo("#s10-foot", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4 }, 7.35);
+  tl.to("#s10-h", { opacity: 0, y: -40, duration: 0.4, ease: "power2.in" }, 6.0);
+  tl.to(".card", { x: (i) => [656, 247, -162, -571][i], y: (i) => [-30, -56, -30, -56][i], scale: 0.2, opacity: 0, duration: 0.6, ease: "power4.in", stagger: 0.04 }, 6.1);
+  tl.fromTo("#s10-kit", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(2.4)" }, 6.65);
+  tl.fromTo("#s10-foot", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4 }, 6.95);
   window.__timelines["s10"] = tl;
 })();
 </script>

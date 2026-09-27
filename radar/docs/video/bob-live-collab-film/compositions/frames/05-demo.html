@@ -9,7 +9,7 @@
 @font-face{font-family:"PlexMono";font-weight:400;src:url("assets/fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2")}
 @font-face{font-family:"PlexMono";font-weight:500;src:url("assets/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2")}
 #root{position:absolute;inset:0;overflow:hidden;color:#f4f4f4;font-family:"Plex",sans-serif}
-#d-world{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0}
+#d-world{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;text-rendering:geometricPrecision;-webkit-font-smoothing:antialiased}
 .it{font-family:"Plex",sans-serif;font-style:normal;font-weight:600;text-decoration:underline;text-decoration-color:#0f62fe;text-decoration-thickness:0.07em;text-underline-offset:0.14em;text-decoration-skip-ink:none}
 .mono{font-family:"PlexMono",monospace}
 .win{position:absolute;background:#1c1c1e;border:2px solid #393939;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 30px 90px rgba(0,0,0,0.6)}
@@ -105,17 +105,69 @@
 #d-cap i{display:block;width:14px;height:14px;border-radius:50%;background:var(--c,#0f62fe)}
 #d-cap em{font-style:normal;font-weight:600;text-decoration:underline;text-decoration-color:#0f62fe;text-decoration-thickness:3px;text-underline-offset:6px}
 .bb{font-family:"PlexMono",monospace;font-size:18px;font-weight:500;letter-spacing:0.02em;background:#0f62fe;color:#fff;padding:5px 11px;border-radius:4px}
+
+/* Bob IDE chrome (matches the real IBM Bob window: VS Code layout, IBM BOB side panel) */
+.win{background:#1f1f1f;border-color:#2b2b2b;border-radius:10px}
+.bar{background:#1f1f1f;border-bottom:1px solid #2b2b2b;color:#cccccc;font-weight:500}
+.bar s:nth-of-type(1){background:#ff5f57}.bar s:nth-of-type(2){background:#febc2e}.bar s:nth-of-type(3){background:#28c840}
+.bar .ttl{margin-left:6px;display:flex;align-items:center;gap:6px}
+.act{background:#181818;border-right:1px solid #2b2b2b;gap:12px;padding-top:10px;position:relative}
+.act svg{width:20px;height:20px;stroke:#858585;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;position:relative}
+.act svg.on{stroke:#e8e8e8}
+.act svg.on::before{content:none}
+.act .ind{position:absolute;left:0;width:2px;height:24px;background:#e8e8e8;top:8px}
+.act .bot{margin-top:auto;margin-bottom:10px}
+.exp{background:#181818;border-right:1px solid #2b2b2b;color:#cccccc}
+.exp h6{display:flex;justify-content:space-between;color:#bbbbbb;font-weight:500;letter-spacing:0.06em}
+.exp .ws{font-weight:700;font-size:11px;letter-spacing:0.04em;color:#cccccc}
+.fi{display:inline-grid;place-items:center;width:14px;height:12px;font-style:normal;font-size:8px;font-weight:700;border-radius:2px;flex:none;font-family:"PlexMono",monospace}
+.fi.ts{background:#3178c6;color:#fff}.fi.tsx{color:#4fc1ff;font-size:11px}.fi.cfg{color:#e2c08d;font-size:10px}.fi.md{color:#519aba;font-size:10px}.fi.pdf{color:#f14c4c;font-size:9px;line-height:12px;overflow:visible}
+.ed{background:#1f1f1f}
+.tabs{background:#181818;border-bottom:1px solid #2b2b2b}
+.tab{gap:6px;color:#9d9d9d;border-right:1px solid #2b2b2b}
+.tab.cur{background:#1f1f1f;color:#ffffff;font-style:italic;box-shadow:inset 0 1px 0 #0078d4}
+.tab .x{font-style:normal;color:#9d9d9d;margin-left:4px;font-size:12px}
+.crumb{height:22px;flex:none;display:flex;align-items:center;gap:6px;padding:0 12px;font-size:12px;color:#9d9d9d;background:#1f1f1f}
+.chat{background:#181818;border-left:1px solid #2b2b2b}
+.hd{height:34px;padding:0 10px;gap:14px;border-bottom:none;font-size:12px;font-weight:500;color:#9d9d9d;letter-spacing:0.04em}
+.hd .ptab{color:#e8e8e8;height:100%;display:flex;align-items:center;box-shadow:inset 0 -1px 0 #e8e8e8}
+.hd .ic{margin-left:auto;display:flex;gap:10px;color:#9d9d9d;font-size:13px;letter-spacing:0}
+.tk{flex:none;display:flex;align-items:center;gap:8px;height:30px;padding:0 12px;font-size:13px;font-weight:600;color:#e8e8e8;border-bottom:1px solid #2b2b2b;white-space:nowrap;overflow:hidden}
+.tk span{overflow:hidden;text-overflow:ellipsis}
+.tk .xx{margin-left:auto;color:#9d9d9d;font-weight:400}
+.m{color:#cccccc}
+.u{background:#252526;border:1px solid #2b2b2b;border-left:3px solid var(--c);border-radius:6px}
+.bob::before{content:none}
+.tr{border:none;background:transparent;padding:2px 2px 2px 20px;color:#9d9d9d;font-family:"Plex",sans-serif;font-size:12.5px}
+.tr b{font-family:"Plex",sans-serif;font-weight:500;color:#cccccc;margin-left:-18px}
+.tr b::after{content:" ›";color:#6f6f6f}
+.tr .st{top:3px}
+.hook b{color:#e2c08d}
+.bad{border:1px solid #f14c4c;background:rgba(241,76,76,0.12);border-radius:6px;padding:6px 9px 6px 26px;color:#ffd7d9}
+.bad b{color:#ff8389}
+.rule{border:1px dashed #be95ff;border-radius:6px;padding:6px 9px 6px 26px;color:#e8daff}
+.rule b{color:#be95ff}
+.plan{background:#1f1f1f;border-color:#2b2b2b;border-radius:6px}
+.inp{margin:0 10px 6px;border:1px solid #3c3c3c;border-radius:8px;background:#1f1f1f;min-height:54px;color:#e8e8e8}
+.ph{color:#8b8b8b}
+.ft{flex:none;height:26px;margin:0 10px 8px;display:flex;align-items:center;gap:12px;font-size:12px;color:#cccccc;position:relative}
+.ft .mode{margin-left:0;border:none;padding:0;color:#cccccc;font-weight:500}
+.ft .perm{color:#9d9d9d}
+.ft .send{margin-left:auto;width:22px;height:22px;border-radius:50%;background:#3c3c3c;display:grid;place-items:center;color:#cccccc;font-size:12px}
+.ft .menu{top:auto;bottom:28px;left:14px;right:auto}
+.status{background:#181818;border-top:1px solid #2b2b2b;color:#cccccc;font-family:"Plex",sans-serif;font-size:11.5px}
+.status .ok0{color:#9d9d9d}
 </style>
 <div data-hf-id="hf-fvbf" id="root" data-composition-id="s05" data-width="1920" data-height="1080">
 <div data-hf-id="hf-rynk" id="d-world">
 
   <!-- ===== Aarief · PM ===== -->
   <div data-hf-id="hf-to11" class="win" id="w-pm" style="left:40px;top:40px;width:760px;height:1000px;--c:#be95ff">
-    <div data-hf-id="hf-a7uv" class="bar"><s data-hf-id="hf-dljm"></s><s data-hf-id="hf-tzme"></s><s data-hf-id="hf-udxf"></s>toko-demo — Bob IDE<span data-hf-id="hf-i6z7" class="who"><i data-hf-id="hf-wt6k"></i>Aarief <small data-hf-id="hf-nnab">PM</small></span></div>
+    <div data-hf-id="hf-a7uv" class="bar"><s data-hf-id="hf-dljm"></s><s data-hf-id="hf-tzme"></s><s data-hf-id="hf-udxf"></s><span class="ttl">toko-demo — IBM Bob</span><span data-hf-id="hf-i6z7" class="who"><i data-hf-id="hf-wt6k"></i>Aarief <small data-hf-id="hf-nnab">PM</small></span></div>
     <div data-hf-id="hf-2t3w" class="body">
-      <div data-hf-id="hf-szf0" class="act"><i data-hf-id="hf-zeb8"></i><i data-hf-id="hf-y7e5"></i><i data-hf-id="hf-l5u7" class="on"></i></div>
+      <div data-hf-id="hf-szf0" class="act"><i class="ind"></i><svg class="on" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="8" r="2"/><path d="M6 8v8M18 10c0 4-6 3-10 6"/></svg><svg viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z"/></svg><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7"/><rect x="13" y="4" width="7" height="7"/><rect x="4" y="13" width="7" height="7"/><rect x="13" y="13" width="7" height="7"/></svg><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M6 6l12 12M18 6L6 18"/></svg><svg class="bot" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg></div>
       <div data-hf-id="hf-0dc4" class="ed" style="flex:none;width:300px">
-        <div data-hf-id="hf-5rmk" class="tabs"><div data-hf-id="hf-bxat" class="tab cur" id="pm-tab" style="--c:#be95ff">brief.pdf</div></div>
+        <div data-hf-id="hf-5rmk" class="tabs"><div data-hf-id="hf-bxat" class="tab cur" id="pm-tab" style="--c:#be95ff"><i class="fi pdf">▤</i>brief.pdf<span class="x">×</span></div></div>
         <div data-hf-id="hf-030s" class="pdf" id="pm-pdf"><div data-hf-id="hf-lfpk" class="bf">
   <div data-hf-id="hf-sijt" class="top">
     <div data-hf-id="hf-udx1" class="client">TOKO DEMO<small data-hf-id="hf-rnr5">Client brief · e-commerce storefront</small></div>
@@ -142,22 +194,19 @@
   <div data-hf-id="hf-mlgk" class="foot"><span data-hf-id="hf-bdgf">Synthetic sample for demo purposes</span><span data-hf-id="hf-1g1x">Page 1 of 1</span></div>
         </div></div>
         <div data-hf-id="hf-vsdf" class="pmexp" id="pm-exp"><h6 data-hf-id="hf-lad0">EXPLORER</h6>
-          <div data-hf-id="hf-qgvk" class="f" style="--p:10px">▾ TOKO-DEMO</div>
-          <div data-hf-id="hf-ev8w" class="f" style="--p:18px">▾ docs</div>
-          <div data-hf-id="hf-swf8" class="f" id="pm-f-brief" style="--p:34px">▤ brief.pdf</div>
-          <div data-hf-id="hf-5s4b" class="f" style="--p:18px">▾ src</div>
-          <div data-hf-id="hf-azby" class="f" style="--p:34px">checkout.ts</div>
-          <div data-hf-id="hf-x2fd" class="f" style="--p:34px">promo.ts</div>
-          <div data-hf-id="hf-5k73" class="f" style="--p:34px">Header.tsx</div>
-          <div data-hf-id="hf-ll4n" class="f" style="--p:34px">cartBadge.ts</div>
-          <div data-hf-id="hf-rl70" class="f" style="--p:18px">▸ .bob</div>
+          <div data-hf-id="hf-qgvk" class="f" style="--p:10px">⌄ TOKO-DEMO</div>
+          <div data-hf-id="hf-ev8w" class="f" style="--p:18px">⌄ docs</div>
+          <div data-hf-id="hf-swf8" class="f" id="pm-f-brief" style="--p:34px"><i class="fi pdf">▤</i>brief.pdf</div>
+          <div data-hf-id="hf-5s4b" class="f" style="--p:18px">⌄ src</div>
+          <div data-hf-id="hf-azby" class="f" style="--p:34px"><i class="fi ts">TS</i>checkout.ts</div>
+          <div data-hf-id="hf-x2fd" class="f" style="--p:34px"><i class="fi ts">TS</i>promo.ts</div>
+          <div data-hf-id="hf-5k73" class="f" style="--p:34px"><i class="fi tsx">⚛</i>Header.tsx</div>
+          <div data-hf-id="hf-ll4n" class="f" style="--p:34px"><i class="fi ts">TS</i>cartBadge.ts</div>
+          <div data-hf-id="hf-rl70" class="f" style="--p:18px">› .bob</div>
         </div>
       </div>
       <div data-hf-id="hf-ke86" class="chat" style="width:420px">
-        <div data-hf-id="hf-9mfb" class="hd"><span data-hf-id="hf-qc60" class="bm">B</span>Bob
-          <span data-hf-id="hf-b1fx" class="mode" id="pm-mode"><span data-hf-id="hf-sws4" id="pm-mode-a">◐ Code ▾</span><span data-hf-id="hf-rhlq" id="pm-mode-b" class="on" style="display:none">◐ Live Collab PM Lead ▾</span></span>
-          <div data-hf-id="hf-rghe" class="menu" id="pm-menu"><div data-hf-id="hf-vhwx">Ask</div><div data-hf-id="hf-lpwz">Plan</div><div data-hf-id="hf-b11x">Code</div><div data-hf-id="hf-xbhe">Advanced</div><div data-hf-id="hf-0pkk" class="sel">◐ Live Collab PM Lead</div></div>
-        </div>
+        <div class="hd"><span class="ptab">IBM BOB</span><span class="ic">⚙ ☰ ＋ ⋯</span></div><div class="tk" data-layout-allow-overlap><span data-layout-allow-overlap>Split brief.pdf into tasks</span><span data-layout-allow-overlap class="xx">×</span></div>
         <div data-hf-id="hf-1w6y" class="msgs">
           <div data-hf-id="hf-nt23" class="m u" id="pm-u1" style="--c:#be95ff"><span data-hf-id="hf-whhe" class="att">▤ brief.pdf</span><div data-hf-id="hf-acaa">Read brief.pdf and split it into tasks for Alief and Umar. One owner per file.</div></div>
           <div data-hf-id="hf-db8j" class="m bob" id="pm-b1">Reading brief.pdf. I found 2 features: promo codes and a header cart total.</div>
@@ -171,34 +220,34 @@
           </div>
           <div data-hf-id="hf-t1es" class="m bob" id="pm-b2">Plan approved. Tasks sent, and each file is locked to its owner.</div>
         </div>
-        <div data-hf-id="hf-od88" class="inp" id="pm-inp"><span data-hf-id="hf-35mz" class="ph" id="pm-ph">Ask Bob…</span><span data-hf-id="hf-2yf9" id="pm-att" class="att" style="display:none">▤ brief.pdf</span> <span data-hf-id="hf-22nb" id="pm-typed" data-text="Read brief.pdf and split it into tasks for Alief and Umar. One owner per file."></span></div>
+        <div data-hf-id="hf-od88" class="inp" id="pm-inp"><span data-hf-id="hf-35mz" class="ph" id="pm-ph" data-layout-allow-overlap>Follow up or start new task ⌘N</span><span data-hf-id="hf-2yf9" id="pm-att" class="att" style="display:none">▤ brief.pdf</span> <span data-hf-id="hf-22nb" id="pm-typed" data-text="Read brief.pdf and split it into tasks for Alief and Umar. One owner per file."></span></div><div class="ft"><span>＋</span><span data-hf-id="hf-b1fx" class="mode" id="pm-mode"><span data-hf-id="hf-sws4" id="pm-mode-a">Code ⌄</span><span data-hf-id="hf-rhlq" id="pm-mode-b" class="on" style="display:none">Live Collab PM Lead ⌄</span></span><span class="perm">⛉ Permissions ⌄</span><span class="send">↑</span><div data-hf-id="hf-rghe" class="menu" id="pm-menu" data-layout-allow-overlap><div data-hf-id="hf-vhwx">Ask</div><div data-hf-id="hf-lpwz">Plan</div><div data-hf-id="hf-b11x">Code</div><div data-hf-id="hf-xbhe">Advanced</div><div data-hf-id="hf-0pkk" class="sel">◐ Live Collab PM Lead</div></div></div>
       </div>
     </div>
-    <div data-hf-id="hf-flqn" class="status">radar · connected · 3 members<span data-hf-id="hf-8cog" style="margin-left:auto" id="pm-stat">mode: pm-lead · read + mcp only</span></div>
+    <div data-hf-id="hf-flqn" class="status" data-layout-allow-overlap><span data-layout-allow-overlap class="ok0">⊗ 0 ⚠ 0</span><span data-layout-allow-overlap>radar · connected · 3 members</span><span data-hf-id="hf-8cog" style="margin-left:auto" id="pm-stat" data-layout-allow-overlap>mode: pm-lead · read + mcp only · Bob Settings</span></div>
     <div data-hf-id="hf-6wjs" class="toast" id="pm-toast" style="--c:#ff7eb6;top:52px"><small data-hf-id="hf-ml4i">Needs you</small>Umar's Bob requests <b data-hf-id="hf-v4hs">checkout.ts</b>, held by Alief for T1.<div data-hf-id="hf-5u2b" class="btns"><span data-hf-id="hf-uwkt" class="btn pri" id="pm-queue">Queue after T1</span><span data-hf-id="hf-v6b1" class="btn">Deny</span></div></div>
   </div>
 
   <!-- ===== Alief · coder ===== -->
   <div data-hf-id="hf-wnu9" class="win" id="w-al" style="left:840px;top:40px;width:1040px;height:480px;--c:#78a9ff;--bg-ai:rgba(120,169,255,0.08)">
-    <div data-hf-id="hf-tkrr" class="bar"><s data-hf-id="hf-us8g"></s><s data-hf-id="hf-s039"></s><s data-hf-id="hf-seea"></s>toko-demo — Bob IDE<span data-hf-id="hf-nu06" class="who"><i data-hf-id="hf-ylp6"></i>Alief <small data-hf-id="hf-wqqh">coder</small></span></div>
+    <div data-hf-id="hf-tkrr" class="bar"><s data-hf-id="hf-us8g"></s><s data-hf-id="hf-s039"></s><s data-hf-id="hf-seea"></s><span class="ttl">toko-demo — IBM Bob</span><span data-hf-id="hf-nu06" class="who"><i data-hf-id="hf-ylp6"></i>Alief <small data-hf-id="hf-wqqh">coder</small></span></div>
     <div data-hf-id="hf-6g9g" class="body">
-      <div data-hf-id="hf-6esk" class="act"><i data-hf-id="hf-j2zz" class="on"></i><i data-hf-id="hf-0l8b"></i><i data-hf-id="hf-0zjc"></i></div>
-      <div data-hf-id="hf-oa9x" class="exp"><h6 data-hf-id="hf-bb3g">TOKO-DEMO</h6>
-        <div data-hf-id="hf-dx2r" class="f" style="--p:10px">▾ src</div>
-        <div data-hf-id="hf-6qsh" class="f">checkout.ts<span data-hf-id="hf-dged" class="lock lk" style="--c:#78a9ff">Alief · you</span></div>
-        <div data-hf-id="hf-t18c" class="f">promo.ts<span data-hf-id="hf-2bvd" class="lock lk" style="--c:#78a9ff">Alief · you</span></div>
-        <div data-hf-id="hf-xgau" class="f">Header.tsx<span data-hf-id="hf-gb6a" class="lock lk" style="--c:#08bdba">🔒 Umar</span></div>
-        <div data-hf-id="hf-sreq" class="f">cartBadge.ts<span data-hf-id="hf-7xli" class="lock lk" style="--c:#08bdba">🔒 Umar</span></div>
-        <div data-hf-id="hf-4ew2" class="f" style="--p:10px">▾ .bob</div>
-        <div data-hf-id="hf-liez" class="f">custom_modes.yaml</div><div data-hf-id="hf-qnth" class="f">settings.json</div><div data-hf-id="hf-dthi" class="f">mcp.json</div><div data-hf-id="hf-218q" class="f">rules-coder/</div>
+      <div data-hf-id="hf-6esk" class="act"><i class="ind"></i><svg class="on" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="8" r="2"/><path d="M6 8v8M18 10c0 4-6 3-10 6"/></svg><svg viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z"/></svg><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7"/><rect x="13" y="4" width="7" height="7"/><rect x="4" y="13" width="7" height="7"/><rect x="13" y="13" width="7" height="7"/></svg><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M6 6l12 12M18 6L6 18"/></svg><svg class="bot" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg></div>
+      <div data-hf-id="hf-oa9x" class="exp"><h6 data-hf-id="hf-bb3g">EXPLORER<span>···</span></h6><div class="f ws" style="--p:8px">⌄ TOKO-DEMO</div>
+        <div data-hf-id="hf-dx2r" class="f" style="--p:10px">⌄ src</div>
+        <div data-hf-id="hf-6qsh" class="f"><i class="fi ts">TS</i>checkout.ts<span data-hf-id="hf-dged" class="lock lk" style="--c:#78a9ff">Alief · you</span></div>
+        <div data-hf-id="hf-t18c" class="f"><i class="fi ts">TS</i>promo.ts<span data-hf-id="hf-2bvd" class="lock lk" style="--c:#78a9ff">Alief · you</span></div>
+        <div data-hf-id="hf-xgau" class="f"><i class="fi tsx">⚛</i>Header.tsx<span data-hf-id="hf-gb6a" class="lock lk" style="--c:#08bdba">🔒 Umar</span></div>
+        <div data-hf-id="hf-sreq" class="f"><i class="fi ts">TS</i>cartBadge.ts<span data-hf-id="hf-7xli" class="lock lk" style="--c:#08bdba">🔒 Umar</span></div>
+        <div data-hf-id="hf-4ew2" class="f" style="--p:10px">⌄ .bob</div>
+        <div data-hf-id="hf-liez" class="f"><i class="fi cfg">{}</i>custom_modes.yaml</div><div data-hf-id="hf-qnth" class="f"><i class="fi cfg">{}</i>settings.json</div><div data-hf-id="hf-dthi" class="f"><i class="fi cfg">{}</i>mcp.json</div><div data-hf-id="hf-218q" class="f">› rules-coder</div>
       </div>
       <div data-hf-id="hf-npoz" class="ed">
-        <div data-hf-id="hf-ias4" class="tabs"><div data-hf-id="hf-xxhz" class="tab cur" style="--c:#78a9ff">checkout.ts</div></div>
+        <div data-hf-id="hf-ias4" class="tabs"><div data-hf-id="hf-xxhz" class="tab cur" style="--c:#78a9ff"><i class="fi ts">TS</i>checkout.ts<span class="x">×</span></div></div><div class="crumb">src › checkout.ts › …</div>
         <span data-hf-id="hf-cgsm" class="aipill" id="al-pill" style="--c:#78a9ff;opacity:0">Alief · Bob coder writing</span>
         <div data-hf-id="hf-nu74" class="code" id="al-code"><span data-hf-id="hf-r53g" class="ln ai"><b data-hf-id="hf-t4n0">1</b><span data-hf-id="hf-vj3t" class="k">import</span> { applyPromo } <span data-hf-id="hf-0rzw" class="k">from</span> <span data-hf-id="hf-xqu6" class="s">'./promo'</span></span><span data-hf-id="hf-smev" class="ln"><b data-hf-id="hf-rxpx">2</b> </span><span data-hf-id="hf-s3wk" class="ln ai"><b data-hf-id="hf-sc0y">3</b><span data-hf-id="hf-0pve" class="k">export function</span> <span data-hf-id="hf-vfvb" class="fn">calculateTotal</span>(cart, code) {</span><span data-hf-id="hf-s7f4" class="ln ai"><b data-hf-id="hf-ubk3">4</b>  <span data-hf-id="hf-5jgn" class="k">const</span> subtotal = cart.items.reduce(sum, 0)</span><span data-hf-id="hf-z2b1" class="ln ai"><b data-hf-id="hf-upv4">5</b>  <span data-hf-id="hf-ui93" class="k">const</span> discount = code ? <span data-hf-id="hf-t9au" class="fn">applyPromo</span>(code, subtotal) : 0</span><span data-hf-id="hf-r8ln" class="ln ai"><b data-hf-id="hf-tiy1">6</b>  <span data-hf-id="hf-lumi" class="k">return</span> subtotal - discount</span><span data-hf-id="hf-6ze2" class="ln ai"><b data-hf-id="hf-tx92">7</b>}</span></div>
       </div>
       <div data-hf-id="hf-5qc0" class="chat" style="width:400px">
-        <div data-hf-id="hf-c5bb" class="hd"><span data-hf-id="hf-rjao" class="bm">B</span>Bob <span data-hf-id="hf-e5vc" class="mode"><span data-hf-id="hf-r0bm" id="al-mode-a">◐ Code ▾</span><span data-hf-id="hf-t3c8" id="al-mode-b" class="on" style="display:none;color:#78a9ff">◐ Live Collab Coder ▾</span></span></div>
+        <div class="hd"><span class="ptab">IBM BOB</span><span class="ic">⚙ ☰ ＋ ⋯</span></div><div class="tk" data-layout-allow-overlap><span data-layout-allow-overlap>Work on task T1 · Promo codes at checkout</span><span data-layout-allow-overlap class="xx">×</span></div>
         <div data-hf-id="hf-pc66" class="msgs">
           <div data-hf-id="hf-f9hk" class="m tr hook" id="al-h1"><b data-hf-id="hf-lje5">⚓ hook · SessionStart · brief</b><br data-hf-id="hf-szow">You: Alief · T1 Promo codes<br data-hf-id="hf-sldv">Umar owns Header.tsx, cartBadge.ts</div>
           <div data-hf-id="hf-5epw" class="m u" id="al-u1" style="--c:#78a9ff">Start my task.</div>
@@ -207,34 +256,34 @@
           <div data-hf-id="hf-3ubx" class="m tr hook" id="al-h2"><b data-hf-id="hf-yrlk">⚓ PreToolUse · lock_guard → allowed</b><br data-hf-id="hf-q7jp">write_file src/checkout.ts · you own it</div>
           <div data-hf-id="hf-mabd" class="m tr" id="al-note" style="border-color:#08bdba"><b data-hf-id="hf-ljqh" style="color:#08bdba">lock held</b><br data-hf-id="hf-regs">Umar's Bob asked for checkout.ts · queued #1</div>
         </div>
-        <div data-hf-id="hf-9ve7" class="inp"><span data-hf-id="hf-pk5h" class="ph">Ask Bob…</span></div>
+        <div data-hf-id="hf-9ve7" class="inp"><span data-hf-id="hf-pk5h" class="ph">Follow up or start new task ⌘N</span></div><div class="ft"><span>＋</span><span data-hf-id="hf-e5vc" class="mode"><span data-hf-id="hf-r0bm" id="al-mode-a">Code ⌄</span><span data-hf-id="hf-t3c8" id="al-mode-b" class="on" style="display:none;color:#78a9ff">Live Collab Coder ⌄</span></span><span class="perm">⛉ Permissions ⌄</span><span class="send">↑</span></div>
       </div>
     </div>
-    <div data-hf-id="hf-l5gv" class="status">radar · connected · 3 members<span data-hf-id="hf-s5kr" style="margin-left:auto">mode: coder</span></div>
-    <div data-hf-id="hf-ndic" class="toast" id="al-toast" style="--c:#be95ff;bottom:36px"><small data-hf-id="hf-s4fb">New task from Aarief</small>T1 · Promo codes at checkout</div>
+    <div data-hf-id="hf-l5gv" class="status" data-layout-allow-overlap><span data-layout-allow-overlap class="ok0">⊗ 0 ⚠ 0</span><span data-layout-allow-overlap>radar · connected · 3 members</span><span data-layout-allow-overlap data-hf-id="hf-s5kr" style="margin-left:auto">mode: coder · Bob Settings</span></div>
+    <div data-hf-id="hf-ndic" class="toast" id="al-toast" style="--c:#be95ff;top:112px"><small data-hf-id="hf-s4fb">New task from Aarief</small>T1 · Promo codes at checkout</div>
   </div>
 
   <!-- ===== Umar · coder ===== -->
   <div data-hf-id="hf-9nfi" class="win" id="w-um" style="left:840px;top:560px;width:1040px;height:480px;--c:#08bdba;--bg-ai:rgba(8,189,186,0.09)">
-    <div data-hf-id="hf-t6gq" class="bar"><s data-hf-id="hf-sspb"></s><s data-hf-id="hf-t70c"></s><s data-hf-id="hf-qev5"></s>toko-demo — Bob IDE<span data-hf-id="hf-4x4m" class="who"><i data-hf-id="hf-zsm9"></i>Umar <small data-hf-id="hf-mwx9">coder</small></span></div>
+    <div data-hf-id="hf-t6gq" class="bar"><s data-hf-id="hf-sspb"></s><s data-hf-id="hf-t70c"></s><s data-hf-id="hf-qev5"></s><span class="ttl">toko-demo — IBM Bob</span><span data-hf-id="hf-4x4m" class="who"><i data-hf-id="hf-zsm9"></i>Umar <small data-hf-id="hf-mwx9">coder</small></span></div>
     <div data-hf-id="hf-59cd" class="body">
-      <div data-hf-id="hf-57vh" class="act"><i data-hf-id="hf-iooy" class="on"></i><i data-hf-id="hf-06xa"></i><i data-hf-id="hf-26gf"></i></div>
-      <div data-hf-id="hf-5ra1" class="exp"><h6 data-hf-id="hf-l8qs">TOKO-DEMO</h6>
-        <div data-hf-id="hf-4xsj" class="f" style="--p:10px">▾ src</div>
-        <div data-hf-id="hf-xnq5" class="f" id="um-f-co">checkout.ts<span data-hf-id="hf-e5v8" class="lock lk" style="--c:#78a9ff">🔒 Alief</span></div>
-        <div data-hf-id="hf-ncvo" class="f">promo.ts<span data-hf-id="hf-6de4" class="lock lk" style="--c:#78a9ff">🔒 Alief</span></div>
-        <div data-hf-id="hf-0ukq" class="f">Header.tsx<span data-hf-id="hf-x7xp" class="lock lk" style="--c:#08bdba">Umar · you</span></div>
-        <div data-hf-id="hf-gili" class="f">cartBadge.ts<span data-hf-id="hf-y6u9" class="lock lk" style="--c:#08bdba">Umar · you</span></div>
-        <div data-hf-id="hf-epmu" class="f" style="--p:10px">▾ .bob</div>
-        <div data-hf-id="hf-3qd7" class="f">custom_modes.yaml</div><div data-hf-id="hf-u8g9" class="f">settings.json</div><div data-hf-id="hf-3e6i" class="f">mcp.json</div><div data-hf-id="hf-agem" class="f">rules-coder/</div>
+      <div data-hf-id="hf-57vh" class="act"><i class="ind"></i><svg class="on" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="8" r="2"/><path d="M6 8v8M18 10c0 4-6 3-10 6"/></svg><svg viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z"/></svg><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7"/><rect x="13" y="4" width="7" height="7"/><rect x="4" y="13" width="7" height="7"/><rect x="13" y="13" width="7" height="7"/></svg><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M6 6l12 12M18 6L6 18"/></svg><svg class="bot" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg></div>
+      <div data-hf-id="hf-5ra1" class="exp"><h6 data-hf-id="hf-l8qs">EXPLORER<span>···</span></h6><div class="f ws" style="--p:8px">⌄ TOKO-DEMO</div>
+        <div data-hf-id="hf-4xsj" class="f" style="--p:10px">⌄ src</div>
+        <div data-hf-id="hf-xnq5" class="f" id="um-f-co"><i class="fi ts">TS</i>checkout.ts<span data-hf-id="hf-e5v8" class="lock lk" style="--c:#78a9ff">🔒 Alief</span></div>
+        <div data-hf-id="hf-ncvo" class="f"><i class="fi ts">TS</i>promo.ts<span data-hf-id="hf-6de4" class="lock lk" style="--c:#78a9ff">🔒 Alief</span></div>
+        <div data-hf-id="hf-0ukq" class="f"><i class="fi tsx">⚛</i>Header.tsx<span data-hf-id="hf-x7xp" class="lock lk" style="--c:#08bdba">Umar · you</span></div>
+        <div data-hf-id="hf-gili" class="f"><i class="fi ts">TS</i>cartBadge.ts<span data-hf-id="hf-y6u9" class="lock lk" style="--c:#08bdba">Umar · you</span></div>
+        <div data-hf-id="hf-epmu" class="f" style="--p:10px">⌄ .bob</div>
+        <div data-hf-id="hf-3qd7" class="f"><i class="fi cfg">{}</i>custom_modes.yaml</div><div data-hf-id="hf-u8g9" class="f"><i class="fi cfg">{}</i>settings.json</div><div data-hf-id="hf-3e6i" class="f"><i class="fi cfg">{}</i>mcp.json</div><div data-hf-id="hf-agem" class="f">› rules-coder</div>
       </div>
       <div data-hf-id="hf-2hir" class="ed">
-        <div data-hf-id="hf-h3v1" class="tabs"><div data-hf-id="hf-hqdq" class="tab cur" style="--c:#08bdba">Header.tsx</div><div data-hf-id="hf-h0bp" class="tab" id="um-tab2" style="display:none">checkout.ts 🔒</div></div>
+        <div data-hf-id="hf-h3v1" class="tabs"><div data-hf-id="hf-hqdq" class="tab cur" style="--c:#08bdba"><i class="fi tsx">⚛</i>Header.tsx<span class="x">×</span></div><div data-hf-id="hf-h0bp" class="tab" id="um-tab2" style="display:none">checkout.ts 🔒</div></div><div class="crumb">src › Header.tsx › …</div>
         <span data-hf-id="hf-clod" class="aipill" id="um-pill" style="--c:#08bdba;opacity:0">Umar · Bob coder writing</span>
         <div data-hf-id="hf-indb" class="code" id="um-code"><span data-hf-id="hf-el91" class="ln ai"><b data-hf-id="hf-dmic">1</b><span data-hf-id="hf-anv1" class="k">import</span> { calculateTotal } <span data-hf-id="hf-ytro" class="k">from</span> <span data-hf-id="hf-gjc7" class="s">'./checkout'</span></span><span data-hf-id="hf-4o86" class="ln ai"><b data-hf-id="hf-mt2h">2</b><span data-hf-id="hf-bus4" class="k">import</span> { cartCount } <span data-hf-id="hf-xmul" class="k">from</span> <span data-hf-id="hf-js14" class="s">'./cartBadge'</span></span><span data-hf-id="hf-oupj" class="ln"><b data-hf-id="hf-nwee">3</b> </span><span data-hf-id="hf-y5qp" class="ln ai"><b data-hf-id="hf-0683">4</b><span data-hf-id="hf-ycv2" class="k">export function</span> Header({ cart, code }) {</span><span data-hf-id="hf-10za" class="ln ai"><b data-hf-id="hf-zl1k">5</b>  <span data-hf-id="hf-u3y2" class="k">const</span> total = <span data-hf-id="hf-3ytz" class="fn">calculateTotal</span>(cart, code)</span><span data-hf-id="hf-s6ca" class="ln ai"><b data-hf-id="hf-w1st">6</b>  <span data-hf-id="hf-2gpa" class="k">return</span> &lt;header&gt;Cart ({cartCount(cart)}) · {total}&lt;/header&gt;</span><span data-hf-id="hf-b3vy" class="ln ai"><b data-hf-id="hf-nybe">7</b>}</span></div>
       </div>
       <div data-hf-id="hf-r2aw" class="chat" style="width:400px">
-        <div data-hf-id="hf-br0a" class="hd"><span data-hf-id="hf-qcdl" class="bm">B</span>Bob <span data-hf-id="hf-d1qo" class="mode"><span data-hf-id="hf-mwi5" id="um-mode-a">◐ Code ▾</span><span data-hf-id="hf-ercl" id="um-mode-b" class="on" style="display:none;color:#08bdba">◐ Live Collab Coder ▾</span></span></div>
+        <div class="hd"><span class="ptab">IBM BOB</span><span class="ic">⚙ ☰ ＋ ⋯</span></div><div class="tk" data-layout-allow-overlap><span data-layout-allow-overlap>Work on task T2 · Cart total in header</span><span data-layout-allow-overlap class="xx">×</span></div>
         <div data-hf-id="hf-pqh7" class="msgs">
           <div data-hf-id="hf-kso4" class="m tr hook" id="um-h1"><b data-hf-id="hf-bg9t">⚓ hook · SessionStart · brief</b><br data-hf-id="hf-r05r">You: Umar · T2 Cart total<br data-hf-id="hf-p0mm">Alief owns checkout.ts, promo.ts</div>
           <div data-hf-id="hf-rnyl" class="m u" id="um-u1" style="--c:#08bdba">Start my task.</div>
@@ -249,11 +298,11 @@
           <div data-hf-id="hf-k9bh" class="m tr" id="um-t4"><b data-hf-id="hf-gwzl">⧉ mcp · radar.request_file</b><br data-hf-id="hf-otfe">checkout.ts · queued for PM<span data-hf-id="hf-ubb0" class="st"><span data-hf-id="hf-72zt" class="spin"></span><span data-hf-id="hf-u58o" class="chk">✓</span></span></div>
           <div data-hf-id="hf-7bz2" class="m bob" id="um-b2">Queued #1. Header.tsx already passes the code through. Continuing.</div>
         </div>
-        <div data-hf-id="hf-elov" class="inp"><span data-hf-id="hf-8gri" class="ph" id="um-ph">Ask Bob…</span><span data-hf-id="hf-7ff5" id="um-typed" data-text="Header needs the discounted total. Update calculateTotal() in checkout.ts."></span></div>
+        <div data-hf-id="hf-elov" class="inp"><span data-hf-id="hf-8gri" class="ph" id="um-ph">Follow up or start new task ⌘N</span><span data-hf-id="hf-7ff5" id="um-typed" data-text="Header needs the discounted total. Update calculateTotal() in checkout.ts."></span></div><div class="ft"><span>＋</span><span data-hf-id="hf-d1qo" class="mode"><span data-hf-id="hf-mwi5" id="um-mode-a">Code ⌄</span><span data-hf-id="hf-ercl" id="um-mode-b" class="on" style="display:none;color:#08bdba">Live Collab Coder ⌄</span></span><span class="perm">⛉ Permissions ⌄</span><span class="send">↑</span></div>
       </div>
     </div>
-    <div data-hf-id="hf-kr5u" class="status">radar · connected · 3 members<span data-hf-id="hf-88aj" style="margin-left:auto">mode: coder</span></div>
-    <div data-hf-id="hf-1fi2" class="toast" id="um-toast" style="--c:#be95ff;bottom:36px"><small data-hf-id="hf-v2fb">New task from Aarief</small>T2 · Cart total in header</div>
+    <div data-hf-id="hf-kr5u" class="status" data-layout-allow-overlap><span data-layout-allow-overlap class="ok0">⊗ 0 ⚠ 0</span><span data-layout-allow-overlap>radar · connected · 3 members</span><span data-layout-allow-overlap data-hf-id="hf-88aj" style="margin-left:auto">mode: coder · Bob Settings</span></div>
+    <div data-hf-id="hf-1fi2" class="toast" id="um-toast" style="--c:#be95ff;top:112px"><small data-hf-id="hf-v2fb">New task from Aarief</small>T2 · Cart total in header</div>
     <div data-hf-id="hf-k39n" class="flash" id="um-flash"></div>
   </div>
 
@@ -262,14 +311,15 @@
   <div data-hf-id="hf-lrlw" class="chipw" id="fly2" style="--c:#08bdba;left:520px;top:700px"><i data-hf-id="hf-oz7w"></i>T2 → Umar</div>
   <svg data-hf-id="hf-8u36" class="cursor" id="d-cursor" viewBox="0 0 22 30"><path data-hf-id="hf-m8a9" d="M2 2 L2 24 L8 18 L12 28 L16 26 L12 16 L20 16 Z" fill="#fff" stroke="#161616" stroke-width="1.5" /></svg>
 </div>
-<div data-hf-id="hf-67u9" id="d-cap" style="--c:#be95ff"><i data-hf-id="hf-okwv"></i><span data-hf-id="hf-gdks" id="d-cap-t">custom mode <em data-hf-id="hf-tk9d">pm-lead</em> · read + mcp only</span></div>
+<div data-hf-id="hf-67u9" id="d-cap" data-layout-allow-overlap style="--c:#be95ff"><i data-hf-id="hf-okwv"></i><span data-hf-id="hf-gdks" id="d-cap-t">custom mode <em data-hf-id="hf-tk9d">pm-lead</em> · read + mcp only</span></div>
 </div>
 <script>
 (function(){
   const tl = gsap.timeline({ paused: true });
   const W = 1920, H = 1080;
   const cam = (r, s) => { const k = s || Math.min(W / r.w, H / r.h) * 0.94; return { x: W / 2 - (r.x + r.w / 2) * k, y: H / 2 - (r.y + r.h / 2) * k, scale: k }; };
-  const move = (t, r, d, ease, s) => tl.to("#d-world", Object.assign(cam(r, s), { duration: d, ease: ease || "power3.inOut" }), t);
+  // While the camera moves, composite the world as one layer so glyphs glide instead of re-snapping to pixels every frame; re-raster sharp once it lands.
+  const move = (t, r, d, ease, s) => { tl.set("#d-world", { willChange: "transform" }, t); tl.to("#d-world", Object.assign(cam(r, s), { duration: d, ease: ease || "power3.inOut" }), t); tl.set("#d-world", { willChange: "auto" }, t + d); };
   const show = (sel, t, disp) => { tl.set(sel, { display: disp || "block" }, t); tl.fromTo(sel, { opacity: 0, y: 12, filter: "blur(6px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.4, ease: "power3.out" }, t); };
   const done = (id, t0, t1) => { tl.to("#" + id + " .spin", { rotation: 360 * Math.max(1, Math.floor((t1 - t0) / 0.6)), duration: t1 - t0, ease: "none" }, t0); tl.set("#" + id + " .spin", { display: "none" }, t1); tl.set("#" + id + " .chk", { display: "block" }, t1); };
   const typeInto = (id, t, d) => { const el = document.getElementById(id); const txt = el.dataset.text; el.textContent = ""; const spans = [...txt].map(c => { const s = document.createElement("span"); s.textContent = c; s.style.opacity = "0"; el.appendChild(s); return s; }); tl.to(spans, { opacity: 1, duration: 0.001, stagger: d / spans.length, ease: "none" }, t); return spans; };
@@ -302,14 +352,14 @@
   tl.to("#d-cursor", { opacity: 0, duration: 0.25 }, 2.4);
   move(2.6, { x: 83, y: 112, w: 300, h: 330 }, 1.2);                    // "client brief" → the whole page
   move(5.1, { x: 88, y: 236, w: 290, h: 95 }, 1.5);                     // "only Aarief knows" → the scope table
-  move(8.6, { x: 250, y: 50, w: 700, h: 394 }, 1.2);                   // "switches" → mode dropdown
-  tl.set("#pm-menu", { display: "block" }, 10.9);                     // "custom mode"
-  tl.fromTo("#pm-menu", { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.25 }, 10.9);
-  tl.set("#pm-menu", { display: "none" }, 12.3);
-  tl.set("#pm-mode-a", { display: "none" }, 12.3);
-  tl.set("#pm-mode-b", { display: "inline" }, 12.3);
-  tl.fromTo("#pm-mode", { scale: 1 }, { scale: 1.15, duration: 0.15, yoyo: true, repeat: 1, borderColor: "#be95ff" }, 12.3);
-  cap(13, "<span class=\"bb\">IBM Bob · Custom mode</span> <em>pm-lead</em>", "#be95ff");
+  move(8.6, { x: 340, y: 760, w: 470, h: 270 }, 1.2);                   // "switches" → mode dropdown
+  tl.set("#pm-menu", { display: "block" }, 10.3);                     // "custom mode"
+  tl.fromTo("#pm-menu", { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.25 }, 10.3);
+  tl.set("#pm-menu", { display: "none" }, 11.6);
+  tl.set("#pm-mode-a", { display: "none" }, 11.6);
+  tl.set("#pm-mode-b", { display: "inline" }, 11.6);
+  tl.fromTo("#pm-mode", { scale: 1 }, { scale: 1.15, duration: 0.15, yoyo: true, repeat: 1, borderColor: "#be95ff" }, 11.6);
+  cap(12.3, "<span class=\"bb\">IBM Bob · Custom mode</span> <em>pm-lead</em>", "#be95ff");
   move(14.8, { x: 40, y: 760, w: 760, h: 428 }, 1.2);                  // "read and plan" → status bar
   tl.fromTo("#pm-stat", { color: "#ffffff" }, { color: "#f1c21b", duration: 0.3, yoyo: true, repeat: 3 }, 16.4);
   tl.to("#d-cap", { opacity: 0, duration: 0.3 }, 16.2);
@@ -328,7 +378,7 @@
   show("#pm-b1", 25.2);
   show("#pm-t1", 25.5); done("pm-t1", 25.5, 26.6);                     // "checks who's online"
   show("#pm-t2", 27.1); done("pm-t2", 27.1, 29.2);                     // "proposes a plan"
-  cap(30.2, "<span class=\"bb\">IBM Bob · MCP</span> our <em>radar-mcp</em> server", "#78a9ff", 33.6, true);
+  cap(29.2, "<span class=\"bb\">IBM Bob · MCP</span> our <em>radar-mcp</em> server", "#78a9ff", 33.6, true);
   show("#pm-plan", 29.6);
   tl.fromTo(["#pm-r1", "#pm-r2"], { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.4, stagger: 0.9, ease: "power3.out" }, 32.1);   // "Every task"
   tl.fromTo(["#pm-r1 span", "#pm-r2 span"], { color: "#a8a8a8" }, { color: "#f4f4f4", duration: 0.25, yoyo: true, repeat: 3 }, 36);     // "exactly one person"
