@@ -108,14 +108,14 @@ export function registerAdminRoutes(app: Hono, deps: WorkspaceDeps): void {
  * Without `member` the code is open (D-alief-10): its first redeem adds a new member.
  * `owner` makes an owner code (D-alief-11): each redeem rotates the Mission Control token.
  */
-export function createJoinCode(deps: WorkspaceDeps, req: AdminJoinCodeReq): AdminJoinCodeRes {
+export function createJoinCode(deps: WorkspaceDeps, req: AdminJoinCodeReq, ttlMs?: number): AdminJoinCodeRes {
   requireInitialised(deps);
   const member = req.member ?? null;
   if (member !== null && !getMember(deps.db, member))
     throw new RadarError(404, 'NOT_FOUND', `There is no member ${member}.`);
   const code = newJoinCode();
   const now = deps.now();
-  const expiresAt = now + (req.ttlHours ?? JOIN_CODE_TTL_HOURS_DEFAULT) * 3_600_000;
+  const expiresAt = now + (ttlMs ?? (req.ttlHours ?? JOIN_CODE_TTL_HOURS_DEFAULT) * 3_600_000);
   deps.transact(() => {
     deleteExpiredJoinCodes(deps.db, now);
     insertJoinCode(deps.db, {
