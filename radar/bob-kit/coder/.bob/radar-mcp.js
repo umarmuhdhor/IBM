@@ -29898,7 +29898,8 @@ var RadarEventSchema = external_exports.discriminatedUnion("type", [
       by: MemberIdSchema,
       reason: external_exports.string(),
       holderMemberId: MemberIdSchema.nullable(),
-      holderTaskId: TaskIdSchema.nullable()
+      holderTaskId: TaskIdSchema.nullable(),
+      holderRange: LineRangeSchema.optional()
     })
   ),
   event("sync.applied", external_exports.object({ path: PathSchema, version: external_exports.number().int().nonnegative(), memberId: MemberIdSchema, latencyMs: external_exports.number() })),
