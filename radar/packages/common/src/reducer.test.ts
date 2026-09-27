@@ -253,4 +253,14 @@ describe('feedText', () => {
     ).toBe('21:06 Budi is #1 in the queue for checkout.ts');
     expect(feedText({ id: 2, ts, actor: 'A', type: 'bob.turn', payload: { memberId: 'A' } })).toBeNull();
   });
+
+  it('names an empty folder, not its marker path (fase 12k bug 1)', () => {
+    const ts = Date.UTC(2026, 8, 26, 13, 6);
+    expect(
+      feedText({ id: 1, ts, actor: 'A', type: 'file.changed', payload: { path: 'src/empty/.radar-dir', version: 1, hash: 'h', by: 'A', taskId: null, size: 0 } }, { A: 'Andi' }),
+    ).toBe('21:06 Andi adds the empty folder empty/');
+    expect(feedText({ id: 2, ts, actor: 'A', type: 'file.deleted', payload: { path: 'src/empty/.radar-dir', version: 2, by: 'A', taskId: null } }, { A: 'Andi' })).toBe(
+      '21:06 Andi removes the empty folder empty/',
+    );
+  });
 });

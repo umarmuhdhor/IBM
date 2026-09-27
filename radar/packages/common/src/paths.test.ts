@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   basename,
+  DIR_MARKER,
+  dirMarkerFolder,
+  isDirMarker,
   isInside,
   normalizeRelative,
   PathOutsideWorkspaceError,
@@ -59,5 +62,14 @@ describe('paths', () => {
   it('basename returns the last segment', () => {
     expect(basename('src/checkout/checkout.ts')).toBe('checkout.ts');
     expect(basename('README.md')).toBe('README.md');
+  });
+
+  it('an empty folder travels as the marker path <folder>/.radar-dir (fase 12k bug 1)', () => {
+    expect(DIR_MARKER).toBe('.radar-dir');
+    expect(isDirMarker('src/empty/.radar-dir')).toBe(true);
+    expect(isDirMarker('.radar-dir')).toBe(false);
+    expect(isDirMarker('src/empty/.radar-dir.radar-conflict')).toBe(false);
+    expect(isDirMarker('src/utils.ts')).toBe(false);
+    expect(dirMarkerFolder('src/empty/.radar-dir')).toBe('src/empty');
   });
 });

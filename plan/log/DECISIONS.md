@@ -550,3 +550,14 @@ Format:
   3. Mock server (`radar/scripts/mock`) mengikuti teks yang sama supaya lane lain melihat hal yang sama.
   4. Tes `server/test/language.test.ts` menolak literal string di `server/src` dan `common/src/events.ts` yang berbunyi seperti kalimat bahasa Indonesia (dua kata Indonesia umum atau lebih).
 - Dampak: R5 §1 baris "Bahasa teks" diubah. Klien tidak mem-parse teks ini, jadi tidak ada perubahan kontrak. Output tool radar-mcp (`mcp/src`, lane Umar) masih berbahasa Indonesia; usulan terjemahan dicatat di log fase 12k.
+
+## D-alief-19 · 27 Sep 2026 · fase 12k · Folder kosong ikut tersinkron (penanda `.radar-dir`)
+
+- Konteks: protokol sync hanya mengenal file. Folder kosong yang dibuat satu orang (misalnya `assets/icons/`) tidak pernah muncul di laptop teman, dan folder kosong yang dihapus juga tidak ikut terhapus.
+- Keputusan:
+  1. Folder kosong dikirim sebagai path file `<folder>/.radar-dir` dengan isi kosong (`file.update` biasa). Hapus folder = `file.delete` untuk path itu. Tidak ada tipe pesan atau field baru; server tidak berubah.
+  2. `@radar/common` menambah `DIR_MARKER`, `isDirMarker()`, `dirMarkerFolder()` (aditif). Feed menulis "Andi adds the empty folder icons/" dan "Andi removes the empty folder icons/", bukan nama penanda.
+  3. Agent sync tidak pernah menulis file `.radar-dir` ke disk: penanda "ada" selama folder ada dan tidak berisi apa pun yang tersinkron (file yang di-ignore seperti `.DS_Store` tidak dihitung). Terima penanda = `mkdir`; terima hapus = hapus folder kalau kosong (atau hanya berisi `.DS_Store`/`Thumbs.db`/`desktop.ini`). Folder yang diisi file membuat penanda terhapus otomatis.
+  4. Setelah hapus dari server, folder induk yang jadi kosong tidak dihapus kalau server masih punya penandanya (teman sengaja membagikan folder kosong itu).
+  5. File asli bernama `.radar-dir` di folder user tidak pernah disinkron.
+- Dampak: penanda ikut ke commit GitHub per task sebagai file kosong (seperti `.gitkeep`). App, hooks, dan radar-mcp tidak berubah; daftar file di UI bisa menampilkan `<folder>/.radar-dir` sebagai baris file.

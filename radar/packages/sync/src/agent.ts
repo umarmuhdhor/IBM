@@ -4,6 +4,7 @@
 import { EventEmitter } from 'node:events';
 import WebSocket from 'ws';
 import {
+  DIR_MARKER,
   HEARTBEAT_INTERVAL_MS,
   SYNC_DEBOUNCE_MS,
   WS_CLOSE_REASON_CLOSED,
@@ -424,15 +425,26 @@ export class SyncAgent extends EventEmitter {
   /** Keeps an unsent local edit before a server write replaces it. Returns the sidecar path. */
   private hasUnsentEdit(path: string, knownHash: string, incomingHash: string): boolean {
     try {
-      const local = readLocal(this.root, path);
+      const local = this.readFile(path);
       return local.kind === 'text' && local.hash !== knownHash && local.hash !== incomingHash;
     } catch {
       return false;
     }
   }
 
+  /** Reads a local file; an empty-folder marker is judged with the current ignore rules. */
+  private readFile(path: string): LocalFile {
+    return readLocal(this.root, path, (r) => this.matcher.ignores(r));
+  }
+
+  /** True while the server has `<folder>/.radar-dir`: a teammate shares that folder empty on purpose. */
+  private sharesEmptyFolder(folder: string): boolean {
+    const k = folder ? this.known.get(`${folder}/${DIR_MARKER}`) : undefined;
+    return k !== undefined && k.hash !== DELETED_HASH;
+  }
+
   private saveConflict(path: string, previousHash: string | undefined, incomingHash: string): string | null {
-    const local = readLocal(this.root, path);
+    const local = this.readFile(path);
     if (local.kind === 'missing') return null;
     if (local.kind === 'text' && (local.hash === incomingHash || local.hash === previousHash)) return null;
     const sidecar = writeSidecar(this.root, path, 'conflict', local.kind === 'text' ? local.content : local.bytes);
@@ -456,7 +468,7 @@ export class SyncAgent extends EventEmitter {
       }
       const prev = this.known.get(path);
       if (prev && f.version < prev.version) continue;
-      const local = readLocal(this.root, path);
+      const local = this.readFile(path);
       if (local.kind === 'text' && local.hash === f.hash) {
         // Already equal (for example our ack was lost): agree without writing.
         this.known.set(path, { version: f.version, hash: f.hash });
@@ -496,7 +508,7 @@ export class SyncAgent extends EventEmitter {
     }
     // Deleted while offline: known on the server, gone from disk.
     for (const [rel, e] of this.known.entries()) {
-      if (e.hash !== DELETED_HASH && e.version > 0 && !this.dirty.has(rel) && readLocal(this.root, rel).kind === 'missing') this.dirty.add(rel);
+      if (e.hash !== DELETED_HASH && e.version > 0 && !this.dirty.has(rel) && this.readFile(rel).kind === 'missing') this.dirty.add(rel);
     }
     for (const rel of [...this.dirty]) {
       this.dirty.delete(rel);
@@ -516,7 +528,7 @@ export class SyncAgent extends EventEmitter {
     // D-alief-17: the server merged this save with a teammate's lines. Write the result back, unless the user
     // edited the file again meanwhile: that newer edit is sent next and the server checks it against the lines.
     if (fresh && d.merged && d.content !== undefined && p && p.id === id) {
-      const local = readLocal(this.root, d.path);
+      const local = this.readFile(d.path);
       if (local.kind === 'text' && local.hash === p.hash) {
         atomicWrite(this.root, d.path, d.content);
         this.log('ack.merged', `${d.path} v${d.version} merged with a teammate's edit`);
@@ -538,7 +550,7 @@ export class SyncAgent extends EventEmitter {
     this.known.set(path, { version, hash: DELETED_HASH });
     removeLocal(this.root, path);
     // A folder renamed on another Mac arrives as deletes plus adds; do not leave the old folder behind empty.
-    pruneEmptyParents(this.root, path);
+    pruneEmptyParents(this.root, path, (folder) => this.sharesEmptyFolder(folder));
     if (isGitignore(path)) this.rebuildMatcher();
     return true;
   }
@@ -619,7 +631,7 @@ export class SyncAgent extends EventEmitter {
       return;
     }
     const serverFile = s.version > 0 && !s.deleted && s.content !== null && s.hash !== null ? { version: s.version, hash: s.hash, content: s.content } : null;
-    const local = readLocal(this.root, path);
+    const local = this.readFile(path);
     if (serverFile && local.kind === 'text' && local.hash === serverFile.hash) {
       this.known.set(path, { version: serverFile.version, hash: serverFile.hash });
       this.log('reject.equal', `${path} ${d.reason} (local already equals server v${s.version})`);
@@ -665,7 +677,7 @@ export class SyncAgent extends EventEmitter {
     }
     let local: LocalFile;
     try {
-      local = readLocal(this.root, path);
+      local = this.readFile(path);
     } catch (err) {
       if (!(err instanceof UnsafePathError)) throw err;
       this.log('local.unsafe', `${path} (symlink out of the workspace)`);

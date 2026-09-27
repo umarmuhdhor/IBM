@@ -1,5 +1,5 @@
 // Integration: real Worker + Durable Object (phase 03) and three SyncAgents in temp folders (fase 04 step 11).
-import { appendFileSync, existsSync, mkdirSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, afterEach, beforeAll, describe, expect, it, onTestFailed } from 'vitest';
 import { SyncAgent, type SyncAgentOptions } from '../src/agent.js';
@@ -256,4 +256,32 @@ describe('sync agent against the real server', () => {
     expect(A.a.stats.updatesSent).toBe(0);
     expect(existsSync(join(A.root, '.radar'))).toBe(true); // sync.log lives there
   });
+
+  it('an empty folder reaches teammates, and so does its removal (fase 12k bug 1)', async () => {
+    const t = await seedTestWorkspace(server.url, SEED);
+    const [A, B] = await Promise.all([agent(t.A!, 'A'), agent(t.B!, 'B')]);
+    mkdirSync(join(A.root, 'assets/icons'), { recursive: true });
+    await waitFor(() => existsSync(join(B.root, 'assets/icons')), 5000, 'B has assets/icons');
+    // The marker only travels on the wire: nobody gets a .radar-dir file on disk.
+    expect(existsSync(join(A.root, 'assets/icons/.radar-dir'))).toBe(false);
+    expect(existsSync(join(B.root, 'assets/icons/.radar-dir'))).toBe(false);
+    // A file in the folder makes it non-empty: the file arrives, no conflict copy appears.
+    writeFileSync(join(A.root, 'assets/icons/logo.svg'), '<svg/>');
+    await waitFor(() => read(B.root, 'assets/icons/logo.svg') === '<svg/>', 5000, 'B has logo.svg');
+    rmSync(join(A.root, 'assets'), { recursive: true });
+    await waitFor(() => !existsSync(join(B.root, 'assets')), 5000, 'B lost assets/');
+    await sleep(500);
+    expect(existsSync(join(A.root, 'assets'))).toBe(false);
+    // Emptied, but kept: B removes the file and keeps the folder, A's folder stays and B gets it back.
+    mkdirSync(join(B.root, 'notes'));
+    writeFileSync(join(B.root, 'notes/todo.md'), '- x\n');
+    await waitFor(() => read(A.root, 'notes/todo.md') === '- x\n', 5000, 'A has notes/todo.md');
+    rmSync(join(B.root, 'notes/todo.md'));
+    await waitFor(() => !existsSync(join(A.root, 'notes/todo.md')), 5000, 'A lost todo.md');
+    await sleep(3000);
+    expect(existsSync(join(A.root, 'notes'))).toBe(true);
+    expect(existsSync(join(B.root, 'notes'))).toBe(true);
+    const conflicts = (root: string) => (existsSync(root) ? readdirSync(root, { recursive: true }).map(String).filter((p) => p.includes('.radar-conflict')) : []);
+    expect([...conflicts(A.root), ...conflicts(B.root)]).toEqual([]);
+  }, 30_000);
 });
