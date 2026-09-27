@@ -76,6 +76,22 @@ it('titles the joined workspace with your name and role, not the server member l
   useRadarStore.setState({ state: null })
 })
 
+it('titles a PM saved by an older app as PM, from the workspace members', async () => {
+  status.state = 'syncing'
+  status.message = null
+  const state = {
+    workspace: { id: 'w', name: 'old', headCommit: null, repoUrl: null },
+    members: {
+      B: { id: 'B', name: 'Sari', role: 'pm', color: null, online: true, stale: false, activeTaskId: null, blocked: false, writingUntil: 0 }
+    },
+    tasks: {}, locks: {}, files: {}, requests: {}, proposals: {}, feed: [], bobActivity: {}, cursor: 0
+  } satisfies RadarState
+  useRadarStore.setState({ state })
+  render(<JoinWithCodeCard connection={member} onConnectionChange={vi.fn()} />)
+  expect(await screen.findByRole('heading', { name: 'old · Sari (PM)' })).toBeTruthy()
+  useRadarStore.setState({ state: null })
+})
+
 it('tells a PM why their edit was not sent', async () => {
   status.state = 'syncing'
   status.message = null

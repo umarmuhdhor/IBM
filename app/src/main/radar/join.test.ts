@@ -143,6 +143,12 @@ describe('joinWithCode', () => {
     )
   })
 
+  it('saves a PM as a PM, so the app titles the workspace with the right role', async () => {
+    respond(200, { workspace: 'toko-demo', member: 'E', role: 'pm', invite })
+    await joinWithCode('K7QM-3XPA', SERVER, 'Sari', 'pm')
+    expect(mocks.saveRadarConnection).toHaveBeenCalledWith(expect.objectContaining({ role: 'pm' }))
+  })
+
   it('an owner code saves a Mission Control connection and does not sync files (D-alief-11)', async () => {
     respond(200, { workspace: 'toko-demo', member: null, role: 'mc', token: 'rdr_test_mc_value' })
     mocks.getRadarConnectionSummary.mockReturnValue({

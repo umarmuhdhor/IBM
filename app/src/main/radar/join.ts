@@ -77,12 +77,12 @@ export async function joinWithCode(
     return connectOwner(server, res.workspace, res.token)
   }
   const invite = decodeInvite(res.invite)
-  // Why: the app's connection model knows coder and mc only; a PM member uses the member socket too.
+  // Why: a PM uses the member socket too; the saved role only titles the workspace.
   const connection: RadarConnection = {
     server: `${new URL(invite.server).origin}/`,
     workspace: invite.workspace,
     member: invite.member,
-    role: 'coder',
+    role: res.role,
     token: invite.token
   }
   saveRadarConnection(connection)
