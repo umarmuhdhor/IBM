@@ -120,7 +120,8 @@ export function createApp(deps: WorkspaceDeps): Hono {
       } else {
         // An offline seat with the same name is the same person coming back (their code proves the owner invited them).
         const offline = offlineMemberNamed(deps.db, req.name);
-        if (offline) {
+        // The owner's seat comes back only through the owner's own token (D-alief-21), never by name.
+        if (offline && offline.id !== getMeta(deps.db, 'owner_member')) {
           reuseSeatForCode(deps, hash, offline.id, req.name, req.role);
           memberId = offline.id;
         } else {

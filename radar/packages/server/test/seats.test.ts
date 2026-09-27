@@ -78,6 +78,13 @@ describe('rejoining without a token reuses the offline seat (bug reconnect)', ()
       { id: 'B', name: 'dewi', role: 'coder' },
     ]);
   });
+
+  it("a newcomer using the owner's name while the owner is offline gets a new seat, never the owner's", async () => {
+    const { stub } = freshWorkspace();
+    const open = await openWorkspace(stub);
+    const same = await join(stub, open.code, 'alief', 'coder');
+    expect(same.member).toBe('B');
+  });
 });
 
 describe('the owner removes a seat (bug 5)', () => {

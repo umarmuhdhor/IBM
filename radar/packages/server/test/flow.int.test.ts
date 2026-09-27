@@ -106,8 +106,8 @@ describe('flow: plan → block → decision → review → approve (fase 05 step
     });
     expect(review.status).toBe(201);
 
-    // 8. MA-07: no member token may decide, not even the PM's.
-    for (const tok of [t.C, t.A]) expect((await call(stub, 'POST', `/v1/proposals/${review.json.proposalId}/decision`, { token: tok, body: { approve: true } })).status).toBe(403);
+    // 8. MA-07 (D-umar-08): a coder may not decide; the PM and Mission Control may.
+    for (const tok of [t.A]) expect((await call(stub, 'POST', `/v1/proposals/${review.json.proposalId}/decision`, { token: tok, body: { approve: true } })).status).toBe(403);
 
     const approve = await call(stub, 'POST', `/v1/proposals/${review.json.proposalId}/decision`, { token: t.mc, body: { approve: true } });
     expect(approve.status).toBe(200);
