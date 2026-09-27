@@ -1,0 +1,559 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>IBM Bob Live Collab — 15s</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Plex"; src: url("assets/fonts/plex-sans-400.woff2") format("woff2"); font-weight: 400; }
+      @font-face { font-family: "Plex"; src: url("assets/fonts/plex-sans-500.woff2") format("woff2"); font-weight: 500; }
+      @font-face { font-family: "Plex"; src: url("assets/fonts/plex-sans-600.woff2") format("woff2"); font-weight: 600; }
+      @font-face { font-family: "Plex"; src: url("assets/fonts/plex-sans-700.woff2") format("woff2"); font-weight: 700; }
+      @font-face { font-family: "PlexMono"; src: url("assets/fonts/plex-mono-400.woff2") format("woff2"); font-weight: 400; }
+      @font-face { font-family: "PlexMono"; src: url("assets/fonts/plex-mono-500.woff2") format("woff2"); font-weight: 500; }
+
+      /* Palette — dark Carbon, same tokens as @radar/ui theme-vars.css */
+      :root {
+        --bg: #0e0e10;
+        --s1: #161616;
+        --s2: #1e1e20;
+        --s3: #262626;
+        --border: #2a2a2d;
+        --border-strong: #393939;
+        --text: #f4f4f4;
+        --muted: #a8a8a8;
+        --faint: #6f6f6f;
+        --dim: #66666c;
+        --accent: #0f62fe;
+        --accent-soft: #a6c8ff;
+        --blue40: #78a9ff;
+        --ok: #42be65;
+        --warn: #f1c21b;
+        --danger: #fa4d56;
+        --needs: #ff7eb6;
+        --andi: #78a9ff;
+        --budi: #be95ff;
+        --citra: #ff832b;
+        --sans: "Plex", system-ui, sans-serif;
+        --mono: "PlexMono", Menlo, monospace;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--bg); }
+      body { font-family: var(--sans); color: var(--text); -webkit-font-smoothing: antialiased; }
+
+      #root { position: relative; width: 1920px; height: 1080px; overflow: hidden; }
+      #frame { position: absolute; inset: 0; overflow: hidden; }
+
+      /* ── backdrop ─────────────────────────────── */
+      .bg-fill { position: absolute; inset: 0; background: var(--bg); }
+      .bg-dots {
+        position: absolute; left: -60px; top: -60px; width: 2040px; height: 1200px;
+        background-image: radial-gradient(rgba(244, 244, 244, 0.09) 1.4px, transparent 1.6px);
+        background-size: 30px 30px;
+      }
+      .bg-glow {
+        position: absolute; width: 1400px; height: 1400px; left: 900px; top: -700px; border-radius: 50%;
+        background: radial-gradient(closest-side, rgba(15, 98, 254, 0.22), rgba(15, 98, 254, 0) 70%);
+      }
+      .bg-glow.b {
+        left: -600px; top: 500px;
+        background: radial-gradient(closest-side, rgba(190, 149, 255, 0.12), rgba(190, 149, 255, 0) 70%);
+      }
+      .vignette { position: absolute; inset: 0; background: radial-gradient(120% 90% at 50% 45%, transparent 55%, rgba(0,0,0,0.55) 100%); }
+
+      /* ── HUD ──────────────────────────────────── */
+      .hud { position: absolute; left: 0; right: 0; top: 0; height: 96px; padding: 44px 72px 0; display: flex; align-items: flex-start; justify-content: space-between; font-family: var(--mono); font-size: 20px; letter-spacing: 0.08em; color: var(--muted); text-transform: uppercase; z-index: 40; }
+      .chapters { position: relative; height: 28px; width: 600px; overflow: hidden; }
+      .chapter { position: absolute; left: 0; top: 0; display: block; white-space: nowrap; }
+      .chapter b { color: var(--blue40); font-weight: 500; margin-right: 14px; }
+      .live { display: flex; align-items: center; gap: 12px; height: 28px; }
+      .live-dot { display: block; width: 12px; height: 12px; border-radius: 50%; background: var(--danger); box-shadow: 0 0 16px rgba(250, 77, 86, 0.8); }
+      .progress { position: absolute; left: 72px; right: 72px; bottom: 48px; height: 3px; background: rgba(255,255,255,0.08); z-index: 40; }
+      .progress-fill { display: block; width: 100%; height: 100%; background: linear-gradient(90deg, var(--andi), var(--budi), var(--citra)); transform-origin: left center; }
+
+      .scene { position: absolute; inset: 0; }
+
+      /* ── S1 hook ──────────────────────────────── */
+      .s1-content { display: flex; flex-direction: column; justify-content: center; width: 100%; height: 100%; padding: 120px 200px; gap: 4px; }
+      .mask { display: block; overflow: hidden; padding-bottom: 14px; }
+      .mask > .in { display: block; }
+      .kin { font-size: 150px; font-weight: 600; letter-spacing: -0.045em; line-height: 1; }
+      .kin .dim { color: var(--dim); }
+      .kin.blue { color: var(--blue40); }
+      .caret { display: inline-block; width: 16px; height: 128px; margin-left: 18px; vertical-align: -12px; background: var(--blue40); }
+      .trace { position: absolute; left: 0; width: 1920px; height: 3px; transform-origin: left center; }
+      .trace.t1 { top: 250px; background: linear-gradient(90deg, transparent, var(--andi)); }
+      .trace.t2 { top: 540px; background: linear-gradient(90deg, transparent, var(--budi)); }
+      .trace.t3 { top: 830px; background: linear-gradient(90deg, transparent, var(--citra)); }
+      .avatars { position: absolute; right: 180px; top: 50%; margin-top: -144px; display: flex; flex-direction: column; gap: 24px; }
+      .av { display: flex; align-items: center; gap: 18px; font-family: var(--mono); font-size: 26px; color: var(--muted); }
+      .av i { display: block; width: 72px; height: 72px; border-radius: 50%; border: 3px solid currentColor; position: relative; }
+      .av i::after { content: ""; position: absolute; inset: 14px; border-radius: 50%; background: currentColor; opacity: 0.85; }
+      .av.a { color: var(--andi); } .av.b { color: var(--budi); } .av.c { color: var(--citra); }
+      .av .nm { color: var(--text); }
+      .av .lbl { display: block; }
+
+      /* shutter */
+      .shutter { position: absolute; inset: 0; z-index: 30; pointer-events: none; }
+      .shutter i { position: absolute; inset: 0; display: block; }
+      .shutter i:nth-child(1) { background: var(--citra); }
+      .shutter i:nth-child(2) { background: var(--budi); }
+      .shutter i:nth-child(3) { background: var(--accent); }
+
+      /* ── S2 near-miss ─────────────────────────── */
+      .s2-content { display: flex; flex-direction: column; width: 100%; height: 100%; padding: 150px 140px 120px; gap: 44px; }
+      .eyebrow { font-family: var(--mono); font-size: 22px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--blue40); }
+      .headline { font-size: 68px; font-weight: 600; letter-spacing: -0.035em; line-height: 1.04; }
+      .s2-row { display: flex; gap: 40px; }
+      .panel { position: relative; background: var(--s1); border: 1px solid var(--border); border-radius: 18px; box-shadow: 0 40px 80px rgba(0,0,0,0.5); }
+      .editor { flex: 0 0 1000px; width: 1000px; height: 540px; }
+      .tabbar { height: 60px; display: flex; align-items: center; gap: 14px; padding: 0 26px; border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 21px; color: var(--muted); }
+      .tabbar .dots { display: flex; gap: 9px; margin-right: 14px; }
+      .tabbar .dots i { display: block; width: 13px; height: 13px; border-radius: 50%; background: var(--s3); }
+      .tabbar .file { color: var(--text); }
+      .code { position: relative; padding: 26px 0; font-family: var(--mono); font-size: 25px; }
+      .ln { position: relative; display: block; height: 58px; line-height: 58px; padding-left: 26px; white-space: pre; color: #c6c6c6; }
+      .ln .no { display: inline-block; width: 52px; color: var(--faint); }
+      .k { color: var(--accent-soft); } .f { color: #82cfff; } .c { color: var(--faint); }
+      .lockband { position: absolute; left: 0; right: 0; top: 142px; height: 174px; background: rgba(120, 169, 255, 0.1); border-left: 5px solid var(--andi); transform-origin: left center; }
+      .lockband.hit { background: rgba(250, 77, 86, 0.08); border: 2px solid var(--danger); border-left: 5px solid var(--danger); }
+      .chip { position: absolute; display: flex; align-items: center; gap: 10px; padding: 8px 16px; border-radius: 999px; font-family: var(--mono); font-size: 20px; white-space: nowrap; }
+      .chip .d { display: block; width: 10px; height: 10px; border-radius: 50%; background: currentColor; }
+      .chip.lock { right: 26px; top: 212px; background: rgba(120,169,255,0.16); color: var(--andi); border: 1px solid rgba(120,169,255,0.45); }
+      .chip.blocked { right: 26px; top: 326px; background: rgba(250,77,86,0.16); color: var(--danger); border: 1px solid rgba(250,77,86,0.6); font-weight: 500; letter-spacing: 0.08em; }
+      .cursor { position: absolute; left: 0; top: 0; width: 1px; height: 1px; z-index: 5; }
+      .cursor svg { display: block; width: 38px; height: 44px; }
+      .cursor .tag { position: absolute; left: 30px; top: 36px; padding: 6px 12px; border-radius: 8px; font-family: var(--mono); font-size: 19px; font-weight: 500; color: #111; white-space: nowrap; }
+      .cursor.andi .tag { background: var(--andi); }
+      .cursor.budi .tag { background: var(--budi); }
+      .cursor.citra .tag { background: var(--citra); }
+      .typer { position: absolute; left: 732px; top: 213px; width: 4px; height: 32px; background: var(--andi); }
+
+      .tracepanel { flex: 0 0 600px; width: 600px; height: 540px; padding: 30px 32px; display: flex; flex-direction: column; gap: 16px; font-family: var(--mono); }
+      .tp-title { font-size: 19px; color: #8d8d8d; letter-spacing: 0.1em; text-transform: uppercase; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+      .row { display: flex; gap: 18px; font-size: 22px; line-height: 1.35; padding: 4px 8px; margin: 0 -8px; border-radius: 8px; }
+      .row .lab { flex: 0 0 100px; color: #8d8d8d; }
+      .row .val { color: var(--text); }
+      .row .val.red { color: var(--danger); }
+      .row .val.yel { color: var(--warn); }
+      .row .val.grn { color: var(--ok); }
+      .flash { position: absolute; inset: 0; background: var(--danger); z-index: 20; opacity: 0; }
+
+      /* ── S3 human decides ─────────────────────── */
+      .s3-content { display: flex; align-items: center; justify-content: space-between; width: 100%; height: 100%; padding: 120px 120px; gap: 80px; }
+      .s3-copy { display: flex; flex-direction: column; gap: 10px; width: 820px; }
+      .s3-copy .kin { font-size: 92px; }
+      .s3-copy .eyebrow { margin-bottom: 14px; }
+      .underline { display: block; width: 100%; height: 8px; margin-top: 6px; background: var(--blue40); transform-origin: left center; }
+      .deck { position: relative; flex: 0 0 760px; width: 760px; }
+      .card { position: relative; padding: 40px 44px; background: var(--s1); border: 2px solid var(--needs); border-radius: 20px; box-shadow: 0 0 0 8px rgba(255,126,182,0.07), 0 50px 100px rgba(0,0,0,0.55); }
+      .card .ok-border { position: absolute; inset: -2px; border: 2px solid var(--ok); border-radius: 20px; box-shadow: 0 0 0 8px rgba(66,190,101,0.12); }
+      .card .meta { font-family: var(--mono); font-size: 21px; color: var(--needs); letter-spacing: 0.04em; }
+      .card .q { margin-top: 22px; font-size: 36px; line-height: 1.3; font-weight: 500; letter-spacing: -0.015em; }
+      .card .q b { font-weight: 600; color: var(--budi); }
+      .card .q u { text-decoration: none; color: var(--andi); font-weight: 600; }
+      .btns { margin-top: 34px; display: flex; gap: 18px; }
+      .btn { position: relative; display: flex; align-items: center; justify-content: center; width: 200px; height: 68px; border-radius: 12px; font-size: 26px; font-weight: 600; overflow: hidden; }
+      .btn.approve { background: var(--accent); color: #fff; }
+      .btn.deny { border: 2px solid var(--border-strong); color: var(--muted); }
+      .ripple { position: absolute; left: 50%; top: 50%; width: 60px; height: 60px; margin: -30px 0 0 -30px; border-radius: 50%; background: rgba(255,255,255,0.55); }
+      .stamp { position: absolute; right: 44px; bottom: 50px; display: flex; align-items: center; gap: 12px; font-family: var(--mono); font-size: 24px; font-weight: 500; color: var(--ok); }
+      .stamp i { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; background: var(--ok); font-style: normal; }
+      .stamp i svg { display: block; width: 24px; height: 24px; }
+      .handoff { position: relative; margin-top: 60px; display: flex; align-items: center; gap: 16px; height: 66px; padding: 0 24px; border-radius: 14px; background: var(--s2); border: 1px solid var(--border); font-family: var(--mono); font-size: 22px; color: var(--muted); }
+      .handoff .dot { display: block; width: 16px; height: 16px; border-radius: 50%; background: var(--andi); }
+      .handoff .who { position: relative; display: block; width: 260px; height: 30px; overflow: hidden; }
+      .handoff .who span { position: absolute; left: 0; top: 0; display: block; white-space: nowrap; }
+      .handoff .who .from { color: var(--andi); }
+      .handoff .who .to { color: var(--budi); }
+
+      /* ── S4 record ────────────────────────────── */
+      .s4-content { display: flex; flex-direction: column; justify-content: center; width: 100%; height: 100%; padding: 120px 170px; gap: 64px; }
+      .stats { display: flex; }
+      .stat { position: relative; flex: 1; padding: 0 56px; }
+      .stat:first-child { padding-left: 0; }
+      .vrule { position: absolute; left: 0; top: 0; display: block; width: 2px; height: 100%; background: var(--border-strong); transform-origin: top center; }
+      .big { display: flex; align-items: flex-start; font-size: 230px; font-weight: 600; letter-spacing: -0.05em; line-height: 1; }
+      .odo { display: block; height: 230px; overflow: hidden; }
+      .strip { display: flex; flex-direction: column; }
+      .strip span { display: block; height: 230px; line-height: 230px; }
+      .big .unit { display: block; font-size: 110px; margin-left: 14px; height: 230px; line-height: 290px; color: var(--muted); letter-spacing: 0; }
+      .big .dotp { display: block; height: 230px; line-height: 230px; }
+      .stat .lbl { margin-top: 24px; font-family: var(--mono); font-size: 26px; color: var(--muted); line-height: 1.35; }
+      .big.green { color: var(--ok); }
+      .big.blue { color: var(--blue40); }
+      .big.pink { color: var(--needs); }
+
+      /* ── S5 end card ──────────────────────────── */
+      .s5-content { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; padding: 120px 160px; gap: 72px; }
+      .disc-wrap { position: relative; flex: 0 0 380px; width: 380px; height: 380px; }
+      .disc { position: absolute; inset: 0; border-radius: 50%; background: var(--accent); }
+      .disc-ring { position: absolute; inset: -26px; border-radius: 50%; border: 2px solid rgba(120,169,255,0.4); }
+      .mascot { position: absolute; left: 10px; top: 4px; width: 360px; height: 360px; }
+      .lockup { display: flex; flex-direction: column; gap: 22px; width: 960px; }
+      .wordmark { font-size: 104px; font-weight: 600; letter-spacing: -0.045em; line-height: 1.02; }
+      .wordmark .ibm { color: var(--blue40); }
+      .tagline { font-size: 40px; color: var(--muted); letter-spacing: -0.01em; }
+      .url { align-self: flex-start; margin-top: 16px; display: flex; align-items: center; gap: 16px; padding: 16px 26px; border-radius: 14px; border: 1px solid rgba(120,169,255,0.5); background: rgba(15,98,254,0.12); font-family: var(--mono); font-size: 30px; color: var(--text); }
+      .url i { display: block; width: 12px; height: 12px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 14px var(--ok); }
+      .members { display: flex; gap: 12px; margin-top: 10px; }
+      .members i { display: block; width: 46px; height: 8px; border-radius: 4px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="15" data-width="1920" data-height="1080">
+      <div id="frame" class="clip" data-start="0" data-duration="15" data-track-index="0">
+        <!-- backdrop -->
+        <div class="bg-fill"></div>
+        <div class="bg-glow" id="glowA"></div>
+        <div class="bg-glow b" id="glowB"></div>
+        <div class="bg-dots" id="dots"></div>
+        <div class="vignette"></div>
+
+        <!-- S1 · hook -->
+        <section class="scene" id="s1">
+          <div class="trace t1" id="tr1"></div>
+          <div class="trace t2" id="tr2"></div>
+          <div class="trace t3" id="tr3"></div>
+          <div class="s1-content">
+            <div class="mask"><span class="in kin" id="k1">Three <span class="dim">people.</span></span></div>
+            <div class="mask"><span class="in kin" id="k2">Three <span class="dim">Bobs.</span></span></div>
+            <div class="mask"><span class="in kin blue" id="k3">One repo.<span class="caret" id="caret1"></span></span></div>
+          </div>
+          <div class="avatars">
+            <div class="av a" id="av1"><i></i><span class="lbl"><span class="nm">Andi</span> · coder</span></div>
+            <div class="av b" id="av2"><i></i><span class="lbl"><span class="nm">Budi</span> · coder</span></div>
+            <div class="av c" id="av3"><i></i><span class="lbl"><span class="nm">Citra</span> · pm-lead</span></div>
+          </div>
+        </section>
+
+        <!-- S2 · near-miss -->
+        <section class="scene" id="s2">
+          <div class="s2-content">
+            <div>
+              <div class="eyebrow" id="s2eye">Near-miss · caught by a hook</div>
+              <div class="mask" style="margin-top: 14px"><span class="in headline" id="s2head">Two Bobs reach for the same file.</span></div>
+            </div>
+            <div class="s2-row">
+              <div class="panel editor" id="editor">
+                <div class="tabbar"><span class="dots"><i></i><i></i><i></i></span><span class="file">src/checkout/checkout.ts</span><span>· toko-demo</span></div>
+                <div class="code">
+                  <div class="ln"><span class="no">1</span><span class="k">export async function</span> <span class="f">applyCoupon</span>(cart, code) {</div>
+                  <div class="ln"><span class="no">2</span>  <span class="k">const</span> coupon = <span class="k">await</span> <span class="f">lookup</span>(code);</div>
+                  <div class="ln"><span class="no">3</span>  <span class="k">if</span> (!coupon.active) <span class="k">return</span> cart;</div>
+                  <div class="ln"><span class="no">4</span>  <span class="k">const</span> total = cart.subtotal - coupon.off;</div>
+                  <div class="ln"><span class="no">5</span>  <span class="k">return</span> { ...cart, total };</div>
+                  <div class="ln"><span class="no">6</span>}</div>
+                  <div class="ln"><span class="no">7</span><span class="c">// T-1 · coupon codes</span></div>
+                  <div class="lockband" id="lockband"></div>
+                  <div class="lockband hit" id="lockhit"></div>
+                  <div class="typer" id="typer"></div>
+                </div>
+                <div class="chip lock" id="lockchip"><span class="d"></span>locked · Andi</div>
+                <div class="chip blocked" id="blockchip"><span class="d"></span>BLOCKED</div>
+                <div class="cursor andi" id="curA">
+                  <svg viewBox="0 0 38 44"><path d="M2 2 L2 36 L11 27 L18 42 L25 39 L18 24 L31 24 Z" fill="#78a9ff" stroke="#0e0e10" stroke-width="2.5" stroke-linejoin="round"/></svg>
+                  <span class="tag">Andi's Bob</span>
+                </div>
+                <div class="cursor budi" id="curB">
+                  <svg viewBox="0 0 38 44"><path d="M2 2 L2 36 L11 27 L18 42 L25 39 L18 24 L31 24 Z" fill="#be95ff" stroke="#0e0e10" stroke-width="2.5" stroke-linejoin="round"/></svg>
+                  <span class="tag">Budi's Bob</span>
+                </div>
+              </div>
+              <div class="panel tracepanel" id="tracepanel">
+                <div class="tp-title">hook trace · budi</div>
+                <div class="row" id="r1"><span class="lab">write</span><span class="val">apply_diff checkout.ts</span></div>
+                <div class="row" id="r2"><span class="lab">hook</span><span class="val red">PreToolUse · lock_guard → blocked</span></div>
+                <div class="row" id="r3"><span class="lab">held by</span><span class="val">andi · T-1 coupon</span></div>
+                <div class="row" id="r4"><span class="lab">mcp</span><span class="val">radar.why_blocked → “held by Andi for T-1”</span></div>
+                <div class="row" id="r5"><span class="lab">decision</span><span class="val yel">queued · position 1</span></div>
+                <div class="row" id="r6"><span class="lab">budi</span><span class="val grn">continues src/ui/Header.tsx</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="flash" id="flash"></div>
+        </section>
+
+        <!-- S3 · a human decides -->
+        <section class="scene" id="s3">
+          <div class="s3-content">
+            <div class="s3-copy" id="s3copy">
+              <div class="eyebrow" id="s3eye">pm-lead · Needs you</div>
+              <div class="mask"><span class="in kin" id="c1" style="color: var(--faint)">Agents suggest.</span></div>
+              <div class="mask"><span class="in kin" id="c2">A human decides.</span></div>
+              <span class="underline" id="ul"></span>
+            </div>
+            <div class="deck" id="deck">
+              <div class="card" id="card">
+                <div class="ok-border" id="okb"></div>
+                <div class="meta">Bob → PM · approval needed</div>
+                <div class="q"><u>Andi</u> finished T-1. <b>Budi</b> is queued on checkout.ts. Hand the lock to Budi?</div>
+                <div class="btns">
+                  <div class="btn approve" id="approve">Approve<span class="ripple" id="ripple"></span></div>
+                  <div class="btn deny">Deny</div>
+                </div>
+                <div class="stamp" id="stamp"><i><svg viewBox="0 0 24 24"><path d="M5 12.5 L10 17 L19 7" fill="none" stroke="#0e0e10" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></i>approved</div>
+              </div>
+              <div class="handoff" id="handoff">
+                <span class="dot" id="hdot"></span>checkout.ts · lock →
+                <span class="who"><span class="from" id="hfrom">Andi</span><span class="to" id="hto">Budi</span></span>
+              </div>
+              <div class="cursor citra" id="curC">
+                <svg viewBox="0 0 38 44"><path d="M2 2 L2 36 L11 27 L18 42 L25 39 L18 24 L31 24 Z" fill="#ff832b" stroke="#0e0e10" stroke-width="2.5" stroke-linejoin="round"/></svg>
+                <span class="tag">Citra · PM</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- S4 · the record -->
+        <section class="scene" id="s4">
+          <div class="s4-content">
+            <div class="eyebrow" id="s4eye">From the recorded toko-demo session</div>
+            <div class="stats">
+              <div class="stat" id="st1">
+                <span class="vrule"></span>
+                <div class="big green" id="big1"><span class="odo"><span class="strip" id="odo1"><span>7</span><span>5</span><span>3</span><span>2</span><span>1</span><span>0</span></span></span></div>
+                <div class="lbl">merge conflicts</div>
+              </div>
+              <div class="stat" id="st2">
+                <span class="vrule"></span>
+                <div class="big blue"><span class="odo"><span class="strip" id="odo2"><span>0</span><span>1</span><span>2</span></span></span><span class="dotp">.</span><span class="odo"><span class="strip" id="odo3"><span>0</span><span>2</span><span>4</span><span>6</span><span>8</span><span>9</span></span></span><span class="unit">s</span></div>
+                <div class="lbl">median time to a decision</div>
+              </div>
+              <div class="stat" id="st3">
+                <span class="vrule"></span>
+                <div class="big pink"><span class="odo"><span class="strip" id="odo4"><span>0</span><span>1</span><span>2</span></span></span></div>
+                <div class="lbl">decisions, each shown to a human</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- S5 · end card -->
+        <section class="scene" id="s5">
+          <div class="s5-content">
+            <div class="disc-wrap">
+              <div class="disc-ring" id="ring"></div>
+              <div class="disc" id="disc"></div>
+              <img class="mascot" id="mascot" src="assets/bob-crew.png" alt="" />
+            </div>
+            <div class="lockup" id="lockup">
+              <div class="mask"><span class="in wordmark" id="wm"><span class="ibm">IBM Bob</span> Live Collab</span></div>
+              <div class="mask"><span class="in tagline" id="tag">Your team's Bobs, working together.</span></div>
+              <div class="url" id="url"><i></i>ibm-bob-live-collab.pages.dev</div>
+              <div class="members" id="members"><i style="background: var(--andi)"></i><i style="background: var(--budi)"></i><i style="background: var(--citra)"></i></div>
+            </div>
+          </div>
+        </section>
+
+        <div class="shutter" id="shutter"><i></i><i></i><i></i></div>
+
+        <!-- HUD -->
+        <div class="hud" id="hud">
+          <div class="chapters">
+            <span class="chapter" id="ch1"><b>01</b>Live Collab</span>
+            <span class="chapter" id="ch2"><b>02</b>lock_guard</span>
+            <span class="chapter" id="ch3"><b>03</b>pm-lead</span>
+            <span class="chapter" id="ch4"><b>04</b>The record</span>
+          </div>
+          <div class="live"><span class="live-dot" id="livedot"></span>toko-demo · live</div>
+        </div>
+        <div class="progress" id="progress"><span class="progress-fill" id="pfill"></span></div>
+      </div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      const S = (sel, v) => gsap.set(sel, v);
+
+      // ── initial states (t = 0) ─────────────────────────────
+      S(["#s2", "#s3", "#s4", "#s5"], { autoAlpha: 0 });
+      S(".shutter i", { xPercent: -101 });
+      S(["#tr1", "#tr2", "#tr3"], { scaleX: 0 });
+      S(["#k1", "#k2", "#k3"], { yPercent: 110 });
+      S(["#av1", "#av2", "#av3"], { autoAlpha: 0, x: 60 });
+      S(["#ch2", "#ch3", "#ch4"], { yPercent: 110 });
+      S("#pfill", { scaleX: 0 });
+      // S2
+      S("#s2eye", { autoAlpha: 0, x: -30 });
+      S("#s2head", { yPercent: 110 });
+      S(["#editor", "#tracepanel"], { autoAlpha: 0, y: 70 });
+      S("#lockband", { scaleX: 0 });
+      S(["#lockhit", "#flash", "#typer"], { autoAlpha: 0 });
+      S("#lockchip", { autoAlpha: 0, scale: 0.6 });
+      S("#blockchip", { autoAlpha: 0, scale: 1.8 });
+      S("#curA", { x: 520, y: 380, autoAlpha: 0 });
+      S("#curB", { x: 1150, y: 640, autoAlpha: 0 });
+      S(["#r1", "#r2", "#r3", "#r4", "#r5", "#r6"], { autoAlpha: 0, x: -24 });
+      // S3
+      S("#s3eye", { autoAlpha: 0, x: -30 });
+      S(["#c1", "#c2"], { yPercent: 110 });
+      S("#ul", { scaleX: 0 });
+      S("#card", { autoAlpha: 0, y: 120, rotationX: -18, transformPerspective: 1200 });
+      S("#handoff", { autoAlpha: 0, y: 40 });
+      S(["#okb", "#hto"], { autoAlpha: 0 });
+      S("#stamp", { autoAlpha: 0, scale: 0.5 });
+      S("#hto", { yPercent: 100 });
+      S("#ripple", { scale: 0 });
+      S("#curC", { x: 900, y: 560, autoAlpha: 0 });
+      // S4
+      S("#s4eye", { autoAlpha: 0, x: -30 });
+      S(["#st1", "#st2", "#st3"], { autoAlpha: 0, y: 80 });
+      S(".vrule", { scaleY: 0 });
+      // S5
+      S("#disc", { scale: 0 });
+      S("#ring", { autoAlpha: 0, scale: 0.8 });
+      S("#mascot", { autoAlpha: 0, scale: 0.4, y: 60, rotation: -8 });
+      S(["#wm", "#tag"], { yPercent: 115 });
+      S("#url", { autoAlpha: 0, y: 30 });
+      S("#members i", { scaleX: 0, transformOrigin: "left center" });
+
+      // ── global: backdrop drift, progress, live dot ─────────
+      tl.to("#dots", { x: 30, y: 30, duration: 15, ease: "none" }, 0);
+      tl.to("#glowA", { x: -380, y: 180, duration: 15, ease: "sine.inOut" }, 0);
+      tl.to("#glowB", { x: 420, y: -160, duration: 15, ease: "sine.inOut" }, 0);
+      tl.to("#pfill", { scaleX: 1, duration: 15, ease: "none" }, 0);
+      tl.to("#livedot", { opacity: 0.25, duration: 0.5, yoyo: true, repeat: 23, ease: "sine.inOut" }, 0);
+
+      const chapter = (from, to, t) => {
+        tl.to(from, { yPercent: -110, duration: 0.4, ease: "power3.inOut" }, t);
+        tl.to(to, { yPercent: 0, duration: 0.4, ease: "power3.inOut" }, t + 0.05);
+      };
+      const reveal = (sel, t) => tl.to(sel, { autoAlpha: 1, x: 0, duration: 0.35, ease: "power3.out" }, t);
+
+      // ── S1 · hook (0 – 2.84) ───────────────────────────────
+      tl.to("#tr1", { scaleX: 1, duration: 0.55, ease: "expo.out" }, 0.0);
+      tl.to("#tr2", { scaleX: 1, duration: 0.55, ease: "expo.out" }, 0.08);
+      tl.to("#tr3", { scaleX: 1, duration: 0.55, ease: "expo.out" }, 0.16);
+      tl.to(["#tr1", "#tr2", "#tr3"], { autoAlpha: 0, duration: 0.5, ease: "power2.in", stagger: 0.05 }, 0.55);
+
+      tl.to("#k1", { yPercent: 0, duration: 0.6, ease: "expo.out" }, 0.2);
+      tl.to("#av1", { autoAlpha: 1, x: 0, duration: 0.5, ease: "back.out(2)" }, 0.3);
+      tl.to("#k2", { yPercent: 0, duration: 0.6, ease: "expo.out" }, 0.6);
+      tl.to("#av2", { autoAlpha: 1, x: 0, duration: 0.5, ease: "back.out(2)" }, 0.7);
+      tl.to("#k3", { yPercent: 0, duration: 0.6, ease: "expo.out" }, 1.0);
+      tl.to("#av3", { autoAlpha: 1, x: 0, duration: 0.5, ease: "back.out(2)" }, 1.1);
+      tl.to("#caret1", { opacity: 0, duration: 0.18, yoyo: true, repeat: 5, ease: "expo.inOut" }, 1.25);
+      tl.to("#k3", { scale: 1.04, duration: 0.25, yoyo: true, repeat: 1, ease: "sine.inOut", transformOrigin: "left center" }, 1.55);
+      // the three avatars converge on one point: one repo
+      tl.to(".av .lbl", { autoAlpha: 0, x: -16, duration: 0.25, ease: "power2.in", stagger: 0.04 }, 1.6);
+      tl.to("#av1", { y: 60, duration: 0.45, ease: "power3.inOut" }, 1.8);
+      tl.to("#av3", { y: -60, duration: 0.45, ease: "power3.inOut" }, 1.8);
+      tl.to(["#av1", "#av2", "#av3"], { scale: 1.12, duration: 0.2, ease: "power2.out" }, 2.1);
+
+      // shutter wipe → S2
+      tl.to(".shutter i", { xPercent: 0, duration: 0.42, ease: "power3.inOut", stagger: 0.06 }, 2.3);
+      tl.set("#s1", { autoAlpha: 0 }, 2.84);
+      tl.set("#s2", { autoAlpha: 1 }, 2.84);
+      chapter("#ch1", "#ch2", 2.7);
+      tl.to(".shutter i", { xPercent: 101, duration: 0.5, ease: "power3.inOut", stagger: { each: 0.06, from: "end" } }, 2.86);
+
+      // ── S2 · near-miss (2.84 – 7.1) ────────────────────────
+      tl.to("#s2eye", { autoAlpha: 1, x: 0, duration: 0.5, ease: "power3.out" }, 3.05);
+      tl.to("#s2head", { yPercent: 0, duration: 0.65, ease: "expo.out" }, 3.1);
+      tl.to("#editor", { autoAlpha: 1, y: 0, duration: 0.7, ease: "expo.out" }, 3.15);
+      tl.to("#tracepanel", { autoAlpha: 1, y: 0, duration: 0.7, ease: "expo.out" }, 3.25);
+
+      // Andi's Bob takes lines 3–5
+      tl.to("#curA", { autoAlpha: 1, x: 745, y: 232, duration: 0.55, ease: "power3.out" }, 3.4);
+      tl.to("#lockband", { scaleX: 1, duration: 0.5, ease: "expo.out" }, 3.75);
+      tl.to("#lockchip", { autoAlpha: 1, scale: 1, duration: 0.45, ease: "back.out(2.4)" }, 3.85);
+      tl.to("#typer", { autoAlpha: 1, duration: 0.05 }, 3.9);
+      tl.to("#typer", { opacity: 0.1, duration: 0.16, yoyo: true, repeat: 7, ease: "expo.inOut" }, 3.95);
+
+      // Budi's Bob dives for the same block
+      reveal("#r1", 4.1);
+      tl.to("#curB", { autoAlpha: 1, duration: 0.2 }, 4.0);
+      tl.to("#curB", { x: 420, y: 300, duration: 0.55, ease: "power4.in" }, 4.0);
+      // impact at 4.55
+      tl.to("#lockhit", { autoAlpha: 1, duration: 0.06 }, 4.55);
+      tl.to("#flash", { autoAlpha: 0.2, duration: 0.05 }, 4.55);
+      tl.to("#flash", { autoAlpha: 0, duration: 0.4, ease: "power2.out" }, 4.6);
+      tl.to("#editor", { keyframes: [{ x: -14 }, { x: 12 }, { x: -8 }, { x: 5 }, { x: 0 }], duration: 0.36, ease: "none" }, 4.55);
+      tl.to("#curB", { x: 520, y: 400, rotation: 18, duration: 0.5, ease: "back.out(3)" }, 4.56);
+      tl.to("#blockchip", { autoAlpha: 1, scale: 1, duration: 0.4, ease: "back.out(2.5)" }, 4.58);
+      reveal("#r2", 4.62);
+      tl.to("#lockhit", { autoAlpha: 0, duration: 0.5, ease: "power2.out" }, 5.1);
+
+      // the Bob explains itself, then queues and moves on
+      reveal("#r3", 5.0);
+      reveal("#r4", 5.35);
+      reveal("#r5", 5.8);
+      tl.to("#curB", { rotation: 0, duration: 0.3, ease: "power2.out" }, 5.8);
+      reveal("#r6", 6.2);
+      tl.to("#curB", { x: 1060, y: 470, duration: 0.7, ease: "power3.inOut" }, 6.2);
+      tl.to("#r6", { backgroundColor: "rgba(66,190,101,0.14)", duration: 0.3, yoyo: true, repeat: 1 }, 6.45);
+
+      // push through → S3
+      tl.to("#s2", { scale: 1.08, autoAlpha: 0, filter: "blur(10px)", duration: 0.45, ease: "power3.in" }, 6.85);
+      chapter("#ch2", "#ch3", 7.0);
+      tl.set("#s3", { scale: 0.92, filter: "blur(10px)" }, 7.1);
+      tl.to("#s3", { autoAlpha: 1, scale: 1, filter: "blur(0px)", duration: 0.55, ease: "power3.out" }, 7.1);
+
+      // ── S3 · a human decides (7.1 – 10.4) ──────────────────
+      tl.to("#card", { autoAlpha: 1, y: 0, rotationX: 0, duration: 0.8, ease: "expo.out" }, 7.2);
+      tl.to("#handoff", { autoAlpha: 1, y: 0, duration: 0.6, ease: "expo.out" }, 7.45);
+      tl.to("#s3eye", { autoAlpha: 1, x: 0, duration: 0.5, ease: "power3.out" }, 7.3);
+      tl.to("#c1", { yPercent: 0, duration: 0.6, ease: "expo.out" }, 7.55);
+
+      tl.to("#curC", { autoAlpha: 1, duration: 0.2 }, 7.9);
+      tl.to("#curC", { x: 130, y: 318, duration: 0.75, ease: "power3.inOut" }, 7.9);
+      // click
+      tl.to("#approve", { scale: 0.93, duration: 0.09, yoyo: true, repeat: 1, ease: "power2.inOut" }, 8.65);
+      tl.to("#curC", { scale: 0.85, duration: 0.09, yoyo: true, repeat: 1 }, 8.65);
+      tl.to("#ripple", { scale: 8, autoAlpha: 0, duration: 0.6, ease: "power2.out" }, 8.7);
+      tl.to("#okb", { autoAlpha: 1, duration: 0.3 }, 8.75);
+      tl.to("#stamp", { autoAlpha: 1, scale: 1, duration: 0.45, ease: "back.out(3)" }, 8.8);
+      // lock hands over Andi → Budi
+      tl.to("#hfrom", { yPercent: -100, autoAlpha: 0, duration: 0.35, ease: "power3.inOut" }, 9.0);
+      tl.to("#hto", { yPercent: 0, autoAlpha: 1, duration: 0.35, ease: "power3.inOut" }, 9.05);
+      tl.to("#hdot", { backgroundColor: "#be95ff", duration: 0.3 }, 9.0);
+      tl.to("#hdot", { scale: 1.6, duration: 0.2, yoyo: true, repeat: 1, ease: "power2.out" }, 9.0);
+      tl.to("#c2", { yPercent: 0, duration: 0.6, ease: "expo.out" }, 8.9);
+      tl.to("#ul", { scaleX: 1, duration: 0.6, ease: "expo.inOut" }, 9.3);
+      tl.to("#curC", { x: 360, y: 220, autoAlpha: 0, duration: 0.5, ease: "power2.in" }, 9.35);
+
+      // whip up → S4
+      tl.to("#deck", { y: -260, autoAlpha: 0, duration: 0.4, ease: "power3.in" }, 9.95);
+      tl.to("#s3copy", { y: -200, autoAlpha: 0, duration: 0.4, ease: "power3.in" }, 10.0);
+      chapter("#ch3", "#ch4", 10.1);
+      tl.set("#s4", { autoAlpha: 1 }, 10.3);
+      tl.set("#s3", { autoAlpha: 0 }, 10.4);
+
+      // ── S4 · the record (10.3 – 12.7) ──────────────────────
+      tl.to("#s4eye", { autoAlpha: 1, x: 0, duration: 0.5, ease: "power3.out" }, 10.35);
+      tl.to(["#st1", "#st2", "#st3"], { autoAlpha: 1, y: 0, duration: 0.7, ease: "expo.out", stagger: 0.12 }, 10.35);
+      tl.to(".vrule", { scaleY: 1, duration: 0.6, ease: "expo.out", stagger: 0.12 }, 10.55);
+      const H = 230;
+      tl.to("#odo1", { y: -5 * H, duration: 1.1, ease: "expo.out" }, 10.45);
+      tl.to("#odo2", { y: -2 * H, duration: 1.0, ease: "expo.out" }, 10.57);
+      tl.to("#odo3", { y: -5 * H, duration: 1.2, ease: "expo.out" }, 10.6);
+      tl.to("#odo4", { y: -2 * H, duration: 1.0, ease: "expo.out" }, 10.7);
+      tl.to("#big1", { scale: 1.08, duration: 0.18, yoyo: true, repeat: 1, ease: "power2.out", transformOrigin: "left bottom" }, 11.5);
+
+      // iris → S5
+      tl.set("#s5", { autoAlpha: 1 }, 12.2);
+      tl.to("#disc", { scale: 9.5, duration: 0.5, ease: "expo.in" }, 12.2);
+      tl.to(["#hud", "#progress"], { autoAlpha: 0, duration: 0.3 }, 12.4);
+      tl.set("#s4", { autoAlpha: 0 }, 12.7);
+      tl.to("#disc", { scale: 1, duration: 0.8, ease: "expo.out" }, 12.72);
+
+      // ── S5 · end card (12.7 – 15) ──────────────────────────
+      tl.to("#ring", { autoAlpha: 1, scale: 1, duration: 0.8, ease: "expo.out" }, 13.0);
+      tl.to("#mascot", { autoAlpha: 1, scale: 1, y: 0, rotation: 0, duration: 0.75, ease: "back.out(1.8)" }, 13.05);
+      tl.to("#wm", { yPercent: 0, duration: 0.75, ease: "expo.out" }, 13.2);
+      tl.to("#tag", { yPercent: 0, duration: 0.7, ease: "expo.out" }, 13.4);
+      tl.to("#url", { autoAlpha: 1, y: 0, duration: 0.6, ease: "expo.out" }, 13.6);
+      tl.to("#members i", { scaleX: 1, duration: 0.5, ease: "expo.out", stagger: 0.08 }, 13.8);
+      tl.to("#mascot", { y: -10, duration: 0.6, yoyo: true, repeat: 1, ease: "sine.inOut" }, 13.85);
+      tl.to("#ring", { scale: 1.06, autoAlpha: 0.4, duration: 1.1, ease: "sine.inOut" }, 13.8);
+      tl.to("#lockup", { x: 8, duration: 1.2, ease: "sine.out" }, 13.8);
+
+      tl.seek(0);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

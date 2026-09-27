@@ -589,7 +589,6 @@ Format:
 - Alasan: token kursi owner hanya ada di folder yang dibagikan di Mac pemilik, jadi itu bukti kepemilikan yang sudah ada tanpa rahasia baru. Menukar kode di main process menjaga kode owner tetap di luar UI.
 - Alternatif yang ditolak: reclaim dengan token Mission Control lama (token itu sudah dicabut, dan menerima token yang dicabut membuka celah); menampilkan kode owner baru di layar (bisa terlihat di rekaman demo atau tangkapan layar); reclaim yang memutus Mission Control yang sedang aktif (dua perangkat bisa saling merebut terus).
 - Dampak: Aarief (tombol baru di kartu Share), Umar dan Imelda tidak terpengaruh.
-
 ## D-umar-06 · 27 Sep 2026 · fase 15 · Satu PM per room, task berisi langkah yang dicentang coder
 
 - Konteks: permintaan Umar: hanya satu PM per room; PM membagi pekerjaan ke coder dengan tabrakan minimal; coder
@@ -664,3 +663,19 @@ Format:
   diunggah lewat token Mission Control saat share, jadi pembuatan room tidak terpengaruh. Karena persetujuan owner
   memakai token Mission Control, alur ini jalan juga di server production lama.
 - Room yang sudah ada tidak berubah (owner-nya tetap coder); berlaku untuk room baru.
+
+## D-imelda-13 · 27 Sep 2026 · fase 11D1/14 · Web dideploy dari Worker, bukan Cloudflare Pages
+
+- Keputusan: Application URL final = `https://ibm-bob-live-collab.afindo-mi01.workers.dev` (landing `/` + replay `/demo`), disajikan langsung dari Worker Cloudflare, bukan `ibm-bob-live-collab.pages.dev` via `pnpm -C radar deploy:web` (Cloudflare Pages) seperti rencana fase 11D1 langkah 19 dan D-003 poin 3. `/`, `/demo/`, `/demo/events.json` diverifikasi 200.
+- Alasan: deploy sudah dijalankan Sab malam ke Worker yang sama dengan server API, jadi satu origin tanpa CORS tambahan untuk web statis.
+- Alternatif yang ditolak: deploy ulang terpisah ke Cloudflare Pages sesuai rencana awal — tidak perlu, Worker sudah live dan berfungsi.
+- Dampak: `plan/PROGRESS.md` (baris 11D1, UI-09), `plan/fase-14-submission.md` (Application URL). **Belum diperbarui** (perlu konfirmasi/tindakan Alief karena menyentuh domain/CORS_ORIGIN kontrak): `PLAN.md` (one-liner install), `plan/fase-11-terminal-dmg-replay.md` baris 41 (masih menyebut Cloudflare Pages), `plan/ref/R5-konvensi.md` §5 `CORS_ORIGIN` (masih `pages.dev`).
+- File ref/ yang diperbarui: – (usulan untuk R5 §5 menunggu Alief).
+
+## D-imelda-14 · 27 Sep 2026 · fase 11D1/14 · D-imelda-13 dibatalkan: web tetap Cloudflare Pages
+
+- Keputusan: **D-imelda-13 dibatalkan.** Application URL final tetap `https://ibm-bob-live-collab.pages.dev` (Cloudflare Pages), sesuai rencana asli fase 11D1 langkah 19 dan D-003 poin 3. Project Pages `ibm-bob-live-collab` dibuat (belum ada sebelumnya) dan build statis `packages/web/out` di-deploy via `wrangler pages deploy` dengan `--branch main` (akun `Afindo.mi01@gmail.com`, sama dengan Worker). `/`, `/demo/`, `/demo/events.json` diverifikasi 200.
+- Alasan: pemilik (Imelda) sudah mendeploy ke Worker `afindo-mi01.workers.dev` semalam sebagai jalan pintas sementara, tapi rencana submission dan `plan/ref/R5-konvensi.md` `CORS_ORIGIN` sudah memakai domain `.pages.dev`, jadi domain itu yang dipakai sebagai Application URL final untuk menjaga konsistensi dengan kontrak dan dokumen submission.
+- Alternatif yang ditolak: tetap pakai `workers.dev` dan ubah `CORS_ORIGIN`/R5 (butuh persetujuan Alief, tidak perlu karena Pages project bisa dibuat langsung).
+- Dampak: `plan/PROGRESS.md` (baris 11D1, UI-09 dikembalikan ke `pages.dev`), `plan/fase-14-submission.md` (Application URL dikembalikan). `PLAN.md`, `plan/fase-11-terminal-dmg-replay.md`, `plan/ref/R5-konvensi.md` tidak perlu diubah lagi karena sudah cocok dengan `pages.dev` dari awal.
+- File ref/ yang diperbarui: – (tidak ada perubahan kontrak; R5 `CORS_ORIGIN` sudah cocok).

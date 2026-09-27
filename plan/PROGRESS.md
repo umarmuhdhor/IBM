@@ -19,7 +19,7 @@ Waktu dalam WITA. Setiap lane **hanya mengedit baris fasenya sendiri** (supaya m
 | 11a | Tonton Bob rekan (A) + script bukti C4 (E) | Aarief | lane/app | [~] | Sab 26 <12:00 | | PR #21 merged (Watch Bob + C4). App fase 10 PR #26 merged: status offline, "Access rejected" (4401), role PM Lead di Settings. Menunggu uji 2 laptop dan p95 < 1 s; wiring `evidence:check` di luar folder Aarief. | log/fase-11a.md |
 | 11b | `.dmg` + Release (C) | Aarief | lane/app | [ ] | | | | log/fase-11b.md |
 | 11c | Uji pasang Mac teman, P1, poles | Aarief | lane/app | [ ] | | | | log/fase-11c.md |
-| 11D1 | Landing + replay dengan fixture (I1, I2) | Imelda | lane/web | [~] | Sab 26 13:10 | | I1/I2 + e2e 12/12 hijau (1440/390, trailingSlash); BERHENTI di LANGKAH MANUAL deploy Cloudflare Pages (TODO B2) + squash-merge PR #14 | log/fase-11D1.md |
+| 11D1 | Landing + replay dengan fixture (I1, I2) | Imelda | lane/web | [x] | Sab 26 13:10 | Min 27 | I1/I2 + e2e 20/20 hijau (1440/390); live di Cloudflare Pages `https://ibm-bob-live-collab.pages.dev` | log/fase-11D1.md |
 | 11D2 | I3 Long Description + replay final dari rekaman | Imelda | lane/web | [ ] | | | | log/fase-11D2.md |
 | 12 | Hardening & P1 | Alief | lane/core | [~] | Sab 26 19:15 | | SV-09, SY-07, MA-06, SY-06, BC-05, UI-06, IN-02 + body cap/rate limit, 520 test hijau, uji beban 5 anggota p95 219 ms; SV-10/BC-06 dipotong (D-alief-08); deploy Sab 21:30; sisa tag `v0.3.0-freeze` + bug E2E | log/fase-12.md |
 | 13 | Eksperimen A/B | Umar | lane/bob | [ ] | | | | log/fase-13.md |
@@ -56,7 +56,7 @@ Waktu dalam WITA. Setiap lane **hanya mengedit baris fasenya sendiri** (supaya m
 | DA-03, DA-04, DA-06 | 09 | [ ] | |
 | JT-01 (hook + `bob/activity`) | 03 + 07 | [~] | sisi Bob: hook → `POST /v1/bob/activity` 204 di Worker asli (`server.int.test.ts`, log wrangler sesi Bob IDE fase 10); tampilan Watch Bob = 11a |
 | JT-02, JT-03 (Watch Bob, privasi prompt) | 11a (+07 `shareprompts`) | [ ] | |
-| UI-09 (landing web) | 11D1 | [~] | Kode + build statis siap (log fase 11D1); belum live di Cloudflare Pages (LANGKAH MANUAL, TODO B2) |
+| UI-09 (landing web) | 11D1 | [x] | Live di Cloudflare Pages `https://ibm-bob-live-collab.pages.dev`; tombol replay + download berfungsi |
 | IN-01 | 04 + 11 | [ ] | |
 | EV-01..03 | semua (dicek 14) | [ ] | |
 | NFR-11 (template IBM, check:ignored) | 00 | [x] | `check:ignored` di CI |

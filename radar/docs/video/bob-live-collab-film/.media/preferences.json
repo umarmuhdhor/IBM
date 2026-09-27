@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "preferences": {
+    "flow": {
+      "value": "companion",
+      "confirmed_in": [
+        "bob-live-collab-film"
+      ],
+      "updated_at": "2026-09-27T08:22:53.658Z"
+    },
+    "storyboard": {
+      "value": "yes",
+      "confirmed_in": [
+        "bob-live-collab-film"
+      ],
+      "updated_at": "2026-09-27T08:22:53.690Z"
+    }
+  },
+  "sightings": {}
+}

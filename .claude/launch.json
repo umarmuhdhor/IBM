@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "remotion-studio",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["-C", "radar/docs/video", "run", "dev"],
+      "port": 3000
+    }
+  ]
+}

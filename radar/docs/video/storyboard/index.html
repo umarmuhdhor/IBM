@@ -1,0 +1,536 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video Storyboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0b0b;--l0:#161616;--l1:#1c1c1c;--l2:#262626;--l3:#393939;
+  --tx:#f4f4f4;--tx2:#c6c6c6;--tx3:#8d8d8d;
+  --blue:#78a9ff;--blue2:#0f62fe;--red:#fa4d56;--green:#42be65;--yel:#f1c21b;
+  --pm:#be95ff;--al:#33b1ff;--um:#08bdba;
+  --sans:'IBM Plex Sans',system-ui,sans-serif;--mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--tx);font-family:var(--sans)}
+.page{max-width:1280px;margin:0 auto;padding:24px 16px 64px}
+.top h1{font-size:22px;font-weight:600;margin:0 0 4px}
+.top p{margin:0 0 16px;color:var(--tx2);font-size:14px;line-height:1.5}
+.top code{font-family:var(--mono);color:var(--blue)}
+
+/* player */
+.vp{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;background:#000;border:1px solid var(--l3)}
+.stage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;background:radial-gradient(1200px 700px at 50% 40%,#141821,#0b0b0b);overflow:hidden}
+.world{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0}
+.controls{display:flex;align-items:center;gap:12px;padding:10px 0;flex-wrap:wrap}
+.controls button{background:var(--l2);color:var(--tx);border:1px solid var(--l3);font:500 14px var(--sans);padding:8px 14px;cursor:pointer;min-height:40px}
+.controls button:hover{background:var(--l3)}
+.controls button:focus-visible,.chip:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+#play{min-width:96px}
+#scrub{flex:1;min-width:160px;accent-color:var(--blue2)}
+#time{font:14px var(--mono);color:var(--tx2);font-variant-numeric:tabular-nums;min-width:108px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{background:transparent;border:1px solid var(--l3);color:var(--tx2);font:13px var(--sans);padding:6px 10px;cursor:pointer;min-height:36px}
+.chip.cur{border-color:var(--blue);color:var(--tx);background:rgba(15,98,254,.15)}
+
+/* timeline visibility */
+[data-at]:not(.on){display:none !important}
+[data-at].on{animation:pop .35s cubic-bezier(.2,.8,.2,1)}
+@keyframes pop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.fade[data-at].on{animation:fade .5s ease}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+
+/* Bob IDE window */
+.ide{position:absolute;background:var(--l1);border:1px solid var(--l3);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 70px rgba(0,0,0,.55)}
+.ide .bar{height:34px;flex:none;display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--l0);border-bottom:1px solid var(--l3);font-size:13px;color:var(--tx3)}
+.dots i{width:11px;height:11px;border-radius:50%;display:inline-block;background:#4a4a4a;margin-right:6px}
+.who{margin-left:auto;display:flex;align-items:center;gap:8px;font-weight:600;color:var(--tx)}
+.who i{width:10px;height:10px;border-radius:50%;background:var(--c)}
+.who small{font-weight:400;color:var(--tx3)}
+.body{flex:1;display:flex;min-height:0}
+.act{width:44px;flex:none;background:var(--l0);border-right:1px solid var(--l3);display:flex;flex-direction:column;align-items:center;gap:14px;padding-top:12px}
+.act i{width:20px;height:20px;border:2px solid #555;border-radius:4px}
+.act i.b{border-color:var(--blue);background:rgba(120,169,255,.2)}
+.exp{width:210px;flex:none;border-right:1px solid var(--l3);font-size:13px;color:var(--tx2);padding:8px 0;background:#181818}
+.exp h6{margin:0 0 6px;padding:0 12px;font:600 11px var(--sans);letter-spacing:.08em;color:var(--tx3)}
+.f{display:flex;align-items:center;gap:6px;height:26px;padding-right:8px;white-space:nowrap}
+.f .fi{color:var(--tx3);width:10px}
+.lock{margin-left:auto;font-size:11px;border:1px solid var(--c);color:var(--c);padding:0 6px;border-radius:9px;line-height:17px}
+.ed{flex:1;min-width:0;display:flex;flex-direction:column;background:#131313}
+.tabs{height:34px;flex:none;display:flex;background:var(--l0);border-bottom:1px solid var(--l3);font-size:13px}
+.tab{padding:0 14px;display:flex;align-items:center;gap:6px;border-right:1px solid var(--l3);color:var(--tx3)}
+.tab.cur{background:#131313;color:var(--tx);box-shadow:inset 0 2px 0 var(--c,var(--blue))}
+.code{font:13px/1.75 var(--mono);padding:10px 0;color:#d0d0d0;overflow:hidden;flex:1}
+.ln{display:flex;white-space:pre}
+.ln b{flex:none;width:40px;text-align:right;color:#5a5a5a;padding-right:14px;font-weight:400}
+.ln.ai{background:rgba(51,177,255,.07)}
+.um .ln.ai{background:rgba(8,189,186,.08)}
+.k{color:#be95ff}.s{color:#42be65}.c{color:#6f6f6f}.fn{color:#78a9ff}
+.aipill{position:absolute;right:14px;top:8px;font:11px var(--mono);color:var(--c);border:1px solid var(--c);padding:1px 8px;border-radius:9px;background:#131313;z-index:2}
+.edwrap{position:relative;flex:1;display:flex;flex-direction:column;min-height:0}
+.status{height:24px;flex:none;background:#0043ce;color:#fff;font:12px var(--mono);display:flex;align-items:center;gap:16px;padding:0 12px}
+
+/* Bob chat panel */
+.chat{width:380px;flex:none;border-left:1px solid var(--l3);display:flex;flex-direction:column;background:var(--l0)}
+.chat .hd{height:44px;flex:none;display:flex;align-items:center;padding:0 12px;gap:8px;border-bottom:1px solid var(--l3);font-weight:600;font-size:14px;position:relative}
+.bobmark{width:22px;height:22px;border-radius:6px;background:linear-gradient(135deg,#0f62fe,#8a3ffc);display:grid;place-items:center;font:600 12px var(--sans);color:#fff}
+.mode{margin-left:auto;font:500 12px var(--sans);border:1px solid var(--l3);border-radius:4px;padding:4px 8px;color:var(--tx2);display:flex;gap:6px;align-items:center}
+.mode.hot{border-color:var(--c);color:var(--tx)}
+.mode .ic{color:var(--c)}
+.menu{position:absolute;right:12px;top:40px;width:220px;background:var(--l2);border:1px solid var(--l3);z-index:5;font:400 13px var(--sans);box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.menu div{padding:7px 10px;color:var(--tx2)}
+.menu .sel{background:rgba(15,98,254,.35);color:#fff}
+.menu .sep{border-top:1px solid var(--l3);padding:0}
+.msgs{flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:9px;padding:12px;overflow:hidden;min-height:0}
+.m{font-size:13px;line-height:1.5;flex:none}
+.m.u{background:var(--l2);border-left:3px solid var(--c);padding:8px 10px;color:var(--tx)}
+.m.u .att{display:inline-flex;gap:6px;align-items:center;font:12px var(--mono);border:1px solid var(--l3);padding:2px 8px;margin-bottom:6px;color:var(--tx2)}
+.m.b{color:var(--tx2)}
+.m.b::before{content:"Bob";display:block;font:600 11px var(--sans);color:var(--tx3);letter-spacing:.05em;margin-bottom:2px}
+.m.tool{font:12px/1.5 var(--mono);border:1px solid var(--l3);background:#1a1a1a;padding:6px 9px;color:var(--tx2)}
+.m.tool .p{color:var(--blue)}
+.m.tool .r{display:block;color:var(--tx3)}
+.m.hookc{font:12px/1.5 var(--mono);border:1px solid #6f6f6f;padding:6px 9px;color:var(--tx2);background:#1a1a1a}
+.m.hookc .p{color:var(--yel)}
+.m.hookc .r{display:block;color:var(--tx3)}
+.m.bad{border-color:var(--red);background:rgba(250,77,86,.12);color:#ffd7d9}
+.m.bad .p{color:var(--red)}
+.m.rule{font:12px/1.5 var(--mono);border:1px dashed var(--pm);padding:6px 9px;color:#e8daff}
+.m.rule .p{color:var(--pm)}
+.plan{border:1px solid var(--l3);background:#1a1a1a;padding:10px;flex:none}
+.plan h5{margin:0 0 8px;font:600 13px var(--sans)}
+.task{border-left:3px solid var(--c);padding:4px 8px;margin-bottom:8px;background:var(--l1)}
+.task b{font-weight:600;font-size:13px}
+.task span{display:block;font:12px var(--mono);color:var(--tx3)}
+.btns{display:flex;gap:8px;margin-top:4px}
+.btn{font:500 12px var(--sans);padding:5px 12px;border:1px solid var(--l3);color:var(--tx2)}
+.btn.pri{background:var(--blue2);border-color:var(--blue2);color:#fff}
+.btn.hover{outline:2px solid #fff;outline-offset:1px}
+.ok{font:500 12px var(--sans);color:var(--green)}
+.inp{flex:none;margin:0 12px 12px;border:1px solid var(--l3);min-height:56px;padding:9px 10px;font-size:13px;color:var(--tx);background:var(--l1)}
+.inp .ph{color:var(--tx3)}
+.caret::after{content:"";display:inline-block;width:7px;height:15px;background:var(--tx);vertical-align:-2px;margin-left:1px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+
+/* brief pdf */
+.pdf{flex:1;background:#2b2b2b;padding:18px;overflow:hidden}
+.sheet{background:#f4f4f4;color:#161616;padding:22px 20px;font-size:12.5px;line-height:1.55;height:100%}
+.sheet h3{margin:0 0 2px;font-size:17px}
+.sheet .sub{color:#6f6f6f;font-size:11px;margin-bottom:14px}
+.sheet h4{margin:14px 0 4px;font-size:12.5px}
+.sheet ul{margin:0;padding-left:16px}
+
+/* toasts + flashes */
+.toast{position:absolute;right:16px;bottom:34px;width:330px;background:var(--l2);border:1px solid var(--l3);border-left:4px solid var(--c);padding:10px 12px;font-size:13px;z-index:6;box-shadow:0 12px 30px rgba(0,0,0,.5)}
+.toast small{display:block;font:600 11px var(--sans);color:var(--c);letter-spacing:.05em;margin-bottom:2px;text-transform:uppercase}
+.toast .btns{margin-top:8px}
+.flash{position:absolute;inset:0;border:3px solid var(--red);pointer-events:none;z-index:7}
+.flash.on{animation:flash 1.2s ease-out forwards !important}
+@keyframes flash{0%{background:rgba(250,77,86,.22)}100%{background:transparent;border-color:rgba(250,77,86,.5)}}
+
+/* full-frame overlays */
+.ov{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:20;background:#0b0b0b}
+.hookscene{flex-direction:row;gap:40px}
+.mini{width:820px;border:1px solid var(--l3);background:#131313}
+.mini .tabs .tab.cur{box-shadow:inset 0 2px 0 var(--c)}
+.mini .code{font-size:22px;padding:18px 0}
+.mini .tabs{height:44px;font-size:17px}
+.mini .ln b{width:48px}
+.conflict{position:absolute;left:50%;top:72%;transform:translateX(-50%);font:500 26px var(--mono);color:#fff;background:#a2191f;padding:14px 26px;white-space:nowrap}
+.conflict.on{animation:shake .5s !important}
+@keyframes shake{0%,100%{transform:translateX(-50%)}25%{transform:translateX(calc(-50% - 10px))}75%{transform:translateX(calc(-50% + 10px))}}
+.bigq{position:absolute;top:110px;left:0;right:0;text-align:center;font:600 56px var(--sans)}
+.title h2{font:600 84px var(--sans);margin:0;letter-spacing:-.01em}
+.title p{font:400 32px var(--sans);color:var(--tx2);margin:18px 0 0}
+.title .tag{font:13px var(--mono);color:var(--tx3);margin-top:40px}
+.bts h2{font:600 52px var(--sans);margin:0 0 40px}
+.grid4{display:grid;grid-template-columns:repeat(4,390px);gap:24px}
+.card{border:1px solid var(--l3);background:var(--l0);padding:22px;min-height:360px;border-top:4px solid var(--c)}
+.card small{font:600 14px var(--sans);color:var(--c);letter-spacing:.06em;text-transform:uppercase}
+.card h3{font:600 30px var(--sans);margin:6px 0 12px}
+.card pre{font:15px/1.6 var(--mono);color:var(--tx2);margin:0;white-space:pre-wrap}
+.card p{font-size:17px;color:var(--tx2);line-height:1.45;margin:0 0 14px}
+.bts .foot{margin-top:36px;font:20px var(--sans);color:var(--tx2)}
+.cta h2{font:600 72px var(--sans);margin:0}
+.cta p{font:28px var(--mono);color:var(--blue);margin:24px 0 0}
+.cta .team{margin-top:48px;display:flex;gap:28px;font-size:24px;color:var(--tx2)}
+.cta .team span::before{content:"";display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--c);margin-right:8px}
+.cta .fine{margin-top:40px;font-size:16px;color:var(--tx3)}
+
+.cap{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);max-width:1600px;text-align:center;font:500 34px/1.3 var(--sans);background:rgba(0,0,0,.85);padding:10px 24px;z-index:30}
+.cap:empty{display:none}
+.cap code{font:500 31px var(--mono);color:var(--blue)}
+.scenetag{position:absolute;left:24px;top:20px;z-index:31;font:14px var(--mono);color:var(--tx3);background:rgba(0,0,0,.6);padding:4px 10px}
+
+/* notes */
+.notes{margin-top:36px}
+.notes h2{font-size:18px;font-weight:600;margin:0 0 12px}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th,.tbl td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--l3);line-height:1.5}
+.tbl th{font-weight:600;color:var(--tx3);font-size:12px;letter-spacing:.05em;text-transform:uppercase}
+.tbl td:first-child{font-family:var(--mono);white-space:nowrap;color:var(--tx2)}
+.tbl code{font-family:var(--mono);font-size:13px;color:var(--blue)}
+.tbl tr{cursor:pointer}
+.tbl tr:hover td{background:var(--l0)}
+.feat{display:inline-block;font:12px var(--mono);border:1px solid var(--l3);padding:1px 7px;margin:0 4px 4px 0;color:var(--tx2);white-space:nowrap}
+.qs{margin-top:28px;border:1px solid var(--l3);padding:16px 20px;background:var(--l0)}
+.qs h3{margin:0 0 8px;font-size:15px}
+.qs ol{margin:0;padding-left:20px;color:var(--tx2);font-size:14px;line-height:1.6}
+@media (max-width:700px){
+  .tbl thead{display:none}
+  .tbl tr,.tbl td{display:block}
+  .tbl td{border:0;padding:4px 0}
+  .tbl tr{border-bottom:1px solid var(--l3);padding:10px 0}
+}
+@media (prefers-reduced-motion:reduce){[data-at].on,.conflict.on,.flash.on{animation:none !important}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="top">
+    <h1>Video storyboard · IBM Bob Live Collab</h1>
+    <p>Animatic draft for review (2:50). PM: Aarief. Coders: Alief and Umar. Everything happens in Bob IDE. Space = play/pause, ←/→ = 5 s, or add <code>#t=110</code> to the URL.</p>
+  </div>
+
+  <div class="vp" id="vp"><div class="stage" id="stage">
+    <div class="world" id="world"></div>
+    <div id="overlays"></div>
+    <div class="scenetag" id="stag"></div>
+    <div class="cap" id="cap"></div>
+  </div></div>
+
+  <div class="controls">
+    <button id="play" type="button">▶ Play</button>
+    <span id="time">0:00 / 2:50</span>
+    <input id="scrub" type="range" min="0" max="170" step="0.1" value="0" aria-label="Timeline">
+    <button id="speed" type="button" aria-label="Playback speed">1×</button>
+  </div>
+  <div class="chips" id="chips"></div>
+
+  <section class="notes">
+    <h2>Scenes</h2>
+    <table class="tbl"><thead><tr><th>Time</th><th>What's on screen</th><th>Caption</th><th>Bob feature</th></tr></thead><tbody id="rows"></tbody></table>
+    <div class="qs">
+      <h3>Still open</h3>
+      <ol>
+        <li>Record the real Bob IDE (3 windows, 3 accounts) or build it in Remotion from this animatic? At least scene 7 should be a real recording.</li>
+        <li>Voice-over: who records it (English), or TTS?</li>
+        <li>Should Mission Control (the desktop app) appear, or stay 100% in Bob IDE?</li>
+        <li>Replay URL for the last scene. It's a placeholder for now.</li>
+      </ol>
+    </div>
+  </section>
+</div>
+
+<script>
+const T = 170;
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const hl = s => esc(s).replace(/('[^']*')|(\/\/.*$)|\b(import|from|export|function|const|return|type)\b|\b(calculateTotal|applyPromo|formatIDR|cartCount)\b/g,
+  (m,str,com,kw,fn) => str?`<span class="s">${str}</span>`:com?`<span class="c">${com}</span>`:kw?`<span class="k">${kw}</span>`:`<span class="fn">${fn}</span>`);
+const at = (a,u) => ` data-at="${a}"${u!=null?` data-until="${u}"`:''}`;
+const code = (lines, start, step, from=1) => lines.map((l,i)=>
+  `<div class="ln ${start!=null?'ai':''}"${start!=null?at(start+i*step):''}><b>${from+i}</b><span>${hl(l)||' '}</span></div>`).join('');
+const typed = (ts,te,txt,a,u) => `<span class="caret" data-ts="${ts}" data-te="${te}" data-full="${esc(txt)}"${at(a,u)}></span>`;
+const fileRow = (n,d,dir,lock) => `<div class="f" style="padding-left:${10+d*14}px"><span class="fi">${dir?'▾':'·'}</span>${n}${lock||''}</div>`;
+const lk = (who,c,a) => `<span class="lock" style="--c:${c}"${at(a)}>${who}</span>`;
+
+const C = {pm:'var(--pm)', al:'var(--al)', um:'var(--um)'};
+
+/* ---------- sample project (synthetic) ---------- */
+const checkout = [
+  "import { applyPromo } from './promo'",
+  "",
+  "export function calculateTotal(cart: Cart, code?: string) {",
+  "  const subtotal = cart.items.reduce((s, i) => s + i.price * i.qty, 0)",
+  "  const discount = code ? applyPromo(code, subtotal) : 0",
+  "  return subtotal - discount",
+  "}",
+];
+const header = [
+  "import { calculateTotal } from './checkout'",
+  "import { cartCount } from './cartBadge'",
+  "",
+  "export function Header({ cart }: { cart: Cart }) {",
+  "  const total = calculateTotal(cart)",
+  "  return <header>Cart ({cartCount(cart)}) · {formatIDR(total)}</header>",
+  "}",
+];
+
+function explorer(me){
+  const own = (k,name,c) => lk(me===k?`${name} · you`:`🔒 ${name}`,c,60);
+  return `<div class="exp"><h6>TOKO-DEMO</h6>
+    ${fileRow('src',0,true)}
+    ${fileRow('checkout.ts',1,false,own('al','Alief',C.al))}
+    ${fileRow('promo.ts',1,false,own('al','Alief',C.al))}
+    ${fileRow('Header.tsx',1,false,own('um','Umar',C.um))}
+    ${fileRow('cartBadge.ts',1,false,own('um','Umar',C.um))}
+    ${fileRow('.bob',0,true)}
+    ${fileRow('custom_modes.yaml',1)}
+    ${fileRow('settings.json',1)}
+    ${fileRow('mcp.json',1)}
+    ${fileRow('rules-coder/',1)}
+    ${fileRow('brief.pdf',0)}
+  </div>`;
+}
+
+function modePill(c, a, name){
+  return `<span class="mode"${at(0,a)}><span class="ic">◐</span>Code ▾</span>
+          <span class="mode hot" style="--c:${c}"${at(a)}><span class="ic">◐</span>${name} ▾</span>`;
+}
+
+/* ---------- windows ---------- */
+const W = {
+  pm:{x:40,y:40,w:760,h:1000},
+  al:{x:840,y:40,w:1040,h:480},
+  um:{x:840,y:560,w:1040,h:480},
+};
+const pos = r => `left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${r.h}px`;
+const pmPrompt = 'Read brief.pdf and split it into tasks for Alief and Umar. One owner per file.';
+
+const pmWin = `
+<div class="ide fade" style="${pos(W.pm)};--c:${C.pm}"${at(20,145)}>
+  <div class="bar"><span class="dots"><i></i><i></i><i></i></span>toko-demo — Bob IDE<span class="who"><i></i>Aarief <small>PM</small></span></div>
+  <div class="body">
+    <div class="act"><i></i><i></i><i class="b"></i></div>
+    <div class="ed">
+      <div class="tabs"><div class="tab cur" style="--c:${C.pm}">brief.pdf</div></div>
+      <div class="pdf"><div class="sheet">
+        <h3>toko-demo · Sprint brief</h3><div class="sub">Client brief · synthetic sample</div>
+        <h4>Goal</h4><ul><li>Customers can enter a promo code at checkout.</li><li>The header shows the live cart total.</li></ul>
+        <h4>Notes</h4><ul><li>Total must include the discount.</li><li>Ship Friday.</li></ul>
+        <h4>Team</h4><ul><li>Alief, Umar (coders)</li></ul>
+      </div></div>
+    </div>
+    <div class="chat" style="width:416px">
+      <div class="hd"><span class="bobmark">B</span>Bob
+        ${modePill(C.pm,24.6,'Live Collab PM Lead')}
+        <div class="menu"${at(22,24.6)}>
+          <div>Ask</div><div>Plan</div><div>Code</div><div>Advanced</div><div class="sep"></div><div class="sel">◐ Live Collab PM Lead</div>
+        </div>
+      </div>
+      <div class="msgs">
+        <div class="m u" style="--c:${C.pm}"${at(34)}><div class="att">▤ brief.pdf</div><br>${pmPrompt}</div>
+        <div class="m b"${at(36)}>Reading brief.pdf. I found 2 features: promo codes and a header cart total.</div>
+        <div class="m tool"${at(38.5)}><span class="p">⧉ mcp · radar.team_status</span><span class="r">2 coders online: Alief, Umar</span></div>
+        <div class="m tool"${at(46)}><span class="p">⧉ mcp · radar.propose_plan</span><span class="r">2 tasks · 4 files · waiting for approval</span></div>
+        <div class="plan"${at(49)}><h5>Plan · needs your approval</h5>
+          <div class="task" style="--c:${C.al}"><b>T1 · Promo codes at checkout</b><span>Alief · src/checkout.ts, src/promo.ts</span></div>
+          <div class="task" style="--c:${C.um}"><b>T2 · Cart total in header</b><span>Umar · src/Header.tsx, src/cartBadge.ts</span></div>
+          <div class="btns"${at(0,58)}><span class="btn pri" data-hover="55.5">Approve</span><span class="btn">Edit</span></div>
+          <div class="ok"${at(58)}>✓ Approved by Aarief</div>
+        </div>
+        <div class="m b"${at(60)}>Plan approved. Tasks sent, and each file is locked to its owner.</div>
+      </div>
+      <div class="inp"><span class="ph"${at(0,27)}>Ask Bob…</span>${typed(27,33.5,pmPrompt,27,34)}</div>
+    </div>
+  </div>
+  <div class="status">radar · connected · 3 members<span style="margin-left:auto">mode: pm-lead (read + mcp only)</span></div>
+  <div class="toast" style="--c:var(--yel);bottom:auto;top:50px"${at(130)}><small>Needs you</small>Umar's Bob requests <b>checkout.ts</b> (held by Alief, T1).<div class="btns"><span class="btn pri">Queue after T1</span><span class="btn">Deny</span></div></div>
+</div>`;
+
+function coderWin(k, name, c, s, file, lines, prompt, briefMine, briefOther){
+  return `
+<div class="ide fade ${k}" style="${pos(W[k])};--c:${c}"${at(64,145)}>
+  <div class="bar"><span class="dots"><i></i><i></i><i></i></span>toko-demo — Bob IDE<span class="who"><i></i>${name} <small>coder</small></span></div>
+  <div class="body">
+    <div class="act"><i class="b"></i><i></i><i></i></div>
+    ${explorer(k)}
+    <div class="ed">
+      <div class="tabs"><div class="tab cur" style="--c:${c}">${file}</div>${k==='um'?`<div class="tab"${at(111)}>checkout.ts 🔒</div>`:''}</div>
+      <div class="edwrap">
+        <span class="aipill" style="--c:${c}"${at(88+s,104)}>${name} · Bob coder writing</span>
+        <div class="code">${code(lines, 88+s, 1.7)}</div>
+      </div>
+    </div>
+    <div class="chat">
+      <div class="hd"><span class="bobmark">B</span>Bob ${modePill(c,76+s,'Live Collab Coder')}</div>
+      <div class="msgs">
+        <div class="m hookc"${at(77+s)}><span class="p">⚓ hook · SessionStart · brief</span><span style="display:block">You: ${name} · task ${briefMine}</span><span class="r">${briefOther}</span></div>
+        <div class="m u" style="--c:${c}"${at(82+s)}>Start my task.</div>
+        <div class="m tool"${at(84+s)}><span class="p">⧉ mcp · radar.my_tasks</span><span class="r">${briefMine}</span></div>
+        <div class="m b"${at(86+s)}>${k==='al'?'Adding promo support to calculateTotal() in checkout.ts.':'Building the cart total in Header.tsx.'}</div>
+        <div class="m tool"${at(88+s)}><span class="p">✎ write_file · src/${file}</span><span class="r">⚓ PreToolUse · lock_guard → allowed · you own it</span></div>
+        ${k==='um' ? `
+        <div class="m u" style="--c:${c}"${at(109)}>${esc(prompt)}</div>
+        <div class="m tool"${at(111)}><span class="p">✎ apply_diff · src/checkout.ts</span><span class="r">…</span></div>
+        <div class="m hookc bad"${at(113)}><span class="p">⚓ hook · PreToolUse · lock_guard → blocked · 84 ms</span><span style="display:block">checkout.ts is locked by Alief (T1)</span></div>
+        <div class="m rule"${at(116)}><span class="p">§ rules · rules-coder/01-radar.md</span><span style="display:block">Don't retry. Don't edit through the shell. Ask why_blocked first.</span></div>
+        <div class="m tool"${at(118)}><span class="p">⧉ mcp · radar.why_blocked</span><span class="r">held by Alief · T1 Promo codes · editing now</span></div>
+        <div class="m b"${at(121)}>I can't edit checkout.ts. Alief's Bob holds it for T1 (promo codes). I won't retry or work around the lock. I'll ask the PM for it and keep going on Header.tsx.</div>
+        <div class="m tool"${at(125)}><span class="p">⧉ mcp · radar.request_file</span><span class="r">checkout.ts · queued for PM</span></div>
+        <div class="m b"${at(136)}>Header.tsx now calls calculateTotal(cart, code). No change to checkout.ts needed.</div>
+        ` : `
+        <div class="m hookc"${at(92)}><span class="p">⚓ hook · PostToolUse · mark_ai_edit</span><span class="r">checkout.ts marked as a Bob edit</span></div>
+        `}
+      </div>
+      <div class="inp"><span class="ph"${k==='um'?at(0,105):''}>Ask Bob…</span>${k==='um'?typed(105,108.6,prompt,105,109):''}</div>
+    </div>
+  </div>
+  <div class="status">radar · connected · 3 members<span style="margin-left:auto">mode: coder</span></div>
+  <div class="toast" style="--c:var(--pm)"${at(67+s,74+s)}><small>New task from Aarief</small>${briefMine}</div>
+  ${k==='al'?`<div class="toast" style="--c:var(--red)"${at(114,124)}><small>Lock held</small>Umar's Bob tried checkout.ts. Your edit is safe.</div>`:''}
+  ${k==='um'?`<div class="flash"${at(113,114.2)}></div>`:''}
+</div>`;
+}
+
+document.getElementById('world').innerHTML = pmWin +
+  coderWin('al','Alief',C.al,0,'checkout.ts',checkout,'',
+    'T1 · Promo codes at checkout · checkout.ts, promo.ts','Umar owns Header.tsx, cartBadge.ts') +
+  coderWin('um','Umar',C.um,2,'Header.tsx',header,
+    'Header needs the discounted total. Update calculateTotal() in checkout.ts.',
+    'T2 · Cart total in header · Header.tsx, cartBadge.ts','Alief owns checkout.ts, promo.ts');
+
+/* ---------- full-frame overlays ---------- */
+const hookA = ["export function calculateTotal(cart) {","  const sum = cart.items.reduce(add, 0)","  return sum - promo(cart.code)","}"];
+const hookB = ["export function calculateTotal(cart) {","  const sum = cart.items.reduce(add, 0)","  return formatIDR(sum)","}"];
+const mini = (who,c,lines,s) => `<div class="mini" style="--c:${c}"><div class="tabs"><div class="tab cur">checkout.ts · ${who}'s AI</div></div><div class="code">${code(lines,s,0.9)}</div></div>`;
+
+document.getElementById('overlays').innerHTML = `
+<div class="ov hookscene"${at(0,12)}>
+  <div class="bigq"${at(0.3)}>Two AI coders. One file.</div>
+  ${mini('Alief',C.al,hookA,1)}${mini('Umar',C.um,hookB,1.4)}
+  <div class="conflict"${at(6.5)}>CONFLICT (content): Merge conflict in src/checkout.ts</div>
+</div>
+<div class="ov title fade"${at(12,20)}>
+  <h2>IBM Bob Live Collab</h2>
+  <p>One live workspace for a team where everyone codes with their own Bob.</p>
+  <div class="tag">community hackathon project · not an official IBM product</div>
+</div>
+<div class="ov bts fade"${at(145,163)}>
+  <h2>Built on Bob's own features</h2>
+  <div class="grid4">
+    <div class="card" style="--c:var(--pm)"${at(146)}><small>1 · Custom modes</small><h3>Roles</h3><p>Same Bob, two jobs.</p><pre>pm-lead  read + mcp
+         plans, never edits
+coder    edit + mcp</pre></div>
+    <div class="card" style="--c:var(--yel)"${at(148)}><small>2 · Hooks</small><h3>Enforcement</h3><p>A hard block, not a suggestion.</p><pre>SessionStart     brief
+UserPromptSubmit brief
+PreToolUse       lock_guard
+PostToolUse      mark_ai_edit
+Stop             stop</pre></div>
+    <div class="card" style="--c:var(--blue)"${at(150)}><small>3 · MCP · radar-mcp</small><h3>A voice</h3><p>Bob explains and proposes.</p><pre>PM     propose_plan, notify
+       team_status, propose_review
+coder  my_tasks, why_blocked
+       request_file, submit_task</pre></div>
+    <div class="card" style="--c:var(--green)"${at(152)}><small>4 · Rules</small><h3>Manners</h3><p>What Bob does when it's blocked.</p><pre>✗ retry the edit
+✗ edit through the shell
+✓ call why_blocked
+✓ explain, move on</pre></div>
+  </div>
+  <div class="foot"${at(155)}>All in one <code style="font-family:var(--mono);color:var(--blue)">.bob/</code> kit per workspace · built with Bob (see bob_sessions/)</div>
+</div>
+<div class="ov cta fade"${at(163)}>
+  <h2>Watch the replay</h2>
+  <p>[replay URL]/demo</p>
+  <div class="team"><span style="--c:var(--pm)">Aarief</span><span style="--c:var(--al)">Alief</span><span style="--c:var(--um)">Umar</span><span style="--c:var(--yel)">Imelda</span></div>
+  <div class="fine">community hackathon project · not an official IBM product</div>
+</div>`;
+
+/* ---------- scenes, captions, camera ---------- */
+const scenes = [
+  {a:0,b:12,n:'1 Hook',vis:'Two AI editors write the same <code>checkout.ts</code>. Merge conflict.',cap:'Two AI coders. One file.',f:[]},
+  {a:12,b:20,n:'2 Title',vis:'Product name + one-line pitch.',cap:'—',f:[]},
+  {a:20,b:45,n:'3 PM brief',vis:'Zoom on Aarief\'s Bob IDE. Opens brief.pdf, switches mode to <code>pm-lead</code>, asks Bob to split the work.',cap:'Only the PM knows the project. / Custom mode pm-lead: Bob plans, never edits.',f:['Custom modes']},
+  {a:45,b:64,n:'4 Plan',vis:'Bob calls <code>team_status</code> + <code>propose_plan</code>. Plan card, Aarief approves.',cap:'Bob splits the brief by file. / Nothing happens until a human approves.',f:['MCP']},
+  {a:64,b:75,n:'5 Zoom out',vis:'Zoom out to 3 Bob IDE windows. Task toasts land at Alief and Umar.',cap:'Each task lands in that coder\'s own Bob IDE.',f:[]},
+  {a:75,b:105,n:'6 Build',vis:'Both switch to <code>coder</code>. Brief from <code>SessionStart</code>, <code>my_tasks</code>, code writes live.',cap:'Every Bob starts with a brief. / They build in parallel.',f:['Custom modes','Hooks','MCP']},
+  {a:105,b:145,n:'7 Blocked',vis:'Zoom on Umar. Bob tries <code>checkout.ts</code> → <code>PreToolUse</code> blocks it. Rules → <code>why_blocked</code> → <code>request_file</code>. Aarief gets "Needs you".',cap:'Blocked before the collision. / No retry, no shell tricks. / The PM decides.',f:['Hooks','Rules','MCP']},
+  {a:145,b:163,n:'8 Behind the scenes',vis:'4 cards: Modes, Hooks, MCP, Rules.',cap:'—',f:['all 4']},
+  {a:163,b:170,n:'9 CTA',vis:'Replay URL + team.',cap:'—',f:[]},
+];
+const caps = [
+  [20,26,'Only the PM knows the project.'],
+  [26,45,'Custom mode <code>pm-lead</code>: Bob plans, but never edits code.'],
+  [45,57,'Bob splits the brief into tasks, one owner per file, through <code>radar-mcp</code>.'],
+  [57,64,'Nothing happens until a human approves.'],
+  [64,75,'Each task lands in that coder\'s own Bob IDE.'],
+  [75,90,'Hook <code>SessionStart</code>: every Bob starts with a brief of who owns what.'],
+  [90,105,'Alief and Umar build in parallel. Every file has one owner.'],
+  [105,113,'Umar\'s Bob reaches for <code>checkout.ts</code>. That\'s Alief\'s file.'],
+  [113,121,'Hook <code>PreToolUse</code> blocks the edit before it lands.'],
+  [121,130,'Rules: no retry, no shell tricks. Bob asks <code>why_blocked</code> and explains.'],
+  [130,145,'Bob moves on. The PM gets the request and decides.'],
+];
+const R = r => ({x:r.x,y:r.y,w:r.w,h:r.h});
+const pmChat = {x:W.pm.x+344,y:W.pm.y+470,w:416,h:530};
+const pmPlan = {x:W.pm.x+300,y:W.pm.y+300,w:460,h:700};
+const umChat = {x:W.um.x+560,y:W.um.y,w:480,h:W.um.h};
+const all = {x:0,y:0,w:1920,h:1080};
+const cams = [
+  [0,R(W.pm)],[20,R(W.pm)],[25,pmChat],[44,pmChat],[47,pmPlan],[63,pmPlan],
+  [71,all],[104,all],[108.5,R(W.um)],[114,umChat],[127,umChat],[133,all],[170,all],
+];
+function camOf(r){
+  const s = Math.min(1920/r.w,1080/r.h)*0.96;
+  return {s, x:960-(r.x+r.w/2)*s, y:540-(r.y+r.h/2)*s};
+}
+const ease = p => p<.5 ? 4*p*p*p : 1-Math.pow(-2*p+2,3)/2;
+function camAt(t){
+  for(let i=0;i<cams.length-1;i++){
+    const [ta,ra]=cams[i],[tb,rb]=cams[i+1];
+    if(t>=ta && t<=tb){
+      const p = tb===ta?1:ease((t-ta)/(tb-ta));
+      const A=camOf(ra),B=camOf(rb);
+      return {s:A.s+(B.s-A.s)*p,x:A.x+(B.x-A.x)*p,y:A.y+(B.y-A.y)*p};
+    }
+  }
+  return camOf(all);
+}
+
+/* ---------- render ---------- */
+const $ = id => document.getElementById(id);
+const unesc = s => s.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');
+const timed = [...document.querySelectorAll('[data-at]')].map(el=>({el,a:+el.dataset.at,u:el.dataset.until!=null?+el.dataset.until:Infinity}));
+const types = [...document.querySelectorAll('[data-ts]')].map(el=>({el,a:+el.dataset.ts,b:+el.dataset.te,full:unesc(el.dataset.full)}));
+const hovers = [...document.querySelectorAll('[data-hover]')].map(el=>({el,a:+el.dataset.hover}));
+const fmt = t => `${Math.floor(t/60)}:${String(Math.floor(t%60)).padStart(2,'0')}`;
+
+$('chips').innerHTML = scenes.map((s,i)=>`<button class="chip" type="button" data-i="${i}">${s.n}</button>`).join('');
+$('rows').innerHTML = scenes.map((s,i)=>`<tr data-i="${i}"><td>${fmt(s.a)}–${fmt(s.b)}</td><td>${s.vis}</td><td>${s.cap}</td><td>${s.f.map(f=>`<span class="feat">${f}</span>`).join('')||'—'}</td></tr>`).join('');
+
+let t = 0, playing = false, speed = 1, last = 0;
+function render(){
+  for(const o of timed) o.el.classList.toggle('on', t>=o.a && t<o.u);
+  for(const o of types){
+    const p = Math.max(0,Math.min(1,(t-o.a)/(o.b-o.a)));
+    o.el.textContent = o.full.slice(0, Math.round(p*o.full.length));
+  }
+  for(const o of hovers) o.el.classList.toggle('hover', t>=o.a);
+  const c = camAt(t);
+  $('world').style.transform = `translate(${c.x}px,${c.y}px) scale(${c.s})`;
+  const cp = caps.find(c=>t>=c[0]&&t<c[1]);
+  const html = cp?cp[2]:'';
+  if($('cap').innerHTML!==html) $('cap').innerHTML = html;
+  const si = scenes.findIndex(s=>t>=s.a&&t<s.b);
+  const cur = si<0?scenes.length-1:si;
+  $('stag').textContent = `${scenes[cur].n} · ${fmt(t)}`;
+  document.querySelectorAll('.chip').forEach((c,i)=>c.classList.toggle('cur',i===cur));
+  $('time').textContent = `${fmt(t)} / ${fmt(T)}`;
+  $('scrub').value = t;
+}
+function fit(){ $('stage').style.transform = `scale(${$('vp').clientWidth/1920})`; }
+function seek(v){ t = Math.max(0,Math.min(T,v)); render(); }
+function setPlay(p){ if(p&&t>=T) t=0; playing=p; $('play').textContent = p?'❚❚ Pause':'▶ Play'; last=performance.now(); }
+function loop(now){
+  if(playing){ t += (now-last)/1000*speed; if(t>=T){t=T;setPlay(false);} render(); }
+  last = now; requestAnimationFrame(loop);
+}
+$('play').onclick = ()=>setPlay(!playing);
+$('scrub').oninput = e=>seek(+e.target.value);
+$('speed').onclick = ()=>{ speed = speed===1?2:speed===2?0.5:1; $('speed').textContent = speed+'×'; };
+$('chips').onclick = e=>{ const b=e.target.closest('.chip'); if(b) seek(scenes[+b.dataset.i].a+0.01); };
+$('rows').onclick = e=>{ const r=e.target.closest('tr'); if(r){ seek(scenes[+r.dataset.i].a+0.01); $('vp').scrollIntoView({behavior:'smooth'}); } };
+addEventListener('keydown', e=>{
+  if(e.target.tagName==='INPUT'&&e.code!=='Space') return;
+  if(e.code==='Space'){ e.preventDefault(); setPlay(!playing); }
+  if(e.code==='ArrowRight') seek(t+5);
+  if(e.code==='ArrowLeft') seek(t-5);
+});
+addEventListener('resize', fit);
+const m = location.hash.match(/t=([\d.]+)/); if(m) t = +m[1];
+fit(); render(); requestAnimationFrame(loop);
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+[
+  { "id": "01-hook", "start": 0, "text": "Two AI coders. One file. Both push, and the build breaks. When everyone on a team codes with their own AI, this happens every day." },
+  { "id": "02-title", "start": 12, "text": "This is IBM Bob Live Collab: one live workspace for a team where everyone codes with their own Bob." },
+  { "id": "03-pm-brief", "start": 20, "text": "It starts with the PM. Aarief has the client brief, and right now, only Aarief knows the project. Aarief opens Bob IDE and switches to our custom mode, PM Lead. In this mode, Bob can read and plan, but it can't touch the code. Then Aarief asks Bob to split the brief into tasks for Alief and Umar." },
+  { "id": "04-plan", "start": 45, "text": "Bob checks who's online and proposes a plan through our MCP server, radar M C P. Every task gets an owner, and every file belongs to exactly one person. Nothing moves until a human approves. Aarief clicks Approve." },
+  { "id": "05-zoom-out", "start": 64, "text": "Now zoom out. Each task lands in that coder's own Bob IDE, with their own account and their own context." },
+  { "id": "06-build", "start": 75, "text": "Alief and Umar switch to the Coder mode. The moment a session starts, a hook gives each Bob a short brief: your task, your files, and who owns the rest. Bob pulls the task through MCP and gets to work. They build at the same time, and every edit is checked against the lock before it's written." },
+  { "id": "07-blocked", "start": 105, "text": "Then it happens. Umar asks Bob to change calculate total, in checkout dot T S. But that's Alief's file. Before the edit lands, our Pre Tool Use hook blocks it. Now the rules kick in. Bob doesn't retry, and it doesn't sneak around the lock through the shell. It calls why blocked, explains who holds the file and why, and asks the PM for access. Then it keeps working on the header. Aarief gets the request and decides. No conflict. No broken build." },
+  { "id": "08-behind", "start": 145, "text": "All of this runs on Bob's own features. Custom modes set the roles. Hooks enforce the locks. MCP lets Bob explain and propose. Rules tell Bob what to do when it's blocked. And we built it all with Bob." },
+  { "id": "09-cta", "start": 163, "text": "IBM Bob Live Collab. Every Bob, on the same page. Watch the replay below." }
+]
