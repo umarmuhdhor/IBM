@@ -121,6 +121,19 @@ describe('collectFolderFiles', () => {
     expect(skipped).toBe(2)
   })
 
+  it('honours a .gitignore in a subfolder (D-alief-16)', () => {
+    write('pkg/.gitignore', 'local.txt\n')
+    write('pkg/local.txt', 'private')
+    write('pkg/deep/local.txt', 'private')
+    write('pkg/keep.ts', 'x')
+    write('local.txt', 'shared')
+    expect(collectFolderFiles(root).files.map((file) => file.path)).toEqual([
+      'local.txt',
+      'pkg/.gitignore',
+      'pkg/keep.ts'
+    ])
+  })
+
   it('splits uploads into batches of at most 100 files', () => {
     const files = Array.from({ length: 205 }, (_, i) => ({ path: `f${i}.txt`, content: 'x' }))
     expect(batchFolderFiles(files).map((batch) => batch.length)).toEqual([100, 100, 5])

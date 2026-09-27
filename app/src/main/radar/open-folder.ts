@@ -43,18 +43,28 @@ export const MAX_SHARED_FILES = 3000
 
 export type FolderFile = { path: string; content: string }
 
-/** Files the sync agent would sync: root .gitignore plus R5 §6 defaults, text only, 1 MB each. */
-export function collectFolderFiles(root: string): { files: FolderFile[]; skipped: number } {
-  let gitignore = ''
+function readGitignore(dir: string): string | null {
   try {
-    gitignore = readFileSync(join(root, '.gitignore'), 'utf8')
+    return readFileSync(join(dir, '.gitignore'), 'utf8')
   } catch {
-    // No .gitignore: defaults only.
+    return null
   }
-  const matcher = createIgnoreMatcherFromText(gitignore)
+}
+
+/** Files the sync agent would sync: every .gitignore plus R5 §6 defaults, text only, 1 MB each. */
+export function collectFolderFiles(root: string): { files: FolderFile[]; skipped: number } {
+  const gitignore = readGitignore(root) ?? ''
+  const nested: Record<string, string> = {}
+  let matcher = createIgnoreMatcherFromText(gitignore)
   const files: FolderFile[] = []
   let skipped = 0
   const walk = (relDir: string): void => {
+    // Why: a folder's own .gitignore applies to everything below it (D-alief-16).
+    const own = relDir ? readGitignore(join(root, relDir)) : null
+    if (own !== null) {
+      nested[relDir] = own
+      matcher = createIgnoreMatcherFromText(gitignore, nested)
+    }
     const entries = readdirSync(join(root, relDir), { withFileTypes: true }).sort((a, b) =>
       a.name.localeCompare(b.name)
     )
