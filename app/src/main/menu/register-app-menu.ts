@@ -8,6 +8,9 @@ import {
 import type { UpdateCheckOptions } from '../../shared/update-status-types'
 import { translateMain } from '../i18n/main-i18n'
 import { createAppMenuSelectionItem } from './app-menu-selection-item'
+import { RADAR_AUTO_UPDATE_DISABLED, radarUnlessHidden } from '../../shared/radar-product-trim'
+
+type MenuItem = Electron.MenuItemConstructorOptions
 
 export type AppearanceMenuState = {
   showTasksButton: boolean
@@ -142,7 +145,7 @@ function buildAndApplyMenu(options: RegisterAppMenuOptions): void {
     label: options.appMenuLabel ?? app.name,
     submenu: [
       { role: 'about' },
-      checkForUpdatesItem,
+      ...(RADAR_AUTO_UPDATE_DISABLED ? [] : [checkForUpdatesItem]),
       settingsItem,
       { type: 'separator' },
       { role: 'services' },
@@ -242,24 +245,24 @@ function buildAndApplyMenu(options: RegisterAppMenuOptions): void {
         click: () => onToggleAppearance('statusBarVisible')
       },
       { type: 'separator' },
-      {
+      ...radarUnlessHidden<MenuItem>('tasksSidebarButton', {
         label: translateMain('menu.showTasksButton', 'Show Tasks Button'),
         type: 'checkbox',
         checked: appearance.showTasksButton,
         click: () => onToggleAppearance('showTasksButton')
-      },
-      {
+      }),
+      ...radarUnlessHidden<MenuItem>('automationsSidebarButton', {
         label: translateMain('menu.showAutomationsButton', 'Show Automations Button'),
         type: 'checkbox',
         checked: appearance.showAutomationsButton,
         click: () => onToggleAppearance('showAutomationsButton')
-      },
-      {
+      }),
+      ...radarUnlessHidden<MenuItem>('mobileSidebarButton', {
         label: translateMain('menu.showMobileButton', 'Show Orca Mobile Button'),
         type: 'checkbox',
         checked: appearance.showMobileButton,
         click: () => onToggleAppearance('showMobileButton')
-      },
+      }),
       {
         label: translateMain('menu.showTitlebarAppName', 'Show Titlebar App Name'),
         type: 'checkbox',
@@ -320,14 +323,14 @@ function buildAndApplyMenu(options: RegisterAppMenuOptions): void {
     submenu: [
       crashReportItem,
       { type: 'separator' },
-      featureTourItem,
-      setupGuideItem,
+      ...radarUnlessHidden('featureWall', featureTourItem),
+      ...radarUnlessHidden('setupGuideSidebarEntry', setupGuideItem),
       ...(isMac
         ? []
         : ([
             { type: 'separator' },
             { role: 'about' },
-            checkForUpdatesItem
+            ...(RADAR_AUTO_UPDATE_DISABLED ? [] : [checkForUpdatesItem])
           ] satisfies Electron.MenuItemConstructorOptions[]))
     ]
   }

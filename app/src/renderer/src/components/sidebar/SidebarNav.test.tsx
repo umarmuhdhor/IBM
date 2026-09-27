@@ -11,6 +11,11 @@ import type { Repo } from '../../../../shared/repo-types'
 import { i18n } from '../../i18n/i18n'
 import { PSEUDO_LOCALIZATION_LOCALE } from '../../i18n/pseudo-localization'
 
+vi.mock(
+  '../../../../shared/radar-product-trim',
+  () => import('../../../../shared/radar-product-trim-off')
+)
+
 const mocks = vi.hoisted(() => ({
   state: {} as Record<string, unknown>,
   openTaskPage: vi.fn(),

@@ -5,6 +5,7 @@ import { RELEASE_CHANNELS, type ReleaseChannel } from '../../shared/release-chan
 import { isTrustedUIRenderer } from '../ipc/ui'
 import type { Store } from '../persistence'
 import { logStartupMilestone } from '../startup/startup-diagnostics'
+import { RADAR_AUTO_UPDATE_DISABLED } from '../../shared/radar-product-trim'
 import {
   checkForUpdatesFromMenu,
   dismissAvailableUpdate,
@@ -36,6 +37,9 @@ export function scheduleMainWindowAutoUpdaterSetup(
     updateInstallMode?: UpdateInstallMode
   }
 ): void {
+  if (RADAR_AUTO_UPDATE_DISABLED) {
+    return
+  }
   // Why: setupAutoUpdater sync-require()s electron-updater (slow on cold Windows w/ Defender, #7225), so defer past first paint; timer fallback covers crash-looping renderers.
   let updaterSetupDone = false
   const setupAutoUpdaterDeferred = (): void => {
@@ -94,10 +98,15 @@ export function registerUpdaterHandlers(_store: Store): void {
   ipcMain.handle('updater:getStatus', () => getUpdateStatus())
   ipcMain.handle('updater:getVersion', () => app.getVersion())
   ipcMain.handle('updater:check', (_event, options?: UpdateCheckOptions) => {
+    if (RADAR_AUTO_UPDATE_DISABLED) {
+      return
+    }
     ensureAutoUpdaterConfigured()
     return checkForUpdatesFromMenu(options)
   })
-  ipcMain.handle('updater:download', () => downloadUpdate())
+  ipcMain.handle('updater:download', () =>
+    RADAR_AUTO_UPDATE_DISABLED ? undefined : downloadUpdate()
+  )
   ipcMain.handle('updater:quitAndInstall', () => quitAndInstall())
   ipcMain.handle('updater:dismissNudge', () => dismissNudge())
   ipcMain.handle('updater:dismissAvailableUpdate', () => dismissAvailableUpdate())

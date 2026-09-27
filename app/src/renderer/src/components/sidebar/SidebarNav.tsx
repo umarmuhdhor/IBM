@@ -16,19 +16,22 @@ import { translate } from '@/i18n/i18n'
 import { lazyWithRetry } from '@/lib/lazy-with-retry'
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import { LiveCollabSidebarButton } from '@/components/radar/LiveCollabSidebarButton'
+import { RADAR_HIDDEN_SURFACES } from '../../../../shared/radar-product-trim'
 
 export { getSetupGuideSidebarEntryReady, shouldShowSetupGuideEntry } from './SetupGuideSidebarEntry'
 
 export function shouldShowMobileButton(
   settings: Partial<Pick<GlobalSettings, 'showMobileButton'>> | null | undefined
 ): boolean {
-  return settings?.showMobileButton !== false
+  return !RADAR_HIDDEN_SURFACES.mobileSidebarButton && settings?.showMobileButton !== false
 }
 
 export function shouldShowAutomationsButton(
   settings: Partial<Pick<GlobalSettings, 'showAutomationsButton'>> | null | undefined
 ): boolean {
-  return settings?.showAutomationsButton !== false
+  return (
+    !RADAR_HIDDEN_SURFACES.automationsSidebarButton && settings?.showAutomationsButton !== false
+  )
 }
 
 export function shouldShowArtifactsButton(
@@ -120,7 +123,7 @@ const SidebarNav = React.memo(function SidebarNav() {
           ))}
         </span>
       </button>
-      <SetupGuideSidebarEntry />
+      {RADAR_HIDDEN_SURFACES.setupGuideSidebarEntry ? null : <SetupGuideSidebarEntry />}
       <SidebarTaskNavButton />
       {showArtifactsButton ? (
         <ContextMenu>

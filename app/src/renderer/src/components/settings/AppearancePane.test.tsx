@@ -10,6 +10,11 @@ import { getDefaultSettings } from '../../../../shared/constants'
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import type { StatusBarItem } from '../../../../shared/ui-chrome-types'
 
+vi.mock(
+  '../../../../shared/radar-product-trim',
+  () => import('../../../../shared/radar-product-trim-off')
+)
+
 const mocks = vi.hoisted(() => ({
   state: {
     appPlatform: 'linux' as NodeJS.Platform,

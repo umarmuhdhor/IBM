@@ -1,8 +1,13 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { basename, resolve } from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { buildSettingsNavigationMetadata } from './useSettingsNavigationMetadata'
 import type { Repo } from '../../../shared/repo-types'
+
+vi.mock(
+  '../../../shared/radar-product-trim',
+  () => import('../../../shared/radar-product-trim-off')
+)
 
 const repo = {
   id: 'repo-1',

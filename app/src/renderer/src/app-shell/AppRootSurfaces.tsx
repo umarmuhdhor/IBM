@@ -9,6 +9,7 @@ import { MarkdownTemplatePicker } from '../components/editor/MarkdownTemplatePic
 import RecentTabSwitcher from '../components/tab-bar/RecentTabSwitcher'
 import { SkillFreshnessUpdateDialog } from '../components/skills/SkillFreshnessUpdateDialog'
 import { StarNagCard } from '../components/StarNagCard'
+import { RADAR_HIDDEN_SURFACES } from '../../../shared/radar-product-trim'
 import { NativeChatResumeOnRestartModal } from '../components/NativeChatResumeOnRestartModal'
 import { StarNagAgentValueMomentObserver } from '../components/star-nag/StarNagAgentValueMomentObserver'
 import { StarNagToastHost } from '../components/star-nag/StarNagToastHost'
@@ -150,7 +151,9 @@ export function AppRootSurfaces(props: {
   const shouldMountSetupGuideTelemetryObserver = persistedUIReady
   const shouldMountUpdateCard = shouldMountUpdateCardForStatus(updateStatus)
   const shouldMountDictationController = voiceEnabled || dictationState !== 'idle'
-  const renderPetOverlay = shouldRenderPetOverlay({ persistedUIReady, petEnabled, petVisible })
+  const renderPetOverlay =
+    !RADAR_HIDDEN_SURFACES.pet &&
+    shouldRenderPetOverlay({ persistedUIReady, petEnabled, petVisible })
 
   return (
     <>
@@ -251,12 +254,12 @@ export function AppRootSurfaces(props: {
             <SetupGuideModal />
           </ModalBoundary>
         ) : null}
-        {mountedLazyModalIds.has('feature-wall') ? (
+        {mountedLazyModalIds.has('feature-wall') && !RADAR_HIDDEN_SURFACES.featureWall ? (
           <ModalBoundary boundaryId="modal.feature-wall" resetKey={activeModal === 'feature-wall'}>
             <FeatureWallModal />
           </ModalBoundary>
         ) : null}
-        {mountedLazyModalIds.has('feature-tips') ? (
+        {mountedLazyModalIds.has('feature-tips') && !RADAR_HIDDEN_SURFACES.featureTips ? (
           <ModalBoundary boundaryId="modal.feature-tips" resetKey={activeModal === 'feature-tips'}>
             <FeatureTipsModal />
           </ModalBoundary>
@@ -267,7 +270,7 @@ export function AppRootSurfaces(props: {
           <SetupGuideTelemetryObserver />
         </Suspense>
       ) : null}
-      {activeContextualTourId !== null ? (
+      {activeContextualTourId !== null && !RADAR_HIDDEN_SURFACES.contextualTours ? (
         <Suspense fallback={null}>
           <ContextualTourOverlay />
         </Suspense>
@@ -293,17 +296,23 @@ export function AppRootSurfaces(props: {
             <UnexpectedSignoutCard />
           </OverlayBoundary>
         </Suspense>
-        <OverlayBoundary boundaryId="overlay.star-nag" resetKey={activeView}>
-          <StarNagCard />
-        </OverlayBoundary>
+        {RADAR_HIDDEN_SURFACES.starNag ? null : (
+          <OverlayBoundary boundaryId="overlay.star-nag" resetKey={activeView}>
+            <StarNagCard />
+          </OverlayBoundary>
+        )}
       </NotificationCardStack>
       <OverlayBoundary boundaryId="overlay.native-chat-resume-on-restart" resetKey={activeView}>
         <NativeChatResumeOnRestartModal />
       </OverlayBoundary>
-      <OverlayBoundary boundaryId="overlay.star-nag-toast" resetKey={activeView}>
-        <StarNagToastHost />
-      </OverlayBoundary>
-      <StarNagAgentValueMomentObserver />
+      {RADAR_HIDDEN_SURFACES.starNag ? null : (
+        <>
+          <OverlayBoundary boundaryId="overlay.star-nag-toast" resetKey={activeView}>
+            <StarNagToastHost />
+          </OverlayBoundary>
+          <StarNagAgentValueMomentObserver />
+        </>
+      )}
       {/* Why: mount at App root to render once per session; internal cohort gate limits it to pre-telemetry users — see telemetry-plan.md §First-launch experience. */}
       <OverlayBoundary boundaryId="overlay.telemetry-first-launch" resetKey={telemetryOptedIn}>
         <TelemetryFirstLaunchSurface />

@@ -21,6 +21,7 @@ import {
 import { getActiveRuntimeTarget } from '@/runtime/runtime-rpc-client'
 import { useAppStore } from '@/store'
 import type { Repo } from '../../../shared/repo-types'
+import { RADAR_HIDDEN_SETTINGS_PANES } from '../../../shared/radar-product-trim'
 import {
   buildCapabilitySettingsSections,
   buildSetupSettingsSections
@@ -92,7 +93,7 @@ export function buildSettingsNavigationMetadata({
     ...buildWorkflowSettingsSections(options, terminalPaneSearchEntries),
     ...buildInterfaceSettingsSections(options),
     ...buildRemoteSettingsSections(options, runtimeEnvironmentsSearchEntry, reposById)
-  ]
+  ].filter((section) => !RADAR_HIDDEN_SETTINGS_PANES.has(section.id))
 }
 
 export function useSettingsNavigationMetadata(): SettingsNavSection[] {

@@ -7,6 +7,7 @@ import {
   getPreviousVisibleContextualTourStepIndex
 } from '../../../components/contextual-tours/contextual-tour-gate'
 import { hasFeatureInteraction } from '../../../../../shared/feature-interactions'
+import { RADAR_HIDDEN_SURFACES } from '../../../../../shared/radar-product-trim'
 
 export function createUiTourActions(set: UISliceSet, get: UISliceGet): Partial<UISlice> {
   return {
@@ -60,7 +61,7 @@ export function createUiTourActions(set: UISliceSet, get: UISliceGet): Partial<U
           blockingSurfaceVisible: s.contextualToursBlockingSurfaceVisible,
           targetExists: hasContextualTourTarget
         })
-        if (decision.kind !== 'start') {
+        if (decision.kind !== 'start' || RADAR_HIDDEN_SURFACES.contextualTours) {
           if (s.contextualTourNavigationInteractionSnapshot[id] === undefined) {
             return s
           }

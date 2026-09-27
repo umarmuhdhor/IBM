@@ -3,6 +3,11 @@ import type { PersistedUIState } from '../../../../shared/persisted-ui-state-typ
 import type { ContextualTourId } from '../../../../shared/contextual-tours'
 import { createUIStore, makePersistedUI } from './ui-slice-test-harness'
 
+vi.mock(
+  '../../../../shared/radar-product-trim',
+  () => import('../../../../shared/radar-product-trim-off')
+)
+
 const mocks = vi.hoisted(() => ({
   sendNotesToActiveAgentSession: vi.fn(),
   track: vi.fn(),

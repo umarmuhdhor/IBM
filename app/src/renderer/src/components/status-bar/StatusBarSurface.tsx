@@ -26,6 +26,7 @@ import { TOGGLE_FLOATING_TERMINAL_EVENT } from '@/lib/floating-terminal'
 import { FloatingTerminalIconContextMenu } from '@/components/floating-terminal/FloatingTerminalIconContextMenu'
 import { ClaudeSwitcherMenu } from './ClaudeSwitcherMenu'
 import { CodexSwitcherMenu } from './CodexSwitcherMenu'
+import { RADAR_HIDDEN_SURFACES } from '../../../../shared/radar-product-trim'
 import { ProviderDetailsMenu, CLOSE_ALL_CONTEXT_MENUS_EVENT } from './ProviderDetailsMenu'
 import { ProviderLetterBadge, ProviderSegment } from './StatusBarProviderSegment'
 import { useStatusBarController } from './use-status-bar-controller'
@@ -176,7 +177,10 @@ export function StatusBarSurface({
                     // Every provider drills into its detail panel (parity with the
                     // per-provider dropdowns on main); Claude/Codex additionally get
                     // the account switcher + runtime toggle + Codex reset credits.
-                    if (p.provider === 'claude') {
+                    if (
+                      p.provider === 'claude' &&
+                      !RADAR_HIDDEN_SURFACES.providerAccountSwitchers
+                    ) {
                       return (
                         <ClaudeSwitcherMenu
                           claude={p}
@@ -187,7 +191,7 @@ export function StatusBarSurface({
                         />
                       )
                     }
-                    if (p.provider === 'codex') {
+                    if (p.provider === 'codex' && !RADAR_HIDDEN_SURFACES.providerAccountSwitchers) {
                       return (
                         <CodexSwitcherMenu
                           codex={p}
@@ -246,13 +250,15 @@ export function StatusBarSurface({
       <div className="flex-1" />
 
       <div className="flex items-center gap-3">
-        {!isPairedWebClientWindow() ? <CaffeinateStatusSegment iconOnly={iconOnly} /> : null}
+        {!isPairedWebClientWindow() && !RADAR_HIDDEN_SURFACES.caffeinateStatus ? (
+          <CaffeinateStatusSegment iconOnly={iconOnly} />
+        ) : null}
         <RemoteServerUpdateStatusSegment iconOnly={iconOnly} />
         <SkillUpdateStatusSegment iconOnly={iconOnly} />
         <NativeChatResumeStatusSegment iconOnly={iconOnly} />
         <UpdateStatusSegment compact={compact} iconOnly={iconOnly} />
         <React.Suspense fallback={null}>
-          {petEnabled ? <PetStatusSegment /> : null}
+          {petEnabled && !RADAR_HIDDEN_SURFACES.pet ? <PetStatusSegment /> : null}
           {showResourceUsage ? (
             <ResourceUsageStatusSegment compact={compact} iconOnly={iconOnly} />
           ) : null}
