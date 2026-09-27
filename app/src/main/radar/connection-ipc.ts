@@ -2,7 +2,7 @@ import { BrowserWindow, ipcMain } from 'electron'
 import { isRadarConnection } from '../../shared/radar-connection'
 import type { RadarConnection } from '../../shared/radar-connection'
 import type { RadarWsUpdate } from '../../shared/radar-update'
-import { cancelTask, decideProposal, revokeLock, setTaskStep, submitTask } from './api'
+import { activateTask, cancelTask, decideProposal, mySeat, revokeLock, setTaskStep, submitTask } from './api'
 import { runRadarChecks } from './checks'
 import { readSharePrompts, writeSharePrompts } from './share-prompts'
 import {
@@ -125,6 +125,13 @@ export function registerRadarConnectionIpc(): void {
     }
     return setTaskStep(value.id, value.index, value.done)
   })
+  ipcMain.handle('radar:activate-task', (_event, value: unknown) => {
+    if (!isRecord(value) || typeof value.id !== 'string') {
+      throw new Error('Invalid Live Collab task')
+    }
+    return activateTask(value.id)
+  })
+  ipcMain.handle('radar:my-seat', () => mySeat())
   ipcMain.handle('radar:submit-task', (_event, value: unknown) => {
     if (!isRecord(value) || typeof value.id !== 'string' || typeof value.summary !== 'string') {
       throw new Error('Invalid Live Collab task submit')

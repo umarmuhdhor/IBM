@@ -1,215 +1,125 @@
-import { useState } from 'react'
 import type { RadarState, TaskView } from '@radar/ui'
-import { TASK_STATUS_TEXT } from './radar-lanes'
+import { CoderTaskCard } from './CoderTaskCard'
+import { PlanApprovalCard } from './PlanApprovalCard'
+import { StepProgressBar, stepProgress, TaskStatusLabel } from './TaskStatusLabel'
 
 type Props = {
   state: RadarState
   role: 'coder' | 'pm' | 'mc' | null
-  memberId: string | null
+  /** The member this app works as: the coder, or the owner's own seat for Mission Control. */
+  seatId: string | null
 }
 
-const ACTIVE_STATUSES = new Set(['terbuka', 'dikerjakan'])
-
-// Why: Electron prefixes IPC errors with the channel name; keep only the server's sentence.
-function serverMessage(err: unknown, fallback: string): string {
-  const text = err instanceof Error ? err.message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '') : ''
-  return text || fallback
-}
-
-function taskProgress(task: TaskView): { checked: number; total: number } {
-  const total = task.steps.length
-  const checked = task.steps.filter((s) => s.done).length
-  return { checked, total }
-}
-
-function ProgressBar({ checked, total }: { checked: number; total: number }) {
-  if (total === 0) {
-    return null
-  }
-  const pct = Math.round((checked / total) * 100)
+function ReadonlyTaskCard({ task }: { task: TaskView }) {
+  const { checked, total } = stepProgress(task)
   return (
-    <div
-      role="progressbar"
-      aria-valuenow={checked}
-      aria-valuemax={total}
-      aria-label={`${checked} of ${total} steps done`}
-      className="h-1.5 w-full overflow-hidden rounded-full bg-secondary"
-    >
-      <div className="h-full bg-[var(--lc-ok)]" style={{ width: `${pct}%` }} />
+    <article aria-label={task.title} className="space-y-2 rounded-lg border border-border bg-card p-3">
+      <header className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <h5 className="min-w-0 text-sm font-medium [overflow-wrap:anywhere]">
+          <span className="mr-2 font-mono text-xs text-muted-foreground">{task.id}</span>
+          {task.title}
+        </h5>
+        <TaskStatusLabel status={task.status} />
+      </header>
+      {task.files.length > 0 && (
+        <p className="font-mono text-xs text-muted-foreground [overflow-wrap:anywhere]">{task.files.join(', ')}</p>
+      )}
+      <StepProgressBar checked={checked} total={total} />
+      {total > 0 && (
+        <ul className="space-y-1">
+          {task.steps.map((step, i) => (
+            <li key={i} className="flex items-start gap-2 text-xs">
+              <span aria-hidden="true" className="w-3 shrink-0 text-muted-foreground">{step.done ? '✓' : '○'}</span>
+              <span className={step.done ? 'text-muted-foreground [overflow-wrap:anywhere]' : '[overflow-wrap:anywhere]'}>
+                <span className="sr-only">{step.done ? 'Done: ' : 'To do: '}</span>
+                {step.text}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </article>
+  )
+}
+
+function SectionHeading({ title, hint }: { title: string; hint?: string }) {
+  return (
+    <div className="space-y-0.5">
+      <h3 className="text-sm font-semibold">{title}</h3>
+      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
     </div>
   )
 }
 
-function CoderTaskCard({ task }: { task: TaskView }) {
-  const [pending, setPending] = useState<Set<number>>(new Set())
-  const [error, setError] = useState<string | null>(null)
-  const [submitting, setSubmitting] = useState(false)
-  const isActive = ACTIVE_STATUSES.has(task.status)
-  const { checked, total } = taskProgress(task)
-
-  const toggleStep = (index: number, done: boolean) => {
-    setPending((prev) => new Set(prev).add(index))
-    setError(null)
-    void window.api.radar
-      .setTaskStep(task.id, index, done)
-      .catch((err: unknown) => {
-        setError(serverMessage(err, 'Step update failed. Check the connection and try again.'))
-      })
-      .finally(() => {
-        setPending((prev) => {
-          const next = new Set(prev)
-          next.delete(index)
-          return next
-        })
-      })
-  }
-
-  const markDone = () => {
-    setSubmitting(true)
-    setError(null)
-    const summary = `Marked done in the app: ${checked}/${total} steps checked`
-    void window.api.radar
-      .submitTask(task.id, summary)
-      .catch((err: unknown) => {
-        const message = serverMessage(err, 'Could not mark the task done. Check the connection and try again.')
-        // Why: the server refuses a task with no edits; say what to do next, not only what went wrong.
-        setError(/has not changed any file/.test(message) ? `${message} Edit its files in Bob first, then mark it done.` : message)
-      })
-      .finally(() => setSubmitting(false))
-  }
+export function TaskBoardView({ state, role, seatId }: Props) {
+  const tasks = Object.values(state.tasks).filter((task) => task.status !== 'batal')
+  const pm = Object.values(state.members).find((member) => member.role === 'pm')
+  const plans = Object.values(state.proposals).filter((p) => p.kind === 'plan' && p.status === 'menunggu')
+  const decides = role === 'pm' || (role === 'mc' && !pm)
+  const readOnlyNote = decides ? null : pm ? `Waiting for ${pm.name} (PM) to approve.` : 'The owner approves plans in Mission Control.'
+  const mine = seatId ? tasks.filter((task) => task.ownerId === seatId) : []
+  const showMine = role === 'coder' || (role === 'mc' && seatId !== null)
+  const showTeam = role === 'pm' || role === 'mc'
+  const coders = Object.values(state.members).filter((member) => member.role === 'coder')
 
   return (
-    <article aria-label={task.title} className="rounded-lg border border-border bg-card p-3 space-y-2">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0 flex-1">
-          <div className="text-sm font-medium [overflow-wrap:anywhere]">{task.title}</div>
-          <div className="text-xs text-muted-foreground">{TASK_STATUS_TEXT[task.status]}</div>
-        </div>
-      </div>
-      {task.description && (
-        <p className="text-xs text-muted-foreground [overflow-wrap:anywhere]">{task.description}</p>
-      )}
-      {task.files.length > 0 && (
-        <ul className="space-y-0.5">
-          {task.files.map((f) => (
-            <li key={f} className="font-mono text-[11px] text-muted-foreground [overflow-wrap:anywhere]">{f}</li>
+    <div className="mx-auto max-w-3xl space-y-8 p-4">
+      {plans.length > 0 && (
+        <section aria-label="Plans to approve" className="space-y-3">
+          <SectionHeading
+            title={decides ? `Plans to approve · ${plans.length}` : `Plans waiting · ${plans.length}`}
+            hint={decides ? 'Your Bob (PM Lead) split the work. Approve to hand each task to its coder.' : undefined}
+          />
+          {plans.map((proposal) => (
+            <PlanApprovalCard key={proposal.id} proposal={proposal} state={state} readOnlyNote={readOnlyNote} />
           ))}
-        </ul>
+        </section>
       )}
-      {total > 0 && <ProgressBar checked={checked} total={total} />}
-      {task.steps.length > 0 && (
-        <ul className="space-y-1">
-          {task.steps.map((step, i) => (
-            <li key={i} className="flex items-start gap-2">
-              <input
-                type="checkbox"
-                id={`${task.id}-step-${i}`}
-                checked={step.done}
-                disabled={pending.has(i) || !isActive}
-                onChange={(e) => toggleStep(i, e.target.checked)}
-                className="mt-0.5 shrink-0"
-              />
-              <label htmlFor={`${task.id}-step-${i}`} className="text-xs [overflow-wrap:anywhere]">
-                {step.text}
-              </label>
-            </li>
-          ))}
-        </ul>
-      )}
-      {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
-      <button
-        type="button"
-        disabled={!isActive || submitting}
-        onClick={markDone}
-        className="rounded-md border border-border px-3 py-1.5 text-xs disabled:opacity-50"
-      >
-        Mark task done
-      </button>
-    </article>
-  )
-}
 
-function ReadonlyTaskCard({ task }: { task: TaskView }) {
-  const { checked, total } = taskProgress(task)
-  return (
-    <article aria-label={task.title} className="rounded-lg border border-border bg-card p-3 space-y-2">
-      <div className="text-sm font-medium [overflow-wrap:anywhere]">{task.title}</div>
-      <div className="text-xs text-muted-foreground">{TASK_STATUS_TEXT[task.status]}</div>
-      {task.files.length > 0 && (
-        <ul className="space-y-0.5">
-          {task.files.map((f) => (
-            <li key={f} className="font-mono text-[11px] text-muted-foreground [overflow-wrap:anywhere]">{f}</li>
-          ))}
-        </ul>
+      {showMine && (
+        <section aria-label="My tasks" className="space-y-3">
+          <SectionHeading
+            title="My tasks"
+            hint="Start in Bob opens IBM Bob IDE and copies a prompt. Pick the Live Collab Coder mode and paste it; Bob works through the steps and ticks them. You can tick steps here too."
+          />
+          {mine.length === 0 ? (
+            <p className="rounded-lg border border-dashed border-border p-4 text-xs text-muted-foreground">
+              No tasks for you yet. The PM splits the work in Bob (PM Lead mode); once it is approved, your tasks appear here.
+            </p>
+          ) : (
+            mine.map((task) => <CoderTaskCard key={task.id} task={task} />)
+          )}
+        </section>
       )}
-      {total > 0 && <ProgressBar checked={checked} total={total} />}
-      {task.steps.length > 0 && (
-        <ul className="space-y-1">
-          {task.steps.map((step, i) => (
-            <li key={i} className="flex items-start gap-2 text-xs">
-              <span className="shrink-0 text-muted-foreground">{step.done ? '✓' : '○'}</span>
-              <span className="[overflow-wrap:anywhere]">{step.text}</span>
-            </li>
-          ))}
-        </ul>
+
+      {showTeam && (
+        <section aria-label="Team progress" className="space-y-4">
+          <SectionHeading title="Team progress" hint="Updates live as coders tick their steps." />
+          {tasks.length === 0 ? (
+            <p className="rounded-lg border border-dashed border-border p-4 text-xs text-muted-foreground">
+              No tasks yet. Put the brief in the project folder (.md), then ask Bob in PM Lead mode: “@brief.md split this for the coders with propose_plan”.
+            </p>
+          ) : (
+            coders.map((coder) => {
+              const own = tasks.filter((task) => task.ownerId === coder.id)
+              if (own.length === 0) {
+                return null
+              }
+              const total = own.reduce((sum, task) => sum + task.steps.length, 0)
+              const done = own.reduce((sum, task) => sum + task.steps.filter((step) => step.done).length, 0)
+              return (
+                <div key={coder.id} className="space-y-2">
+                  <h4 className="flex items-baseline justify-between text-xs font-semibold">
+                    <span>{coder.name}</span>
+                    {total > 0 && <span className="font-normal text-muted-foreground tabular-nums">{done}/{total} steps</span>}
+                  </h4>
+                  {own.map((task) => <ReadonlyTaskCard key={task.id} task={task} />)}
+                </div>
+              )
+            })
+          )}
+        </section>
       )}
-    </article>
-  )
-}
-
-export function TaskBoardView({ state, role, memberId }: Props) {
-  const allTasks = Object.values(state.tasks).filter((t) => t.status !== 'batal')
-
-  if (role === 'coder') {
-    const myTasks = allTasks.filter((t) => t.ownerId === memberId)
-    return (
-      <section aria-label="My tasks" className="space-y-3 p-4">
-        <h3 className="text-sm font-semibold">My tasks</h3>
-        {myTasks.length === 0 ? (
-          <p className="text-xs text-muted-foreground">
-            No tasks yet. Your PM splits the work in Bob (PM Lead mode) and the owner approves it.
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {myTasks.map((task) => (
-              <CoderTaskCard key={task.id} task={task} />
-            ))}
-          </div>
-        )}
-      </section>
-    )
-  }
-
-  // pm or mc: group by owner (coders only)
-  const coders = Object.values(state.members).filter((m) => m.role === 'coder')
-  return (
-    <section aria-label="Tasks" className="space-y-4 p-4">
-      <h3 className="text-sm font-semibold">Tasks</h3>
-      {allTasks.length === 0 ? (
-        <p className="text-xs text-muted-foreground">
-          No tasks yet. Ask Bob in PM Lead mode to split the goal with propose_plan.
-        </p>
-      ) : (
-        coders.map((coder) => {
-          const coderTasks = allTasks.filter((t) => t.ownerId === coder.id)
-          if (coderTasks.length === 0) {
-            return null
-          }
-          const totalSteps = coderTasks.reduce((acc, t) => acc + t.steps.length, 0)
-          const doneSteps = coderTasks.reduce((acc, t) => acc + t.steps.filter((s) => s.done).length, 0)
-          return (
-            <div key={coder.id} className="space-y-2">
-              <h4 className="text-xs font-semibold text-muted-foreground">
-                {coder.name}
-                {totalSteps > 0 && <span className="ml-1 font-normal tabular-nums">{doneSteps}/{totalSteps} steps</span>}
-              </h4>
-              {coderTasks.map((task) => (
-                <ReadonlyTaskCard key={task.id} task={task} />
-              ))}
-            </div>
-          )
-        })
-      )}
-    </section>
+    </div>
   )
 }

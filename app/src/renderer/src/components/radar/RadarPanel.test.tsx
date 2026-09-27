@@ -141,8 +141,10 @@ describe('Team seats (D-alief-20)', () => {
     const { unmount } = render(<Harness initial="team" />)
     expect(screen.queryByRole('button', { name: 'Remove Budi' })).toBeNull()
     unmount()
+    vi.stubGlobal('api', { radar: { mySeat: vi.fn(async () => null) } })
     render(<Harness initial="team" role="mc" />)
     expect(screen.getByRole('button', { name: 'Remove Budi' })).toBeTruthy()
+    vi.unstubAllGlobals()
   })
 
   it('tells a removed member why the team views are gone', () => {
@@ -215,7 +217,8 @@ describe('Invite teammates after a folder switch', () => {
         onSyncStatus: vi.fn(() => () => undefined),
         getProfileName: vi.fn(async () => null),
         createJoinCode: vi.fn(async () => ({ member: null, code: 'WMAW-K7TN', expiresAt: 1 })),
-        copyText: vi.fn(async () => undefined)
+        copyText: vi.fn(async () => undefined),
+        mySeat: vi.fn(async () => null)
       }
     })
     const owner = { ...connection, member: 'mc', role: 'mc' } as const

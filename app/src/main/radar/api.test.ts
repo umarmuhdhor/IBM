@@ -48,7 +48,7 @@ describe('Mission Control requests', () => {
       role: 'coder',
       token: 'synthetic-value'
     })
-    await expect(decideProposal('P-5', true, '')).rejects.toThrow(/Mission Control/)
+    await expect(decideProposal('P-5', true, '')).rejects.toThrow(/PM or the owner/)
     expect(fetchMock).not.toHaveBeenCalled()
   })
 

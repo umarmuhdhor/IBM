@@ -200,17 +200,17 @@ export async function removeMember(memberInput: unknown): Promise<void> {
 
 const RECLAIM_NEEDS_FOLDER = 'Open the shared folder on this Mac to take back ownership.'
 
-/** The shared folder's own seat token from `.radar/local.json`, only for the workspace and server of `saved`. */
-function ownerSeatToken(saved: RadarConnection): string {
+/** The shared folder's own seat (`.radar/local.json`), only for the workspace and server of `saved`; else null. */
+export function sharedFolderSeat(saved: RadarConnection): { token: string; member: string } | null {
   const folder = getSyncStatus().folder
   if (!folder) {
-    throw new Error(RECLAIM_NEEDS_FOLDER)
+    return null
   }
   let local: unknown
   try {
     local = JSON.parse(readFileSync(join(folder, '.radar', 'local.json'), 'utf8'))
   } catch {
-    throw new Error(RECLAIM_NEEDS_FOLDER)
+    return null
   }
   const field = (key: string): string =>
     typeof local === 'object' && local !== null && typeof (local as Record<string, unknown>)[key] === 'string'
@@ -218,9 +218,17 @@ function ownerSeatToken(saved: RadarConnection): string {
       : ''
   const sameServer = URL.canParse(field('server')) && new URL(field('server')).origin === new URL(saved.server).origin
   if (!sameServer || field('workspace') !== saved.workspace || !field('token')) {
+    return null
+  }
+  return { token: field('token'), member: field('member') }
+}
+
+function ownerSeatToken(saved: RadarConnection): string {
+  const seat = sharedFolderSeat(saved)
+  if (!seat) {
     throw new Error(RECLAIM_NEEDS_FOLDER)
   }
-  return field('token')
+  return seat.token
 }
 
 /**
