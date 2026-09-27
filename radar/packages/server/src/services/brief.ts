@@ -4,7 +4,7 @@ import { clampBrief, type BriefRes, type LockState } from '@radar/common';
 import { allocationsOf } from '../db/repo/allocation';
 import { lastBlockFor } from '../db/repo/block';
 import { eventsAfter, lastEventId } from '../db/repo/event';
-import { listLocks } from '../db/repo/lock';
+import { listLocks, rangeOf, type LockRow } from '../db/repo/lock';
 import { getMember, type MemberRow } from '../db/repo/member';
 import { notificationsFor, type NotificationRow } from '../db/repo/notification';
 import { listProposals } from '../db/repo/proposal';
@@ -14,6 +14,12 @@ import type { Db } from '../db/sql';
 import { RadarError } from '../http/errors';
 import { rowsToEvents } from './events';
 import { lastBlock } from './requests';
+
+/** D-alief-17: `:3-5` for a range lock, nothing for a whole-file lock. */
+function lineSuffix(l: LockRow): string {
+  const r = rangeOf(l);
+  return r ? `:${r.start}-${r.end}` : '';
+}
 
 const ACTIVE: readonly TaskRow['status'][] = ['terbuka', 'dikerjakan', 'review'];
 const MAX_EVENTS = 500;
@@ -50,7 +56,7 @@ function coderStart(db: Db, m: MemberRow): string[] {
   const wanted = new Set(allocs.map((a) => a.path));
   const others = listLocks(db).filter((l) => !mineIds.has(l.task_id));
   const ranked = [...others.filter((l) => wanted.has(l.path)), ...others.filter((l) => !wanted.has(l.path)).sort((a, b) => b.acquired_at - a.acquired_at)];
-  if (ranked.length > 0) lines.push(`Dipegang orang lain: ${ranked.slice(0, 4).map((l) => `${l.path}→${l.member_id}(${l.task_id})`).join(', ')}`);
+  if (ranked.length > 0) lines.push(`Dipegang orang lain: ${ranked.slice(0, 4).map((l) => `${l.path}${lineSuffix(l)}→${l.member_id}(${l.task_id})`).join(', ')}`);
 
   const waiting = listRequests(db, ['terbuka', 'diusulkan']).filter((r) => r.requester_member === m.id);
   if (waiting.length > 0) lines.push(`Menunggu PM: ${waiting.map((r) => `${r.path} (${r.id})`).join(', ')}.`);

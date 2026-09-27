@@ -19,6 +19,10 @@ export function migrate(db: Db): void {
       db.script('ALTER TABLE join_code ADD COLUMN open INTEGER NOT NULL DEFAULT 0;');
       db.script('UPDATE join_code SET open = 1 WHERE owner = 0;');
     }
+    // v5 (D-alief-17): line-range locks. Existing locks keep NULL = the whole file.
+    const lockCols = db.all<{ name: string }>('PRAGMA table_info(lock)').map((c) => c.name);
+    if (!lockCols.includes('start_line')) db.script('ALTER TABLE lock ADD COLUMN start_line INTEGER;');
+    if (!lockCols.includes('end_line')) db.script('ALTER TABLE lock ADD COLUMN end_line INTEGER;');
     if (row?.value !== SCHEMA_VERSION) {
       db.run("INSERT INTO meta (key, value) VALUES ('schema_version', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value", SCHEMA_VERSION);
     }

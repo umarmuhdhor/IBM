@@ -64,7 +64,7 @@ describe('flow: plan → block → decision → review → approve (fase 05 step
     // 3. B is blocked; repeated blocks reuse one request (SV-05).
     const b1 = await check(t.B!, CHECKOUT);
     expect(b1).toMatchObject({ decision: 'block', results: [{ reason: 'held_by_other', requestId: 'R-1', holder: { memberId: 'A', taskId: 'T-1' } }] });
-    expect(b1.message).toContain('Jangan coba ulang');
+    expect(b1.message).toContain('Do not retry');
     expect(b1.message).toContain('radar why_blocked');
     for (let i = 0; i < 3; i++) expect((await check(t.B!, CHECKOUT)).results[0]?.requestId).toBe('R-1');
     const why = await call(stub, 'GET', '/v1/blocks/last', { token: t.B });

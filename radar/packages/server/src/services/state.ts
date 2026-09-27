@@ -12,6 +12,7 @@ import type {
 } from '@radar/common';
 import { lastEventId, recentEvents } from '../db/repo/event';
 import { listFileMeta, listFilesWithContent } from '../db/repo/file';
+import { rangeOf } from '../db/repo/lock';
 import { listMembers } from '../db/repo/member';
 import { getMeta } from '../db/repo/meta';
 import type { Db } from '../db/sql';
@@ -19,15 +20,18 @@ import { rowsToEvents } from './events';
 
 const RECENT_EVENTS = 100;
 
-type LockRow = { path: string; task_id: string; member_id: string; state: LockState };
+type LockRow = { path: string; task_id: string; member_id: string; state: LockState; start_line: number | null; end_line: number | null };
 type AllocationRow = { task_id: string; path: string; queue_pos: number; source: AllocationSource };
 
 function locksWithQueue(db: Db) {
-  const locks = db.all<LockRow>('SELECT path, task_id, member_id, state FROM lock ORDER BY path');
+  const locks = db.all<LockRow>('SELECT path, task_id, member_id, state, start_line, end_line FROM lock ORDER BY path');
   const queued = db.all<AllocationRow>('SELECT task_id, path, queue_pos, source FROM allocation WHERE queue_pos > 0 ORDER BY path, queue_pos');
   const queues = new Map<string, string[]>();
   for (const a of queued) queues.set(a.path, [...(queues.get(a.path) ?? []), a.task_id]);
-  return locks.map((l) => ({ path: l.path, taskId: l.task_id, memberId: l.member_id, state: l.state, queue: queues.get(l.path) ?? [] }));
+  return locks.map((l) => {
+    const range = rangeOf(l);
+    return { path: l.path, taskId: l.task_id, memberId: l.member_id, state: l.state, queue: queues.get(l.path) ?? [], ...(range ? { range } : {}) };
+  });
 }
 
 /** A corrupt stored JSON column must not take down /v1/state for the whole workspace. */

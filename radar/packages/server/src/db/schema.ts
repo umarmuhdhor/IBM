@@ -1,6 +1,6 @@
 // R2 §2, copied verbatim. Kept as a TS string (not schema.sql) because workerd and the vitest pool cannot
 // import a .sql file the same way (D-alief-03). Runs on every DO start; every statement is IF NOT EXISTS.
-export const SCHEMA_VERSION = '4';
+export const SCHEMA_VERSION = '5';
 
 export const SCHEMA_SQL = `
 -- Tanpa PRAGMA journal/transaksi: Durable Object mengatur sendiri. FK sudah ON secara default (§1).
@@ -97,7 +97,9 @@ CREATE TABLE IF NOT EXISTS lock (
   member_id   TEXT NOT NULL REFERENCES member(id),
   state       TEXT NOT NULL CHECK (state IN ('dipesan','dipegang','review')),
   acquired_at INTEGER NOT NULL,
-  updated_at  INTEGER NOT NULL
+  updated_at  INTEGER NOT NULL,
+  start_line  INTEGER,                                   -- D-alief-17: baris terkunci (1-based, inklusif); NULL = seluruh file
+  end_line    INTEGER
 );
 CREATE INDEX IF NOT EXISTS lock_task ON lock(task_id);
 
