@@ -160,3 +160,24 @@ Pelajaran: Task 17 mahal karena Bob menjalankan ulang suite server berkali-kali 
 - Deploy server ke Cloudflare **belum** dilakukan; skema v7 dibuat otomatis saat DO bangun (`CREATE TABLE IF NOT
   EXISTS`). Kit Bob di folder pengguna perlu dipasang ulang (`radar kit install` / tombol di app) agar
   `complete_step` tersedia.
+
+## Lanjutan · PM boleh menambah dokumen (Task 22)
+
+- Permintaan Umar: PM harus bisa memasukkan file brief ke folder proyek supaya bisa dipanggil (`@brief.md`) di
+  Bob. Sebelumnya `checkWrite` baris 2 menolak semua tulisan PM (`pm_readonly`), dan sync agent melewatkan file
+  baru PM saat scan awal. Lampiran chat Bob (⇧ drag) hanya menerima gambar, jadi file teks harus ada di workspace.
+- Keputusan Umar (pilihan dari tiga): **dokumen saja**, `.md` dan `.txt`. PDF tidak termasuk karena sync menolak
+  file biner.
+- Aturan baru (`locks.ts` baris 2): PM + dokumen bebas → `allow 'pm_doc'` tanpa kunci, tanpa task, tanpa event;
+  dokumen yang dipegang coder → `held_by_other`; di bawah klaim commit → `committing`; PM + file lain →
+  `pm_readonly` seperti sebelumnya. Sync agent tidak lagi melewatkan dokumen baru PM. Pesan penolakan dan brief
+  PM menjelaskan aturannya.
+- Bob (mode Agent, 2.95 Bobcoin, `uaai_umar_task22_pm_can_add_documents_summary.png`): 7 perubahan file-spesifik
+  + 3 test baru di `locks.test.ts`; Bob tidak menjalankan test. Satu perintah `find … | head` (hanya baca)
+  di-approve Claude. Commit `d7125a9f`.
+- Perbaikan Claude (`871c078c`): label log scan sync, kalimat brief PM, test sync yang memakai `README.md` sebagai
+  contoh penolakan PM diganti ke file kode, dan test integrasi baru: PM menulis `docs/brief.md` → coder A dan B
+  menerimanya. Kit Bob di-bundle ulang (`822e5c12`).
+- Verifikasi: common 148, sync 74, server 234, hooks 52, mcp 50; `pnpm -C radar typecheck` + `lint` bersih.
+- Catatan: dokumen PM tidak punya task, jadi tidak ikut commit GitHub per task; dokumen tetap tersimpan di server
+  dan tersinkron ke semua anggota.
