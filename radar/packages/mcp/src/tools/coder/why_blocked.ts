@@ -1,3 +1,4 @@
+import { rangeText } from '@radar/common';
 import { defineTool } from '../types.js';
 
 interface Holder {
@@ -7,6 +8,8 @@ interface Holder {
   taskTitle: string;
   state: string;
   sinceMs: number;
+  /** Line-range lock (D-alief-17); absent = the whole file. */
+  range?: { start: number; end: number };
 }
 
 interface Block {
@@ -37,7 +40,8 @@ export default defineTool({
     const holder = block.holder;
     const sinceMin = Math.round(holder.sinceMs / 60000);
     const lines: string[] = [];
-    lines.push(`${block.path} dipegang ${holder.memberName} (${holder.taskId} ${holder.taskTitle}) sejak ${sinceMin} menit.`);
+    const what = holder.range ? `${block.path} ${rangeText(holder.range)}` : block.path;
+    lines.push(`${what} dipegang ${holder.memberName} (${holder.taskId} ${holder.taskTitle}) sejak ${sinceMin} menit.`);
     if (block.requestId) {
       lines.push(`Permintaanmu ${block.requestId} — status: ${block.requestStatus}.`);
     } else {

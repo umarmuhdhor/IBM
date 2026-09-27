@@ -2,7 +2,7 @@
 import { feedText, type ActivityRes, type RadarEvent, type TeamRes } from '@radar/common';
 import { listAllocations, queueOf } from '../db/repo/allocation';
 import { recentEvents } from '../db/repo/event';
-import { listLocks } from '../db/repo/lock';
+import { listLocks, rangeOf } from '../db/repo/lock';
 import { getMeta } from '../db/repo/meta';
 import { listMembers } from '../db/repo/member';
 import { listProposals } from '../db/repo/proposal';
@@ -48,15 +48,19 @@ export function buildTeam(db: Db, hub: Hub, now: number): TeamRes {
     editCount: t.edit_count,
   }));
 
-  const locks = listLocks(db).map((l) => ({
-    path: l.path,
-    taskId: l.task_id,
-    memberId: l.member_id,
-    state: l.state,
-    queue: queueOf(db, l.path)
-      .filter((e) => e.task_id !== l.task_id)
-      .map((e) => e.task_id),
-  }));
+  const locks = listLocks(db).map((l) => {
+    const range = rangeOf(l);
+    return {
+      ...(range ? { range } : {}),
+      path: l.path,
+      taskId: l.task_id,
+      memberId: l.member_id,
+      state: l.state,
+      queue: queueOf(db, l.path)
+        .filter((e) => e.task_id !== l.task_id)
+        .map((e) => e.task_id),
+    };
+  });
 
   return {
     members,

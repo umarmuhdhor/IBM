@@ -25,6 +25,10 @@ import {
 // ---- Primitives ----------------------------------------------------------------------------------------------
 
 export const PathSchema = z.string().min(1).max(1024);
+/** 1-based, inclusive (D-alief-17). No range on a lock means the whole file. */
+export const LineRangeSchema = z
+  .object({ start: z.number().int().positive(), end: z.number().int().positive() })
+  .refine((r) => r.end >= r.start, { message: 'end must be >= start' });
 export const MemberIdSchema = z.string().min(1).max(64);
 export const TaskIdSchema = z.string().min(1).max(64);
 export const EpochMsSchema = z.number().int().nonnegative();
@@ -97,6 +101,7 @@ export const LockHolder = z.object({
   taskTitle: z.string(),
   state: LockStateSchema,
   sinceMs: z.number().nonnegative().optional(),
+  range: LineRangeSchema.optional(),
 });
 export type LockHolder = z.infer<typeof LockHolder>;
 
@@ -105,6 +110,8 @@ export const LockCheckReq = z.object({
   tool: z.string().min(1).max(128),
   sessionId: z.string().max(256).nullable().optional(),
   clientTs: EpochMsSchema,
+  /** Lines each path's edit touches (D-alief-17). A path without an entry is a whole-file edit. */
+  lines: z.record(PathSchema, z.array(LineRangeSchema).max(200)).optional(),
 });
 export type LockCheckReq = z.infer<typeof LockCheckReq>;
 
@@ -262,6 +269,7 @@ export const TeamRes = z.object({
       memberId: MemberIdSchema,
       state: LockStateSchema,
       queue: z.array(TaskIdSchema),
+      range: LineRangeSchema.optional(),
     }),
   ),
   openRequests: z.number().int().nonnegative(),
@@ -569,6 +577,7 @@ export const LockViewSchema = z.object({
   memberId: MemberIdSchema,
   state: LockStateSchema,
   queue: z.array(TaskIdSchema),
+  range: LineRangeSchema.optional(),
 });
 
 export const AllocationViewSchema = z.object({
@@ -666,11 +675,12 @@ export const RadarEventSchema = z.discriminatedUnion('type', [
       reason: z.string(),
       holderMemberId: MemberIdSchema.nullable(),
       holderTaskId: TaskIdSchema.nullable(),
+      holderRange: LineRangeSchema.optional(),
     }),
   ),
   event('sync.applied', z.object({ path: PathSchema, version: z.number().int().nonnegative(), memberId: MemberIdSchema, latencyMs: z.number() })),
   event('lock.reserved', z.object({ path: PathSchema, taskId: TaskIdSchema, memberId: MemberIdSchema, source: AllocationSourceSchema })),
-  event('lock.acquired', z.object({ path: PathSchema, taskId: TaskIdSchema, memberId: MemberIdSchema, auto: z.boolean() })),
+  event('lock.acquired', z.object({ path: PathSchema, taskId: TaskIdSchema, memberId: MemberIdSchema, auto: z.boolean(), range: LineRangeSchema.optional() })),
   event('lock.review', z.object({ path: PathSchema, taskId: TaskIdSchema })),
   event('lock.released', z.object({ path: PathSchema, taskId: TaskIdSchema })),
   event(
@@ -695,6 +705,7 @@ export const RadarEventSchema = z.discriminatedUnion('type', [
       holderTaskId: TaskIdSchema,
       via: BlockViaSchema,
       requestId: z.string().nullable(),
+      holderRange: LineRangeSchema.optional(),
     }),
   ),
   event('hook.failopen', z.object({ memberId: MemberIdSchema, paths: z.array(PathSchema), errorKind: z.string() })),

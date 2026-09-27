@@ -155,12 +155,15 @@ function applyDomain(s: RadarState, ev: RadarEvent): RadarState {
     case 'lock.acquired': {
       const p = ev.payload;
       const prev = s.locks[p.path];
+      // D-alief-17: a lock.acquired without range (e.g. back from review) keeps the holder's lines.
+      const range = ev.type === 'lock.acquired' ? (ev.payload.range ?? (prev?.taskId === p.taskId ? prev.range : undefined)) : undefined;
       const next = setLock(s, {
         path: p.path,
         taskId: p.taskId,
         memberId: p.memberId,
         state: ev.type === 'lock.reserved' ? 'dipesan' : 'dipegang',
         queue: (prev?.queue ?? []).filter((t) => t !== p.taskId),
+        ...(range ? { range } : {}),
       });
       return ev.type === 'lock.acquired' ? patchMember(next, p.memberId, { activeTaskId: p.taskId }) : next;
     }

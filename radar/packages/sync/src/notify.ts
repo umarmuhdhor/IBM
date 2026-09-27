@@ -1,7 +1,7 @@
 // Terminal notices (fase 04 step 6): red + bell for rejections, yellow for warnings.
 import pc from 'picocolors';
 import type { LockHolder } from '@radar/common';
-import { basename } from '@radar/common';
+import { basename, rangeText } from '@radar/common';
 
 export type RejectReason = 'held_by_other' | 'committing' | 'pm_readonly' | 'conflict' | 'too_large' | 'binary';
 
@@ -25,7 +25,8 @@ export function formatRejection(r: { path: string; reason: RejectReason; holder:
       return `✖ ${r.path} is a binary file and does not sync.`;
     case 'held_by_other':
     case 'committing': {
-      const who = r.holder ? `held by ${r.holder.memberName} (${r.holder.taskId} ${r.holder.taskTitle})` : 'held by another member';
+      const held = r.holder?.range ? `${rangeText(r.holder.range)} ${r.holder.range.start === r.holder.range.end ? 'is' : 'are'} held by` : 'held by';
+      const who = r.holder ? `${held} ${r.holder.memberName} (${r.holder.taskId} ${r.holder.taskTitle})` : 'held by another member';
       const why = r.reason === 'committing' ? `being committed${r.holder ? ` (${r.holder.taskId})` : ''}` : who;
       return `✖ Your change to ${r.path} was refused: ${why}.${saved ? ` Your content is kept in ${saved}.` : ''}`;
     }

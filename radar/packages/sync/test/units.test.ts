@@ -141,6 +141,11 @@ describe('notify messages', () => {
       '✖ Your change to src/checkout/checkout.ts was refused: held by Alice (T-1 Kupon). Your content is kept in checkout.ts.radar-rejected.',
     );
   });
+  it('names the locked lines for a line-range lock (D-alief-17)', () => {
+    expect(formatRejection({ path: 'src/app.ts', reason: 'held_by_other', holder: { ...holder, range: { start: 3, end: 5 } }, sidecar: 'src/app.ts.radar-rejected' })).toBe(
+      '✖ Your change to src/app.ts was refused: lines 3–5 are held by Alice (T-1 Kupon). Your content is kept in app.ts.radar-rejected.',
+    );
+  });
   it('explains pm_readonly and conflict', () => {
     expect(formatRejection({ path: 'README.md', reason: 'pm_readonly', holder: null, sidecar: 'README.md.radar-rejected' })).toBe(
       '✖ A PM does not write files. Your change is kept in README.md.radar-rejected.',

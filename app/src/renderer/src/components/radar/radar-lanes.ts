@@ -1,3 +1,4 @@
+import { lockLabel, rangeText } from '@radar/common'
 import type { BobActivityItem, RadarState, TaskStatus } from '@radar/ui'
 
 // View helpers for the demo-style lanes (Team cards, Shared repo list). Pure: every string comes from
@@ -20,6 +21,8 @@ export type RepoRow = {
   path: string
   holderId: string | null
   holderName: string | null
+  /** "lines 3–5 · Alice" for a line-range lock (D-alief-17), the name alone for a whole-file lock. */
+  holderLabel: string | null
   lock: RepoLockLabel | null
   writing: boolean
   /** Teammates waiting for this file, in queue order (pos starts at 1). */
@@ -49,6 +52,7 @@ export function repoRows(state: RadarState, now: number): RepoRow[] {
       path,
       holderId: lock?.memberId ?? null,
       holderName: lock ? memberName(state, lock.memberId) : null,
+      holderLabel: lock ? lockLabel(memberName(state, lock.memberId), lock.range) : null,
       lock: lock ? (LOCK_LABEL[lock.state] ?? null) : null,
       writing: Boolean(file && file.writingUntil > now),
       queue
@@ -56,13 +60,15 @@ export function repoRows(state: RadarState, now: number): RepoRow[] {
   })
 }
 
+export type QueueSpot = { path: string; pos: number; holderName: string; /** "it" or "lines 3–5". */ holds: string }
+
 /** Files this member is queued for, e.g. "#1 in the queue for checkout.ts". */
-export function queueSpots(state: RadarState, memberId: string): { path: string; pos: number; holderName: string }[] {
-  const spots: { path: string; pos: number; holderName: string }[] = []
+export function queueSpots(state: RadarState, memberId: string): QueueSpot[] {
+  const spots: QueueSpot[] = []
   for (const lock of Object.values(state.locks)) {
     const index = lock.queue.findIndex((taskId) => state.tasks[taskId]?.ownerId === memberId)
     if (index !== -1) {
-      spots.push({ path: lock.path, pos: index + 1, holderName: memberName(state, lock.memberId) })
+      spots.push({ path: lock.path, pos: index + 1, holderName: memberName(state, lock.memberId), holds: lock.range ? rangeText(lock.range) : 'it' })
     }
   }
   return spots.sort((a, b) => a.path.localeCompare(b.path))

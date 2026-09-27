@@ -3,7 +3,9 @@
 // Never prints to stdout. The block message goes to stderr: Bob IDE 2.2.0 passes it to the model (D-umar-01).
 import { sendActivity } from './activity.js';
 import { loadContext, logLine, radarFetch, settleWithin } from './_shared.js';
-import { EDIT_TOOLS_REGEX, HOOK_SERVER_TIMEOUT_MS, type LockCheckRes } from '@radar/common';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { EDIT_TOOLS_REGEX, HOOK_SERVER_TIMEOUT_MS, touchedLines, type LineRange, type LockCheckRes, type NormalizedHook } from '@radar/common';
 import { saveState } from '@radar/common/node';
 
 // Whole-hook budget from process start (stdin + server call); keeps the hook under the 1.8 s fail-open target
@@ -11,6 +13,25 @@ import { saveState } from '@radar/common/node';
 // startup + budget) stays under 1.8 s even on loaded CI runners running parallel suites.
 export const LOCK_GUARD_BUDGET_MS = 1_200;
 const MAX_SAVED_MESSAGE = 2_000;
+
+function readText(root: string, path: string): string | null {
+  try {
+    return readFileSync(join(root, path), 'utf8');
+  } catch {
+    return null;
+  }
+}
+
+/** D-alief-17: lines each path's edit touches. Paths whose lines are unknown are left out (= whole file). */
+export function linesFor(hook: NormalizedHook, tool: string, root: string): Record<string, LineRange[]> {
+  const out: Record<string, LineRange[]> = {};
+  // Single-file tool input only; a multi-file apply_diff counts as whole-file edits.
+  if (hook.paths.length !== 1) return out;
+  const path = hook.paths[0]!;
+  const lines = touchedLines(tool, hook.input, readText(root, path));
+  if (lines) out[path] = lines;
+  return out;
+}
 
 async function main(): Promise<void> {
   const ctx = await loadContext('lock_guard');
@@ -20,13 +41,20 @@ async function main(): Promise<void> {
 
   if (!EDIT_TOOLS_REGEX.test(tool) || hook.paths.length === 0) return;
 
+  let lines: Record<string, LineRange[]> = {};
+  try {
+    lines = linesFor(hook, tool, cfg.root);
+  } catch (err) {
+    logLine(cfg.root, 'lock_guard', `lines unknown: ${String(err)}`);
+  }
+
   let res: LockCheckRes;
   try {
     res = await radarFetch<LockCheckRes>(
       cfg,
       'POST',
       '/v1/locks/check',
-      { paths: hook.paths, tool, sessionId: hook.sessionId, clientTs: Date.now() },
+      { paths: hook.paths, tool, sessionId: hook.sessionId, clientTs: Date.now(), ...(Object.keys(lines).length > 0 ? { lines } : {}) },
       Math.max(100, Math.min(HOOK_SERVER_TIMEOUT_MS, LOCK_GUARD_BUDGET_MS - (Date.now() - started))),
     );
   } catch (err) {

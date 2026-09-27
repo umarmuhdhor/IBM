@@ -507,3 +507,36 @@ Format:
 - Alasan: e2e 27 Sep: owner membagikan folder berisi `.env`, dan `.env` itu muncul di Mac teman. Aturan `!.radar/` di `.gitignore` juga bisa mengirim token member ke server. `pkg/.gitignore` diabaikan sehingga `pkg/local.txt` ikut tersinkron.
 - Alternatif yang ditolak: hanya menambah `.env` ke `DEFAULT_IGNORE_PATTERNS` (masih bisa dibatalkan dengan `!.env` di `.gitignore`); membuang semua `.env.*` termasuk contoh (template yang aman berguna untuk tim).
 - Dampak: server menolak lock/tulis `.env` dari klien lama; admin import juga melewatinya. Umar dan Aarief tidak perlu mengubah apa pun.
+
+## D-alief-17 · 27 Sep 2026 · fase 12j · Kunci per rentang baris dan penggabungan tiga arah di server
+
+- Konteks: landing dan `lock-collision-demo.tsx` menampilkan "lines 3–5 locked · Alice" dan Budi terblokir saat mengetik di baris 3. Server hanya mengunci seluruh file, jadi klaim itu belum benar di produk.
+- Keputusan:
+  1. **Kontrak (milik Core, semua field baru opsional):**
+     - `LineRange {start, end}` (mulai 1, inklusif, `end >= start`).
+     - `LockHolder.range?`, `LockViewSchema.range?`, `TeamRes.locks[].range?`, `lock.changed.d.range?` (WS) dan snapshot `locks[].range?`. Tanpa `range` artinya seluruh file, jadi klien dan fixture lama tetap jalan.
+     - `LockCheckReq.lines?: Record<path, LineRange[]>`: baris yang akan disentuh edit Bob. Path tanpa entri = baris tidak diketahui = seluruh file.
+     - Event `lock.acquired.range?` (juga dikirim ulang saat rentang pemegang melebar) dan `lock.blocked.holderRange?`.
+     - `CHECK_REASONS` bertambah `outside_range` (allow: file dikunci orang lain, tetapi edit tidak menyentuh rentangnya). Hook lama tidak mengirim `lines`, jadi tidak pernah menerima alasan ini.
+     - `file.ack.d.merged?` dan `file.ack.d.content?`: isi hasil gabungan dikirim balik ke pengirim.
+  2. **Penyimpanan (skema v5):** tabel `lock` tetap satu baris per path (I1, antrean, dan alokasi tidak berubah), ditambah kolom `start_line`/`end_line` yang boleh NULL. NULL = kunci seluruh file.
+  3. **`checkWrite(member, path, via, lines | null)`:**
+
+     | # | Kunci di path | Baris edit | Hasil |
+     |---|---|---|---|
+     | R1 | tidak ada | diketahui | allow `grabbed`, kunci rentang = span baris edit |
+     | R2 | tidak ada | tidak diketahui | allow `grabbed`, seluruh file (seperti sekarang) |
+     | R3 | rentang milik saya | diketahui | allow `own`, rentang melebar ke span gabungan |
+     | R4 | rentang milik saya | tidak diketahui | allow `own`, rentang tetap (lapis sync menghitung baris sebenarnya) |
+     | R5 | rentang orang lain | tidak beririsan | allow `outside_range`, tanpa kunci baru |
+     | R6 | rentang orang lain | beririsan | block `held_by_other`, `holder.range`, request + block seperti biasa |
+     | R7 | rentang orang lain | tidak diketahui | block (sama dengan R6) |
+     | R8 | seluruh file milik orang lain | apa pun | block seperti tabel R4 lama (baris 8–10) |
+
+     Beririsan = `a.start <= b.end && b.start <= a.end`. Sisipan sebelum baris n dihitung menyentuh baris n. PM, path diabaikan, dan klaim commit tetap seperti sebelumnya (baris 1, 2, 12). Pesan blokir menyebut pemegang dan baris: "lines 3–5 are locked by Alice".
+  4. **Hook (lane Umar, perubahan kecil):** `touchedLines(tool, input, isiFileDiDisk)` di `@radar/common`. `apply_diff` memakai `:start_line:` dan jumlah baris SEARCH (tanpa start line: posisi pertama teks SEARCH di file). `insert_content` = `[line, line]` (0 = akhir file). `search_and_replace` = baris yang cocok dengan teks cari. `write_file`/`write_to_file` = seluruh file (tidak diketahui). `lock_guard` mengirim `lines`.
+  5. **Lapis kedua di sync:** `file.update` hanya membawa isi penuh. Kalau kunci path punya rentang, server menghitung baris yang disentuh dengan diff baris (LCS, ditulis sendiri di `common/src/line-range.ts`, tanpa dependency). Kalau update basi (`baseVersion` < versi server dan penulis terakhir orang lain), server menggabungkan tiga arah: base = isi versi `baseVersion`, ours = isi server, theirs = kiriman. Hunk yang beririsan atau bersebelahan = konflik: ditolak `conflict` dan sync agent menyimpan sidecar `.radar-conflict` seperti biasa. Hasil gabungan disimpan sebagai versi baru, disiarkan ke member lain, dan dikirim balik ke pengirim lewat `file.ack.content`. Tidak pernah ada timpa diam-diam. Tanpa rentang, aturan SY-07 lama berlaku (update basi ditolak).
+  6. **Tampilan:** selektor `lockLabel` di common ("lines 3–5 · Alice", "line 10 · Budi", tanpa rentang: nama saja). App (Files & locks, Shared repo, kartu Team), radar-mcp, dan baris feed memakai teks itu.
+- Batasan yang dicatat: rentang tidak bergeser saat ada sisipan di atasnya; commit task mengambil isi file penuh, jadi baris rekan yang digabung ikut ter-commit oleh task pemegang (sama dengan catatan `transferNow`); member yang mengedit di luar rentang tidak mendapat kunci sendiri.
+- Alternatif yang ditolak: tabel `lock_range` terpisah dengan banyak pemegang per file (I1, antrean, dan sekitar 10 pemanggil `getLock` harus diubah, terlalu besar sebelum deadline); kunci rentang dari sync tanpa hook (edit manual di luar Bob tetap mengunci seluruh file, perilaku lama); menolak semua update basi (dua orang di satu file tidak bisa bekerja bersamaan).
+- Dampak: Umar (`lock_guard` mengirim `lines`), Aarief (label kunci di app), Imelda (teks landing dan `/demo` sekarang benar; usulan penyesuaian kalau ada beda dicatat di log fase 12j).

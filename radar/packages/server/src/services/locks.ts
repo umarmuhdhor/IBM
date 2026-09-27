@@ -3,7 +3,10 @@
 import {
   COMMIT_CLAIM_TTL_MS,
   createIgnoreMatcherFromText,
+  rangesOverlap,
+  spanOf,
   type BlockVia,
+  type LineRange,
   type LockCheckResult,
   type LockHolder,
   type AllocationSource,
@@ -12,7 +15,7 @@ import {
 import { deleteAllocation, getAllocation, headOf, insertAllocation, nextPos, pathsOf, queueOf, renumberQueue, setFront, type QueueEntry } from '../db/repo/allocation';
 import { insertBlock } from '../db/repo/block';
 import { getFile } from '../db/repo/file';
-import { deleteLock, getLock, insertLock, setLockState, setTaskLocksState, updateLock, type LockRow } from '../db/repo/lock';
+import { deleteLock, getLock, insertLock, rangeOf, setLockRange, setLockState, setTaskLocksState, updateLock, type LockRow } from '../db/repo/lock';
 import { getMember, setActiveTask, type MemberRow } from '../db/repo/member';
 import { expirePendingReviews } from '../db/repo/proposal';
 import { createRequest } from '../db/repo/request';
@@ -64,6 +67,7 @@ export function requireTask(db: Db, id: string): TaskRow {
 export function holderOf(ctx: Pick<LockCtx, 'db' | 'now'>, lock: LockRow): LockHolder {
   const member = getMember(ctx.db, lock.member_id);
   const task = getTask(ctx.db, lock.task_id);
+  const range = rangeOf(lock);
   return {
     memberId: lock.member_id,
     memberName: member?.name ?? lock.member_id,
@@ -71,6 +75,7 @@ export function holderOf(ctx: Pick<LockCtx, 'db' | 'now'>, lock: LockRow): LockH
     taskTitle: task?.title ?? lock.task_id,
     state: lock.state,
     sinceMs: Math.max(0, ctx.now - lock.acquired_at),
+    ...(range ? { range } : {}),
   };
 }
 
@@ -153,6 +158,7 @@ export function returnTaskToWorking(ctx: LockCtx, taskId: string, by: string): v
 /** Queues a `lock.changed` WebSocket message for every sync client (sent after commit). */
 export function lockChanged(ctx: LockCtx, path: string): void {
   const lock = getLock(ctx.db, path);
+  const range = lock ? rangeOf(lock) : null;
   ctx.uow.toSync.push({
     msg: {
       t: 'lock.changed',
@@ -162,6 +168,7 @@ export function lockChanged(ctx: LockCtx, path: string): void {
         taskId: lock?.task_id ?? null,
         memberId: lock?.member_id ?? null,
         queue: queueOf(ctx.db, path).map((e) => e.task_id),
+        ...(range ? { range } : {}),
       },
     },
     except: null,
@@ -185,8 +192,13 @@ export function lockChanged(ctx: LockCtx, path: string): void {
  * 10. review by other       → block  'in_review_by_other'  (request dedup + block row)
  * 11. #9 repeated           → block  'held_by_other'       (1 request, N block rows)
  * 12. commit claim active   → block  'committing'          (no request, applies to owner too)
+ *
+ * Line ranges (D-alief-17): `lines` are the lines the edit touches, null when unknown (whole-file edit).
+ * R1 a free file with known lines is grabbed for their span; R3 the holder's range widens to cover new lines;
+ * R5 another member's edit that overlaps no locked line is allowed ('outside_range', no lock, no request);
+ * R6/R7 an overlapping or unknown edit is blocked as before; R8 a whole-file lock blocks every line.
  */
-export function checkWrite(ctx: LockCtx, memberId: string, path: string, via: BlockVia): CheckWriteResult {
+export function checkWrite(ctx: LockCtx, memberId: string, path: string, via: BlockVia, lines: readonly LineRange[] | null = null): CheckWriteResult {
   // Row 1: ignored paths are always allowed, no DB work needed.
   if (isIgnoredPath(ctx.db, path)) return { decision: 'allow', reason: 'ignored_path', taskId: null };
 
@@ -209,7 +221,7 @@ export function checkWrite(ctx: LockCtx, memberId: string, path: string, via: Bl
     if (headOf(ctx.db, path) !== null) {
       // Promote the queue head, then decide again against the new lock (own reservation or someone else's).
       advanceQueue(ctx, path, null);
-      if (getLock(ctx.db, path) !== null) return checkWrite(ctx, memberId, path, via);
+      if (getLock(ctx.db, path) !== null) return checkWrite(ctx, memberId, path, via, lines);
     }
 
     // No queue: auto-grab for the member's active (or new ad-hoc) task.
@@ -222,14 +234,16 @@ export function checkWrite(ctx: LockCtx, memberId: string, path: string, via: Bl
       }
       returnTaskToWorking(ctx, task.id, memberId);
     }
+    // R1/R2: known lines lock their span, unknown lines lock the whole file.
+    const range = lines ? spanOf(lines) : null;
     insertAllocation(ctx.db, { taskId: task.id, path, pos: 0, source: 'auto', now: ctx.now });
-    insertLock(ctx.db, { path, taskId: task.id, memberId, state: 'dipegang', now: ctx.now });
+    insertLock(ctx.db, { path, taskId: task.id, memberId, state: 'dipegang', now: ctx.now, range });
     markTaskWorking(ctx, task.id);
     appendEvent(ctx.db, ctx.uow, {
       ts: ctx.now,
       actor: memberId,
       type: 'lock.acquired',
-      payload: { path, taskId: task.id, memberId, auto: true },
+      payload: { path, taskId: task.id, memberId, auto: true, ...(range ? { range } : {}) },
     });
     lockChanged(ctx, path);
     return { decision: 'allow', reason: 'grabbed', taskId: task.id };
@@ -253,13 +267,26 @@ export function checkWrite(ctx: LockCtx, memberId: string, path: string, via: Bl
       // dikerjakan/dipegang. returnTaskToWorking calls lockChanged for every path of the task.
       returnTaskToWorking(ctx, lock.task_id, memberId);
     }
+    // R3: the holder's range widens to cover the new lines (R4: unknown lines leave it as it is).
+    const held = rangeOf(lock);
+    const wider = held && lines && lines.length > 0 ? spanOf([held, ...lines]) : null;
+    if (held && wider && (wider.start !== held.start || wider.end !== held.end)) {
+      setLockRange(ctx.db, path, wider, ctx.now);
+      appendEvent(ctx.db, ctx.uow, { ts: ctx.now, actor: memberId, type: 'lock.acquired', payload: { path, taskId: lock.task_id, memberId, auto: false, range: wider } });
+      lockChanged(ctx, path);
+    }
     // Rows 5–7: mark task working and point active_task at it.
     markTaskWorking(ctx, lock.task_id);
     setActiveTask(ctx.db, memberId, lock.task_id);
     return { decision: 'allow', reason: 'own', taskId: lock.task_id };
   }
 
-  // Rows 8–11: lock is held by someone else.
+  // R5: someone else holds some lines; an edit that touches none of them goes through without a lock.
+  const held = rangeOf(lock);
+  if (held && lines && !lines.some((l) => rangesOverlap(l, held))) {
+    return { decision: 'allow', reason: 'outside_range', taskId: null };
+  }
+  // Rows 8–11 (R6–R8): lock is held by someone else.
   return blockFor(ctx, memberId, path, via);
 }
 
@@ -273,6 +300,7 @@ function blockFor(ctx: LockCtx, memberId: string, path: string, via: BlockVia): 
   if (!lock) throw new Error(`blockFor: no lock found for path ${path}`);
 
   const reqTask = resolveActiveTask(ctx, memberId);
+  const holderRange = rangeOf(lock);
 
   // One open request per task+path (SV-05 / I10); emit request.created only on first creation.
   const { request, created } = createRequest(ctx.db, {
@@ -326,6 +354,7 @@ function blockFor(ctx: LockCtx, memberId: string, path: string, via: BlockVia): 
       holderTaskId: lock.task_id,
       via,
       requestId: request.id,
+      ...(holderRange ? { holderRange } : {}),
     },
   });
 

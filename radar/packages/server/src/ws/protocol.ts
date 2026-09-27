@@ -157,7 +157,12 @@ function handleFileUpdate(deps: WorkspaceDeps, ws: WebSocket, att: ReadyAttachme
     return res;
   });
   const reply: WsMessage = r.ok
-    ? { t: 'file.ack', ...(msg.id ? { id: msg.id } : {}), d: { ...(msg.id ? { id: msg.id } : {}), path: r.path, version: r.version, hash: r.hash } }
+    ? {
+        t: 'file.ack',
+        ...(msg.id ? { id: msg.id } : {}),
+        // D-alief-17: a merged save sends the result back so the sender's disk matches the server.
+        d: { ...(msg.id ? { id: msg.id } : {}), path: r.path, version: r.version, hash: r.hash, ...(r.merged ? { merged: true, content: r.content } : {}) },
+      }
     : {
         t: 'file.rejected',
         ...(msg.id ? { id: msg.id } : {}),

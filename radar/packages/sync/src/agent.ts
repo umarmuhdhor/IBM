@@ -422,6 +422,15 @@ export class SyncAgent extends EventEmitter {
   }
 
   /** Keeps an unsent local edit before a server write replaces it. Returns the sidecar path. */
+  private hasUnsentEdit(path: string, knownHash: string, incomingHash: string): boolean {
+    try {
+      const local = readLocal(this.root, path);
+      return local.kind === 'text' && local.hash !== knownHash && local.hash !== incomingHash;
+    } catch {
+      return false;
+    }
+  }
+
   private saveConflict(path: string, previousHash: string | undefined, incomingHash: string): string | null {
     const local = readLocal(this.root, path);
     if (local.kind === 'missing') return null;
@@ -504,6 +513,15 @@ export class SyncAgent extends EventEmitter {
     this.retries.delete(d.path);
     const fresh = this.known.set(d.path, { version: d.version, hash: d.hash });
     this.log('ack', `${d.path} v${d.version}${p ? ` ${Date.now() - p.sentAt}ms` : ''}${fresh ? '' : ' (stale)'}`);
+    // D-alief-17: the server merged this save with a teammate's lines. Write the result back, unless the user
+    // edited the file again meanwhile: that newer edit is sent next and the server checks it against the lines.
+    if (fresh && d.merged && d.content !== undefined && p && p.id === id) {
+      const local = readLocal(this.root, d.path);
+      if (local.kind === 'text' && local.hash === p.hash) {
+        atomicWrite(this.root, d.path, d.content);
+        this.log('ack.merged', `${d.path} v${d.version} merged with a teammate's edit`);
+      }
+    }
     this.emit('ack', d);
     // Settle check: the watcher can coalesce the last events of a burst, so re-read once nothing is in flight.
     if (!this.pending.has(d.path)) this.processPath(d.path);
@@ -542,6 +560,23 @@ export class SyncAgent extends EventEmitter {
     if (prev && d.version <= prev.version) {
       this.log('recv.stale', `${path} v${d.version} ≤ known v${prev.version}`);
       return;
+    }
+    // Our save of this path is in flight and the server handled this change first. Its answer to our save
+    // settles the file: a merged ack carries both edits, a reject carries the server file. Writing this change
+    // now would put the teammate's version over our edit and the next scan would send it back (prod e2e 12j).
+    if (this.pending.has(path)) {
+      this.log('recv.deferred', `${path} v${d.version} by ${d.by} (our save is in flight)`);
+      return;
+    }
+    // An edit on disk the debounce has not sent yet: send it now against the version it was made on, so the
+    // server can merge it by lines (D-alief-17). Without a line lock the server rejects it and the answer keeps
+    // it as `.radar-conflict`, as before.
+    if (prev && prev.hash !== DELETED_HASH && this.hasUnsentEdit(path, prev.hash, d.hash)) {
+      this.processPath(path);
+      if (this.pending.has(path)) {
+        this.log('recv.deferred', `${path} v${d.version} by ${d.by} (sent our unsent edit first)`);
+        return;
+      }
     }
     this.saveConflict(path, prev?.hash, d.hash);
     this.known.set(path, { version: d.version, hash: d.hash });

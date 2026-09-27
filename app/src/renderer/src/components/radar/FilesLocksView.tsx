@@ -13,7 +13,7 @@ export function FilesLocksView({ state, now }: { state: RadarState; now: number 
           {rows.length} {rows.length === 1 ? 'file' : 'files'} · {locked} locked
         </span>
       </div>
-      <p className="text-xs text-muted-foreground">One Bob per file. Others queue and keep working on their other files.</p>
+      <p className="text-xs text-muted-foreground">One Bob per block of lines, or per file when Bob rewrites it whole. Others edit elsewhere or queue.</p>
       <SharedRepoList rows={rows} emptyText="No files have been synced yet." />
     </section>
   )

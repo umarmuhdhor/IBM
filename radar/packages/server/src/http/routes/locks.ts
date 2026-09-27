@@ -1,5 +1,5 @@
 // `POST /v1/locks/check` (R3 §2.2) and `POST /v1/locks/revoke` (R3 §2.18, mc only).
-import { LockCheckReq, RevokeReq, type LockCheckRes, type RevokeRes } from '@radar/common';
+import { LockCheckReq, RevokeReq, type LineRange, type LockCheckRes, type RevokeRes } from '@radar/common';
 import type { Hono } from 'hono';
 import { ctxOf, type WorkspaceDeps } from '../../deps';
 import { insertMetric } from '../../db/repo/metric';
@@ -26,10 +26,16 @@ export function registerLockRoutes(app: Hono, deps: WorkspaceDeps): void {
     if (paths.length > LOCK_CHECK_MAX_PATHS) {
       throw new RadarError(422, 'VALIDATION', `Maksimal ${LOCK_CHECK_MAX_PATHS} path per panggilan.`);
     }
+    // D-alief-17: lines per path, keyed by the same clean path as `paths`. Unknown keys are ignored.
+    const lines: Record<string, LineRange[]> = {};
+    for (const [raw, ranges] of Object.entries(req.lines ?? {})) {
+      const path = cleanPath(raw);
+      if (path !== null) lines[path] = ranges;
+    }
     const started = Date.now();
     const res: LockCheckRes = deps.transact((uow) => {
       const ctx = ctxOf(deps, uow);
-      const out = checkPaths(ctx, member.memberId, paths);
+      const out = checkPaths(ctx, member.memberId, paths, lines);
       const serverMs = Date.now() - started;
       insertMetric(ctx.db, { ts: ctx.now, name: 'lock_check_ms', value: serverMs, tags: { memberId: member.memberId, paths: paths.length } });
       const rtt = ctx.now - req.clientTs;

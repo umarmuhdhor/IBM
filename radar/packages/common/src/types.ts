@@ -49,6 +49,7 @@ export const CHECK_REASONS = [
   'committing',
   'pm_readonly',
   'ignored_path',
+  'outside_range',
 ] as const;
 export type CheckReason = (typeof CHECK_REASONS)[number];
 
@@ -104,6 +105,8 @@ export interface LockView {
   state: LockState;
   /** Task ids waiting for this path, in queue order. */
   queue: TaskId[];
+  /** Locked lines (D-alief-17). Absent = the whole file. */
+  range?: { start: number; end: number };
 }
 
 export interface FileView {

@@ -2,6 +2,7 @@
 import { z } from 'zod';
 import {
   EpochMsSchema,
+  LineRangeSchema,
   LockHolder,
   LockStateSchema,
   LockStateViewSchema,
@@ -33,6 +34,7 @@ export const LockChangedData = z.object({
   taskId: TaskIdSchema.nullable(),
   memberId: MemberIdSchema.nullable(),
   queue: z.array(TaskIdSchema),
+  range: LineRangeSchema.optional(),
 });
 
 export const CoreWsMessageSchema = z.discriminatedUnion('t', [
@@ -50,14 +52,25 @@ export const CoreWsMessageSchema = z.discriminatedUnion('t', [
     'snapshot',
     z.object({
       files: z.array(z.object({ path: PathSchema, version: Version, hash: z.string().nullable(), content: z.string().nullable(), deleted: z.boolean() })),
-      locks: z.array(z.object({ path: PathSchema, taskId: TaskIdSchema, memberId: MemberIdSchema, state: LockStateSchema, queue: z.array(TaskIdSchema) })),
+      locks: z.array(z.object({ path: PathSchema, taskId: TaskIdSchema, memberId: MemberIdSchema, state: LockStateSchema, queue: z.array(TaskIdSchema), range: LineRangeSchema.optional() })),
       cursor: z.number().int().nonnegative(),
     }),
   ),
   msg('state', StateRes),
   msg('file.update', z.object({ path: PathSchema, baseVersion: Version, content: z.string(), hash: z.string(), clientTs: EpochMsSchema })),
   msg('file.delete', z.object({ path: PathSchema, baseVersion: Version, clientTs: EpochMsSchema })),
-  msg('file.ack', z.object({ id: z.string().optional(), path: PathSchema, version: Version, hash: z.string() })),
+  msg(
+    'file.ack',
+    z.object({
+      id: z.string().optional(),
+      path: PathSchema,
+      version: Version,
+      hash: z.string(),
+      /** D-alief-17: the server merged this save with a teammate's edit; `content` is the result to write back. */
+      merged: z.boolean().optional(),
+      content: z.string().optional(),
+    }),
+  ),
   msg(
     'file.changed',
     z.object({

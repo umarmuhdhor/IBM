@@ -1,4 +1,5 @@
 // Event catalog (R3 §5) and the plain-English feed sentences shown in Mission Control.
+import { rangeText } from './line-range.js';
 import { basename } from './paths.js';
 import type { RadarEvent, RadarEventType } from './schemas.js';
 
@@ -99,13 +100,19 @@ function sentence(ev: RadarEvent, names: FeedNames): string | null {
     case 'file.deleted':
       return `${who(ev.payload.by)}'s Bob deletes ${basename(ev.payload.path)}`;
     case 'file.rejected':
+      if (ev.payload.holderMemberId && ev.payload.holderRange) {
+        const r = ev.payload.holderRange;
+        return `${who(ev.payload.by)}'s change to ${basename(ev.payload.path)} is refused, ${rangeText(r)} ${r.start === r.end ? 'is' : 'are'} locked by ${who(ev.payload.holderMemberId)}`;
+      }
       return ev.payload.holderMemberId
         ? `${who(ev.payload.by)}'s change to ${basename(ev.payload.path)} is refused, ${who(ev.payload.holderMemberId)} holds it`
         : `${who(ev.payload.by)}'s change to ${basename(ev.payload.path)} is refused (${ev.payload.reason})`;
     case 'lock.reserved':
       return `${basename(ev.payload.path)} is reserved for ${who(ev.payload.memberId)} (${ev.payload.taskId})`;
     case 'lock.acquired':
-      return `${who(ev.payload.memberId)} now holds ${basename(ev.payload.path)} (${ev.payload.taskId})`;
+      return ev.payload.range
+        ? `${who(ev.payload.memberId)} now holds ${rangeText(ev.payload.range)} of ${basename(ev.payload.path)} (${ev.payload.taskId})`
+        : `${who(ev.payload.memberId)} now holds ${basename(ev.payload.path)} (${ev.payload.taskId})`;
     case 'lock.review':
       return `${basename(ev.payload.path)} is held for review (${ev.payload.taskId})`;
     case 'lock.released':
@@ -117,7 +124,9 @@ function sentence(ev: RadarEvent, names: FeedNames): string | null {
     case 'lock.revoked':
       return `The lock on ${basename(ev.payload.path)} is taken back from ${who(ev.payload.memberId)}`;
     case 'lock.blocked':
-      return `${who(ev.payload.memberId)}'s Bob is blocked on ${basename(ev.payload.path)}, ${who(ev.payload.holderMemberId)} holds it`;
+      return ev.payload.holderRange
+        ? `${who(ev.payload.memberId)}'s Bob is blocked on ${basename(ev.payload.path)}, ${rangeText(ev.payload.holderRange)} ${ev.payload.holderRange.start === ev.payload.holderRange.end ? 'is' : 'are'} locked by ${who(ev.payload.holderMemberId)}`
+        : `${who(ev.payload.memberId)}'s Bob is blocked on ${basename(ev.payload.path)}, ${who(ev.payload.holderMemberId)} holds it`;
     case 'task.created':
       return `${ev.payload.taskId} “${ev.payload.title}” goes to ${who(ev.payload.ownerId)}`;
     case 'task.status':
