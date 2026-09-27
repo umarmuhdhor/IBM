@@ -300,3 +300,30 @@ it.each([
     expect(onOpenChange).toHaveBeenCalledWith(false)
   }
 )
+
+it.each([
+  ['Share a different folder…', 'Share a different folder?', /This replaces my-app/],
+  ['Stop sharing…', 'Stop sharing my-app?', /Everyone is disconnected/]
+])('the %s confirmation is an alert dialog, and Escape elsewhere leaves it open', async (trigger, heading, warning) => {
+  status.folder = '/Users/me/my-app'
+  render(
+    <>
+      <input aria-label="Elsewhere" />
+      <ShareFolderCard
+        connection={owner}
+        folder="/Users/me/my-app"
+        sharedCode={code}
+        onConnectionChange={vi.fn()}
+        onShared={vi.fn()}
+      />
+    </>
+  )
+  fireEvent.click(await screen.findByRole('button', { name: trigger }))
+  const dialog = screen.getByRole('alertdialog', { name: heading })
+  expect(dialog.getAttribute('aria-describedby')).toBe(screen.getByText(warning).id)
+
+  const elsewhere = screen.getByRole('textbox', { name: 'Elsewhere' })
+  elsewhere.focus()
+  fireEvent.keyDown(elsewhere, { key: 'Escape' })
+  expect(screen.getByRole('alertdialog', { name: heading })).toBeTruthy()
+})

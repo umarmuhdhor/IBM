@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { useRadarStore } from '@/store/radar-store'
 import type { RadarConnectionSummary } from '../../../../shared/radar-connection'
 import { DEFAULT_RADAR_SERVER, type RadarJoinCode } from '../../../../shared/radar-join'
 import { SyncConflictsNote } from './SyncConflictsNote'
-import { useEscapeToCancel } from './use-escape-to-cancel'
+import { confirmDialogProps, useEscapeToCancel } from './use-escape-to-cancel'
 import {
   endedNotice,
   ipcErrorText,
@@ -49,6 +49,8 @@ export function ShareFolderCard({
   const [replacing, setReplacing] = useState(false)
   const [stopping, setStopping] = useState(false)
   const cancelButton = useRef<HTMLButtonElement>(null)
+  const confirmSection = useRef<HTMLElement>(null)
+  const confirmId = useId()
   const replaceButton = useRef<HTMLButtonElement>(null)
   const stopButton = useRef<HTMLButtonElement>(null)
   const [refocus, setRefocus] = useState<'replace' | 'stop' | null>(null)
@@ -74,7 +76,7 @@ export function ShareFolderCard({
     setReplacing(false)
     setStopping(false)
   }
-  useEscapeToCancel(owner && (replacing || stopping), cancelConfirm)
+  useEscapeToCancel(confirmSection, owner && (replacing || stopping), cancelConfirm)
   // Keyboard focus follows the confirmation in and back out to the button that opened it.
   useEffect(() => {
     if (replacing || stopping) {
@@ -194,12 +196,13 @@ export function ShareFolderCard({
   if (owner && stopping) {
     return (
       <section
-        aria-label="Stop sharing"
+        ref={confirmSection}
+        {...confirmDialogProps(confirmId)}
         className="space-y-3 rounded-lg border border-border bg-card p-4"
       >
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold">Stop sharing {connection.workspace}?</h3>
-          <p className="text-xs text-destructive">
+          <h3 id={`${confirmId}-title`} className="text-sm font-semibold">Stop sharing {connection.workspace}?</h3>
+          <p id={`${confirmId}-warning`} className="text-xs text-destructive">
             Everyone is disconnected, and tasks, locks and teammates on the server are removed.
             Files on every Mac stay. Afterwards anyone on the team can share their own folder.
           </p>
@@ -231,12 +234,13 @@ export function ShareFolderCard({
   if (owner && replacing) {
     return (
       <section
-        aria-label="Share a different folder"
+        ref={confirmSection}
+        {...confirmDialogProps(confirmId)}
         className="space-y-3 rounded-lg border border-border bg-card p-4"
       >
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold">Share a different folder?</h3>
-          <p className="text-xs text-destructive">
+          <h3 id={`${confirmId}-title`} className="text-sm font-semibold">Share a different folder?</h3>
+          <p id={`${confirmId}-warning`} className="text-xs text-destructive">
             This replaces {connection.workspace} for everyone. Tasks, locks, files and teammates on
             the server are removed, and teammates need a new code. Files on your Mac stay.
           </p>
