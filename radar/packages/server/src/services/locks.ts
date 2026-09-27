@@ -3,6 +3,7 @@
 import {
   COMMIT_CLAIM_TTL_MS,
   createIgnoreMatcherFromText,
+  isPmDocPath,
   rangesOverlap,
   spanOf,
   type BlockVia,
@@ -181,7 +182,8 @@ export function lockChanged(ctx: LockCtx, path: string): void {
  *
  * Decision table (rows 1–12 from R4 §3):
  *  1. ignored path          → allow  'ignored_path'       (no side-effects)
- *  2. member is PM          → block  'pm_readonly'         (no request)
+ *  2. member is PM + doc    → allow  'pm_doc'              (no lock, no task, unless a coder holds it)
+ *  2. member is PM + code   → block  'pm_readonly'         (no request)
  *  3. file free, no queue   → allow  'grabbed'             (lock dipegang, task → dikerjakan)
  *  4. dipesan by own task   → allow  'own'                 (→ dipegang, task → dikerjakan)
  *  5. dipegang by own task  → allow  'own'                 (no state change)
@@ -202,9 +204,22 @@ export function checkWrite(ctx: LockCtx, memberId: string, path: string, via: Bl
   // Row 1: ignored paths are always allowed, no DB work needed.
   if (isIgnoredPath(ctx.db, path)) return { decision: 'allow', reason: 'ignored_path', taskId: null };
 
-  // Row 2: PMs are read-only — block without creating a request.
+  // Row 2: PMs may only write .md / .txt files; code files remain read-only.
   const member = requireMember(ctx.db, memberId);
-  if (member.role === 'pm') return { decision: 'block', reason: 'pm_readonly', holder: null, taskId: null };
+  if (member.role === 'pm') {
+    if (isPmDocPath(path)) {
+      const lock = getLock(ctx.db, path);
+      if (lock !== null) {
+        const lockTask = getTask(ctx.db, lock.task_id);
+        if (commitClaimActive(lockTask, ctx.now)) {
+          return { decision: 'block', reason: 'committing', holder: holderOf(ctx, lock), taskId: null };
+        }
+        return { decision: 'block', reason: 'held_by_other', holder: holderOf(ctx, lock), taskId: null };
+      }
+      return { decision: 'allow', reason: 'pm_doc', taskId: null };
+    }
+    return { decision: 'block', reason: 'pm_readonly', holder: null, taskId: null };
+  }
 
   const lock = getLock(ctx.db, path);
 

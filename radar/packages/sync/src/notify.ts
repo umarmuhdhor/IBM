@@ -16,7 +16,7 @@ export function formatRejection(r: { path: string; reason: RejectReason; holder:
   const saved = r.sidecar ? basename(r.sidecar) : null;
   switch (r.reason) {
     case 'pm_readonly':
-      return `✖ A PM does not write files. Your change is kept in ${saved ?? '(no copy)'}.`;
+      return `✖ A PM can only add documents (.md, .txt), not code. Your change is kept in ${saved ?? '(no copy)'}.`;
     case 'conflict':
       return `✖ Your copy was behind, so the server version is used. Your copy: ${saved ?? '(no copy)'}`;
     case 'too_large':

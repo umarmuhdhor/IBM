@@ -42,6 +42,7 @@ export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 
 export const CHECK_REASONS = [
   'own',
+  'pm_doc',
   'grabbed',
   'held_by_other',
   'reserved_by_other',

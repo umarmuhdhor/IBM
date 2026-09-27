@@ -50,3 +50,6 @@ export const FEED_MAX_ITEMS = 200;
 export const BOB_ACTIVITY_MAX_ITEMS = 100;
 export const BINARY_SNIFF_BYTES = 8_192;
 export const TASK_DIFF_MAX_PATCH_BYTES = 60_000;
+
+/** Extensions a PM may create/edit/delete without a lock or task (case-insensitive). */
+export const PM_DOC_EXTENSIONS = ['.md', '.txt'] as const;
