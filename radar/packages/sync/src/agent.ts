@@ -8,6 +8,7 @@ import {
   HEARTBEAT_INTERVAL_MS,
   SYNC_DEBOUNCE_MS,
   WS_CLOSE_REASON_CLOSED,
+  WS_CLOSE_REASON_REMOVED,
   WS_CLOSE_REASON_ROTATED,
   WS_CLOSE_UNAUTHORIZED,
   WS_PING_FRAME,
@@ -36,7 +37,7 @@ export const WS_CLOSE_REPLACED = 4000;
 export const WS_CLOSE_RESET = 1012;
 
 /** Why the agent stopped for good (D-alief-15); the app turns it into a friendly state. */
-export type StopKind = 'workspace-closed' | 'signed-out' | 'replaced' | 'rejected';
+export type StopKind = 'workspace-closed' | 'signed-out' | 'removed' | 'replaced' | 'rejected';
 
 /** Maps a fatal close to a stop kind and an English message, or null when the agent should reconnect. */
 export function fatalClose(code: number, reason: string): { kind: StopKind; message: string } | null {
@@ -44,6 +45,7 @@ export function fatalClose(code: number, reason: string): { kind: StopKind; mess
   if (code !== WS_CLOSE_UNAUTHORIZED) return null;
   if (reason === WS_CLOSE_REASON_CLOSED) return { kind: 'workspace-closed', message: 'The owner stopped sharing this workspace.' };
   if (reason === WS_CLOSE_REASON_ROTATED) return { kind: 'signed-out', message: 'You joined on another device, so sync stopped here.' };
+  if (reason === WS_CLOSE_REASON_REMOVED) return { kind: 'removed', message: 'The workspace owner removed you, so sync stopped.' };
   return { kind: 'rejected', message: 'The server refused this member token (4401).' };
 }
 /** Retries for an update the server could not verify (hash or path mismatch). */

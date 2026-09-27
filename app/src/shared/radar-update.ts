@@ -7,6 +7,8 @@ export type RadarConnectionFailure =
   | 'connection-lost'
   | 'workspace-closed'
   | 'signed-out'
+  /** D-alief-20: the owner removed this seat; only a new code brings this app back. */
+  | 'removed'
 
 export type RadarWsUpdate =
   | { kind: 'status'; connected: boolean; failure?: RadarConnectionFailure }
