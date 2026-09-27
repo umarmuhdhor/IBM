@@ -59,7 +59,8 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
   }, [connection?.role, connection?.workspace])
   const seatId = connection?.role === 'coder' ? connection.member : connection?.role === 'mc' ? ownerSeat : null
   const pm = state ? Object.values(state.members).find((member) => member.role === 'pm') : undefined
-  const canDecide = connection?.role === 'pm' || (connection?.role === 'mc' && !pm)
+  // D-umar-10: the owner is normally the PM; Mission Control decides when its own seat is the PM, or when there is none.
+  const canDecide = connection?.role === 'pm' || (connection?.role === 'mc' && (!pm || pm.id === seatId))
   const decideNote = pm ? `${pm.name} (PM) approves plans and reviews.` : 'Only the PM or the owner can decide.'
   const [sharedCode, setSharedCode] = useState<RadarJoinCode | null>(null)
   // Why: codes made for a folder this app no longer shares are dead; a new share starts an empty list.

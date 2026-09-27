@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import type { RadarConnectionSummary } from '../../../../shared/radar-connection'
 import { DEFAULT_RADAR_SERVER, type RadarJoinRole } from '../../../../shared/radar-join'
 import { useRadarStore } from '@/store/radar-store'
@@ -20,7 +19,8 @@ type Props = {
 export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
   const [code, setCode] = useState('')
   const [name, setName] = useState('')
-  const [role, setRole] = useState<RadarJoinRole>('coder')
+  // D-umar-10: the room's creator is the PM, so everyone who joins with a code is a coder.
+  const role: RadarJoinRole = 'coder'
   const [owner, setOwner] = useState(false)
   // Why: after the owner stops sharing, a teammate joins the next workspace from the same card.
   const [another, setAnother] = useState(false)
@@ -157,7 +157,7 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
         <p className="text-xs text-muted-foreground">
           {owner
             ? 'Enter the owner code printed by admin init. This app becomes Mission Control and can invite teammates.'
-            : 'Enter the code from your workspace owner, your name and your role. The files sync to your Mac and open in IBM Bob IDE.'}
+            : 'Enter the code from the room owner and your name. The files sync to your Mac and open in IBM Bob IDE.'}
         </p>
       </div>
       <label className="block max-w-xs space-y-1 text-xs">
@@ -188,28 +188,7 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
               maxLength={100}
             />
           </label>
-          <div className="space-y-1 text-xs">
-            <span id="radar-join-role">Your role</span>
-            <ToggleGroup
-              type="single"
-              aria-labelledby="radar-join-role"
-              value={role}
-              onValueChange={(value) => {
-                if (value === 'coder' || value === 'pm') {
-                  setRole(value)
-                }
-              }}
-              variant="outline"
-              size="sm"
-            >
-              <ToggleGroupItem value="coder" className="px-3 text-xs">
-                Coder
-              </ToggleGroupItem>
-              <ToggleGroupItem value="pm" className="px-3 text-xs">
-                PM
-              </ToggleGroupItem>
-            </ToggleGroup>
-          </div>
+          <p className="text-xs text-muted-foreground">You join as a coder. The person who created the room is its PM.</p>
         </>
       )}
       <div className="flex flex-wrap items-center gap-2">

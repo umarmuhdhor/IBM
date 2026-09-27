@@ -162,7 +162,8 @@ export async function shareFolder(
     readProfileName() ??
     saveProfileName(await ownerName(folder)) ??
     'Owner'
-  const role: RadarJoinRole = roleInput === 'pm' ? 'pm' : 'coder'
+  // D-umar-10: whoever creates the room is its PM; a coder owner stays possible only when asked for explicitly.
+  const role: RadarJoinRole = roleInput === 'coder' ? 'coder' : 'pm'
   requireOsEncryption()
   const current = readRadarConnection()
   const server = current?.role === 'mc' ? new URL(current.server).origin : serverOrigin(serverInput)

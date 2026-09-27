@@ -190,4 +190,16 @@ describe('TaskBoardView — plans and starting work (fase 15c)', () => {
     expect(screen.getByRole('region', { name: 'My tasks' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Start in Bob' })).toBeTruthy()
   })
+
+  it('the owner who is the PM approves from Mission Control (D-umar-10)', async () => {
+    const ownerPm = {
+      ...state,
+      members: { ...state.members, C: { ...state.members.C, role: 'pm' } },
+      proposals: { 'P-1': PLAN }
+    } as unknown as RadarState
+    render(<TaskBoardView state={ownerPm} role="mc" seatId="C" />)
+    expect(screen.queryByRole('region', { name: 'My tasks' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Approve and assign' }))
+    await waitFor(() => expect(decide).toHaveBeenCalledWith('P-1', true, ''))
+  })
 })

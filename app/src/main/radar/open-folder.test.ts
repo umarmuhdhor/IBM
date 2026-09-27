@@ -154,6 +154,13 @@ describe('collectFolderFiles', () => {
 })
 
 describe('shareFolder (D-alief-12)', () => {
+  it('makes the room creator its PM when the app asks for no role (D-umar-10)', async () => {
+    write('src/a.ts', 'export const a = 1\n')
+    respondInOrder([201, opened], [200, { inserted: 1, headCommit: null }])
+    await shareFolder(root, 'Alief', undefined, SERVER)
+    expect(JSON.parse(String(vi.mocked(fetch).mock.calls[0]?.[1]?.body))).toMatchObject({ owner: { name: 'Alief', role: 'pm' } })
+  })
+
   it('opens the workspace, uploads the folder, saves Mission Control and syncs the same folder', async () => {
     write('src/a.ts', 'export const a = 1\n')
     respondInOrder([201, opened], [200, { inserted: 1, headCommit: null }])
