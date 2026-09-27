@@ -63,29 +63,29 @@ export function buildSessionReport(db: Db, range: { from?: number | undefined; t
   };
 
   const lines: string[] = [];
-  lines.push('## Laporan sesi');
+  lines.push('## Session report');
   lines.push('');
   lines.push(
     events.length === 0
-      ? 'Belum ada event di rentang ini.'
+      ? 'No events in this range yet.'
       : `${formatClock(first)}–${formatClock(last)} WITA · ${ms(last - first)} · ${events.length} event (#${events[0]!.id}–#${events.at(-1)!.id})`,
   );
   lines.push('');
-  lines.push('| Ukuran | Nilai |', '|---|---|');
+  lines.push('| Measure | Value |', '|---|---|');
   lines.push(`| Task | ${stats.tasks} |`);
-  lines.push(`| Commit | ${stats.commits}${pushFailed.length > 0 ? ` (gagal push: ${pushFailed.length})` : ''} |`);
-  lines.push(`| Blokir | ${stats.blocks} |`);
-  lines.push(`| Keputusan PM | ${stats.decisions} |`);
-  lines.push(`| Median blokir → keputusan | ${ms(stats.medianBlockToDecisionMs)} |`);
-  lines.push(`| Review (ditandai) | ${reviews.length} (${flagged.length}) |`);
-  lines.push(`| p95 sinkron | ${ms(stats.syncP95Ms)} |`);
-  lines.push(`| p95 cek kunci (server) | ${ms(stats.lockCheckP95Ms)} |`);
-  if (hookRtt.length > 0) lines.push(`| p95 cek kunci (RTT hook) | ${ms(percentile(hookRtt, 95))} |`);
+  lines.push(`| Commit | ${stats.commits}${pushFailed.length > 0 ? ` (push failed: ${pushFailed.length})` : ''} |`);
+  lines.push(`| Blocks | ${stats.blocks} |`);
+  lines.push(`| PM decisions | ${stats.decisions} |`);
+  lines.push(`| Median block → decision | ${ms(stats.medianBlockToDecisionMs)} |`);
+  lines.push(`| Reviews (flagged) | ${reviews.length} (${flagged.length}) |`);
+  lines.push(`| p95 sync | ${ms(stats.syncP95Ms)} |`);
+  lines.push(`| p95 lock check (server) | ${ms(stats.lockCheckP95Ms)} |`);
+  if (hookRtt.length > 0) lines.push(`| p95 lock check (hook RTT) | ${ms(percentile(hookRtt, 95))} |`);
 
   if (tasks.length > 0) {
     const byStatus = TASK_STATUSES.map((s) => [s, tasks.filter((t) => t.status === s).length] as const).filter(([, n]) => n > 0);
-    lines.push('', '### Task', '', `Per status: ${byStatus.map(([s, n]) => `${s} ${n}`).join(' · ')}`, '');
-    lines.push('| Task | Judul | Pemilik | Status |', '|---|---|---|---|');
+    lines.push('', '### Task', '', `By status: ${byStatus.map(([s, n]) => `${s} ${n}`).join(' · ')}`, '');
+    lines.push('| Task | Title | Owner | Status |', '|---|---|---|---|');
     for (const t of tasks) lines.push(`| ${t.id} | ${cell(t.title)} | ${t.owner_id} | ${t.status} |`);
   }
   if (commits.length > 0) {
@@ -93,11 +93,11 @@ export function buildSessionReport(db: Db, range: { from?: number | undefined; t
     for (const c of commits) {
       const short = c.payload.sha.slice(0, 7);
       const sha = c.payload.url ? `[${short}](${c.payload.url})` : short;
-      lines.push(`| ${c.payload.taskId} | ${sha}${c.payload.pushed ? '' : ' (lokal)'} | ${c.payload.files.length} |`);
+      lines.push(`| ${c.payload.taskId} | ${sha}${c.payload.pushed ? '' : ' (local)'} | ${c.payload.files.length} |`);
     }
   }
   if (flagged.length > 0) {
-    lines.push('', '### Temuan review', '');
+    lines.push('', '### Review findings', '');
     for (const f of flagged) for (const x of f.payload.flags) lines.push(`- ${f.payload.taskId} · \`${x.path}\`: ${cell(x.issue)}`);
   }
   return { markdown: `${lines.join('\n')}\n`, stats };

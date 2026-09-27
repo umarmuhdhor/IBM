@@ -86,7 +86,7 @@ describe('flow: plan → block → decision → review → approve (fase 05 step
     const tasksB2 = await call(stub, 'GET', '/v1/tasks', { token: t.B });
     expect(tasksB2.json.tasks[0].files).toContainEqual({ path: CHECKOUT, lock: null, queuePos: 1, waitingFor: 'T-1' });
     const briefB = await call(stub, 'GET', `/v1/brief?kind=prompt&since=${cursorB}`, { token: t.B });
-    expect(briefB.json.lines.join('\n')).toContain('Keputusan PM');
+    expect(briefB.json.lines.join('\n')).toContain('PM decision');
 
     // 7. A edits, submits; PM proposes "setujui_beri_tahu"; Mission Control approves: T-1 selesai, the local
     //    commit (GITHUB_COMMIT=false) is recorded, and checkout.ts moves to B (SV-06) with a note in B's brief.
@@ -120,7 +120,7 @@ describe('flow: plan → block → decision → review → approve (fase 05 step
     expect(await lockOf(COUPON)).toBeNull();
     const briefB2 = (await call(stub, 'GET', `/v1/brief?kind=prompt&since=${cursorB2}`, { token: t.B })).json.lines.join('\n') as string;
     expect(briefB2).toContain('calculateTotal() kini menerima kupon.');
-    expect(briefB2).toContain('Giliranmu');
+    expect(briefB2).toContain('Your turn');
 
     // 9. The export holds the whole story in order.
     const exp = ExportRes.parse((await call(stub, 'GET', '/v1/events/export', { token: t.mc })).json);

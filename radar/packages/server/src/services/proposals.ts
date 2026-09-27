@@ -38,13 +38,13 @@ const ACTIVE_TASK: readonly TaskRow['status'][] = ['terbuka', 'dikerjakan', 'rev
 
 function requireCoder(db: Db, memberId: string, what: string): void {
   const m = getMember(db, memberId);
-  if (!m) throw new RadarError(422, 'VALIDATION', `${what}: member ${memberId} tidak ada.`);
-  if (m.role !== 'coder') throw new RadarError(422, 'VALIDATION', `${what}: ${memberId} bukan coder (PM tidak memegang file).`);
+  if (!m) throw new RadarError(422, 'VALIDATION', `${what}: there is no member ${memberId}.`);
+  if (m.role !== 'coder') throw new RadarError(422, 'VALIDATION', `${what}: ${memberId} is not a coder (the PM does not hold files).`);
 }
 
 function normalizePath(raw: string, where: string): string {
   const p = cleanPath(raw);
-  if (p === null) throw new RadarError(422, 'VALIDATION', `${where}: path ${raw} tidak valid (harus relatif di dalam workspace).`);
+  if (p === null) throw new RadarError(422, 'VALIDATION', `${where}: path ${raw} is not valid (it must be relative, inside the workspace).`);
   return p;
 }
 
@@ -61,7 +61,7 @@ function validatePlan(db: Db, payload: PlanPayload): PlanPayload {
   const again = PlanPayload.safeParse({ ...payload, tasks });
   if (!again.success) {
     const i = again.error.issues[0];
-    throw new RadarError(422, 'VALIDATION', `${i?.path.join('.') ?? 'plan'}: ${i?.message ?? 'rencana tidak valid'}`);
+    throw new RadarError(422, 'VALIDATION', `${i?.path.join('.') ?? 'plan'}: ${i?.message ?? 'the plan is not valid'}`);
   }
   return again.data;
 }
@@ -91,8 +91,8 @@ export function createProposal(ctx: LockCtx, pmId: string, req: ProposalCreateRe
   if (req.kind === 'decision') {
     const payload = req.payload;
     const request = getRequest(ctx.db, payload.requestId);
-    if (!request) throw new RadarError(404, 'NOT_FOUND', `Permintaan ${payload.requestId} tidak ada.`);
-    if (request.status !== 'terbuka') throw new RadarError(409, 'CONFLICT', `Permintaan ${request.id} berstatus ${request.status}, bukan terbuka.`);
+    if (!request) throw new RadarError(404, 'NOT_FOUND', `There is no request ${payload.requestId}.`);
+    if (request.status !== 'terbuka') throw new RadarError(409, 'CONFLICT', `Request ${request.id} is ${request.status}, not open.`);
     if (payload.newTask?.ownerId) requireCoder(ctx.db, payload.newTask.ownerId, 'newTask');
     const p = insertProposal(ctx.db, { kind: 'decision', payload: JSON.stringify(payload), reason: req.reason, refId: request.id, createdBy: pmId, now: ctx.now });
     setRequestStatus(ctx.db, request.id, 'diusulkan', { proposalId: p.id });
@@ -108,10 +108,10 @@ export function createProposal(ctx: LockCtx, pmId: string, req: ProposalCreateRe
 
   const payload = req.payload;
   const task = taskOr404(ctx.db, payload.taskId);
-  if (task.status !== 'review') throw new RadarError(409, 'CONFLICT', `Task ${task.id} berstatus ${task.status}, belum di-submit untuk review.`);
-  if (commitClaimActive(task, ctx.now)) throw new RadarError(409, 'CONFLICT', `Task ${task.id} sedang di-commit; coba lagi sebentar.`);
+  if (task.status !== 'review') throw new RadarError(409, 'CONFLICT', `Task ${task.id} is ${task.status}; it has not been submitted for review.`);
+  if (commitClaimActive(task, ctx.now)) throw new RadarError(409, 'CONFLICT', `Task ${task.id} is being committed; try again in a moment.`);
   for (const n of payload.notify) {
-    if (!getMember(ctx.db, n.memberId)) throw new RadarError(422, 'VALIDATION', `notify: member ${n.memberId} tidak ada.`);
+    if (!getMember(ctx.db, n.memberId)) throw new RadarError(422, 'VALIDATION', `notify: there is no member ${n.memberId}.`);
   }
   const p = insertProposal(ctx.db, { kind: 'review', payload: JSON.stringify(payload), reason: req.reason, refId: task.id, createdBy: pmId, now: ctx.now });
   // The newest review of a task replaces older ones that are still waiting.
@@ -149,7 +149,7 @@ function storedPayload<S extends z.ZodType>(p: ProposalRow, schema: S): z.infer<
   const r = schema.safeParse(raw);
   if (!r.success) {
     console.error(`radar: proposal ${p.id} (${p.kind}) payload does not match its schema; nothing applied`);
-    throw new RadarError(500, 'INTERNAL', `Isi usulan ${p.id} rusak; tidak ada yang diterapkan.`);
+    throw new RadarError(500, 'INTERNAL', `Proposal ${p.id} is corrupt; nothing was applied.`);
   }
   return r.data;
 }
@@ -200,25 +200,25 @@ function holderLabel(db: Db, path: string): string {
 
 function applyDecision(ctx: LockCtx, request: RequestRow, payload: DecisionPayload, proposalId: string, auto: boolean): Record<string, unknown> {
   if (request.status !== 'terbuka' && request.status !== 'diusulkan') {
-    throw new RadarError(409, 'CONFLICT', `Permintaan ${request.id} berstatus ${request.status}.`);
+    throw new RadarError(409, 'CONFLICT', `Request ${request.id} is ${request.status}.`);
   }
   const reqTask = requireTask(ctx.db, request.requester_task);
-  if (!ACTIVE_TASK.includes(reqTask.status)) throw new RadarError(409, 'CONFLICT', `Task peminta ${reqTask.id} sudah ${reqTask.status}.`);
+  if (!ACTIVE_TASK.includes(reqTask.status)) throw new RadarError(409, 'CONFLICT', `The requesting task ${reqTask.id} is already ${reqTask.status}.`);
   const path = request.path;
   const holder = holderLabel(ctx.db, path);
   let message: string;
   let applied: Record<string, unknown>;
   if (payload.option === 'antre') {
     const pos = enqueue(ctx, path, reqTask, 'decision');
-    message = pos === 0 ? `${path} sudah bebas dan kini dipesan untuk ${reqTask.id}.` : `Kamu antre ${path} di posisi ${pos}, setelah ${holder}.`;
+    message = pos === 0 ? `${path} is free and now reserved for ${reqTask.id}.` : `You are queued for ${path} at position ${pos}, after ${holder}.`;
     applied = { option: 'antre', path, taskId: reqTask.id, queuePos: pos };
   } else if (payload.option === 'pindahkan') {
     transferNow(ctx, path, reqTask);
-    message = `${path} kini milikmu (${reqTask.id}).`;
+    message = `${path} is now yours (${reqTask.id}).`;
     applied = { option: 'pindahkan', path, taskId: reqTask.id };
   } else {
     const spec = payload.newTask;
-    if (!spec) throw new RadarError(500, 'INTERNAL', `Usulan ${proposalId} pecah tanpa newTask; tidak ada yang diterapkan.`);
+    if (!spec) throw new RadarError(500, 'INTERNAL', `Split proposal ${proposalId} has no newTask; nothing was applied.`);
     const child = insertTask(ctx.db, {
       title: spec.title,
       description: spec.description,
@@ -235,7 +235,7 @@ function applyDecision(ctx: LockCtx, request: RequestRow, payload: DecisionPaylo
       payload: { taskId: child.id, title: child.title, description: child.description, ownerId: child.owner_id, status: 'terbuka', files: [], queuedFiles: [path], adhoc: false, parentTaskId: reqTask.id },
     });
     const pos = enqueue(ctx, path, child, 'decision');
-    message = `Bagian ${path} dipindah ke task baru ${child.id}, mulai setelah ${holder}.`;
+    message = `Your part of ${path} moved to the new task ${child.id}, starting after ${holder}.`;
     applied = { option: 'pecah', path, taskId: child.id, queuePos: pos };
   }
   setRequestStatus(ctx.db, request.id, 'diputuskan', { outcome: payload.option, decidedAt: ctx.now });
@@ -249,20 +249,20 @@ function rejectRequest(ctx: LockCtx, request: RequestRow, proposalId: string): v
   setRequestStatus(ctx.db, request.id, 'ditolak', { decidedAt: ctx.now });
   appendEvent(ctx.db, ctx.uow, { ts: ctx.now, actor: 'mc', type: 'request.decided', payload: { requestId: request.id, outcome: 'ditolak', proposalId, auto: false } });
   insertMetric(ctx.db, { ts: ctx.now, name: 'block_to_decision_ms', value: ctx.now - request.created_at, tags: { requestId: request.id, outcome: 'ditolak' } });
-  addNotification(ctx, { memberId: request.requester_member, kind: 'decision', message: `Permintaan ${request.path} ditolak PM.`, ref: request.id });
+  addNotification(ctx, { memberId: request.requester_member, kind: 'decision', message: `The PM declined your request for ${request.path}.`, ref: request.id });
 }
 
 // ---- decide (R3 §2.14, mc only) --------------------------------------------------------------------------------
 
 function pendingOr409(db: Db, id: string): ProposalRow {
   const p = getProposal(db, id);
-  if (!p) throw new RadarError(404, 'NOT_FOUND', `Usulan ${id} tidak ada.`);
-  if (p.status !== 'menunggu') throw new RadarError(409, 'CONFLICT', `Usulan ${id} berstatus ${p.status}, bukan menunggu.`);
+  if (!p) throw new RadarError(404, 'NOT_FOUND', `There is no proposal ${id}.`);
+  if (p.status !== 'menunggu') throw new RadarError(409, 'CONFLICT', `Proposal ${id} is ${p.status}, not waiting.`);
   return p;
 }
 
 function decideNow(ctx: LockCtx, p: ProposalRow, status: 'disetujui' | 'ditolak', note: string | null): void {
-  if (!decideProposal(ctx.db, p.id, status, 'mc', ctx.now, note)) throw new RadarError(409, 'CONFLICT', `Usulan ${p.id} sudah diputuskan.`);
+  if (!decideProposal(ctx.db, p.id, status, 'mc', ctx.now, note)) throw new RadarError(409, 'CONFLICT', `Proposal ${p.id} is already decided.`);
   proposalDecided(ctx, p, status, 'mc', note);
 }
 
@@ -288,13 +288,13 @@ export function decideStart(ctx: LockCtx, id: string, req: DecisionReq): Decisio
   }
   if (p.kind === 'decision') {
     const request = p.ref_id ? getRequest(ctx.db, p.ref_id) : null;
-    if (!request) throw new RadarError(404, 'NOT_FOUND', `Permintaan ${p.ref_id ?? '?'} tidak ada.`);
+    if (!request) throw new RadarError(404, 'NOT_FOUND', `There is no request ${p.ref_id ?? '?'}.`);
     decideNow(ctx, p, 'disetujui', note);
     return { proposalId: p.id, status: 'disetujui', applied: applyDecision(ctx, request, storedPayload(p, DecisionPayload), p.id, false) };
   }
   const review = storedPayload(p, ReviewPayload);
   const task = taskOr404(ctx.db, review.taskId);
-  if (task.status !== 'review') throw new RadarError(409, 'CONFLICT', `Task ${task.id} berstatus ${task.status}, bukan review.`);
+  if (task.status !== 'review') throw new RadarError(409, 'CONFLICT', `Task ${task.id} is ${task.status}, not in review.`);
   if (review.verdict === 'kembalikan') {
     decideNow(ctx, p, 'disetujui', note);
     applyReviewRecord(ctx, p, task, review, null);
@@ -339,10 +339,10 @@ export async function decideProposalFlow(deps: WorkspaceDeps, id: string, req: D
       appendEvent(ctx.db, ctx.uow, { ts: ctx.now, actor: 'server', type: 'commit.push_failed', payload: { taskId: claim.taskId, sha: null, error: code } });
     });
     // The raw error stays in the server log and the event; the client gets a fixed message.
-    throw new RadarError(409, 'CONFLICT', `Commit ${claim.taskId} gagal. Task tetap review; coba lagi.`);
+    throw new RadarError(409, 'CONFLICT', `Commit of ${claim.taskId} failed. The task stays in review; try again.`);
   }
   const done = deps.transact((uow) => finishCommit(ctxOf(deps, uow), claim, result));
-  if (!done) throw new RadarError(409, 'CONFLICT', `Keputusan ${claim.proposalId} berubah selama commit berjalan; tidak ada yang diterapkan.`);
+  if (!done) throw new RadarError(409, 'CONFLICT', `Decision ${claim.proposalId} changed while the commit ran; nothing was applied.`);
   return done;
 }
 
@@ -358,7 +358,7 @@ export interface CommitClaim {
 /** R4 §6.3 Tx1: one active commit claim per workspace; the snapshot is taken from each touch's last version. */
 function claimCommit(ctx: LockCtx, p: ProposalRow, task: TaskRow, review: ReviewPayload, note: string | null): CommitClaim {
   const busy = tasksWithCommitClaim(ctx.db).find((t) => commitClaimActive(t, ctx.now));
-  if (busy) throw new RadarError(409, 'CONFLICT', `Commit lain sedang berjalan (${busy.id}); coba lagi sebentar.`);
+  if (busy) throw new RadarError(409, 'CONFLICT', `Another commit is running (${busy.id}); try again in a moment.`);
   setCommitClaim(ctx.db, task.id, ctx.now);
   const owner = getMember(ctx.db, task.owner_id);
   const held = new Set(locksOfTask(ctx.db, task.id).map((l) => l.path));
@@ -422,7 +422,7 @@ export function finishCommit(ctx: LockCtx, claim: CommitClaim, result: CommitRes
     type: 'commit.created',
     payload: { taskId: task.id, sha: result.sha, author: task.owner_id, files, pushed: result.pushed, ...(result.url ? { url: result.url } : {}) },
   });
-  addNotification(ctx, { memberId: task.owner_id, kind: 'review', message: `Task ${task.id} disetujui dan di-commit (${result.sha.slice(0, 7)}).`, ref: task.id });
+  addNotification(ctx, { memberId: task.owner_id, kind: 'review', message: `Task ${task.id} was approved and committed (${result.sha.slice(0, 7)}).`, ref: task.id });
   if (claim.review.verdict === 'setujui_beri_tahu') {
     for (const n of claim.review.notify) sendNote(ctx, { memberId: n.memberId, kind: 'review', message: n.message, ref: task.id }, 'mc');
   }

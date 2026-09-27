@@ -14,7 +14,7 @@ const HISTORY_MAX_PATCH_BYTES = 30 * 1024;
 export function fileHistory(db: Db, path: string, limit: number): FilesHistoryRes {
   // One extra row: the oldest shown version still needs its predecessor for the patch.
   const rows = db.all<FileVersionRow>('SELECT * FROM file_version WHERE path = ? ORDER BY version DESC LIMIT ?', path, limit + 1);
-  if (rows.length === 0) throw new RadarError(404, 'NOT_FOUND', `File ${path} tidak ada.`);
+  if (rows.length === 0) throw new RadarError(404, 'NOT_FOUND', `There is no file ${path}.`);
   const versions = rows.slice(0, limit).map((v, i) => {
     const prev = rows[i + 1];
     const before = prev && !prev.deleted ? (prev.content ?? '') : '';

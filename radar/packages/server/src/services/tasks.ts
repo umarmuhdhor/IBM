@@ -17,7 +17,7 @@ const OPEN: readonly TaskStatus[] = ['terbuka', 'dikerjakan', 'review'];
 
 export function taskOr404(db: Db, id: string): TaskRow {
   const task = getTask(db, id);
-  if (!task) throw new RadarError(404, 'NOT_FOUND', `Task ${id} tidak ada.`);
+  if (!task) throw new RadarError(404, 'NOT_FOUND', `There is no task ${id}.`);
   return task;
 }
 
@@ -55,9 +55,9 @@ export function listTaskItems(db: Db, owner: string, status: 'open' | 'all'): Ta
 /** `POST /v1/tasks/:id/activate`: only the owner, only a `terbuka`/`dikerjakan` task. */
 export function activateTask(db: Db, memberId: string, taskId: string): string {
   const task = taskOr404(db, taskId);
-  if (task.owner_id !== memberId) throw new RadarError(403, 'FORBIDDEN', `Task ${task.id} bukan milikmu.`);
+  if (task.owner_id !== memberId) throw new RadarError(403, 'FORBIDDEN', `Task ${task.id} is not yours.`);
   if (task.status !== 'terbuka' && task.status !== 'dikerjakan') {
-    throw new RadarError(409, 'CONFLICT', `Task ${task.id} berstatus ${task.status}; hanya task terbuka/dikerjakan yang bisa diaktifkan.`);
+    throw new RadarError(409, 'CONFLICT', `Task ${task.id} is ${task.status}; only an open or in-progress task can be made active.`);
   }
   setActiveTask(db, memberId, task.id);
   return task.id;
@@ -69,12 +69,12 @@ export function activateTask(db: Db, memberId: string, taskId: string): string {
  */
 export function submitTask(ctx: LockCtx, memberId: string, taskId: string, summary: string): { files: string[] } {
   const task = taskOr404(ctx.db, taskId);
-  if (task.owner_id !== memberId) throw new RadarError(403, 'FORBIDDEN', `Task ${task.id} bukan milikmu.`);
+  if (task.owner_id !== memberId) throw new RadarError(403, 'FORBIDDEN', `Task ${task.id} is not yours.`);
   if (task.status !== 'dikerjakan' && task.status !== 'terbuka') {
-    throw new RadarError(409, 'CONFLICT', `Task ${task.id} berstatus ${task.status}; hanya task yang sedang dikerjakan yang bisa di-submit.`);
+    throw new RadarError(409, 'CONFLICT', `Task ${task.id} is ${task.status}; only an in-progress task can be submitted.`);
   }
   const files = touchesOf(ctx.db, task.id).map((t) => t.path);
-  if (files.length === 0) throw new RadarError(409, 'CONFLICT', `Task ${task.id} belum mengubah file apa pun.`);
+  if (files.length === 0) throw new RadarError(409, 'CONFLICT', `Task ${task.id} has not changed any file yet.`);
   for (const path of setTaskLocksState(ctx.db, task.id, 'review', ctx.now)) {
     appendEvent(ctx.db, ctx.uow, { ts: ctx.now, actor: memberId, type: 'lock.review', payload: { path, taskId: task.id } });
     lockChanged(ctx, path);
@@ -102,7 +102,7 @@ export function closeTask(ctx: LockCtx, task: TaskRow, to: 'selesai' | 'batal', 
 export function cancelTask(ctx: LockCtx, taskId: string): void {
   const task = taskOr404(ctx.db, taskId);
   if (task.status !== 'terbuka' && task.status !== 'draf' && task.status !== 'dikerjakan') {
-    throw new RadarError(409, 'CONFLICT', `Task ${task.id} berstatus ${task.status} dan tidak bisa dibatalkan.`);
+    throw new RadarError(409, 'CONFLICT', `Task ${task.id} is ${task.status} and cannot be cancelled.`);
   }
   closeTask(ctx, task, 'batal', 'mc');
 }

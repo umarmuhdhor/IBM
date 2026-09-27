@@ -18,8 +18,8 @@ import { holderOf, requireMember, resolveActiveTask, type LockCtx } from './lock
  */
 function suggestionFor(db: Db, memberId: string, holderTask: string | null, requestId: string | null): string {
   const parts: string[] = [];
-  if (holderTask) parts.push(`File ini milik ${holderTask}.`);
-  if (requestId) parts.push(`Permintaanmu ${requestId} sudah masuk antrean PM.`);
+  if (holderTask) parts.push(`This file belongs to ${holderTask}.`);
+  if (requestId) parts.push(`Your request ${requestId} is in the PM's queue.`);
   const active = getMember(db, memberId)?.active_task_id ?? null;
   const writable = active
     ? locksOfTask(db, active)
@@ -27,9 +27,9 @@ function suggestionFor(db: Db, memberId: string, holderTask: string | null, requ
         .map((l) => l.path)
         .sort((a, b) => Number(getTouch(db, active, a) !== null) - Number(getTouch(db, active, b) !== null) || a.localeCompare(b))
     : [];
-  if (active && writable.length > 0) parts.push(`Lanjutkan file lain di task ${active}: ${writable.slice(0, 3).join(', ')}.`);
-  else if (active) parts.push(`Task ${active} tidak punya file lain yang bisa ditulis; tunggu keputusan PM.`);
-  else parts.push('Tunggu keputusan PM atau panggil radar my_tasks.');
+  if (active && writable.length > 0) parts.push(`Continue with other files of ${active}: ${writable.slice(0, 3).join(', ')}.`);
+  else if (active) parts.push(`Task ${active} has no other file you can write; wait for the PM's decision.`);
+  else parts.push('Wait for the PM\'s decision or call radar my_tasks.');
   return parts.join(' ');
 }
 
@@ -62,7 +62,7 @@ export function requestFile(ctx: LockCtx, memberId: string, path: string, reason
   const lock = getLock(ctx.db, path);
   if (!lock) return { status: 200, body: { requestId: null, status: 'bebas', message: 'File bebas, langsung edit saja.' } };
   if (lock.member_id === memberId) {
-    return { status: 200, body: { requestId: null, status: 'bebas', message: `File ini sudah dikunci untuk task kamu (${lock.task_id}).` } };
+    return { status: 200, body: { requestId: null, status: 'bebas', message: `This file is already locked for your task (${lock.task_id}).` } };
   }
   const reqTask = resolveActiveTask(ctx, memberId);
   const { request, created } = createRequest(ctx.db, {
