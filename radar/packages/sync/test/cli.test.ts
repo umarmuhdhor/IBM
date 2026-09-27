@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { loadLocalConfig } from '@radar/common/node';
 import { encodeInvite } from '@radar/common';
 import { EventEmitter } from 'node:events';
-import { resolveJoin, wireJsonStatus, writeJoinFiles } from '../src/cli.js';
+import { kitStatusLine, resolveJoin, wireJsonStatus, writeJoinFiles } from '../src/cli.js';
 import { findKitDir, installKit } from '../src/kit.js';
 import { cleanupDirs, read, tempDir } from './helpers.js';
 
@@ -168,5 +168,20 @@ describe('--json-status lines', () => {
       expect.objectContaining({ type: 'rejected', path: 'notes.md', reason: 'pm_readonly', message: expect.stringContaining('A PM does not write files') }),
       expect.objectContaining({ type: 'stopped', reason: 'workspace-closed', message: 'The owner stopped sharing this workspace.' }),
     ]);
+  });
+});
+
+describe('kit status line (fase 12k bug 4)', () => {
+  it('tells the app the kit was refused, which files are in the way, and what --force does', () => {
+    const line = JSON.parse(kitStatusLine({ status: 'refused', foreign: ['.bob/custom_modes.yaml', '.bob/notes.md'] }, 'coder'));
+    expect(line).toMatchObject({ type: 'kit', status: 'refused', role: 'coder', foreign: ['.bob/custom_modes.yaml', '.bob/notes.md'] });
+    expect(line.message).toContain('.bob/custom_modes.yaml');
+    expect(line.message).toMatch(/backup/i);
+    expect(line.message).toContain('.bob.bak-');
+  });
+
+  it('reports an installed kit and a missing kit', () => {
+    expect(JSON.parse(kitStatusLine({ status: 'installed', files: 7 }, 'pm'))).toMatchObject({ type: 'kit', status: 'installed', role: 'pm' });
+    expect(JSON.parse(kitStatusLine({ status: 'missing-kit', kitDir: null }, 'coder'))).toMatchObject({ type: 'kit', status: 'missing-kit', message: expect.stringContaining('Bob kit') });
   });
 });
