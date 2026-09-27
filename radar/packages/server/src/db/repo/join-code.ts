@@ -8,23 +8,31 @@ export function insertJoinCode(
   c: { hash: string; memberId: string | null; owner?: boolean; now: number; expiresAt: number },
 ): void {
   db.run(
-    'INSERT INTO join_code (hash, member_id, owner, created_at, expires_at) VALUES (?, ?, ?, ?, ?)',
+    'INSERT INTO join_code (hash, member_id, owner, open, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?)',
     c.hash,
     c.memberId,
     c.owner ? 1 : 0,
+    !c.owner && c.memberId === null ? 1 : 0,
     c.now,
     c.expiresAt,
   );
 }
 
-/** A live code (`memberId` null while it is still open), or null when the code is unknown or expired. */
-export function findJoinCode(db: Db, hash: string, now: number): { memberId: string | null; owner: boolean } | null {
-  const row = db.one<{ member_id: string | null; owner: number }>(
-    'SELECT member_id, owner FROM join_code WHERE hash = ? AND expires_at > ?',
+/**
+ * A live code (`memberId` null while it is still open), or null when the code is unknown or expired.
+ * `open` stays true after the first redeem binds it (D-alief-13), so only that member may reuse it.
+ */
+export function findJoinCode(
+  db: Db,
+  hash: string,
+  now: number,
+): { memberId: string | null; owner: boolean; open: boolean } | null {
+  const row = db.one<{ member_id: string | null; owner: number; open: number }>(
+    'SELECT member_id, owner, open FROM join_code WHERE hash = ? AND expires_at > ?',
     hash,
     now,
   );
-  return row ? { memberId: row.member_id, owner: row.owner === 1 } : null;
+  return row ? { memberId: row.member_id, owner: row.owner === 1, open: row.open === 1 } : null;
 }
 
 /** Binds an open code to the member it created; later redeems sign that member in again. */

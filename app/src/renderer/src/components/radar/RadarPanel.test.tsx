@@ -113,9 +113,12 @@ describe('RadarPanel without a connection', () => {
           state: 'stopped',
           folder: null,
           files: null,
-          message: null
+          message: null,
+          conflicts: [],
+          stopReason: null
         })),
-        onSyncStatus: vi.fn(() => stopListening)
+        onSyncStatus: vi.fn(() => stopListening),
+        getProfileName: vi.fn(async () => null)
       }
     })
     render(<Harness initial="team" joined={false} />)
@@ -138,6 +141,64 @@ describe('Live Collab connection labels', () => {
     expect(screen.getByLabelText('Live Collab status').textContent).toContain('offline')
     expect(screen.queryByText('1 online')).toBeNull()
     expect(screen.queryByRole('button', { name: "Watch Budi's Bob" })).toBeNull()
-    expect(screen.getByRole('button', { name: 'Open settings' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Open Multiplayer' })).toBeTruthy()
+  })
+})
+
+describe('Multiplayer and Settings tabs', () => {
+  it('Multiplayer is its own tab with its own title, next to Settings', () => {
+    vi.stubGlobal('api', {
+      radar: {
+        getSyncStatus: vi.fn(async () => ({
+          state: 'stopped',
+          folder: null,
+          files: null,
+          message: null,
+          conflicts: [],
+          stopReason: null
+        })),
+        onSyncStatus: vi.fn(() => () => undefined),
+        getProfileName: vi.fn(async () => null),
+        runChecks: vi.fn(async () => ({ bobVersion: null, bobSettings: null })),
+        getSharePrompts: vi.fn(async () => false)
+      }
+    })
+    render(<Harness initial="multiplayer" />)
+    expect(screen.getByRole('heading', { level: 2 }).textContent).toBe('Multiplayer')
+    expect(screen.getByRole('form', { name: 'Join with a code' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }))
+    expect(screen.getByRole('heading', { level: 2 }).textContent).toBe('Settings')
+    expect(screen.queryByRole('form', { name: 'Join with a code' })).toBeNull()
+    vi.unstubAllGlobals()
+  })
+})
+
+describe('Invite teammates after a folder switch', () => {
+  it('forgets codes made for the workspace this app no longer shares', async () => {
+    vi.stubGlobal('api', {
+      radar: {
+        getSyncStatus: vi.fn(async () => ({
+          state: 'stopped',
+          folder: null,
+          files: null,
+          message: null,
+          conflicts: [],
+          stopReason: null
+        })),
+        onSyncStatus: vi.fn(() => () => undefined),
+        getProfileName: vi.fn(async () => null),
+        createJoinCode: vi.fn(async () => ({ member: null, code: 'WMAW-K7TN', expiresAt: 1 })),
+        copyText: vi.fn(async () => undefined)
+      }
+    })
+    const owner = { ...connection, member: 'mc', role: 'mc' } as const
+    const props = { tab: 'multiplayer', onConnectionChange: vi.fn(), onTabChange: vi.fn() } as const
+    const { rerender } = render(<RadarPanel connection={owner} {...props} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Make code' }))
+    expect(await screen.findByText('WMAW-K7TN')).toBeTruthy()
+    rerender(<RadarPanel connection={{ ...owner, workspace: 'gamma' }} {...props} />)
+    expect(screen.queryByText('WMAW-K7TN')).toBeNull()
+    expect(screen.queryByText(/Copied WMAW-K7TN/)).toBeNull()
+    vi.unstubAllGlobals()
   })
 })

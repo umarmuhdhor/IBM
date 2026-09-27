@@ -1,26 +1,36 @@
 // @vitest-environment happy-dom
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import type { RadarState } from '@radar/ui'
 import type { RadarSyncStatus } from '../../../../shared/radar-join'
+import { useRadarStore } from '@/store/radar-store'
 import { ShareFolderCard } from './ShareFolderCard'
 
 const shareFolder = vi.fn()
 const stopSharing = vi.fn()
-const writeText = vi.fn(async () => undefined)
-const status: RadarSyncStatus = { state: 'syncing', folder: null, files: 3, message: null }
+const copyText = vi.fn(async (_text: string) => undefined)
+const status: RadarSyncStatus = {
+  state: 'syncing',
+  folder: null,
+  files: 3,
+  message: null,
+  conflicts: [],
+  stopReason: null
+}
 
 beforeEach(() => {
   vi.stubGlobal('api', {
     radar: {
       shareFolder,
       stopSharing,
+      clearConnection: vi.fn(async () => undefined),
+      copyText,
       getSyncStatus: vi.fn(async () => status),
       onSyncStatus: vi.fn(() => () => undefined),
       openInBob: vi.fn(),
       showFolder: vi.fn()
     }
   })
-  Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
 })
 
 afterEach(() => {
@@ -28,6 +38,7 @@ afterEach(() => {
   vi.unstubAllGlobals()
   vi.clearAllMocks()
   status.folder = null
+  useRadarStore.setState({ connectionFailure: null })
 })
 
 const owner = {
@@ -62,7 +73,7 @@ it('shares the folder open in the app with one click and copies the code', async
   await waitFor(() => expect(onConnectionChange).toHaveBeenCalledWith(owner))
   expect(shareFolder).toHaveBeenCalledWith('/Users/me/my-app', expect.any(String))
   expect(onShared).toHaveBeenCalledWith(code)
-  await waitFor(() => expect(writeText).toHaveBeenCalledWith('K7QM-3XPA'))
+  await waitFor(() => expect(copyText).toHaveBeenCalledWith('K7QM-3XPA'))
 })
 
 it('opens the folder picker when no folder is open', async () => {
@@ -85,7 +96,7 @@ it('opens the folder picker when no folder is open', async () => {
 it("shows the server's sentence when the server already has another owner", async () => {
   shareFolder.mockRejectedValue(
     new Error(
-      "Error invoking remote method 'radar:share-folder': Error: This server already has the workspace toko-demo. Ask its owner for a join code, or use your own server to share a folder."
+      "Error invoking remote method 'radar:share-folder': Error: Andi is sharing toko-demo. Ask them to stop sharing first, or ask them for a join code."
     )
   )
   render(
@@ -100,7 +111,7 @@ it("shows the server's sentence when the server already has another owner", asyn
   fireEvent.click(screen.getByRole('button', { name: 'Share app' }))
   expect(
     await screen.findByText(
-      'This server already has the workspace toko-demo. Ask its owner for a join code, or use your own server to share a folder.'
+      'Andi is sharing toko-demo. Ask them to stop sharing first, or ask them for a join code.'
     )
   ).toBeTruthy()
 })
@@ -119,7 +130,7 @@ it('shows the shared folder with its code, and asks before replacing the workspa
   expect(await screen.findByText('my-app is shared')).toBeTruthy()
   expect(screen.getByLabelText('Join code').textContent).toBe('K7QM-3XPA')
   fireEvent.click(screen.getByRole('button', { name: 'Copy code' }))
-  await waitFor(() => expect(writeText).toHaveBeenCalledWith('K7QM-3XPA'))
+  await waitFor(() => expect(copyText).toHaveBeenCalledWith('K7QM-3XPA'))
 
   fireEvent.click(screen.getByRole('button', { name: 'Share a different folder…' }))
   expect(screen.getByText(/This replaces my-app for everyone/)).toBeTruthy()
@@ -148,4 +159,90 @@ it('stops sharing only after the owner confirms, then disconnects', async () => 
   fireEvent.click(screen.getByRole('button', { name: 'Stop sharing' }))
   await waitFor(() => expect(onConnectionChange).toHaveBeenCalledWith(null))
   expect(stopSharing).toHaveBeenCalledTimes(1)
+})
+
+it('tells the old owner that another device took over, and lets them start over (D-alief-15)', async () => {
+  useRadarStore.setState({ connectionFailure: 'signed-out' })
+  const onConnectionChange = vi.fn()
+  render(
+    <ShareFolderCard
+      connection={owner}
+      folder={null}
+      sharedCode={code}
+      onConnectionChange={onConnectionChange}
+      onShared={vi.fn()}
+    />
+  )
+  expect(await screen.findByText(/Another device took over as owner/)).toBeTruthy()
+  expect(screen.queryByRole('button', { name: /Stop sharing/ })).toBeNull()
+  expect(screen.queryByLabelText('Join code')).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: 'Forget this workspace' }))
+  await waitFor(() => expect(onConnectionChange).toHaveBeenCalledWith(null))
+})
+
+it('drops the "Sharing stopped" note once this app joins another workspace', async () => {
+  stopSharing.mockResolvedValue(undefined)
+  const props = { folder: null, sharedCode: null, onConnectionChange: vi.fn(), onShared: vi.fn() }
+  const view = render(<ShareFolderCard connection={owner} {...props} />)
+  fireEvent.click(await screen.findByRole('button', { name: 'Stop sharing…' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Stop sharing' }))
+  view.rerender(<ShareFolderCard connection={null} {...props} />)
+  expect(await screen.findByText(/Sharing stopped/)).toBeTruthy()
+  view.rerender(
+    <ShareFolderCard
+      connection={{ server: owner.server, workspace: 'next', member: 'B', role: 'coder' }}
+      {...props}
+    />
+  )
+  expect(screen.queryByText(/Sharing stopped/)).toBeNull()
+})
+
+it("a teammate sees who is sharing instead of a Share button that always fails", async () => {
+  const state = {
+    workspace: { id: 'w', name: 'my-app', headCommit: null, repoUrl: null },
+    members: {
+      A: { id: 'A', name: 'Alief', role: 'coder', color: null, online: true, stale: false, activeTaskId: null, blocked: false, writingUntil: 0 }
+    },
+    tasks: {}, locks: {}, files: {}, requests: {}, proposals: {}, feed: [], bobActivity: {}, cursor: 0
+  } satisfies RadarState
+  useRadarStore.setState({ state })
+  render(
+    <ShareFolderCard
+      connection={{ server: owner.server, workspace: 'my-app', member: 'B', role: 'coder' }}
+      folder="/Users/me/other"
+      sharedCode={null}
+      onConnectionChange={vi.fn()}
+      onShared={vi.fn()}
+    />
+  )
+  expect(
+    await screen.findByText('Alief is sharing my-app. Ask them to stop sharing first, then you can share your own folder.')
+  ).toBeTruthy()
+  expect(screen.queryByRole('button', { name: /Share/ })).toBeNull()
+  useRadarStore.setState({ state: null })
+})
+
+it('after a restart the owner is told where to make a new join code', async () => {
+  status.folder = '/Users/me/my-app'
+  render(
+    <ShareFolderCard
+      connection={owner}
+      folder="/Users/me/my-app"
+      sharedCode={null}
+      onConnectionChange={vi.fn()}
+      onShared={vi.fn()}
+    />
+  )
+  expect(await screen.findByText(/click Make code under Invite teammates/)).toBeTruthy()
+})
+
+it('drops the "Copied" note when another device takes over as owner', async () => {
+  status.folder = '/Users/me/my-app'
+  const props = { folder: null, sharedCode: code, onConnectionChange: vi.fn(), onShared: vi.fn() }
+  render(<ShareFolderCard connection={owner} {...props} />)
+  fireEvent.click(await screen.findByRole('button', { name: 'Copy code' }))
+  expect(await screen.findByText(/Copied K7QM-3XPA/)).toBeTruthy()
+  act(() => useRadarStore.setState({ connectionFailure: 'signed-out' }))
+  expect(await screen.findByText(/Another device took over as owner/)).toBeTruthy()
+  expect(screen.queryByText(/Copied K7QM-3XPA/)).toBeNull()
 })

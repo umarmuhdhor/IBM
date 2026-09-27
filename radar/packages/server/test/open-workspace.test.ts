@@ -88,7 +88,7 @@ describe('open a folder as the workspace from the app (D-alief-12)', () => {
       headers: { 'cf-connecting-ip': '198.51.100.7' },
     });
     expect(stranger.status).toBe(409);
-    expect(stranger.json.error.message).toMatch(/one/);
+    expect(stranger.json.error.message).toBe('Alief is sharing one. Ask them to stop sharing first, or ask them for a join code.');
     const asMember = await call(stub, 'POST', '/v1/workspace/open', {
       token: decodeInvite(first.invite).token,
       body: { workspace: 'two', owner: OWNER },

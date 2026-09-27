@@ -1,8 +1,15 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { useRadarStore } from '@/store/radar-store'
 import type { RadarConnectionSummary } from '../../../../shared/radar-connection'
 import { DEFAULT_RADAR_SERVER, type RadarJoinCode } from '../../../../shared/radar-join'
-import { ipcErrorText, syncLine, useRadarSyncStatus } from './use-radar-sync-status'
+import { SyncConflictsNote } from './SyncConflictsNote'
+import {
+  endedNotice,
+  ipcErrorText,
+  syncLine,
+  useRadarSyncStatus
+} from './use-radar-sync-status'
 
 type Props = {
   connection: RadarConnectionSummary | null
@@ -12,6 +19,11 @@ type Props = {
   sharedCode: RadarJoinCode | null
   onConnectionChange: (connection: RadarConnectionSummary | null) => void
   onShared: (code: RadarJoinCode) => void
+}
+
+/** A note belongs to the connection it was written for, so it disappears when that connection changes. */
+function noteKey(connection: RadarConnectionSummary | null): string {
+  return connection ? `${connection.workspace}/${connection.member}/${connection.role}` : ''
 }
 
 function folderName(path: string): string {
@@ -30,28 +42,37 @@ export function ShareFolderCard({
   onShared
 }: Props) {
   const sync = useRadarSyncStatus()
+  const connectionFailure = useRadarStore((store) => store.connectionFailure)
+  const ownerName = useRadarStore((store) => store.state?.members['A']?.name ?? null)
   const [busy, setBusy] = useState(false)
   const [replacing, setReplacing] = useState(false)
   const [stopping, setStopping] = useState(false)
-  const [message, setMessage] = useState<string | null>(null)
-  const [invalid, setInvalid] = useState(false)
   const owner = connection?.role === 'mc'
+  // D-alief-15: the Mission Control token stopped working, so Stop sharing and codes would only fail.
+  const ownerEnded =
+    owner && (connectionFailure === 'signed-out' || connectionFailure === 'workspace-closed')
+  // Why: notes about sharing (e.g. "Copied …") do not carry over once another device took over.
+  const currentKey = `${noteKey(connection)}${ownerEnded ? '/ended' : ''}`
+  const [note, setNote] = useState<{ text: string; key: string; error: boolean } | null>(null)
+  const message = note && note.key === currentKey ? note.text : null
+  const invalid = message !== null && note?.error === true
+  const setMessage = (text: string | null, error = false, key = currentKey) =>
+    setNote(text === null ? null : { text, key, error })
   // Only offer the open folder when it is not the one already shared.
   const openFolder = folder && folder !== sync.folder ? folder : null
 
-  const copy = async (code: string) => {
+  const copy = async (code: string, key = currentKey) => {
     try {
-      await navigator.clipboard.writeText(code)
-      setMessage(`Copied ${code}. Send it to your teammate.`)
+      await window.api.radar.copyText(code)
+      setMessage(`Copied ${code}. Send it to your teammate.`, false, key)
     } catch {
-      setMessage(`Unable to copy. Select ${code} and copy it by hand.`)
+      setMessage(`Unable to copy. Select ${code} and copy it by hand.`, true, key)
     }
   }
 
   const share = async (target: string | null) => {
     setBusy(true)
     setMessage(null)
-    setInvalid(false)
     try {
       const result = await window.api.radar.shareFolder(target, DEFAULT_RADAR_SERVER)
       if (!result) {
@@ -60,12 +81,12 @@ export function ShareFolderCard({
       setReplacing(false)
       onShared(result.code)
       onConnectionChange(result.connection)
-      await copy(result.code.code)
+      await copy(result.code.code, noteKey(result.connection))
     } catch (error) {
       setMessage(
-        ipcErrorText(error) || 'Unable to share the folder. Check your internet connection.'
+        ipcErrorText(error) || 'Unable to share the folder. Check your internet connection.',
+        true
       )
-      setInvalid(true)
     } finally {
       setBusy(false)
     }
@@ -74,15 +95,20 @@ export function ShareFolderCard({
   const stopSharing = async () => {
     setBusy(true)
     setMessage(null)
-    setInvalid(false)
     try {
       await window.api.radar.stopSharing()
       setStopping(false)
       onConnectionChange(null)
-      setMessage('Sharing stopped. The server is empty, so a teammate can share their folder now.')
+      setMessage(
+        'Sharing stopped. The server is empty, so a teammate can share their folder now.',
+        false,
+        noteKey(null)
+      )
     } catch (error) {
-      setMessage(ipcErrorText(error) || 'Unable to stop sharing. Check your internet connection.')
-      setInvalid(true)
+      setMessage(
+        ipcErrorText(error) || 'Unable to stop sharing. Check your internet connection.',
+        true
+      )
     } finally {
       setBusy(false)
     }
@@ -103,6 +129,39 @@ export function ShareFolderCard({
       {message}
     </p>
   )
+
+  if (ownerEnded) {
+    return (
+      <section
+        aria-label="Multiplayer"
+        className="space-y-3 rounded-lg border border-border bg-card p-4"
+      >
+        <div className="space-y-1">
+          <h3 className="text-sm font-semibold">{connection.workspace}</h3>
+          <p className="text-xs text-foreground">
+            {connectionFailure === 'signed-out'
+              ? 'Another device took over as owner. This Mac no longer runs Mission Control.'
+              : 'This workspace is no longer shared from this Mac.'}
+          </p>
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={busy}
+          onClick={() => {
+            setBusy(true)
+            void window.api.radar
+              .clearConnection()
+              .then(() => onConnectionChange(null))
+              .finally(() => setBusy(false))
+          }}
+        >
+          Forget this workspace
+        </Button>
+        {status}
+      </section>
+    )
+  }
 
   if (owner && stopping) {
     return (
@@ -208,8 +267,9 @@ export function ShareFolderCard({
               You are Mission Control for this workspace. Its files are not synced on this Mac.
             </p>
           )}
+          <SyncConflictsNote sync={sync} />
         </div>
-        {sharedCode && (
+        {sharedCode ? (
           <div className="flex flex-wrap items-center gap-3">
             <code
               aria-label="Join code"
@@ -221,6 +281,11 @@ export function ShareFolderCard({
               Copy code
             </Button>
           </div>
+        ) : (
+          // Why: codes are shown once and not kept after a restart; new ones come from Invite teammates.
+          <p className="text-xs text-muted-foreground">
+            To add a teammate, click Make code under Invite teammates and send them the code.
+          </p>
         )}
         <div className="flex flex-wrap gap-2">
           {sync.folder && (
@@ -243,7 +308,6 @@ export function ShareFolderCard({
             onClick={() => {
               setReplacing(true)
               setMessage(null)
-              setInvalid(false)
             }}
           >
             Share a different folder…
@@ -254,13 +318,28 @@ export function ShareFolderCard({
             onClick={() => {
               setStopping(true)
               setMessage(null)
-              setInvalid(false)
             }}
           >
             Stop sharing…
           </Button>
         </div>
         {status}
+      </section>
+    )
+  }
+
+  // Why: the server has one workspace; a teammate can share only after the owner stops.
+  if (connection && connection.role !== 'mc' && !endedNotice(sync, connectionFailure)) {
+    return (
+      <section
+        aria-label="Multiplayer"
+        className="space-y-1 rounded-lg border border-border bg-card p-4"
+      >
+        <h3 className="text-sm font-semibold">Multiplayer</h3>
+        <p className="text-xs text-muted-foreground">
+          {ownerName ?? 'The owner'} is sharing {connection.workspace}. Ask them to stop sharing
+          first, then you can share your own folder.
+        </p>
       </section>
     )
   }

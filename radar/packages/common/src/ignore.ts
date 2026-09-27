@@ -25,13 +25,43 @@ export const DEFAULT_IGNORE_PATTERNS: readonly string[] = [
   '.#*',
 ];
 
+/**
+ * D-alief-16: never synced, whatever the workspace .gitignore says. A `!` rule there cannot bring back the member
+ * token (.radar/), the Bob kit, git internals, sync copies or .env files; shareable .env examples still sync.
+ */
+export const ALWAYS_IGNORED_PATTERNS: readonly string[] = [
+  '.git/',
+  '.radar/',
+  '.bob/',
+  '*.radar-rejected',
+  '*.radar-conflict',
+  '.*.radar-tmp-*',
+  '.env',
+  '.env.*',
+  '!.env.example',
+  '!.env.sample',
+  '!.env.template',
+];
+
 export interface IgnoreMatcher {
   /** True for ignored workspace-relative paths. Paths outside the workspace count as ignored. */
   ignores(relPath: string): boolean;
 }
 
-export function createIgnoreMatcherFromText(gitignoreText = ''): IgnoreMatcher {
+/**
+ * `nested` maps a workspace-relative folder to the text of its own .gitignore. As in git, those rules apply only
+ * inside that folder, and a deeper file wins over a shallower one; ALWAYS_IGNORED_PATTERNS still win over all.
+ */
+export function createIgnoreMatcherFromText(
+  gitignoreText = '',
+  nested: Readonly<Record<string, string>> = {},
+): IgnoreMatcher {
+  const always = ignore().add([...ALWAYS_IGNORED_PATTERNS]);
   const ig = ignore().add([...DEFAULT_IGNORE_PATTERNS]).add(gitignoreText);
+  const layers = Object.entries(nested)
+    .map(([dir, text]) => ({ prefix: `${normalizeRelative(dir)}/`, ig: ignore().add(text) }))
+    .filter((layer) => layer.prefix !== '/')
+    .sort((a, b) => a.prefix.length - b.prefix.length);
   return {
     ignores(relPath: string): boolean {
       let rel: string;
@@ -42,7 +72,18 @@ export function createIgnoreMatcherFromText(gitignoreText = ''): IgnoreMatcher {
         throw err;
       }
       if (rel === '') return false;
-      return ig.ignores(rel);
+      // A trailing slash marks a directory, so `dist/` rules can skip the whole folder.
+      if (/[\\/]$/.test(relPath)) rel += '/';
+      if (always.ignores(rel)) return true;
+      let ignored = ig.ignores(rel);
+      for (const layer of layers) {
+        const sub = rel.startsWith(layer.prefix) ? rel.slice(layer.prefix.length) : '';
+        if (sub === '') continue;
+        const result = layer.ig.test(sub);
+        if (result.ignored) ignored = true;
+        else if (result.unignored) ignored = false;
+      }
+      return ignored;
     },
   };
 }

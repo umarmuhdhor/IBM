@@ -29,6 +29,12 @@ function connectionStatus(saved: boolean, connected: boolean, failure: RadarConn
   if (failure === 'access-rejected') {
     return 'Access rejected. Check the token for this role or ask the workspace admin for a fresh one.'
   }
+  if (failure === 'workspace-closed') {
+    return 'This workspace is no longer shared. Join with a new code.'
+  }
+  if (failure === 'signed-out') {
+    return 'This seat signed in on another device, so this app was signed out.'
+  }
   if (failure === 'connection-lost') {
     return 'Server connection lost. Check the URL and network; the app will retry.'
   }

@@ -35,14 +35,17 @@ import { registerRequestRoutes } from './routes/requests';
 import { registerTaskRoutes } from './routes/tasks';
 import { registerTeamRoutes } from './routes/team';
 
+const sameName = (a: string | undefined, b: string) =>
+  a !== undefined && a.trim().toLowerCase() === b.trim().toLowerCase();
+
 export function createApp(deps: WorkspaceDeps): Hono {
   const app = new Hono();
   app.onError((err) => toErrorResponse(err));
-  app.notFound(() => errorJson(404, 'NOT_FOUND', 'Endpoint tidak ada.'));
+  app.notFound(() => errorJson(404, 'NOT_FOUND', 'This endpoint does not exist.'));
 
   app.get('/ws', async (c) => {
     if (c.req.header('upgrade')?.toLowerCase() !== 'websocket')
-      return errorJson(426, 'BAD_REQUEST', 'Butuh header Upgrade: websocket.');
+      return errorJson(426, 'BAD_REQUEST', 'Needs the header Upgrade: websocket.');
     const pair = new WebSocketPair();
     const [client, server] = [pair[0], pair[1]];
     // No tags: client kind and member are only known after `hello` (fase 03 step 11).
@@ -78,7 +81,7 @@ export function createApp(deps: WorkspaceDeps): Hono {
       const res = errorJson(
         429,
         'RATE_LIMITED',
-        `Terlalu banyak percobaan. Coba lagi dalam ${retry} detik.`,
+        `Too many attempts. Try again in ${retry} seconds.`,
       );
       res.headers.set('retry-after', String(retry));
       return res;
@@ -108,6 +111,15 @@ export function createApp(deps: WorkspaceDeps): Hono {
     }
     const member = getMember(deps.db, memberId);
     if (!member) throw notFound;
+    // D-alief-13: a used open code is not a seat anyone can take. Only the member it created (same name) may redeem
+    // it again, e.g. on a new Mac; anyone else is refused and the member stays signed in.
+    if (found.open && found.memberId !== null && !sameName(req.name, member.name)) {
+      throw new RadarError(
+        409,
+        'CONFLICT',
+        `This code was already used by ${member.name}. Ask the owner for a new code.`,
+      );
+    }
     const token = rotateToken(deps, member.id);
     const res: JoinRes = {
       workspace,
@@ -157,7 +169,7 @@ export function createApp(deps: WorkspaceDeps): Hono {
         throw new RadarError(
           409,
           'CONFLICT',
-          `This server already has the workspace ${current}. Ask its owner for a join code, or use your own server to share a folder.`,
+          `${getMember(deps.db, 'A')?.name ?? 'Someone'} is sharing ${current}. Ask them to stop sharing first, or ask them for a join code.`,
         );
       }
       await deps.wipe();
@@ -239,7 +251,7 @@ export function createApp(deps: WorkspaceDeps): Hono {
     const res = errorJson(
       429,
       'RATE_LIMITED',
-      `Terlalu banyak permintaan. Coba lagi dalam ${retry} detik.`,
+      `Too many requests. Try again in ${retry} seconds.`,
     );
     res.headers.set('retry-after', String(retry));
     return res;

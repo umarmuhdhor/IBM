@@ -1,6 +1,6 @@
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { ConfigInvalidError, ConfigMissingError, createIgnoreMatcher, loadLocalConfig, loadState, saveState } from './node.js';
 
@@ -85,5 +85,19 @@ describe('createIgnoreMatcher', () => {
     const m = createIgnoreMatcher(root);
     expect(m.ignores('tmp.log')).toBe(true);
     expect(m.ignores('node_modules/a')).toBe(true);
+  });
+
+  it('reads .gitignore files in subfolders, but not inside ignored folders (D-alief-16)', () => {
+    const write = (rel: string, text: string) => {
+      mkdirSync(dirname(join(root, rel)), { recursive: true });
+      writeFileSync(join(root, rel), text);
+    };
+    write('.gitignore', 'vendor/\n');
+    write('pkg/.gitignore', 'local.txt\n');
+    write('vendor/lib/.gitignore', '!*\n');
+    const m = createIgnoreMatcher(root);
+    expect(m.ignores('pkg/local.txt')).toBe(true);
+    expect(m.ignores('pkg/keep.txt')).toBe(false);
+    expect(m.ignores('vendor/lib/a.js')).toBe(true);
   });
 });

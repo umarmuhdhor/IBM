@@ -36,7 +36,7 @@ const script = (body: string) => new Response(body, { headers: { 'content-type':
 app.get('/join.sh', (c) => script(joinScript(new URL(c.req.url).origin, '')));
 app.get('/j/:code', (c) => {
   const code = normalizeJoinCode(c.req.param('code'));
-  if (code === null) return script(`#!/bin/sh\necho 'Kode gabung tidak valid. Contoh: K7QM-3XPA' >&2\nexit 1\n`);
+  if (code === null) return script(`#!/bin/sh\necho 'This join code is not valid. Example: K7QM-3XPA' >&2\nexit 1\n`);
   return script(joinScript(new URL(c.req.url).origin, code));
 });
 

@@ -467,3 +467,43 @@ Format:
 - Alternatif yang ditolak: banyak workspace per server (butuh routing Durable Object per workspace, terlalu besar sebelum deadline); menyalin folder pemilik ke `~/live-collab/<ws>` (pemilik harus pindah folder); membiarkan sync agent mengunggah file satu per satu (PM tidak boleh menulis, dan unggah lewat HTTP lebih cepat).
 - Dampak: Aarief (kartu Share a folder di app), Imelda (demo dimulai dari pemilik membuka folder). Panduan: `deploy.md`.
 - File ref/ yang diperbarui: – (endpoint baru dicatat di sini; R3 diperbarui di fase integrasi).
+
+## D-alief-13 · 27 Sep 2026 · pasca fase 12 · Kode terbuka yang sudah dipakai tidak bisa diambil orang lain
+
+- Keputusan:
+  1. **Kontrak (milik Core):** kolom `join_code.open` (skema v4). Bernilai 1 untuk kode yang dibuat tanpa `member` dan bukan kode owner. Migrasi v3→v4 menandai semua kode non-owner lama sebagai `open = 1` (tidak bisa dibedakan lagi; aman karena kode kedaluwarsa).
+  2. `POST /v1/join`: kode terbuka yang sudah membuat member hanya boleh ditukar lagi oleh member itu sendiri (`name` sama, tanpa beda huruf besar/kecil). Orang lain, atau permintaan tanpa nama, mendapat 409 `This code was already used by <name>. Ask the owner for a new code.` Token dan socket member pertama tidak disentuh.
+  3. Kode member dari admin (`admin code --member B`) dan kode owner tidak berubah: tetap bisa dipakai ulang untuk memutar token.
+- Alasan: e2e 27 Sep: "Eve" (pm) menukar kode yang sudah dipakai B dan diam-diam mendapat kursi B (coder), lalu B ditendang dengan 4401. Kode hidup 72 jam, jadi siapa pun yang melihat kode bisa mengambil kursi teman.
+- Alternatif yang ditolak: kode terbuka sekali pakai (member yang pindah Mac butuh kode baru); membuat member baru untuk nama lain (satu kode jadi undangan untuk banyak orang tanpa sepengetahuan owner).
+- Dampak: Aarief (pesan 409 tampil apa adanya di kartu Join). Skrip join mengirim `RADAR_NAME`, jadi pemakaian ulang lewat skrip tetap jalan.
+
+## D-alief-14 · 27 Sep 2026 · pasca fase 12 · Gabung selalu ke folder kosong, konflik ditampilkan
+
+- Keputusan:
+  1. App: sebelum `radar join`, folder `~/live-collab/<ws>` yang sudah berisi file dipindah ke `<ws>.old-<waktu UTC>` (tidak ada yang dihapus). Kartu Join menyebut lokasi salinan lama itu.
+  2. `radar join/start --json-status` juga mencetak baris `{"type":"conflict","path","sidecar"}` untuk setiap file lokal yang berbeda dengan server dan disimpan sebagai `<file>.radar-conflict`. `RadarSyncStatus.conflicts` (daftar path) dan kartu Multiplayer menampilkan jumlah serta nama file.
+- Alasan: e2e 27 Sep: folder sisa sesi lama mengunggah `stale-only.md` ke project pemilik, dan edit offline yang bentrok diganti tanpa pemberitahuan.
+- Alternatif yang ditolak: menghapus folder lama (edit yang belum terkirim hilang); agent menolak folder tidak kosong (teman harus membereskan sendiri).
+
+## D-alief-15 · 27 Sep 2026 · pasca fase 12 · Server memberi tahu kenapa token ditolak, pesan jalur Multiplayer dalam bahasa Inggris
+
+- Keputusan:
+  1. **Kontrak (milik Core):** `ErrorRes.error.reason?: 'signed-out' | 'workspace-closed'` (opsional, klien lama mengabaikannya). `WS_CLOSE_REASON_ROTATED = 'token rotated'` dan `WS_CLOSE_REASON_CLOSED = 'workspace closed'` menjadi alasan penutupan 4401.
+  2. Token yang dicabut (diputar oleh kode owner/kode member di Mac lain) memberi 401 `reason: 'signed-out'` dan socket ditutup 4401 `token rotated`. Token yang tidak dikenal lagi (owner menekan Stop sharing atau berganti folder) memberi 401 `reason: 'workspace-closed'` dan 4401 `workspace closed`.
+  3. Pesan server, skrip join, CLI `radar`, dan sync agent yang dilihat pengguna Multiplayer ditulis dalam bahasa Inggris. Pesan domain lain (task, lock, proposal) diterjemahkan belakangan.
+  4. Sync agent dengan `--json-status` mencetak `{"type":"stopped","reason":"workspace-closed"|"signed-out"|"replaced"|"rejected","message"}` saat berhenti; app memakai `reason` untuk keadaan yang ramah ("The owner stopped sharing. Your files stay in …") tanpa karakter bel dan tanpa membuka form token.
+- Alasan: e2e 27 Sep: setelah owner berhenti berbagi, teman melihat `\x07Sync berhenti: token ditolak server` dan form token terbuka otomatis, padahal tidak ada yang salah dengan token mereka.
+- Alternatif yang ditolak: app mencocokkan teks pesan (rapuh, dan teks berganti bahasa); kode close baru selain 4401 (klien lama akan terus mencoba menyambung ulang).
+- Dampak: Aarief (keadaan baru di kartu Join), Umar (hook/radar-mcp tidak berubah, hanya teks error).
+
+## D-alief-16 · 27 Sep 2026 · pasca fase 12 · File `.env` tidak pernah disinkron, `.gitignore` tidak bisa membuka `.radar/`, `.gitignore` subfolder dipakai
+
+- Keputusan:
+  1. **Kontrak (milik Core):** `@radar/common` menambah `ALWAYS_IGNORED_PATTERNS`: `.git/`, `.radar/`, `.bob/`, `*.radar-rejected`, `*.radar-conflict`, file temp sync, `.env` dan `.env.*`. Pengecualian: `.env.example`, `.env.sample`, `.env.template` tetap disinkron.
+  2. `createIgnoreMatcherFromText` memeriksa daftar ini terpisah dari `.gitignore` workspace, jadi aturan `!` di `.gitignore` tidak bisa membuat token member (`.radar/local.json`), kit Bob, atau `.env` ikut tersinkron. `DEFAULT_IGNORE_PATTERNS` tidak berubah.
+  3. Path yang berakhir `/` dianggap folder, sehingga aturan seperti `node_modules/` langsung melewati seluruh folder saat app memindai folder yang dibagikan.
+  4. `.gitignore` di subfolder ikut dipakai, seperti di git: `createIgnoreMatcherFromText(rootText, nested)` menerima `{ folder: isi .gitignore }`; aturan yang lebih dalam menang. `createIgnoreMatcher(root)` (`@radar/common/node`) membaca semua `.gitignore` di folder yang tidak diabaikan, dan sync agent membangun ulang aturannya saat `.gitignore` mana pun berubah. Server tetap hanya membaca `.gitignore` root (untuk lock), jadi penyaringan ada di klien.
+- Alasan: e2e 27 Sep: owner membagikan folder berisi `.env`, dan `.env` itu muncul di Mac teman. Aturan `!.radar/` di `.gitignore` juga bisa mengirim token member ke server. `pkg/.gitignore` diabaikan sehingga `pkg/local.txt` ikut tersinkron.
+- Alternatif yang ditolak: hanya menambah `.env` ke `DEFAULT_IGNORE_PATTERNS` (masih bisa dibatalkan dengan `!.env` di `.gitignore`); membuang semua `.env.*` termasuk contoh (template yang aman berguna untuk tim).
+- Dampak: server menolak lock/tulis `.env` dari klien lama; admin import juga melewatinya. Umar dan Aarief tidak perlu mengubah apa pun.

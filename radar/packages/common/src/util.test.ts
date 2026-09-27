@@ -57,11 +57,41 @@ describe('ignore rules (R5 §6)', () => {
     }
     expect(m.ignores('src/checkout/checkout.ts')).toBe(false);
     expect(m.ignores('src/radar-tmp-notes.ts')).toBe(false);
+    expect(m.ignores('node_modules/')).toBe(true);
+    expect(m.ignores('src/')).toBe(false);
   });
 
   it('applies the root .gitignore text', () => {
     expect(m.ignores('app.log')).toBe(true);
     expect(m.ignores('secret-notes/a.md')).toBe(true);
+  });
+
+  it('never syncs .env files, but keeps the shareable examples (D-alief-16)', () => {
+    for (const p of ['.env', '.env.local', 'api/.env', 'api/.env.production']) expect(m.ignores(p), p).toBe(true);
+    for (const p of ['.env.example', 'api/.env.sample', '.env.template', 'src/env.ts']) expect(m.ignores(p), p).toBe(false);
+  });
+
+  it('a .gitignore negation cannot make the token folder, the Bob kit or .env sync (D-alief-16)', () => {
+    const open = createIgnoreMatcherFromText('!.radar/\n!.radar/local.json\n!.bob/\n!.env\n!.git/\n');
+    for (const p of ['.radar/local.json', '.bob/mcp.json', '.env', '.git/config', 'a.ts.radar-conflict']) {
+      expect(open.ignores(p), p).toBe(true);
+    }
+    expect(open.ignores('.radar/')).toBe(true);
+  });
+
+  it('applies .gitignore files in subfolders to their own folder only (D-alief-16)', () => {
+    const n = createIgnoreMatcherFromText('*.log\n', { pkg: 'local.txt\n/build-out/\n!keep.log\n', 'pkg/deep': '*.tmp\n' });
+    expect(n.ignores('pkg/local.txt')).toBe(true);
+    expect(n.ignores('pkg/sub/local.txt')).toBe(true);
+    expect(n.ignores('local.txt')).toBe(false);
+    expect(n.ignores('pkg/build-out/a.js')).toBe(true);
+    expect(n.ignores('pkg/sub/build-out/a.js')).toBe(false);
+    expect(n.ignores('pkg/keep.log')).toBe(false);
+    expect(n.ignores('pkg/other.log')).toBe(true);
+    expect(n.ignores('pkg/deep/x.tmp')).toBe(true);
+    expect(n.ignores('pkg/x.tmp')).toBe(false);
+    const open = createIgnoreMatcherFromText('', { pkg: '!.env\n' });
+    expect(open.ignores('pkg/.env')).toBe(true);
   });
 
   it('treats paths outside the workspace as ignored and the root as not ignored', () => {

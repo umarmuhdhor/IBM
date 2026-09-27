@@ -1,6 +1,6 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { chmodSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { homedir, tmpdir } from 'node:os'
+import { dirname, join } from 'node:path'
 import { encodeInvite } from '@radar/common'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -107,11 +107,31 @@ describe('collectFolderFiles', () => {
     write('secret-notes.txt', 'x')
     write('node_modules/x/index.js', 'x')
     write('.radar/local.json', '{}')
+    write('.env', 'KEY=value\n')
+    write('.env.example', 'KEY=\n')
     write('logo.png', Buffer.from([0x89, 0x50, 0x4e, 0x47, 0, 0, 0, 0]))
     write('big.txt', 'a'.repeat(1_048_577))
     const { files, skipped } = collectFolderFiles(root)
-    expect(files.map((file) => file.path)).toEqual(['.gitignore', 'README.md', 'src/a.ts'])
+    expect(files.map((file) => file.path)).toEqual([
+      '.env.example',
+      '.gitignore',
+      'README.md',
+      'src/a.ts'
+    ])
     expect(skipped).toBe(2)
+  })
+
+  it('honours a .gitignore in a subfolder (D-alief-16)', () => {
+    write('pkg/.gitignore', 'local.txt\n')
+    write('pkg/local.txt', 'private')
+    write('pkg/deep/local.txt', 'private')
+    write('pkg/keep.ts', 'x')
+    write('local.txt', 'shared')
+    expect(collectFolderFiles(root).files.map((file) => file.path)).toEqual([
+      'local.txt',
+      'pkg/.gitignore',
+      'pkg/keep.ts'
+    ])
   })
 
   it('splits uploads into batches of at most 100 files', () => {
@@ -202,6 +222,40 @@ describe('shareFolder (D-alief-12)', () => {
     expect(body.owner.name.length).toBeGreaterThan(0)
   })
 
+  it('keeps the first name so the owner does not drift between git and the Mac account', async () => {
+    respondInOrder([201, opened], [201, opened])
+    await shareFolder(root, ' Alief ', 'coder', SERVER)
+    await shareFolder(root, '', 'coder', SERVER)
+    const opens = vi
+      .mocked(fetch)
+      .mock.calls.filter(([url]) => String(url).endsWith('/v1/workspace/open'))
+    expect(JSON.parse(String(opens[1]?.[1]?.body)).owner.name).toBe('Alief')
+  })
+
+  it('never shares the whole disk, the home folder or the folder teammates sync into', async () => {
+    respondInOrder([201, opened])
+    for (const folder of ['/', homedir(), dirname(homedir()), '/home/test/live-collab']) {
+      await expect(shareFolder(folder, 'Alief', 'coder', SERVER), folder).rejects.toThrow(
+        /Pick one project folder/
+      )
+    }
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it('says which file it cannot read instead of a raw EACCES', async () => {
+    respondInOrder([201, opened])
+    write('locked/a.txt', 'x')
+    chmodSync(join(root, 'locked'), 0o000)
+    try {
+      await expect(shareFolder(root, 'Alief', 'coder', SERVER)).rejects.toThrow(
+        /cannot read .*locked/
+      )
+    } finally {
+      chmodSync(join(root, 'locked'), 0o755)
+    }
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
   it('refuses a folder that does not exist before it calls the server', async () => {
     respondInOrder([201, opened])
     await expect(shareFolder(join(root, 'gone'), 'Alief', 'coder', SERVER)).rejects.toThrow(
@@ -235,6 +289,24 @@ describe('stopSharing (D-alief-12)', () => {
       })
     )
     expect(mocks.disconnectRadar).toHaveBeenCalled()
+  })
+
+  it("says the server can't be reached instead of a raw TimeoutError (offline)", async () => {
+    mocks.readRadarConnection.mockReturnValue({
+      server: `${SERVER}/`,
+      workspace: 'my-app',
+      member: 'mc',
+      role: 'mc',
+      token: 'rdr_test_mc_value'
+    })
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        throw new DOMException('The operation was aborted due to timeout', 'TimeoutError')
+      })
+    )
+    await expect(stopSharing()).rejects.toThrow("Can't reach the Live Collab server. Try again.")
+    expect(mocks.disconnectRadar).not.toHaveBeenCalled()
   })
 
   it('keeps the connection when the server refuses', async () => {

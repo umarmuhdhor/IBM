@@ -6,7 +6,7 @@ class FakeSocket {
   readonly sent: string[] = []
   onopen: (() => void) | null = null
   onmessage: ((event: { data: string }) => void) | null = null
-  onclose: ((event: { code: number }) => void) | null = null
+  onclose: ((event: { code: number; reason?: string }) => void) | null = null
   onerror: (() => void) | null = null
 
   constructor(readonly url: string) {
@@ -109,5 +109,53 @@ describe('Radar WebSocket client', () => {
     vi.advanceTimersByTime(30_000)
     expect(FakeSocket.instances).toHaveLength(1)
     expect(updates).toHaveBeenCalledWith({ kind: 'status', connected: false, failure: 'access-rejected' })
+  })
+
+  it('says why the server closed the workspace or signed this device out (D-alief-15)', () => {
+    const updates = vi.fn()
+    const client = new RadarWsClient(connection, updates, (url) => new FakeSocket(url))
+    client.connect()
+    FakeSocket.instances[0]!.onclose?.({ code: 4401, reason: 'workspace closed' })
+    expect(updates).toHaveBeenLastCalledWith({
+      kind: 'status',
+      connected: false,
+      failure: 'workspace-closed'
+    })
+    const again = new RadarWsClient(connection, updates, (url) => new FakeSocket(url))
+    again.connect()
+    FakeSocket.instances[1]!.onclose?.({ code: 4401, reason: 'token rotated' })
+    expect(updates).toHaveBeenLastCalledWith({ kind: 'status', connected: false, failure: 'signed-out' })
+    vi.advanceTimersByTime(30_000)
+    expect(FakeSocket.instances).toHaveLength(2)
+  })
+
+  it('shows Disconnected and reconnects when the server stops answering pings', () => {
+    const updates = vi.fn()
+    const client = new RadarWsClient(connection, updates, (url) => new FakeSocket(url))
+    client.connect()
+    const socket = FakeSocket.instances[0]!
+    socket.onopen?.()
+    socket.receive({ t: 'welcome', d: {} })
+    // Why: close() on a dead network never fires onclose, so the fake stays silent too.
+    socket.close = () => undefined
+    vi.advanceTimersByTime(60_000)
+    expect(updates).toHaveBeenLastCalledWith({ kind: 'status', connected: false, failure: 'connection-lost' })
+    vi.advanceTimersByTime(1_000)
+    expect(FakeSocket.instances).toHaveLength(2)
+    client.disconnect()
+  })
+
+  it('keeps a socket that answers pings', () => {
+    const updates = vi.fn()
+    const client = new RadarWsClient(connection, updates, (url) => new FakeSocket(url))
+    client.connect()
+    const socket = FakeSocket.instances[0]!
+    socket.receive({ t: 'welcome', d: {} })
+    for (let i = 0; i < 6; i++) {
+      vi.advanceTimersByTime(20_000)
+      socket.receive({ t: 'pong' })
+    }
+    expect(updates).toHaveBeenLastCalledWith({ kind: 'status', connected: true })
+    client.disconnect()
   })
 })

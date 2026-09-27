@@ -1,10 +1,12 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import type { RadarConnectionSummary } from '../../../../shared/radar-connection'
 import { DEFAULT_RADAR_SERVER, type RadarJoinRole } from '../../../../shared/radar-join'
-import { ipcErrorText, syncLine, useRadarSyncStatus } from './use-radar-sync-status'
+import { useRadarStore } from '@/store/radar-store'
+import { SyncConflictsNote } from './SyncConflictsNote'
+import { endedNotice, ipcErrorText, syncLine, useRadarSyncStatus } from './use-radar-sync-status'
 
 type Props = {
   connection: RadarConnectionSummary | null
@@ -24,14 +26,35 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
   const [another, setAnother] = useState(false)
   const codeInput = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
+  const sync = useRadarSyncStatus()
+  const connectionFailure = useRadarStore((store) => store.connectionFailure)
+  const seat = useRadarStore((store) =>
+    connection ? (store.state?.members[connection.member] ?? null) : null
+  )
+  // Why: an older app saved a PM as coder; the server member record has the real role.
+  const memberRole = seat?.role ?? connection?.role
+  // Why: once the owner stops sharing, the old seat cannot come back; offer the join form instead.
+  const ended = connection && connection.role !== 'mc' ? endedNotice(sync, connectionFailure) : null
   // A message belongs to the connection it was written for, so it disappears when that connection changes.
-  const connectionKey = connection ? `${connection.workspace}/${connection.member}` : ''
+  const connectionKey = connection
+    ? `${connection.workspace}/${connection.member}${ended ? '/ended' : ''}`
+    : ''
   const [note, setNote] = useState<{ text: string; key: string } | null>(null)
   const message = note && note.key === connectionKey ? note.text : null
   const setMessage = (text: string | null, key = connectionKey) =>
     setNote(text === null ? null : { text, key })
   const [invalid, setInvalid] = useState(false)
-  const sync = useRadarSyncStatus()
+  useEffect(() => {
+    let live = true
+    void window.api.radar.getProfileName().then((saved) => {
+      if (live && saved) {
+        setName((typed) => typed || saved)
+      }
+    })
+    return () => {
+      live = false
+    }
+  }, [])
 
   const join = async () => {
     setBusy(true)
@@ -47,8 +70,11 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
       if (result.role === 'mc') {
         return
       }
+      const moved = result.previousFolder
+        ? ` Your earlier copy of this folder was moved to ${result.previousFolder}.`
+        : ''
       setMessage(
-        `Joined ${result.connection.workspace} as ${name.trim() || result.connection.member} (${result.role === 'pm' ? 'PM' : 'coder'}).`,
+        `Joined ${result.connection.workspace} as ${name.trim() || result.connection.member} (${result.role === 'pm' ? 'PM' : 'coder'}).${moved}`,
         `${result.connection.workspace}/${result.connection.member}`
       )
     } catch (error) {
@@ -69,7 +95,7 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
   }
 
   const joined =
-    !another && connection !== null && connection.role === 'coder' && sync.folder !== null
+    !another && !ended && connection !== null && connection.role !== 'mc' && sync.folder !== null
 
   if (joined) {
     return (
@@ -79,7 +105,7 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
       >
         <div className="space-y-1">
           <h3 className="text-sm font-semibold">
-            {connection.workspace} · {connection.member}
+            {`${connection.workspace} · ${seat?.name ?? connection.member} (${memberRole === 'pm' ? 'PM' : 'coder'})`}
           </h3>
           <p
             role="status"
@@ -92,6 +118,7 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
           <p className="font-mono text-xs text-muted-foreground [overflow-wrap:anywhere]">
             {sync.folder}
           </p>
+          <SyncConflictsNote sync={sync} />
         </div>
         <div className="flex flex-wrap gap-2">
           <Button size="sm" onClick={() => void openInBob()}>
@@ -104,7 +131,9 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
             Join with a different code
           </Button>
         </div>
-        {message && <p className="text-xs text-muted-foreground">{message}</p>}
+        {message && (
+          <p className="text-xs text-muted-foreground [overflow-wrap:anywhere]">{message}</p>
+        )}
       </section>
     )
   }
@@ -122,6 +151,9 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
         <h3 className="text-sm font-semibold">
           {owner ? 'Connect as workspace owner' : 'Join a workspace'}
         </h3>
+        {ended && !owner && (
+          <p className="text-xs text-foreground [overflow-wrap:anywhere]">{ended}</p>
+        )}
         <p className="text-xs text-muted-foreground">
           {owner
             ? 'Enter the owner code printed by admin init. This app becomes Mission Control and can invite teammates.'
@@ -184,6 +216,11 @@ export function JoinWithCodeCard({ connection, onConnectionChange }: Props) {
         <Button type="submit" size="sm" disabled={busy}>
           {busy ? (owner ? 'Connecting…' : 'Joining…') : owner ? 'Connect' : 'Join'}
         </Button>
+        {another && (
+          <Button type="button" size="sm" variant="outline" onClick={() => setAnother(false)}>
+            Cancel
+          </Button>
+        )}
         <Button
           type="button"
           variant="link"

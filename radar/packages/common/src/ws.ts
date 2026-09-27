@@ -98,3 +98,11 @@ export type WsMessageOf<T extends WsMessageType> = Extract<WsMessage, { t: T }>;
 
 /** WebSocket close code when `hello` is missing or invalid (R3 §3). */
 export const WS_CLOSE_UNAUTHORIZED = 4401;
+
+/**
+ * Close reasons sent with 4401 (D-alief-15), so a client can tell why its token stopped working:
+ * `rotated` = the same member (or owner) signed in on another device; `closed` = the workspace was stopped or
+ * replaced, so the token no longer exists; anything else = wrong token or client kind.
+ */
+export const WS_CLOSE_REASON_ROTATED = 'token rotated';
+export const WS_CLOSE_REASON_CLOSED = 'workspace closed';

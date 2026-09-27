@@ -4,9 +4,10 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { sha256Hex } from '@radar/common';
 import { KnownStore } from '../src/known.js';
-import { atomicWrite, hashText, readLocal, removeLocal, UnsafePathError } from '../src/writer.js';
+import { atomicWrite, hashText, pruneEmptyParents, readLocal, removeLocal, UnsafePathError } from '../src/writer.js';
 import { writeSidecar } from '../src/sidecar.js';
-import { formatRejection } from '../src/notify.js';
+import { formatRejection, terminalNotifier } from '../src/notify.js';
+import { fatalClose } from '../src/agent.js';
 import { createSyncLog } from '../src/log.js';
 import { cleanupDirs, read, tempDir } from './helpers.js';
 
@@ -106,6 +107,19 @@ describe('writer', () => {
     removeLocal(root, 'a.ts');
     expect(existsSync(join(root, 'a.ts'))).toBe(false);
   });
+
+  it('pruneEmptyParents drops folders a remote rename emptied, and keeps the rest', () => {
+    const root = tempDir();
+    mkdirSync(join(root, 'old dir/deep'), { recursive: true });
+    mkdirSync(join(root, 'keep'), { recursive: true });
+    writeFileSync(join(root, 'keep/x.ts'), 'x');
+    pruneEmptyParents(root, 'old dir/deep/a.ts');
+    pruneEmptyParents(root, 'keep/gone.ts');
+    pruneEmptyParents(root, 'top.ts');
+    expect(existsSync(join(root, 'old dir'))).toBe(false);
+    expect(existsSync(join(root, 'keep/x.ts'))).toBe(true);
+    expect(existsSync(root)).toBe(true);
+  });
 });
 
 describe('sidecar', () => {
@@ -124,20 +138,36 @@ describe('notify messages', () => {
   const holder = { memberId: 'A', memberName: 'Alice', taskId: 'T-1', taskTitle: 'Kupon', state: 'dipegang' as const };
   it('names the holder for held_by_other', () => {
     expect(formatRejection({ path: 'src/checkout/checkout.ts', reason: 'held_by_other', holder, sidecar: 'src/checkout/checkout.ts.radar-rejected' })).toBe(
-      '✖ Perubahanmu di src/checkout/checkout.ts ditolak: dipegang Alice (T-1 Kupon). Isimu disimpan di checkout.ts.radar-rejected.',
+      '✖ Your change to src/checkout/checkout.ts was refused: held by Alice (T-1 Kupon). Your content is kept in checkout.ts.radar-rejected.',
     );
   });
   it('explains pm_readonly and conflict', () => {
     expect(formatRejection({ path: 'README.md', reason: 'pm_readonly', holder: null, sidecar: 'README.md.radar-rejected' })).toBe(
-      '✖ PM tidak menulis file. Perubahan disimpan di README.md.radar-rejected.',
+      '✖ A PM does not write files. Your change is kept in README.md.radar-rejected.',
     );
     expect(formatRejection({ path: 'src/a.ts', reason: 'conflict', holder: null, sidecar: 'src/a.ts.radar-conflict' })).toBe(
-      '✖ Versi lokal tertinggal, isi server dipakai. Salinanmu: a.ts.radar-conflict',
+      '✖ Your copy was behind, so the server version is used. Your copy: a.ts.radar-conflict',
     );
   });
   it('covers committing and a missing sidecar', () => {
-    expect(formatRejection({ path: 'a.ts', reason: 'committing', holder, sidecar: null })).toMatch(/sedang di-commit/);
-    expect(formatRejection({ path: 'a.ts', reason: 'held_by_other', holder: null, sidecar: null })).toMatch(/dipegang anggota lain/);
+    expect(formatRejection({ path: 'a.ts', reason: 'committing', holder, sidecar: null })).toMatch(/being committed/);
+    expect(formatRejection({ path: 'a.ts', reason: 'held_by_other', holder: null, sidecar: null })).toMatch(/held by another member/);
+  });
+});
+
+describe('stop reasons (D-alief-15)', () => {
+  it('maps fatal closes to a kind and keeps reconnecting otherwise', () => {
+    expect(fatalClose(4401, 'workspace closed')?.kind).toBe('workspace-closed');
+    expect(fatalClose(4401, 'token rotated')?.kind).toBe('signed-out');
+    expect(fatalClose(4401, 'unauthorized')?.kind).toBe('rejected');
+    expect(fatalClose(4000, '')?.kind).toBe('replaced');
+    expect(fatalClose(1006, '')).toBeNull();
+    expect(fatalClose(1012, 'reset')).toBeNull();
+  });
+  it('a plain notifier writes no bell or colors (the app reads it)', () => {
+    const out: string[] = [];
+    terminalNotifier((s) => out.push(s), { plain: true })({ level: 'error', text: '✖ Sync stopped: x' });
+    expect(out).toEqual(['✖ Sync stopped: x\n']);
   });
 });
 

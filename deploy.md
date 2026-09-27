@@ -52,6 +52,14 @@ App desktop dalam mode dev:
 pnpm -C app dev
 ```
 
+App selalu memakai server produksi, kecuali `LIVE_COLLAB_SERVER` diisi. Untuk mencoba Share, Join dan Stop sharing tanpa menyentuh produksi, arahkan app ke server lokal:
+
+```bash
+LIVE_COLLAB_SERVER=http://localhost:8787 pnpm -C app dev
+```
+
+Variabel ini hanya dibaca oleh main process (Share, Join, kode undangan, sinkron). Server yang diketik manual di form tetap dipakai. Sebelum `dev:server`, pastikan tidak ada `workerd` lama yang memegang port 8787 (`lsof -nP -iTCP:8787 -sTCP:LISTEN`). Kode pemilik untuk server lokal: `ADMIN_SECRET=<dari .dev.vars> pnpm -C radar admin code --server http://localhost:8787 --owner`.
+
 Web (landing + replay):
 
 ```bash

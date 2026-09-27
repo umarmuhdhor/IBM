@@ -1,4 +1,5 @@
 import { readRadarConnection } from './secure-store'
+import { serverFetch } from './server-fetch'
 
 function requireNonempty(value: string, field: string): string {
   if (typeof value !== 'string' || value.trim().length === 0) {
@@ -16,7 +17,7 @@ async function postAsMissionControl(path: string, body: Record<string, unknown>)
   if (url.protocol !== 'http:' && url.protocol !== 'https:') {
     throw new Error('Invalid Live Collab server URL')
   }
-  const response = await fetch(url.toString(), {
+  const response = await serverFetch(url.toString(), {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${connection.token}`,

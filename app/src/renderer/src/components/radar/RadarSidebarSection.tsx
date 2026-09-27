@@ -8,12 +8,25 @@ type Props = {
 
 const ITEMS = [
   // D-alief-12: open a folder, then Multiplayer shares it and gives you a code.
-  { tab: 'settings', label: 'Multiplayer', icon: Share2 },
+  { tab: 'multiplayer', label: 'Multiplayer', icon: Share2 },
   { tab: 'mission', label: 'Mission Control', icon: LayoutDashboard },
   { tab: 'team', label: 'Team', icon: Users },
   { tab: 'files', label: 'Files & locks', icon: Files },
   { tab: 'settings', label: 'Settings', icon: Settings2 }
 ] as const
+
+/**
+ * The Live Collab sheet is non-modal, so a click in the sidebar counts as outside and closes it.
+ * Clicks on these items switch the tab instead.
+ */
+export function keepPanelOpenForLiveCollabNav(event: {
+  target: EventTarget | null
+  preventDefault: () => void
+}): void {
+  if (event.target instanceof Element && event.target.closest('nav[aria-label="Live Collab"]')) {
+    event.preventDefault()
+  }
+}
 
 export function RadarSidebarSection({ needsYou, onOpen }: Props) {
   return (

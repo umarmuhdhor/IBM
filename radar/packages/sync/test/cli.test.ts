@@ -4,7 +4,8 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { loadLocalConfig } from '@radar/common/node';
 import { encodeInvite } from '@radar/common';
-import { resolveJoin, writeJoinFiles } from '../src/cli.js';
+import { EventEmitter } from 'node:events';
+import { resolveJoin, wireJsonStatus, writeJoinFiles } from '../src/cli.js';
 import { findKitDir, installKit } from '../src/kit.js';
 import { cleanupDirs, read, tempDir } from './helpers.js';
 
@@ -33,12 +34,24 @@ describe('writeJoinFiles', () => {
     expect(read(root, '.gitignore')).toBe('node_modules/\n');
   });
 
-  it('skips the exclude when .gitignore already lists .radar/ or there is no git folder', () => {
+  it('also keeps the Bob kit and .radar-conflict / .radar-rejected copies out of git', () => {
+    const root = tempDir();
+    mkdirSync(join(root, '.git/info'), { recursive: true });
+    const opts = { root, server: 'http://x', workspace: 'w', member: 'A', token: 't', role: 'coder' as const };
+    writeJoinFiles(opts);
+    writeJoinFiles(opts);
+    const exclude = read(root, '.git/info/exclude') ?? '';
+    for (const rule of ['.radar/', '.bob/', '*.radar-conflict', '*.radar-rejected']) {
+      expect(exclude.split('\n').filter((l) => l === rule)).toHaveLength(1);
+    }
+  });
+
+  it('skips rules .gitignore already has, and the exclude when there is no git folder', () => {
     const root = tempDir();
     expect(writeJoinFiles({ root, server: 'http://x', workspace: 'w', member: 'A', token: 't', role: 'coder' }).excluded).toBeNull();
     const withIgnore = tempDir();
     mkdirSync(join(withIgnore, '.git/info'), { recursive: true });
-    writeFileSync(join(withIgnore, '.gitignore'), '.radar/\n');
+    writeFileSync(join(withIgnore, '.gitignore'), '.radar/\n.bob/\n*.radar-conflict\n*.radar-rejected\n');
     expect(writeJoinFiles({ root: withIgnore, server: 'http://x', workspace: 'w', member: 'A', token: 't', role: 'coder' }).excluded).toBeNull();
     expect(existsSync(join(withIgnore, '.git/info/exclude'))).toBe(false);
   });
@@ -85,6 +98,20 @@ describe('kit install', () => {
     expect(read(root, '.bob/mine.md')).toBeNull();
   });
 
+  it('switching coder to pm replaces the coder kit, including files only the coder kit has', () => {
+    const root = tempDir();
+    const kitDir = fakeKit();
+    mkdirSync(join(kitDir, 'coder/.bob/rules-coder'), { recursive: true });
+    writeFileSync(join(kitDir, 'coder/.bob/rules-coder/01-radar.md'), 'coder rule\n');
+    writeFileSync(join(kitDir, 'coder/.bob/hooks/lock_guard.js'), '// guard\n');
+    expect(installKit({ root, role: 'coder', kitDir }).status).toBe('installed');
+    const r = installKit({ root, role: 'pm', kitDir });
+    expect(r.status).toBe('installed');
+    expect(read(root, '.bob/custom_modes.yaml')).toBe('role: pm\n');
+    expect(read(root, '.bob/hooks/lock_guard.js')).toBeNull();
+    expect(existsSync(join(root, '.bob/rules-coder'))).toBe(false);
+  });
+
   it('reports a missing kit instead of failing', () => {
     const root = tempDir();
     expect(installKit({ root, role: 'coder', kitDir: join(root, 'nope') }).status).toBe('missing-kit');
@@ -123,5 +150,23 @@ describe('resolveJoin (IN-02 invite)', () => {
     expect(bad).toMatchObject({ error: expect.any(String) });
     expect(JSON.stringify(bad)).not.toContain(code.slice(8, 12));
     expect(resolveJoin('https://o.example', { workspace: 'w', as: 'A' }, {})).toMatchObject({ error: expect.stringContaining('RADAR_TOKEN') });
+  });
+});
+
+describe('--json-status lines', () => {
+  it('reports status and every file kept as .radar-conflict', () => {
+    const agent = new EventEmitter();
+    const lines: string[] = [];
+    wireJsonStatus(agent, (l) => lines.push(l));
+    agent.emit('status', { connected: true, files: 2 });
+    agent.emit('conflict', { path: 'notes/a.md', sidecar: 'notes/a.md.radar-conflict' });
+    agent.emit('rejected', { path: 'notes.md', reason: 'pm_readonly', holder: null, sidecar: 'notes.md.radar-rejected' });
+    agent.emit('stopped', 'The owner stopped sharing this workspace.', 'workspace-closed');
+    expect(lines.map((l) => JSON.parse(l))).toEqual([
+      expect.objectContaining({ type: 'status', connected: true, files: 2 }),
+      expect.objectContaining({ type: 'conflict', path: 'notes/a.md', sidecar: 'notes/a.md.radar-conflict' }),
+      expect.objectContaining({ type: 'rejected', path: 'notes.md', reason: 'pm_readonly', message: expect.stringContaining('A PM does not write files') }),
+      expect.objectContaining({ type: 'stopped', reason: 'workspace-closed', message: 'The owner stopped sharing this workspace.' }),
+    ]);
   });
 });

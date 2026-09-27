@@ -6,6 +6,8 @@ import WebSocket from 'ws';
 import {
   HEARTBEAT_INTERVAL_MS,
   SYNC_DEBOUNCE_MS,
+  WS_CLOSE_REASON_CLOSED,
+  WS_CLOSE_REASON_ROTATED,
   WS_CLOSE_UNAUTHORIZED,
   WS_PING_FRAME,
   WS_PING_MS,
@@ -22,12 +24,27 @@ import { createSyncLog, type SyncLog } from './log.js';
 import { formatRejection, terminalNotifier, type Notifier } from './notify.js';
 import { writeSidecar } from './sidecar.js';
 import { createWatcher, isIgnored, listFiles, type SyncMode, type Watcher } from './watcher.js';
-import { atomicWrite, readLocal, removeLocal, safeRelative, UnsafePathError, type LocalFile } from './writer.js';
+import { atomicWrite, pruneEmptyParents, readLocal, removeLocal, safeRelative, UnsafePathError, type LocalFile } from './writer.js';
+
+/** Any .gitignore, root or nested, changes which paths sync (D-alief-16). */
+const isGitignore = (path: string): boolean => path === '.gitignore' || path.endsWith('/.gitignore');
 
 /** Close code for a sync socket replaced by a newer one of the same member (R3 §3). */
 export const WS_CLOSE_REPLACED = 4000;
 /** Close code when the workspace is reset on the server. */
 export const WS_CLOSE_RESET = 1012;
+
+/** Why the agent stopped for good (D-alief-15); the app turns it into a friendly state. */
+export type StopKind = 'workspace-closed' | 'signed-out' | 'replaced' | 'rejected';
+
+/** Maps a fatal close to a stop kind and an English message, or null when the agent should reconnect. */
+export function fatalClose(code: number, reason: string): { kind: StopKind; message: string } | null {
+  if (code === WS_CLOSE_REPLACED) return { kind: 'replaced', message: 'Another sync agent for the same member took over this folder (4000).' };
+  if (code !== WS_CLOSE_UNAUTHORIZED) return null;
+  if (reason === WS_CLOSE_REASON_CLOSED) return { kind: 'workspace-closed', message: 'The owner stopped sharing this workspace.' };
+  if (reason === WS_CLOSE_REASON_ROTATED) return { kind: 'signed-out', message: 'You joined on another device, so sync stopped here.' };
+  return { kind: 'rejected', message: 'The server refused this member token (4401).' };
+}
 /** Retries for an update the server could not verify (hash or path mismatch). */
 const MAX_VERIFY_RETRIES = 3;
 
@@ -89,6 +106,7 @@ export class SyncAgent extends EventEmitter {
   readonly locks = new Map<string, LockView>();
   principal: Principal | null = null;
   stopReason: string | null = null;
+  stopKind: StopKind | null = null;
 
   private readonly root: string;
   private readonly o: Required<Pick<SyncAgentOptions, 'debounceMs' | 'heartbeatMs' | 'pingMs' | 'reconnect' | 'clientVersion' | 'mode'>> & SyncAgentOptions;
@@ -239,18 +257,19 @@ export class SyncAgent extends EventEmitter {
     }
   }
 
-  private halt(reason: string): void {
+  private halt(kind: StopKind, reason: string): void {
     this.isStopped = true;
     this.stopReason = reason;
+    this.stopKind = kind;
     this.teardown();
-    this.log('halt', reason);
-    this.notify({ level: 'error', text: `✖ Sync berhenti: ${reason}` });
+    this.log('halt', `${kind} ${reason}`);
+    this.notify({ level: 'error', text: `✖ Sync stopped: ${reason}` });
     this.startWaiter?.reject(new Error(reason));
     this.startWaiter = null;
     const w = this.watcher;
     this.watcher = null;
     void w?.close().catch((err: unknown) => this.log('watch.error', String(err)));
-    this.emit('stopped', reason);
+    this.emit('stopped', reason, kind);
     this.emit('status', this.status());
   }
 
@@ -265,18 +284,18 @@ export class SyncAgent extends EventEmitter {
     this.log('close', `${code}${reason ? ` ${reason}` : ''}`);
     this.emit('status', this.status());
     if (this.isStopped) return;
-    if (code === WS_CLOSE_UNAUTHORIZED) return this.halt(`token ditolak server (${code})`);
-    if (code === WS_CLOSE_REPLACED) return this.halt(`diganti agent lain untuk member yang sama (${code})`);
+    const fatal = fatalClose(code, reason);
+    if (fatal) return this.halt(fatal.kind, fatal.message);
     if (code === WS_CLOSE_RESET) {
       // Fresh workspace: forget agreed versions and do not re-upload local-only files into it.
       this.known.clear();
       this.resetSeen = true;
-      this.notify({ level: 'warn', text: 'Workspace di-reset server. File lokal yang tidak ada di server tidak diunggah otomatis.' });
+      this.notify({ level: 'warn', text: 'The workspace was reset on the server. Local files that are not on the server are not uploaded.' });
     }
     // One notice per outage, not per reconnect attempt; local edits are uploaded after the reconnect.
     if (this.everSynced && !this.offlineNotified) {
       this.offlineNotified = true;
-      this.notify({ level: 'warn', text: '⚠ Koneksi ke server terputus. Mencoba lagi; edit lokal diunggah setelah tersambung.' });
+      this.notify({ level: 'warn', text: '⚠ Lost the connection to the server. Retrying; local edits upload once it is back.' });
     }
     this.scheduleReconnect();
   }
@@ -325,7 +344,7 @@ export class SyncAgent extends EventEmitter {
     } catch (err) {
       // A failed disk write must not kill the connection; the next snapshot or save repairs the path.
       this.log('handler.error', `${msg.t}: ${(err as Error).message}`);
-      this.notify({ level: 'error', text: `✖ Gagal memproses ${msg.t}: ${(err as Error).message}` });
+      this.notify({ level: 'error', text: `✖ Could not apply ${msg.t}: ${(err as Error).message}` });
     }
   }
 
@@ -364,7 +383,7 @@ export class SyncAgent extends EventEmitter {
     if (this.everSynced) this.stats.reconnects++;
     if (this.offlineNotified) {
       this.offlineNotified = false;
-      this.notify({ level: 'info', text: '✓ Koneksi ke server tersambung lagi.' });
+      this.notify({ level: 'info', text: '✓ Connected to the server again.' });
     }
     this.attempt = 0;
     const who = msg.d.principal.kind === 'member' ? `${msg.d.principal.memberId} (${msg.d.principal.role})` : 'mc';
@@ -410,7 +429,7 @@ export class SyncAgent extends EventEmitter {
     const sidecar = writeSidecar(this.root, path, 'conflict', local.kind === 'text' ? local.content : local.bytes);
     this.stats.conflicts++;
     this.log('conflict', `${path} local copy → ${sidecar}`);
-    this.notify({ level: 'warn', text: `⚠ ${path} berbeda dengan server, isi server dipakai. Salinanmu: ${sidecar}` });
+    this.notify({ level: 'warn', text: `⚠ ${path} differed from the server, so the server version is used. Your copy: ${sidecar}` });
     this.emit('conflict', { path, sidecar });
     return sidecar;
   }
@@ -439,7 +458,7 @@ export class SyncAgent extends EventEmitter {
       this.known.set(path, { version: f.version, hash: f.hash });
       atomicWrite(this.root, path, f.content);
       written++;
-      if (path === '.gitignore') this.rebuildMatcher();
+      if (isGitignore(path)) this.rebuildMatcher();
     }
     this.locks.clear();
     for (const l of msg.d.locks) this.locks.set(l.path, { path: l.path, state: l.state, taskId: l.taskId, memberId: l.memberId });
@@ -500,7 +519,9 @@ export class SyncAgent extends EventEmitter {
     this.saveConflict(path, prev?.hash, DELETED_HASH);
     this.known.set(path, { version, hash: DELETED_HASH });
     removeLocal(this.root, path);
-    if (path === '.gitignore') this.rebuildMatcher();
+    // A folder renamed on another Mac arrives as deletes plus adds; do not leave the old folder behind empty.
+    pruneEmptyParents(this.root, path);
+    if (isGitignore(path)) this.rebuildMatcher();
     return true;
   }
 
@@ -525,7 +546,7 @@ export class SyncAgent extends EventEmitter {
     this.saveConflict(path, prev?.hash, d.hash);
     this.known.set(path, { version: d.version, hash: d.hash });
     atomicWrite(this.root, path, d.content);
-    if (path === '.gitignore') this.rebuildMatcher();
+    if (isGitignore(path)) this.rebuildMatcher();
     const appliedTs = Date.now();
     this.sendMsg({ t: 'file.applied', d: { path, version: d.version, serverTs: d.serverTs, appliedTs } });
     this.stats.applied++;
@@ -555,7 +576,7 @@ export class SyncAgent extends EventEmitter {
         // The next local edit starts a fresh budget.
         this.retries.delete(path);
         this.log('reject.giveup', `${path} not verified after ${MAX_VERIFY_RETRIES} retries`);
-        this.notify({ level: 'error', text: `✖ ${path} gagal diverifikasi server setelah ${MAX_VERIFY_RETRIES} kali coba. Simpan ulang file untuk mencoba lagi.` });
+        this.notify({ level: 'error', text: `✖ The server could not verify ${path} after ${MAX_VERIFY_RETRIES} tries. Save the file again to retry.` });
         return;
       }
       this.log('reject.retry', `${path} attempt ${n}`);
@@ -627,7 +648,7 @@ export class SyncAgent extends EventEmitter {
       return;
     }
     this.skipped.delete(path);
-    if (path === '.gitignore') this.rebuildMatcher();
+    if (isGitignore(path)) this.rebuildMatcher();
     const known = this.known.get(path);
     if (known?.hash === local.hash) return;
     const p = this.pending.get(path);

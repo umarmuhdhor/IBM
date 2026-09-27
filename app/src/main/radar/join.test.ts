@@ -1,3 +1,4 @@
+import type * as fs from 'node:fs'
 import { encodeInvite } from '@radar/common'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -9,13 +10,24 @@ const mocks = vi.hoisted(() => ({
   startClient: vi.fn(),
   startSyncAgent: vi.fn(),
   stopSyncAgent: vi.fn(),
-  ensureNodeForBob: vi.fn(async () => undefined)
+  ensureNodeForBob: vi.fn(async () => undefined),
+  moveAsideOldFolder: vi.fn((_folder: string): string | null => null),
+  existsSync: vi.fn((_path: string) => false)
+}))
+
+vi.mock('node:fs', async (importOriginal) => ({
+  ...(await importOriginal<typeof fs>()),
+  existsSync: mocks.existsSync
 }))
 
 vi.mock('electron', () => ({
   app: { on: vi.fn(), whenReady: vi.fn(async () => undefined) },
   ipcMain: { handle: vi.fn() },
   shell: { openPath: vi.fn() }
+}))
+vi.mock('./profile-name', () => ({
+  readProfileName: () => null,
+  saveProfileName: (value: unknown) => (typeof value === 'string' && value.trim()) || null
 }))
 vi.mock('./secure-store', () => ({
   requireOsEncryption: mocks.requireOsEncryption,
@@ -25,6 +37,7 @@ vi.mock('./secure-store', () => ({
 }))
 vi.mock('./connection-ipc', () => ({ startClient: mocks.startClient }))
 vi.mock('./node-shim', () => ({ ensureNodeForBob: mocks.ensureNodeForBob }))
+vi.mock('./join-folder', () => ({ moveAsideOldFolder: mocks.moveAsideOldFolder }))
 vi.mock('./sync-agent', () => ({
   getSyncStatus: vi.fn(),
   startSyncAgent: mocks.startSyncAgent,
@@ -32,7 +45,7 @@ vi.mock('./sync-agent', () => ({
   workspaceFolder: (workspace: string) => `/home/test/live-collab/${workspace}`
 }))
 
-const { createJoinCode, joinWithCode } = await import('./join')
+const { createJoinCode, joinWithCode, resumeMemberSync, serverOrigin } = await import('./join')
 
 const SERVER = 'https://collab.example.dev'
 const invite = encodeInvite({
@@ -96,8 +109,27 @@ describe('joinWithCode', () => {
     expect(result).toEqual({
       connection: expect.objectContaining({ workspace: 'toko-demo', member: 'D' }),
       role: 'coder',
-      folder: '/home/test/live-collab/toko-demo'
+      folder: '/home/test/live-collab/toko-demo',
+      previousFolder: null
     })
+  })
+
+  it('stops the old sync and moves a leftover folder aside before syncing, so stale files never upload', async () => {
+    respond(200, { workspace: 'toko-demo', member: 'D', role: 'coder', invite })
+    mocks.moveAsideOldFolder.mockReturnValueOnce('/home/test/live-collab/toko-demo.old-1')
+    const result = await joinWithCode('K7QM-3XPA', SERVER)
+    expect(mocks.moveAsideOldFolder).toHaveBeenCalledWith('/home/test/live-collab/toko-demo')
+    const stopped = mocks.stopSyncAgent.mock.invocationCallOrder[0]!
+    const moved = mocks.moveAsideOldFolder.mock.invocationCallOrder[0]!
+    expect(stopped).toBeLessThan(moved)
+    expect(moved).toBeLessThan(mocks.startSyncAgent.mock.invocationCallOrder[0]!)
+    expect(result.previousFolder).toBe('/home/test/live-collab/toko-demo.old-1')
+  })
+
+  it('keeps the old folder when the server refuses the code', async () => {
+    respond(409, { error: { code: 'CONFLICT', message: 'This code was already used by Budi. Ask the owner for a new code.' } })
+    await expect(joinWithCode('K7QM-3XPA', SERVER, 'Eve', 'pm')).rejects.toThrow(/already used by Budi/)
+    expect(mocks.moveAsideOldFolder).not.toHaveBeenCalled()
   })
 
   it('sends the name and role that an open code needs', async () => {
@@ -109,6 +141,12 @@ describe('joinWithCode', () => {
         body: JSON.stringify({ code: 'K7QM-3XPA', name: 'Sari', role: 'pm' })
       })
     )
+  })
+
+  it('saves a PM as a PM, so the app titles the workspace with the right role', async () => {
+    respond(200, { workspace: 'toko-demo', member: 'E', role: 'pm', invite })
+    await joinWithCode('K7QM-3XPA', SERVER, 'Sari', 'pm')
+    expect(mocks.saveRadarConnection).toHaveBeenCalledWith(expect.objectContaining({ role: 'pm' }))
   })
 
   it('an owner code saves a Mission Control connection and does not sync files (D-alief-11)', async () => {
@@ -134,7 +172,8 @@ describe('joinWithCode', () => {
     expect(result).toEqual({
       connection: expect.objectContaining({ role: 'mc' }),
       role: 'mc',
-      folder: null
+      folder: null,
+      previousFolder: null
     })
   })
 
@@ -187,5 +226,48 @@ describe('createJoinCode', () => {
         body: JSON.stringify({})
       })
     )
+  })
+})
+
+describe('serverOrigin', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  it('uses LIVE_COLLAB_SERVER instead of the deployed server, but keeps a typed server', () => {
+    vi.stubEnv('LIVE_COLLAB_SERVER', 'http://localhost:8787')
+    expect(serverOrigin('https://live-collab.afindo-mi01.workers.dev')).toBe('http://localhost:8787')
+    expect(serverOrigin(undefined)).toBe('http://localhost:8787')
+    expect(serverOrigin(SERVER)).toBe(SERVER)
+  })
+
+  it('falls back to the deployed server without LIVE_COLLAB_SERVER', () => {
+    vi.stubEnv('LIVE_COLLAB_SERVER', '')
+    expect(serverOrigin('')).toBe('https://live-collab.afindo-mi01.workers.dev')
+  })
+})
+
+describe('resumeMemberSync', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('resumes a PM as well as a coder after a restart', () => {
+    mocks.existsSync.mockReturnValue(true)
+    for (const role of ['coder', 'pm'] as const) {
+      mocks.startSyncAgent.mockClear()
+      mocks.readRadarConnection.mockReturnValue({ server: SERVER, workspace: 'toko-demo', member: 'C', role })
+      resumeMemberSync()
+      expect(mocks.startSyncAgent, role).toHaveBeenCalledWith('toko-demo', null)
+    }
+    mocks.existsSync.mockReturnValue(false)
+  })
+
+  it('leaves the owner to its own folder and skips a folder that is gone', () => {
+    mocks.readRadarConnection.mockReturnValue({ server: SERVER, workspace: 'w', member: null, role: 'mc' })
+    mocks.existsSync.mockReturnValue(true)
+    resumeMemberSync()
+    mocks.readRadarConnection.mockReturnValue({ server: SERVER, workspace: 'w', member: 'B', role: 'coder' })
+    mocks.existsSync.mockReturnValue(false)
+    resumeMemberSync()
+    expect(mocks.startSyncAgent).not.toHaveBeenCalled()
   })
 })

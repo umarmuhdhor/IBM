@@ -32,6 +32,9 @@ import {
   saveRadarConnection
 } from './secure-store'
 import { startSyncAgent } from './sync-agent'
+import { readableOrThrow, refuseBroadFolder } from './share-folder-guard'
+import { serverFetch } from './server-fetch'
+import { readProfileName, saveProfileName } from './profile-name'
 
 // D-alief-12: the owner opens a folder on their own Mac, and that folder becomes the workspace.
 // The app uploads it with the Mission Control token, then syncs the same folder as member A.
@@ -41,18 +44,28 @@ export const MAX_SHARED_FILES = 3000
 
 export type FolderFile = { path: string; content: string }
 
-/** Files the sync agent would sync: root .gitignore plus R5 §6 defaults, text only, 1 MB each. */
-export function collectFolderFiles(root: string): { files: FolderFile[]; skipped: number } {
-  let gitignore = ''
+function readGitignore(dir: string): string | null {
   try {
-    gitignore = readFileSync(join(root, '.gitignore'), 'utf8')
+    return readFileSync(join(dir, '.gitignore'), 'utf8')
   } catch {
-    // No .gitignore: defaults only.
+    return null
   }
-  const matcher = createIgnoreMatcherFromText(gitignore)
+}
+
+/** Files the sync agent would sync: every .gitignore plus R5 §6 defaults, text only, 1 MB each. */
+export function collectFolderFiles(root: string): { files: FolderFile[]; skipped: number } {
+  const gitignore = readGitignore(root) ?? ''
+  const nested: Record<string, string> = {}
+  let matcher = createIgnoreMatcherFromText(gitignore)
   const files: FolderFile[] = []
   let skipped = 0
   const walk = (relDir: string): void => {
+    // Why: a folder's own .gitignore applies to everything below it (D-alief-16).
+    const own = relDir ? readGitignore(join(root, relDir)) : null
+    if (own !== null) {
+      nested[relDir] = own
+      matcher = createIgnoreMatcherFromText(gitignore, nested)
+    }
     const entries = readdirSync(join(root, relDir), { withFileTypes: true }).sort((a, b) =>
       a.name.localeCompare(b.name)
     )
@@ -149,7 +162,7 @@ function saveOwnerFolder(value: OwnerFolder): void {
   writeFileSync(ownerFolderPath(), JSON.stringify(value))
 }
 
-/** One-click sharing asks for no name: git's user.name, else the macOS account name. */
+/** First share without a saved name: git's user.name, else the macOS account name. */
 export async function ownerName(folder: string): Promise<string> {
   const git = await runProcess({
     program: 'git',
@@ -177,19 +190,23 @@ export async function shareFolder(
   roleInput: unknown,
   serverInput: unknown
 ): Promise<RadarOpenFolderResult> {
+  refuseBroadFolder(folder)
   if (!existsSync(folder) || !statSync(folder).isDirectory()) {
     throw new Error('That folder no longer exists.')
   }
-  const typed = typeof nameInput === 'string' ? nameInput.trim().slice(0, 100) : ''
-  const name = typed || (await ownerName(folder))
+  const name =
+    saveProfileName(nameInput) ??
+    readProfileName() ??
+    saveProfileName(await ownerName(folder)) ??
+    'Owner'
   const role: RadarJoinRole = roleInput === 'pm' ? 'pm' : 'coder'
   requireOsEncryption()
   const current = readRadarConnection()
   const server = current?.role === 'mc' ? new URL(current.server).origin : serverOrigin(serverInput)
-  const { files, skipped } = collectFolderFiles(folder)
+  const { files, skipped } = readableOrThrow(() => collectFolderFiles(folder))
   const workspace = workspaceNameFor(folder)
 
-  const opened = await fetch(`${server}/v1/workspace/open`, {
+  const opened = await serverFetch(`${server}/v1/workspace/open`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -203,7 +220,7 @@ export async function shareFolder(
   }
   const res = OpenWorkspaceRes.parse(await opened.json())
   for (const batch of batchFolderFiles(files)) {
-    const uploaded = await fetch(`${server}/v1/workspace/files`, {
+    const uploaded = await serverFetch(`${server}/v1/workspace/files`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${res.mcToken}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ headCommit: null, files: batch }),
@@ -250,7 +267,7 @@ export async function stopSharing(): Promise<void> {
   if (!connection || connection.role !== 'mc') {
     throw new Error('Only the workspace owner can stop sharing.')
   }
-  const response = await fetch(new URL('/v1/workspace/close', connection.server).toString(), {
+  const response = await serverFetch(new URL('/v1/workspace/close', connection.server).toString(), {
     method: 'POST',
     headers: { Authorization: `Bearer ${connection.token}` },
     signal: AbortSignal.timeout(15_000)

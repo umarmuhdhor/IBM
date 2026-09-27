@@ -22,12 +22,12 @@ export async function verifyHeadCommit(c: GithubRefCheck): Promise<void> {
   try {
     res = await (c.fetchImpl ?? fetch)(url, { headers, signal: AbortSignal.timeout(GITHUB_TIMEOUT_MS) });
   } catch (err) {
-    throw new RadarError(422, 'VALIDATION', `GitHub tidak bisa dihubungi untuk memeriksa headCommit (${err instanceof Error ? err.message : 'network error'}).`);
+    throw new RadarError(422, 'VALIDATION', `Cannot reach GitHub to check headCommit (${err instanceof Error ? err.message : 'network error'}).`);
   }
   if (!res.ok) throw new RadarError(422, 'VALIDATION', `GitHub menolak pemeriksaan headCommit (HTTP ${res.status}).`);
   const body = (await res.json()) as { object?: { sha?: unknown } };
   const sha = typeof body.object?.sha === 'string' ? body.object.sha : '';
   if (c.headCommit.length < 7 || !sha.startsWith(c.headCommit)) {
-    throw new RadarError(409, 'CONFLICT', `headCommit ${c.headCommit} bukan HEAD ${c.branch} di GitHub (${sha.slice(0, 7) || 'tidak ada'}).`);
+    throw new RadarError(409, 'CONFLICT', `headCommit ${c.headCommit} is not the HEAD of ${c.branch} on GitHub (${sha.slice(0, 7) || 'none'}).`);
   }
 }

@@ -1,4 +1,4 @@
-import { ipcMain, app, shell } from 'electron'
+import { ipcMain, app, clipboard, shell } from 'electron'
 import { existsSync } from 'node:fs'
 import { AdminJoinCodeRes, decodeInvite, ErrorRes, JoinRes, normalizeJoinCode } from '@radar/common'
 import { runProcess } from '../../shared/child-process/run-process'
@@ -9,6 +9,7 @@ import {
   type RadarJoinResult
 } from '../../shared/radar-join'
 import { startClient } from './connection-ipc'
+import { moveAsideOldFolder } from './join-folder'
 import { ensureNodeForBob } from './node-shim'
 import {
   getRadarConnectionSummary,
@@ -17,9 +18,17 @@ import {
   saveRadarConnection
 } from './secure-store'
 import { getSyncStatus, startSyncAgent, stopSyncAgent, workspaceFolder } from './sync-agent'
+import { serverFetch } from './server-fetch'
+import { readProfileName, saveProfileName } from './profile-name'
 
+/**
+ * The renderer always sends DEFAULT_RADAR_SERVER. LIVE_COLLAB_SERVER (e.g. http://localhost:8787 for
+ * `pnpm -C radar dev:server`) replaces it, so dev and e2e runs never touch the deployed server.
+ */
 export function serverOrigin(value: unknown): string {
-  const raw = typeof value === 'string' && value.trim() ? value.trim() : DEFAULT_RADAR_SERVER
+  const typed = typeof value === 'string' ? value.trim() : ''
+  const fallback = process.env.LIVE_COLLAB_SERVER?.trim() || DEFAULT_RADAR_SERVER
+  const raw = typed && typed !== DEFAULT_RADAR_SERVER ? typed : fallback
   const url = new URL(raw)
   if (url.protocol !== 'http:' && url.protocol !== 'https:') {
     throw new Error('Invalid Live Collab server URL')
@@ -49,12 +58,12 @@ export async function joinWithCode(
   if (!code) {
     throw new Error('A join code looks like K7QM-3XPA.')
   }
-  const name = typeof nameInput === 'string' ? nameInput.trim().slice(0, 100) : ''
+  const name = saveProfileName(nameInput) ?? ''
   const role = roleInput === 'pm' ? 'pm' : 'coder'
   const server = serverOrigin(serverInput)
   // Why: redeeming rotates the member's token, so fail before that if the new one cannot be stored.
   requireOsEncryption()
-  const response = await fetch(`${server}/v1/join`, {
+  const response = await serverFetch(`${server}/v1/join`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(name ? { code, name, role } : { code }),
@@ -68,16 +77,19 @@ export async function joinWithCode(
     return connectOwner(server, res.workspace, res.token)
   }
   const invite = decodeInvite(res.invite)
-  // Why: the app's connection model knows coder and mc only; a PM member uses the member socket too.
+  // Why: a PM uses the member socket too; the saved role only titles the workspace.
   const connection: RadarConnection = {
     server: `${new URL(invite.server).origin}/`,
     workspace: invite.workspace,
     member: invite.member,
-    role: 'coder',
+    role: res.role,
     token: invite.token
   }
   saveRadarConnection(connection)
   startClient(connection)
+  // Why: files left in an old ~/live-collab/<workspace> would upload into the owner's project (D-alief-14).
+  stopSyncAgent()
+  const previousFolder = moveAsideOldFolder(workspaceFolder(invite.workspace))
   startSyncAgent(invite.workspace, res.invite)
   await ensureNodeForBob().catch(() => undefined)
   const summary = getRadarConnectionSummary()
@@ -87,7 +99,8 @@ export async function joinWithCode(
   return {
     connection: summary,
     role: res.role,
-    folder: workspaceFolder(invite.workspace)
+    folder: workspaceFolder(invite.workspace),
+    previousFolder
   }
 }
 
@@ -107,7 +120,7 @@ function connectOwner(server: string, workspace: string, token: string): RadarJo
   if (!summary) {
     throw new Error('Connection could not be saved')
   }
-  return { connection: summary, role: 'mc', folder: null }
+  return { connection: summary, role: 'mc', folder: null, previousFolder: null }
 }
 
 /**
@@ -119,7 +132,7 @@ export async function createJoinCode(): Promise<RadarJoinCode> {
   if (!connection || connection.role !== 'mc') {
     throw new Error('Connect as Mission Control to make join codes.')
   }
-  const response = await fetch(new URL('/v1/join-codes', connection.server).toString(), {
+  const response = await serverFetch(new URL('/v1/join-codes', connection.server).toString(), {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${connection.token}`,
@@ -156,19 +169,21 @@ async function openInBob(): Promise<string | null> {
   })
 }
 
-export function registerRadarJoinIpc(): void {
-  // A member connection made earlier resumes syncing its folder once Electron is ready.
-  void app.whenReady().then(() => {
-    try {
-      const saved = readRadarConnection()
-      if (saved && saved.role === 'coder' && existsSync(workspaceFolder(saved.workspace))) {
-        startSyncAgent(saved.workspace, null)
-      }
-    } catch (error) {
-      // A locked keychain must not prevent the app from starting.
-      console.warn('[radar] could not resume sync:', error instanceof Error ? error.message : error)
+/** A coder or PM connection made earlier resumes syncing its folder; the owner resumes in open-folder. */
+export function resumeMemberSync(): void {
+  try {
+    const saved = readRadarConnection()
+    if (saved && saved.role !== 'mc' && existsSync(workspaceFolder(saved.workspace))) {
+      startSyncAgent(saved.workspace, null)
     }
-  })
+  } catch (error) {
+    // A locked keychain must not prevent the app from starting.
+    console.warn('[radar] could not resume sync:', error instanceof Error ? error.message : error)
+  }
+}
+
+export function registerRadarJoinIpc(): void {
+  void app.whenReady().then(resumeMemberSync)
   app.on('before-quit', () => stopSyncAgent())
   ipcMain.handle('radar:join-with-code', (_event, value: unknown) => {
     const field = (key: string): unknown =>
@@ -178,8 +193,16 @@ export function registerRadarJoinIpc(): void {
     return joinWithCode(field('code'), field('server'), field('name'), field('role'))
   })
   ipcMain.handle('radar:create-join-code', () => createJoinCode())
+  ipcMain.handle('radar:profile-name', () => readProfileName())
   ipcMain.handle('radar:sync-status', () => getSyncStatus())
   ipcMain.handle('radar:open-in-bob', () => openInBob())
+  // Why: navigator.clipboard rejects while the window is unfocused, e.g. right after the folder picker.
+  ipcMain.handle('radar:copy-text', (_event, text: unknown) => {
+    if (typeof text !== 'string' || text.length === 0 || text.length > 200) {
+      throw new Error('Nothing to copy.')
+    }
+    clipboard.writeText(text)
+  })
   ipcMain.handle('radar:show-folder', () => {
     const folder = getSyncStatus().folder
     return folder ? shell.openPath(folder) : Promise.resolve('Join a workspace first.')

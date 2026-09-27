@@ -10,13 +10,23 @@ export type RadarSyncStatus = {
   folder: string | null
   files: number | null
   message: string | null
+  /** Files whose local copy differed from the server; each is kept as `<path>.radar-conflict` (D-alief-14). */
+  conflicts: string[]
+  /** Why sync ended for good, from the CLI's `stopped` line (D-alief-15); null while running or after a crash. */
+  stopReason: RadarSyncStopReason | null
+  /** Why the last local change was not sent (PM read-only, file held by a task, too large); kept as `.radar-rejected`. */
+  rejected?: string | null
 }
+
+export type RadarSyncStopReason = 'workspace-closed' | 'signed-out' | 'replaced' | 'rejected'
 
 export type RadarJoinResult = {
   connection: RadarConnectionSummary
   /** 'mc' after an owner code (D-alief-11); Mission Control has no synced folder. */
   role: 'coder' | 'pm' | 'mc'
   folder: string | null
+  /** Where a leftover folder of the same workspace was moved before joining (D-alief-14). */
+  previousFolder: string | null
 }
 
 /** `member` is null for an open code: whoever uses it first joins with their own name and role. */

@@ -49,7 +49,10 @@ export const AdminJoinCodeRes = z.object({
 });
 export type AdminJoinCodeRes = z.infer<typeof AdminJoinCodeRes>;
 
-/** `name` and `role` are required for an open code and ignored for a code that already belongs to a member. */
+/**
+ * `name` and `role` are required for an open code. Once an open code created its member, only that member (same
+ * `name`, any case) may redeem it again; anyone else gets 409 (D-alief-13). Owner and admin member codes ignore them.
+ */
 export const JoinReq = z.object({
   code: z.string().min(1).max(32),
   name: z.string().trim().min(1).max(100).optional(),
