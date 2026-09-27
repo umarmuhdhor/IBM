@@ -100,6 +100,11 @@ vi.mock('./useWorkspaceBoardPanel', () => ({
   })
 }))
 
+// The sidebar's Multiplayer card reads the radar preload bridge, which happy-dom lacks.
+vi.mock('@/components/radar/use-radar-session', () => ({
+  useRadarSession: () => ({ connection: null, setConnection: vi.fn() })
+}))
+
 import Sidebar from './index'
 
 function setSidebarState(settings: GlobalSettings, statusBarVisible = true): void {
