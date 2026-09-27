@@ -1,6 +1,6 @@
 # Log fase 10 — Integrasi E2E, bagian Lane Umar · Bob
 
-- **Status:** [~] bagian otomatis lane Bob selesai (kit Bob melawan Worker asli: test integrasi + 7 sesi Bob IDE, termasuk review fase 06). Sisa: milestone 4 Mac (LANGKAH MANUAL, Sab 23:00).
+- **Status:** [x] ditutup Min 27 Sep 01:25 WITA atas keputusan Umar. Bagian otomatis lane Bob selesai (test integrasi + 7 sesi Bob IDE vs Worker asli). Milestone 4 Mac **tidak dijalankan/tercatat**; checklist di bawah dipakai untuk gladi fase 14.
 - **Mulai:** Sab 26 Sep 2026 16:18 WITA (PR #13 fase 05 merge 16:15) · branch `lane/bob` di atas `main` 1aa25d54.
 - **Model:** Claude Opus 5.5.
 - File log terpisah dari `fase-10.md` supaya PR tiap lane tidak bentrok (D-umar-04). Simulator `sim-3pc` = Lane Alief.
@@ -20,7 +20,8 @@
 - [x] Kit `bob-kit/{coder,pm}/.bob` dibundel ulang dari `@radar/common` terbaru.
 - [x] Uji Bob IDE 2.2.0 melawan Worker lokal (tabel di bawah), bukti task 09–12.
 - [x] `TODO(sync` lane Bob = 0 (`mark_ai_edit` → komentar biasa + D-umar-04; `fake-radar` ditandai usang).
-- [ ] Milestone 4 Mac (LANGKAH MANUAL).
+- [ ] Milestone 4 Mac (LANGKAH MANUAL): tidak tercatat saat fase ditutup → pindah ke gladi fase 14.
+- [x] Sinkron setelah fase 12 (Min 01:20): route `POST /v1/ai-edits` sudah ada di Worker → komentar `mark_ai_edit` diperbarui, test integrasi kini menuntut **nol** baris "not sent" (sebelumnya 404 ai-edits ditoleransi), kit dibundel ulang dari `@radar/common` terbaru. hooks 48/48, mcp 48/48.
 - [x] Setelah fase 06 (#16, merge 18:12): test integrasi menambah `get_task_diff` (ekspor berubah + importer `Header.tsx` milik T-2) dan serah kunci `checkout.ts` ke B setelah approve; `pm-review` di Bob IDE (task 13–15). Push GitHub asli sudah dibuktikan Alief di fase 06 (`c0576499`); di sini `GITHUB_COMMIT=false`, commit lokal `pushed:false`.
 
 ## Uji Bob IDE melawan Worker asli (langkah 3)
