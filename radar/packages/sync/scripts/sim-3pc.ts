@@ -280,12 +280,12 @@ export async function runSim(opts: SimOptions): Promise<number> {
     const briefBResp = await http('GET', `/v1/brief?kind=prompt&since=${cursorB}`, { token: tokens.B });
     expectOk('decision', briefBResp.status === 200, `brief prompt: HTTP ${briefBResp.status}`);
     const briefB = needLines('decision', briefBResp.json.lines);
-    expectOk('decision', briefB.join('\n').includes('Keputusan PM'), 'B brief misses the decision');
+    expectOk('decision', briefB.join('\n').includes('PM decision'), 'B brief misses the decision');
     if (opts.until === 'decision') return await finish('decision');
 
     // 6–7. Review + commit: A changes the calculateTotal signature, submits; C reviews
     // setujui_beri_tahu + notify B; the member token cannot decide (403); mc approves → local commit,
-    // checkout.ts moves to T-2 (dipesan), B's brief carries the notice + Giliranmu.
+    // checkout.ts moves to T-2 (dipesan), B's brief carries the notice + "Your turn".
     const sigEdit = "export function calculateTotal(items: { price: number }[], shipping: number): number {\n  return items.reduce((sum, item) => sum + item.price, 0) + shipping;\n}\n";
     const sigCheck = await hookRun('A', 'lock_guard', [], prePayload(roots.A, CHECKOUT));
     expectOk('review', sigCheck.code === 0, `A signature edit blocked: ${sigCheck.stderr.slice(0, 160)}`);
@@ -314,7 +314,7 @@ export async function runSim(opts: SimOptions): Promise<number> {
     expectOk('review', briefB2Resp.status === 200, `brief prompt: HTTP ${briefB2Resp.status}`);
     const briefB2 = needLines('review', briefB2Resp.json.lines).join('\n');
     expectOk('review', briefB2.includes('calculateTotal(items, shipping) berubah.'), 'B brief misses the notify');
-    expectOk('review', briefB2.includes('Giliranmu'), 'B brief misses Giliranmu');
+    expectOk('review', briefB2.includes('Your turn'), 'B brief misses Your turn');
 
     return await finish('review');
 
