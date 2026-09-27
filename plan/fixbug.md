@@ -19,6 +19,24 @@ Rules for session B:
 
 (none yet)
 
+## Where to restart (stopped 27 Sep, 15:00 WITA)
+
+Session A stopped here on Alief's request. `lane/core` and `lane/core-f12k` are pushed at 03401731.
+
+State:
+- Prod live `0f415a37-afc4-45e1-beaa-7d7448afaaf0`, rollback `47e6cba5-ad94-42cb-8b58-3a0baaa73b8c`. It has everything up to d948fb06 except the app-only fix ffea1db3 and the CLI fix 569bd085 (those ship with the app build, not the server).
+- Prod workspace is the synthetic `k2` (owner `af`, teammate "E2E Budi"). E2E profiles and folders are in session 2a01b0f7's scratchpad `e2e/` folder (`profiles/O`, `profiles/B`, `work/k2`).
+- Session B was still working on bugs 5 and 6 in `/Users/af/dumpProject/IBM-12k-b` (`wip/core-12k-seats`); it had 6349c2db and 1408befc, not pushed yet.
+
+Next steps, in order:
+1. Wait for "B done" at the bottom of the worktree's `plan/fixbug.md`, then `git fetch origin` and cherry-pick B's commits onto `lane/core`. Run the common, server and sync tests and the app radar tests.
+2. Deploy with `pnpm -C radar --filter "@radar/server^..." build && pnpm -C radar --filter @radar/server run deploy`, then run the canary. Rebuild the app with `pnpm -C app run build:radar-cli && pnpm -C app run build:electron-vite`.
+3. Start the e2e driver (`node driver.mjs` on :7788), launch O and B, and run the prod e2e for bugs 5 and 6: rejoin reuses the seat, remove member plus the calm notice, owner reclaim. Smoke-test bugs 1, 2, 4, 7, 8 and 9 again.
+4. UI gate on the Team view, verification-loop counts and a code review of B's commits. Fill the phase log and tick the boxes here.
+5. Refresh the snapshot (`git branch -f snap/core-f12k HEAD`, then push to `lane/core-f12k`), open the PR with `gh pr create --base main --head lane/core-f12k`, and bind it.
+6. Alief runs the bug 10 Bob IDE steps below.
+7. Finish: stop the apps and the driver, free ports 8787 and 7788, remove the e2e members and folders from prod, and write the final report.
+
 ## Bugs
 
 - [x] 1. Empty folders sync: they appear for teammates and are deleted for them too. D-alief-19. (55a2497f)
@@ -44,13 +62,13 @@ Rules for session B:
 
 - [x] ecc:silent-failure-hunter run.
 - [ ] **(B)** ecc:security-reviewer on bugs 5 and 6.
-- [ ] ecc:typescript-reviewer and ecc:react-reviewer on the phase diff; CRITICAL and HIGH findings fixed.
-- [ ] UI gate: screenshots from the prod-connected app, better-interface run, HIGH findings fixed.
+- [x] ecc:typescript-reviewer and ecc:react-reviewer on the phase diff; CRITICAL and HIGH findings fixed. (6af8ed58, e793ec36, ffea1db3)
+- [x] UI gate: screenshots from the prod-connected app, better-interface run, HIGH findings fixed. (d948fb06; table in the phase log). Redo for the bug 5/6 Team view after the cherry-pick.
 - [ ] App rebuilt; server deployed; canary passes (health, `/j/<code>`, radar-cli.tgz, WebSocket).
 - [ ] Full two-app e2e on prod.
-- [ ] ecc:verification-loop counts and /ecc:code-review.
-- [ ] Phase log `plan/log/fase-12k-*.md` with the prod version and rollback ID.
-- [ ] Snapshot branch `lane/core-f12k` pushed, PR opened and bound.
+- [ ] ecc:verification-loop counts and /ecc:code-review. Done for session A's commits (APPROVE, 569bd085); redo counts and review B's commits after the cherry-pick.
+- [ ] Phase log `plan/log/fase-12k-bugfix.md` with the prod version and rollback ID. Draft committed; fill bug 5/6, final live ID, Batasan.
+- [ ] Snapshot branch `lane/core-f12k` pushed (03401731), PR opened and bound. Pushed; PR not opened yet.
 
 ## Finish
 
