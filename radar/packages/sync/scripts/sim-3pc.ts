@@ -304,9 +304,10 @@ export async function runSim(opts: SimOptions): Promise<number> {
     });
     expectOk('review', review.status === 201, `propose review: ${review.status} ${JSON.stringify(review.json).slice(0, 160)}`);
     const reviewId = needStr('review', review.json.proposalId, 'review proposalId');
-    for (const tok of [tokens.C!, tokens.A!]) {
+    // D-umar-08: the PM and Mission Control decide; a coder may not.
+    for (const tok of [tokens.A!]) {
       const denied = await http('POST', `/v1/proposals/${reviewId}/decision`, { token: tok, body: { approve: true } });
-      expectOk('review', denied.status === 403, `member decision should be 403, got ${denied.status}`);
+      expectOk('review', denied.status === 403, `coder decision should be 403, got ${denied.status}`);
     }
     const approve = await http('POST', `/v1/proposals/${reviewId}/decision`, { token: tokens.mc, body: { approve: true } });
     expectOk('review', approve.status === 200 && approve.json.status === 'disetujui', `mc approve: HTTP ${approve.status} ${JSON.stringify(approve.json).slice(0, 160)}`);

@@ -8,6 +8,7 @@ import {
   createIgnoreMatcherFromText,
   feedText,
   initialState,
+  isPmDocPath,
   MAX_FILE_BYTES,
   normalizeRelative,
   parseRadarEvent,
@@ -302,7 +303,11 @@ export class MockHub {
       throw err;
     }
     if (path === '' || this.isIgnored(path)) return { path, decision: 'allow', reason: 'ignored_path' };
-    if (p.role === 'pm') return { path, decision: 'block', reason: 'pm_readonly' };
+    // D-umar-07: a PM may add documents (no lock); anything else stays read-only.
+    if (p.role === 'pm') {
+      if (!isPmDocPath(path)) return { path, decision: 'block', reason: 'pm_readonly' };
+      return this.state.locks[path] ? { path, decision: 'block', reason: 'held_by_other' } : { path, decision: 'allow', reason: 'pm_doc' };
+    }
 
     const lock = this.state.locks[path];
     if (!lock) {
