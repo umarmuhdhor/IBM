@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Store } from '../persistence'
 
+vi.mock('../../shared/radar-product-trim', () => import('../../shared/radar-product-trim-off'))
+
 const {
   onMock,
   removeAllListenersMock,

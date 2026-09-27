@@ -33,6 +33,8 @@ vi.mock('electron', () => ({
 
 import { getNextDefaultOnAppearanceSettingValue, registerAppMenu } from './register-app-menu'
 
+vi.mock('../../shared/radar-product-trim', () => import('../../shared/radar-product-trim-off'))
+
 const isMac = process.platform === 'darwin'
 
 function buildMenuOptions() {

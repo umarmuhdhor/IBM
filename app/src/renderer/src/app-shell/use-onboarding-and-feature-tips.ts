@@ -12,6 +12,7 @@ import {
 } from '../components/feature-tips/feature-tip-telemetry'
 import { useAppStore } from '../store'
 import type { OnboardingState } from '../../../shared/onboarding-state-types'
+import { RADAR_HIDDEN_SURFACES } from '../../../shared/radar-product-trim'
 
 export type OnboardingGate = ReturnType<typeof useOnboardingAndFeatureTips>
 
@@ -108,7 +109,7 @@ export function useOnboardingAndFeatureTips() {
       return
     }
 
-    if (featureTipsDecision.kind !== 'open') {
+    if (featureTipsDecision.kind !== 'open' || RADAR_HIDDEN_SURFACES.featureTips) {
       return
     }
 

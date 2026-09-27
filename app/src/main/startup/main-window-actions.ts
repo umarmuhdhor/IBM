@@ -20,6 +20,7 @@ import {
   presentRendererRecoveryPrompt,
   type RendererRecoveryPromptFailure
 } from '../window/renderer-recovery-prompt'
+import { RADAR_AUTO_UPDATE_DISABLED } from '../../shared/radar-product-trim'
 
 // The window module injects this callback to avoid a cycle between actions and lifecycle code.
 let openWindow: (options?: { revealOnDidFinishLoad?: boolean }) => BrowserWindow
@@ -71,6 +72,9 @@ export function quitFromSystemTray(): void {
 }
 
 export function runUserInitiatedUpdateCheck(options?: UpdateCheckOptions): void {
+  if (RADAR_AUTO_UPDATE_DISABLED) {
+    return
+  }
   ensureAutoUpdaterConfigured()
   checkForUpdatesFromMenu(options)
 }

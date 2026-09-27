@@ -41,7 +41,7 @@ export function createGpuAccelerationAboutPanelOptions({
   gpuFeatureStatus
 }: GpuAccelerationAboutPanelOptions): Electron.AboutPanelOptionsOptions {
   const status = `GPU acceleration: ${describeGpuAcceleration(gpuFeatureStatus, gpuFallbackActive)}`
-  const credits = appName.startsWith('IBM Bob Live Collab')
+  const credits = appName.includes('Live Collab')
     ? `${status}\nBuilt on Orca by Stably AI (MIT)`
     : status
   return {

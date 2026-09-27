@@ -4,8 +4,8 @@ import { getDevInstanceIdentity, shouldApplyPreReadyAppName } from './dev-instan
 describe('dev-instance-identity', () => {
   it('keeps packaged identity stable', () => {
     expect(getDevInstanceIdentity(false, {})).toMatchObject({
-      name: 'IBM Bob Live Collab',
-      appName: 'IBM Bob Live Collab',
+      name: 'Live Collab',
+      appName: 'Live Collab',
       isDev: false,
       devLabel: null,
       dockBadgeLabel: null,
@@ -22,7 +22,7 @@ describe('dev-instance-identity', () => {
     // ...but the Keychain-driving appName is identical and distinct from prod.
     expect(a.appName).toBe('IBM Bob Live Collab Dev')
     expect(b.appName).toBe('IBM Bob Live Collab Dev')
-    expect(a.appName).not.toBe('IBM Bob Live Collab')
+    expect(a.appName).not.toBe('Live Collab')
   })
 
   it('never renames a packaged build before ready', () => {
@@ -50,7 +50,7 @@ describe('dev-instance-identity', () => {
       devWorktreeName: 'dev-indicator',
       devRepoRoot: '/repo/worktrees/dev-indicator'
     })
-    expect(identity.name).toBe('IBM Bob Live Collab: nwparker/dev-indicator')
+    expect(identity.name).toBe('Live Collab: nwparker/dev-indicator')
     expect(identity.dockBadgeLabel).toBeNull()
     expect(identity.appUserModelId).toMatch(/^dev\.livecollab\.app\.dev\.[a-f0-9]{10}$/)
   })
@@ -63,7 +63,7 @@ describe('dev-instance-identity', () => {
     })
 
     expect(identity.devLabel).toBe('payment-ui @ feature/billing-shell')
-    expect(identity.name).toBe('IBM Bob Live Collab: feature/billing-shell')
+    expect(identity.name).toBe('Live Collab: feature/billing-shell')
     expect(identity.dockBadgeLabel).toBeNull()
   })
 
@@ -75,7 +75,7 @@ describe('dev-instance-identity', () => {
     })
 
     expect(identity.devLabel).toBe('manual label')
-    expect(identity.name).toBe('IBM Bob Live Collab: feature/other')
+    expect(identity.name).toBe('Live Collab: feature/other')
     expect(identity.dockBadgeLabel).toBeNull()
   })
 })

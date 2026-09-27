@@ -19,6 +19,7 @@ import { translate } from '@/i18n/i18n'
 import { resolveLeftSidebarStyleVariables } from '@/lib/left-sidebar-appearance'
 import { useSystemPrefersDark } from '../terminal-pane/use-system-prefers-dark'
 import { useAppStore } from '@/store'
+import { RADAR_HIDDEN_SURFACES } from '../../../../shared/radar-product-trim'
 
 type NavSection = {
   id: string
@@ -169,7 +170,9 @@ export function SettingsSidebar({
   // Why: "Hide from sidebar" only hides the top-left app sidebar prompt;
   // Settings should remain a stable place to reopen the checklist.
   const showSetupGuideTopRow =
-    setupGuideProgress.ready && setupGuideProgress.doneCount < setupGuideProgress.total
+    !RADAR_HIDDEN_SURFACES.setupGuideSidebarEntry &&
+    setupGuideProgress.ready &&
+    setupGuideProgress.doneCount < setupGuideProgress.total
   const navItemClassName = (isActive: boolean): string =>
     cn(
       'flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-left text-[13px] outline-none transition-colors duration-150 focus-visible:ring-[3px] focus-visible:ring-worktree-sidebar-ring/50',

@@ -131,10 +131,8 @@ export default function Landing(): React.JSX.Element {
     <div className="absolute inset-0 flex items-center justify-center bg-background">
       <div className="w-full max-w-lg px-6">
         <div className="flex flex-col items-center gap-4 py-8">
-          <LiveCollabMark />
-          <h1 className="text-4xl font-bold text-foreground tracking-tight">
-            IBM Bob Live Collab
-          </h1>
+          <LiveCollabMark className="text-foreground" />
+          <h1 className="text-4xl font-bold text-foreground tracking-tight">Live Collab</h1>
 
           {preflightIssues.length > 0 && <PreflightBanner issues={preflightIssues} repos={repos} />}
 

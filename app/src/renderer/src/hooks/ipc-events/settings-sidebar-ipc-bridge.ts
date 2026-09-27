@@ -5,6 +5,7 @@ import { subscribeToUnpairedDeviceAuthNotification } from '../unpaired-device-au
 import { translate } from '@/i18n/i18n'
 import { toast } from 'sonner'
 import { useAppStore } from '../../store'
+import { RADAR_HIDDEN_SURFACES } from '../../../../shared/radar-product-trim'
 
 function getShortcutPlatform(): NodeJS.Platform {
   if (navigator.userAgent.includes('Mac')) {
@@ -89,6 +90,9 @@ export function registerSettingsAndSidebarIpcBridge(unsubs: (() => void)[]): voi
 
   unsubs.push(
     window.api.ui.onOpenFeatureTour(() => {
+      if (RADAR_HIDDEN_SURFACES.featureWall) {
+        return
+      }
       useAppStore.getState().openModal('feature-wall', { source: 'help_menu' })
     })
   )

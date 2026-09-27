@@ -1,11 +1,11 @@
-import bobLogoUrl from '../../../../../resources/app-icons/bob-live-collab.png?url'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/store'
 import { useRadarStore } from '@/store/radar-store'
 import { getRadarViewModel } from './radar-view-model'
 import { toggleLiveCollabPage } from './live-collab-page-store'
+import { LiveCollabMark } from './LiveCollabMark'
 
-/** One sidebar entry under Orca Mobile; the Live Collab page's own tab bar is the only section nav. */
+/** One sidebar entry below Search; the Live Collab page's own tab bar is the only section nav. */
 export function LiveCollabSidebarButton(): React.JSX.Element {
   const active = useAppStore((s) => s.activeView === 'live-collab')
   const needsYou = useRadarStore((s) => (s.state ? getRadarViewModel(s.state).needsYou : 0))
@@ -22,12 +22,7 @@ export function LiveCollabSidebarButton(): React.JSX.Element {
           : 'text-worktree-sidebar-foreground/60 hover:bg-worktree-sidebar-foreground/8'
       )}
     >
-      <img
-        src={bobLogoUrl}
-        alt=""
-        className={cn('size-4 shrink-0 object-contain', !active && 'opacity-60')}
-        draggable={false}
-      />
+      <LiveCollabMark className="size-4" />
       <span className="min-w-0 flex-1 truncate">Live Collab</span>
       {needsYou > 0 ? (
         <span

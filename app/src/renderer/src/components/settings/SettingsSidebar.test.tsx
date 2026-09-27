@@ -18,6 +18,11 @@ vi.mock('@/hooks/useShortcutLabel', () => ({
   useShortcutKeyComboDetails: () => [{ keys: ['⌘', 'F'], doubleTap: false }]
 }))
 
+vi.mock(
+  '../../../../shared/radar-product-trim',
+  () => import('../../../../shared/radar-product-trim-off')
+)
+
 vi.mock('./settings-setup-guide-progress', () => ({
   useSettingsSetupGuideProgress: mocks.useSettingsSetupGuideProgress
 }))
