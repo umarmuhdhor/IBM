@@ -1,127 +1,319 @@
+<div align="center">
+
+<img src=".github/readme/banner.png" width="100%" alt="IBM Bob Live Collab: your team's Bobs, one repo. The session replay, the desktop app's Tasks board, and a locked code block where Budi's Bob is blocked and queued." />
+
 # IBM Bob Live Collab
 
-Multiplayer for IBM Bob: every teammate keeps their own Bob account, and the whole team works in one live workspace, like Google Docs.
+**Your team's Bobs, working together.**
 
-**Status: in development.** IBM Bob 2.0 Hackathon (lablab.ai), 25–27 Sep 2026.
-Community hackathon project, not an official IBM product.
+One live workspace for every teammate's IBM Bob. Shared locks, a queue, and a PM who approves before anything risky lands.
 
-## For judges
+[![IBM Bob 2.0 Hackathon](https://img.shields.io/badge/IBM%20Bob%202.0-Hackathon-0f62fe?style=flat-square)](https://lablab.ai) [![Bob IDE](https://img.shields.io/badge/runs%20in-IBM%20Bob%20IDE-0f62fe?style=flat-square)](#built-on-ibm-bob-primitives) [![Cloudflare Workers](https://img.shields.io/badge/server-Cloudflare%20Durable%20Objects-f38020?style=flat-square&logo=cloudflare&logoColor=white)](#architecture) [![MCP](https://img.shields.io/badge/radar--mcp-14%20tools-8a3ffc?style=flat-square)](#built-on-ibm-bob-primitives) [![Electron](https://img.shields.io/badge/app-Electron%20%2B%20React%2019-47848f?style=flat-square&logo=electron&logoColor=white)](#tech-stack) [![macOS](https://img.shields.io/badge/macOS-arm64-111111?style=flat-square&logo=apple&logoColor=white)](#quick-start)
 
-| What | Where |
-|---|---|
-| IBM Bob evidence (task summaries of all four members) | [`bob_sessions/INDEX.md`](bob_sessions/INDEX.md) |
-| How Bob built and powers the product | [`BOB_DEVELOPMENT.md`](BOB_DEVELOPMENT.md) |
-| Live Collab code (server, sync agent, Bob hooks, MCP, UI, web replay) | [`radar/`](radar/) |
-| Desktop app (Orca fork) | [`app/`](app/) |
-| Security rules | [`SECURITY.MD`](SECURITY.MD) |
+[**Landing page**](https://ibm-bob-live-collab.pages.dev) · [**Watch the replay**](https://ibm-bob-live-collab.pages.dev/demo/) · [**Download**](https://github.com/umarmuhdhor/IBM/releases) · [**Bob evidence**](bob_sessions/INDEX.md) · [**How Bob built it**](BOB_DEVELOPMENT.md)
 
-Install and demo instructions are added in phase 14.
+<br />
+
+<img src=".github/readme/lock-demo.gif" width="760" alt="Two Bob agents edit the same block. Alice's Bob holds the lock, Budi's Bob is blocked and queued, the PM approves the hand-off, and both edits land with zero merge conflicts." />
+
+<sub>Two Bobs reach for the same lines. The second one is blocked, queued, and gets the lock after a human PM approves.</sub>
+
+</div>
 
 ---
 
-## Dokumen tim (Bahasa Indonesia)
+| Where | Link |
+|---|---|
+| **Live site** | https://ibm-bob-live-collab.pages.dev |
+| **Session replay** (no login, no API key) | https://ibm-bob-live-collab.pages.dev/demo/ |
+| **Desktop app** | macOS arm64 `.dmg` from [GitHub Releases](https://github.com/umarmuhdhor/IBM/releases) |
+| **IBM Bob usage** | [`BOB_DEVELOPMENT.md`](BOB_DEVELOPMENT.md) and [`bob_sessions/`](bob_sessions/INDEX.md) |
+| **Event** | IBM Bob 2.0 Hackathon (lablab.ai), 25–27 Sep 2026 |
 
-> Multiplayer untuk IBM Bob: setiap anggota memakai akun Bob sendiri, tapi semua bekerja di satu workspace live seperti Google Docs. Dikirim sebagai app desktop macOS (fork [Orca](https://github.com/stablyai/orca)).
-> IBM Bob 2.0 Hackathon (lablab.ai) · Jum 25 Sep 23:00 → Min 27 Sep 23:00 WITA · community project, bukan produk resmi IBM.
+> Community hackathon project. Not an official IBM product.
 
-## Baca dengan urutan ini
+## Contents
 
-| # | File | Isi | Untuk siapa |
+- [The problem](#the-problem)
+- [What Live Collab does](#what-live-collab-does)
+- [See it work](#see-it-work)
+- [Built on IBM Bob primitives](#built-on-ibm-bob-primitives)
+- [Architecture](#architecture)
+- [Quick start](#quick-start)
+- [Run from source](#run-from-source)
+- [Repository map](#repository-map)
+- [Tech stack](#tech-stack)
+- [Security and privacy](#security-and-privacy)
+- [How IBM Bob built this project](#how-ibm-bob-built-this-project)
+- [Limits](#limits)
+- [Team](#team)
+- [Credits](#credits)
+
+## The problem
+
+IBM Bob is great for one developer. Put three developers, each with their own Bob, on the same repo, and things break:
+
+- Two Bobs edit the same file at the same time. One silently overwrites the other, or you get a merge conflict later.
+- Nobody can see what a teammate's Bob is doing right now.
+- An agent can plan work, but nobody decides who owns which file before the edits start.
+
+Git branches only find these problems after the fact. Live Collab stops them before the write happens.
+
+## What Live Collab does
+
+Every teammate keeps **their own Bob account, their own Bob IDE, and their own context**. Live Collab adds a shared layer between them, like Google Docs for a team of agents.
+
+| Feature | How |
+|---|---|
+| **One block, one Bob** | A `PreToolUse` hook checks a shared lock table before every write. A Bob holds a block of lines, or the whole file when it rewrites the file. Anyone else is blocked and queued. |
+| **A near-miss explains itself** | The blocked Bob calls `why_blocked` and tells its human, in one sentence, who holds the file and what to do next. Then it works on something else. |
+| **PM Bob proposes, a human decides** | The `pm-lead` mode can only read and propose. Plans, file conflicts and reviews land in **Needs you**, where a person clicks Approve or Deny. |
+| **Live file sync** | A sync agent streams every saved file to the shared room. Teammates see it on disk in under a second. |
+| **Watch a teammate's Bob** | Hook traces stream Bob's activity (tool calls, files, blocks) to the desktop app. Prompt text is shared only if the member opts in. |
+| **Tasks with steps** | The PM Bob splits the goal into tasks with 3–6 steps. Coders check steps off, and the PM board updates live. |
+| **Review, then commit** | The PM Bob reviews a task's diff and the files that import it. A human approves, and the server makes one commit per task, co-authored by IBM Bob. |
+
+Three words sum it up: **Visible** (every Bob shows its owner, file and last hook on one screen), **Locked** (a block has one holder, others queue), **Human-approved** (agents suggest, a person approves).
+
+## See it work
+
+The [replay](https://ibm-bob-live-collab.pages.dev/demo/) plays back a recorded session in the browser: three people, three Bobs, one `toko-demo` repo. From that session: **1** near-miss caught by a hook, **2** decisions shown to a human, **0** merge conflicts, **2.9 s** median time to a decision.
+
+<table>
+<tr>
+<td width="50%"><img src=".github/readme/replay-near-miss.png" alt="Replay, step 4: Budi's Bob is blocked on checkout.ts, queued at position 1, and keeps working on theme.css" /></td>
+<td width="50%"><img src=".github/readme/replay-commit.png" alt="Replay, step 5: Andi's task T-0 lands as one commit after the PM approves the review" /></td>
+</tr>
+<tr>
+<td><b>Near-miss.</b> Budi's Bob tries <code>apply_diff checkout.ts</code>. The hook blocks it, Budi is first in the queue, and his Bob moves on to <code>theme.css</code>.</td>
+<td><b>Commit.</b> The PM Bob reviewed task T-0, a human approved it, and it lands in git as one commit.</td>
+</tr>
+</table>
+
+<p align="center">
+<img src=".github/readme/app-pm-tasks.png" width="820" alt="Desktop app, Tasks tab: the PM sees each coder's task, its files, and step progress (Budi 2/5, Dewi 0/5)" />
+<br />
+<sub>The desktop app (an Orca fork). The PM sees every coder's task, its files and step progress, updated live.</sub>
+</p>
+
+## Built on IBM Bob primitives
+
+**IBM Bob IDE is the core of the product.** All AI work happens in each teammate's Bob IDE. The server never calls an LLM. Joining a workspace installs a `.bob/` kit ([`radar/bob-kit`](radar/bob-kit)) that turns Bob into a team player. ("Radar" is the internal name of the collab layer: `radar` CLI, `radar-mcp`.)
+
+### Custom modes
+
+| Mode | Slug | Tools | Job |
 |---|---|---|---|
-| 1 | [`PLAN.md`](PLAN.md) | **Mulai di sini.** Feasibility, 4 lane, branch, cara jalan dengan ECC, jadwal, bukti Bob, Bobcoin | semua (kirim ke teman) |
-| 2 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | **Arsitektur 1 halaman:** diagram, tech stack, hosting (Cloudflare Workers + Pages, gratis, tanpa VPS), 5 alur utama | semua |
-| 3 | [`PRD.md`](PRD.md) | Produk: masalah, requirement (P0/P1), arsitektur, API, naskah video ≤ 3 menit, risiko | semua |
-| 4 | [`DESIGN.md`](DESIGN.md) | Desain: token warna, font, komponen, wireframe tiap layar, peta integrasi Orca | Aarief & Imelda, juga Alief/Umar untuk UI |
-| 5 | [`prompt_ui.md`](prompt_ui.md) | Prompt generate gambar mockup (11 layar) | Aarief |
-| 6 | [`plan/`](plan/README.md) | Detail teknis per fase + satu prompt eksekusi (`plan/PROMPT.md`) + kontrak `plan/ref/` | AI masing-masing lane |
-| – | [`UI Inspo & Design/`](UI%20Inspo%20%26%20Design) | Inspirasi (Orca, Amoeba, Mosaic) + mockup Stitch. **Hanya pedoman**, gaya app mengikuti Orca (DESIGN.md §0). | Aarief |
-| – | `app/` | Kode app desktop = Orca (stablyai/orca@bf40d35, MIT). Node 24 + pnpm 12: `pnpm -C app install && pnpm -C app dev` | Lane Aarief |
-| – | `CLAUDE.md` / `AGENTS.md` | Aturan otomatis untuk AI (lane, skill, gerbang UI, larangan nama file). Dibaca Claude Code/Bob setiap sesi. | semua |
-| – | `.claude/` | Skill & agent bersama: `live-collab-app`, `electron-automation`, `electron-pro`, skill UI (`apple-design`, `better-interface` + `better-*`, `emil-design-eng`, `review-animations`), `brag-slim` (PLAN.md §11) | semua |
-| – | [`plan/VERIFY_PROMPT.md`](plan/VERIFY_PROMPT.md) | Master prompt untuk AI lain: baca dan verifikasi seluruh plan (read-only) | siapa saja |
-| – | [`DATA_SOURCES.md`](DATA_SOURCES.md) | Daftar sumber data (wajib menurut guide). Semua data kita sintetis. | semua |
-| – | [`media-references/`](media-references/README.md) | Tautan referensi teknik multi-agent (gambar pihak ketiga tidak disalin ke repo) | semua |
-| – | [`arsip/`](arsip/README.md) | Dokumen lama (v0.1, v0.2, riset ide, roast). Hanya referensi. | – |
+| Live Collab Coder | `coder` | read, edit, execute, mcp | Works only on its own task's files. When a write is refused, it calls `why_blocked` and never retries or works around the lock through the shell. |
+| Live Collab PM Lead | `pm-lead` | read, mcp | Plans, arbitrates file conflicts and reviews. It cannot write files, run commands, or approve its own proposals. |
 
-## Prompt perkenalan untuk AI (jalankan sekali di awal)
+### Hooks
 
-Tempel ke Claude Code di root repo, ganti `<nama>`:
+| Event | Script | What it does |
+|---|---|---|
+| `SessionStart` | `brief.js start` | Puts a team brief of 6 lines or fewer into Bob's context: your task, your files, who holds what. |
+| `UserPromptSubmit` | `brief.js prompt` | Adds only what changed since the last prompt (PM decisions, notifications, new locks). Adds nothing when nothing changed, to save Bobcoin. |
+| `PreToolUse` | `lock_guard.js` | Asks the server if this member may write the file. If not, exits 2 and the server's reason reaches Bob as the tool error. Fails open after 1.6 s; the server is the real guard. |
+| `PostToolUse` | `mark_ai_edit.js` | Streams activity and marks lines written by AI. |
+| `Stop` | `stop.js` | Ends the turn in the "Watch Bob" timeline. |
 
-```text
-Saya <nama> (Alief | Umar | Aarief | Imelda). Sebelum mulai kerja, pelajari repo ini tanpa mengubah file apa pun.
-Baca berurutan: README.md → CLAUDE.md → PLAN.md → ARCHITECTURE.md → plan/README.md → plan/PROMPT.md →
-file fase milik lane saya di plan/ (lihat tabel lane di PLAN.md §2) → plan/ref yang disebut di "Bacaan wajib" fase itu.
-Skim saja: PRD.md (bagian yang disebut fase saya), DESIGN.md (kalau lane saya menyentuh UI), app/AGENTS.md (kalau saya Aarief).
-Lalu jelaskan ke saya dengan singkat:
-1. struktur folder repo dan mana yang boleh saya ubah,
-2. tugas lane saya dan urutan fasenya,
-3. ketergantungan ke lane lain dan placeholder apa yang akan dipakai,
-4. Bob slice saya dan anggaran Bobcoin,
-5. hal yang harus saya lakukan manual (akun, Bob IDE, Screen Recording).
-Jangan mulai mengerjakan fase. Tunggu saya bilang "mulai".
+### `radar-mcp` (14 tools, stdio)
+
+| For | Tools |
+|---|---|
+| Coder | `my_tasks`, `complete_step`, `why_blocked`, `request_file`, `submit_task`, `team_activity` |
+| PM Lead | `team_status`, `propose_plan`, `list_requests`, `propose_decision`, `get_task_diff`, `propose_review`, `notify`, `session_report` |
+
+Every `propose_*` call creates a card in Mission Control. Only the human owner's token can approve it; the server answers `403` to the PM agent's token.
+
+## Architecture
+
+```mermaid
+flowchart LR
+  subgraph Mac["Each teammate's Mac"]
+    direction TB
+    Bob["IBM Bob IDE<br/>modes: coder / pm-lead"]
+    Hooks["Bob hooks<br/>lock_guard · brief · activity"]
+    MCP["radar-mcp<br/>14 MCP tools"]
+    App["Desktop app (Orca fork)<br/>Mission Control · Tasks · Watch Bob"]
+    Sync["Sync agent<br/>(radar CLI, chokidar)"]
+    Bob --> Hooks
+    Bob --> MCP
+  end
+
+  subgraph CF["Cloudflare (serverless, free plan)"]
+    direction TB
+    Worker["Worker (Hono)"]
+    DO["Durable Object: one per workspace<br/>SQLite · WebSocket Hibernation<br/>files · locks · tasks · events"]
+    Pages["Cloudflare Pages<br/>landing + replay"]
+    Worker --> DO
+  end
+
+  Hooks -->|"REST: lock check, activity"| Worker
+  MCP -->|"REST: tasks, proposals"| Worker
+  Sync <-->|"WebSocket: file changes"| DO
+  App <-->|"WebSocket: events, approvals"| DO
+  DO -.->|"exported events"| Pages
 ```
 
-Setelah itu, ketik perintah kerja (mode auto) di bawah.
+**Why a Durable Object:** one object per workspace takes every connection and handles messages one at a time. Two Bobs that reach for the same file in the same millisecond cannot both win, with no extra locking. No VPS, no database server, no LLM API key.
 
-## Mulai kerja dalam 3 langkah (per orang)
+**Two layers of enforcement:** the hook stops Bob before it writes, and the server rejects any `file.update` from someone who does not hold the lock. The second layer also catches manual edits and `sed`; the sync agent restores the file.
 
-1. Baca `PLAN.md` §2 (lane kamu) dan §5 (jadwal).
-2. Pasang Node 24 + pnpm 12 dan plugin di PLAN.md §11 (minimal ECC: `/plugin marketplace add https://github.com/affaan-m/ECC` lalu `/plugin install ecc@ecc`).
-3. Salin prompt dari `plan/PROMPT.md`, ubah `LANE` dan `FASE`, lalu tempel ke Claude Code.
+### The near-miss, step by step
 
-Repo ini = `github.com/umarmuhdhor/IBM` (**publik**). Jangan commit secret.
+```mermaid
+sequenceDiagram
+  autonumber
+  participant B as Budi's Bob (coder)
+  participant H as lock_guard hook
+  participant S as Collab server (DO)
+  participant PM as PM (human) in Mission Control
+  participant A as Andi's Bob (holder)
 
----
+  B->>H: apply_diff src/checkout/checkout.ts
+  H->>S: POST /v1/locks/check
+  S-->>H: block: held by Andi for T-1
+  H-->>B: exit 2 + reason (edit cancelled)
+  B->>S: MCP why_blocked, request_file
+  S->>PM: "Budi's Bob asks for checkout.ts" (Needs you)
+  B->>B: works on Header.tsx meanwhile
+  A->>S: submit_task T-1
+  PM->>S: Approve hand-off
+  S-->>B: brief on next prompt: lock is yours
+```
 
-## Teknik multi-agent yang kita pakai
+More detail: [`ARCHITECTURE.md`](ARCHITECTURE.md) (Bahasa Indonesia) and the API contract in [`plan/ref/R3-kontrak-api.md`](plan/ref/R3-kontrak-api.md).
 
-Referensi: artikel Akshay Pachaar, **"Subagents vs Agent Teams"** ([X article](https://x.com/akshay_pachaar/article/2033167408463069526)). Gambarnya milik penulis dan tidak kami salin ke repo. Tautan per diagram ada di [`media-references/README.md`](media-references/README.md).
+## Quick start
 
-### A. Produk: IBM Bob Live Collab = pola **Agent Teams** untuk Bob IDE
+You need macOS on Apple Silicon and IBM Bob IDE 2.1 or later.
 
-Diagram: [team lead + shared task list](https://pbs.twimg.com/media/HDcolYDbQAAthSB?format=jpg&name=large) (Akshay Pachaar).
+1. **Download** the latest `.dmg` from [GitHub Releases](https://github.com/umarmuhdhor/IBM/releases) and drag the app to Applications.
+2. **Allow the unsigned app.** System Settings → Privacy & Security → **Open Anyway**, or run:
 
-| Konsep di artikel | Di IBM Bob Live Collab |
+   ```bash
+   xattr -dr com.apple.quarantine "/Applications/IBM Bob Live Collab.app"
+   ```
+
+3. **Share or join.**
+   - *Owner:* open your project folder, go to **Live Collab → Multiplayer**, click **Share &lt;folder&gt;**. A join code such as `K7QM-3XPA` is copied for you. One code per teammate, valid for 72 hours.
+   - *Teammate:* **Live Collab → Multiplayer → Join a workspace**. Enter the code, your name, and a role (**Coder** or **PM**). Files sync to `~/live-collab/<workspace>` and the Bob kit is installed.
+4. **Open in IBM Bob.** Click **Open in IBM Bob**, click **Trust** in Bob IDE, and pick **Live Collab Coder** or **Live Collab PM Lead**.
+
+Starter prompts for both roles are in [`radar/bob-kit/prompts/`](radar/bob-kit/prompts/). The full walkthrough, with a check after every step, is in [`deploy.md`](deploy.md) §5.1.
+
+<details>
+<summary>Join without the app (terminal only)</summary>
+
+```bash
+curl -fsSL https://live-collab.afindo-mi01.workers.dev/j/<CODE> | sh
+```
+
+This installs Node and the `radar` CLI in `~/.radar`, redeems the code, syncs the folder, and opens IBM Bob IDE.
+
+</details>
+
+## Run from source
+
+Toolchain: Node 24 and pnpm 12 (`nvm use 24 && corepack enable`). There is no root `package.json`; run each workspace with `pnpm -C`.
+
+```bash
+pnpm -C radar install
+```
+
+```bash
+pnpm -C app install
+```
+
+| Command | What it runs |
 |---|---|
-| Team Lead (assign + synthesize) | Bob IDE milik PM dalam mode **`pm-lead`**: menyusun rencana, membagi task dan file, me-review. Hanya **mengusulkan**, manusia yang menyetujui. |
-| Teammates (sesi persisten) | Bob IDE setiap coder, dengan akun dan konteks masing-masing |
-| Shared Task List | **Collab Server** (Durable Object): task, alokasi file, kunci, antrean, keputusan |
-| Direct message / "API changed" | **Brief** lewat hook `UserPromptSubmit` + `notify` dari `pm-lead` (mis. "calculateTotal() berubah, dipakai Header.tsx") |
-| `blockedBy` | **Kunci file + antrean**: Bob yang ingin menulis file milik rekan diblokir hook `PreToolUse`, lalu antre |
-| *Tambahan kita, tidak ada di artikel* | Penegakan keras (hook exit 2), sinkron file live, dan persetujuan manusia untuk setiap keputusan |
+| `pnpm -C radar dev:server` | Collab server locally (`wrangler dev`: Worker + Durable Object + SQLite) |
+| `pnpm -C radar dev:mock` | Mock server, enough for UI work and tests |
+| `pnpm -C app dev` | Desktop app in dev mode (uses the production server unless `LIVE_COLLAB_SERVER` is set) |
+| `LIVE_COLLAB_SERVER=http://localhost:8787 pnpm -C app dev` | Desktop app against your local server |
+| `pnpm -C radar test` | Tests for server, sync, hooks and MCP |
+| `pnpm -C app build:mac` | Build the `.dmg` into `app/dist/` |
+| `pnpm -C radar deploy:web` | Deploy landing + replay to Cloudflare Pages |
 
-Di dalam tim itu, `pm-lead` juga memakai pola **Subagents** (review dampak per task di konteks terisolasi) dan **Evaluator-Optimizer** (review → "send back" → coder memperbaiki).
+Deploying your own server, admin CLI and troubleshooting: [`deploy.md`](deploy.md).
 
-### B. Proses membangun: tim manusia + AI kita sendiri
+## Repository map
 
-Diagram: [lima pola orkestrasi](https://pbs.twimg.com/media/HDcupB4bUAAQ7XB?format=jpg&name=large) (Akshay Pachaar).
-
-| Pola | Cara kita memakainya |
+| Path | What is inside |
 |---|---|
-| **Agent Teams** | 4 orang, masing-masing dengan Claude Code + Bob IDE, sebagai teammate. Shared task list = `plan/PROGRESS.md` + `plan/log/DECISIONS.md` + PR. |
-| **Parallelization** | Lane Alief, Umar, Aarief, dan Imelda jalan paralel (pakai mock kalau belum ada hasil lane lain) |
-| **Prompt chaining** | Satu fase = plan → test → implement → review → verify (`plan/PROMPT.md`) |
-| **Routing** | Model per fase: Opus untuk konkurensi/server, Sonnet untuk mayoritas, Haiku untuk tugas mekanis (`plan/ref/R6`) |
-| **Subagents** | Agent ECC (`planner`, `code-reviewer`, `security-reviewer`) jalan di konteks terisolasi dan hanya mengembalikan hasil ringkas |
-| **Evaluator-Optimizer** | Review + `better-interface` diulang sampai tidak ada temuan HIGH |
+| [`radar/packages/server`](radar/packages/server) | Collab server: Cloudflare Worker + Durable Object, lock engine, tasks, commits |
+| [`radar/packages/sync`](radar/packages/sync) | Sync agent and `radar` CLI |
+| [`radar/packages/common`](radar/packages/common) | Shared types, zod schemas and the event reducer |
+| [`radar/packages/hooks`](radar/packages/hooks) | Bob hooks (`lock_guard`, `brief`, activity), bundled with esbuild |
+| [`radar/packages/mcp`](radar/packages/mcp) | `radar-mcp`, the MCP server Bob calls |
+| [`radar/bob-kit`](radar/bob-kit) | The `.bob/` kit: custom modes, rules, hook config, prompts |
+| [`radar/packages/ui`](radar/packages/ui) | Shared React components for the app and web |
+| [`radar/packages/web`](radar/packages/web) | Landing page and session replay (Next.js static export) |
+| [`app/`](app) | Desktop app, a fork of [Orca](https://github.com/stablyai/orca) (Electron) |
+| [`bob_sessions/`](bob_sessions/INDEX.md) | IBM Bob task-summary screenshots, one per session |
+| [`plan/`](plan/README.md) | Phase plans, contracts (`plan/ref/R1–R7`), progress and decision logs |
 
-Diagram: [split by context, not role](https://pbs.twimg.com/media/HDcscLeawAAmtxF?format=jpg&name=large) (Akshay Pachaar).
+## Tech stack
 
-Prinsip yang kita ikuti: **bagi kerja menurut konteks, bukan menurut peran.** Lane dibagi per folder/bagian produk (server, kit Bob, app, web), bukan "planner → coder → tester". Di produk juga sama: `pm-lead` membagi task menurut **file** yang disentuh, sehingga setiap Bob punya batas konteks yang bersih.
-
-### Apa yang dibagikan antar-anggota (dan apa yang tidak)
-
-| Dibagikan | Tidak dibagikan |
+| Layer | Stack |
 |---|---|
-| Isi file workspace (sinkron live) | Riwayat chat lengkap setiap Bob |
-| Task, kunci, antrean, keputusan PM | Isi context window Bob orang lain |
-| **Brief** ≤ 6 baris ke setiap Bob (siapa pegang apa, keputusan terbaru) | Transkrip sesi (kecuali ekspor `bob_sessions/` untuk juri) |
-| **Aktivitas Bob** (ringkasan prompt, file yang dibaca/ditulis, blokir), dan prompt bisa dimatikan | Isi file di dalam aktivitas |
+| Server | Cloudflare Workers, Durable Objects (SQLite, WebSocket Hibernation), Hono, zod, GitHub Git Data API |
+| Sync agent | Node, chokidar, ws |
+| Bob integration | Bob IDE custom modes (YAML), hooks (Node, esbuild), MCP TypeScript SDK |
+| Desktop app | Electron, React 19, zustand, xterm, Monaco, Tailwind (based on Orca) |
+| Web | Next.js 15 static export on Cloudflare Pages |
 
-Alasannya: setiap Bob tetap punya konteks sendiri yang bersih (seperti teammate di Agent Teams). Yang dibagikan cukup ringkasan yang dibutuhkan untuk koordinasi, supaya Bobcoin hemat dan tidak ada "telephone game".
+Hosting runs on free plans: Cloudflare Workers, Durable Objects and Pages, plus GitHub.
 
----
+## Security and privacy
+
+- Member tokens are stored on the server as hashes. The PM approval token is separate, and only it can approve proposals.
+- The PM agent has no tool to approve its own proposals.
+- The app keeps tokens in Electron `safeStorage` (macOS Keychain), never in logs.
+- Bob activity never contains file contents. Prompt text is shared only when a member turns on **Share my prompts**.
+- Hooks run with the user's permissions. We say so in [`SECURITY.MD`](SECURITY.MD).
+- The repo is public and started from the [IBM Hackathon template](https://github.com/watsonxhackathon/ibm-hackathon-template): its `.gitignore`, `.bobignore` (keeps credentials out of Bob's context), `.env.example` and [`SECURITY.MD`](SECURITY.MD) are kept as-is, and gitleaks runs in CI. All demo data is synthetic ([`DATA_SOURCES.md`](DATA_SOURCES.md)).
+
+<details>
+<summary>Before every commit (from the IBM template)</summary>
+
+- [ ] Reviewed `git diff` for sensitive data
+- [ ] No hardcoded API keys or passwords
+- [ ] `.env` is not in staged changes (`git check-ignore -v .env` confirms it is ignored)
+- [ ] No file names containing `credential`, `secret`, `token`, `password` or `apikey`, and no `config.json`
+- [ ] All credentials come from environment variables
+
+</details>
+
+## How IBM Bob built this project
+
+Bob is both the runtime of Live Collab and the tool we built it with.
+
+- Each of the four members built slices of the product in Bob IDE. Every Bob session has a task-summary screenshot in [`bob_sessions/`](bob_sessions/INDEX.md) (32 so far).
+- Code written by Bob was committed unchanged with a `Bob-Assisted: bob_sessions/<png>` trailer. Human fixes went into separate commits, so Bob's part of the diff stays visible.
+- We also used Bob to test Bob: behaviour sessions against the real server checked that the PM agent never gives one file to two tasks, and that a blocked coder calls `why_blocked` instead of working around the lock.
+
+Full breakdown by member, slice and Bobcoin: [`BOB_DEVELOPMENT.md`](BOB_DEVELOPMENT.md).
+
+## Limits
+
+- macOS arm64 only. The build is ad-hoc signed, not notarized.
+- One workspace per server at a time, up to 8 members.
+- Shared folders follow `.gitignore`. Binary files and files over 1 MB stay local. Maximum 3000 files.
+- Bob IDE disables the Bob panel in untrusted workspaces, so each member must click **Trust** once.
+
+## Team
+
+| Person | Lane | Built |
+|---|---|---|
+| Alief | Core | Collab server (Worker + Durable Object), lock engine, sync agent |
+| Umar | Bob | Custom modes, hooks, `radar-mcp`, Bob evidence |
+| Aarief | App | Desktop app (Orca fork), shared UI components |
+| Imelda | Web and media | Landing page, session replay, video, deck |
 
 ## Credits
 
-Desktop app built on top of [Orca](https://github.com/stablyai/orca) (MIT) by Stably AI — vendored in `app/`. Orca's own README is [`app/README.md`](app/README.md); its license is [`app/LICENSE`](app/LICENSE).
+The desktop app is built on [Orca](https://github.com/stablyai/orca) (MIT) by Stably AI, vendored in [`app/`](app). Orca's own README is [`app/README.md`](app/README.md) and its license is [`app/LICENSE`](app/LICENSE).
+
+IBM and IBM Bob are trademarks of IBM. This is a community hackathon project and is not affiliated with or endorsed by IBM.
