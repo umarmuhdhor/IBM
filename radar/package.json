@@ -23,7 +23,7 @@
     "bench:sync": "pnpm --filter \"@radar/sync^...\" build && cd packages/sync && tsx scripts/bench-sync.ts",
     "metrics": "echo \"fase-13: scripts/metrics.ts\"",
     "secrets:scan": "gitleaks detect --source .. --log-opts=\"--all\"",
-    "evidence:check": "echo \"fase-11: scripts/evidence-check.ts\"",
+    "evidence:check": "tsx scripts/evidence-check.ts",
     "check:ignored": "bash scripts/check-ignored.sh",
     "dev:app": "pnpm -C ../app dev"
   },
