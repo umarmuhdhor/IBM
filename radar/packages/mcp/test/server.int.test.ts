@@ -267,7 +267,7 @@ describe('Bob kit against the real server (PRD §15 up to review)', () => {
   it('brief start names the member and the active task (T-1 is done, B still has Dark mode)', async () => {
     const r = await hook('B', 'brief', ['start'], { session_id: 's2', cwd: roots.B, hook_event_name: 'SessionStart', source: 'startup' });
     expect(r.code).toBe(0);
-    expect(r.stdout).toContain('Kamu B');
+    expect(r.stdout).toContain('You are B');
     expect(r.stdout).toContain('Dark mode');
   });
 });
