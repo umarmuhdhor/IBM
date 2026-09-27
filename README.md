@@ -203,9 +203,9 @@ You need macOS on Apple Silicon and IBM Bob IDE 2.1 or later.
    ```
 
 3. **Share or join.**
-   - *Owner:* open your project folder, go to **Live Collab → Multiplayer**, click **Share &lt;folder&gt;**. A join code such as `K7QM-3XPA` is copied for you. One code per teammate, valid for 72 hours.
-   - *Teammate:* **Live Collab → Multiplayer → Join a workspace**. Enter the code, your name, and a role (**Coder** or **PM**). Files sync to `~/live-collab/<workspace>` and the Bob kit is installed.
-4. **Open in IBM Bob.** Click **Open in IBM Bob**, click **Trust** in Bob IDE, and switch the mode to **Live Collab Coder** or **Live Collab PM Lead**. The next section walks through every click.
+   - *Owner (the PM):* open your project folder, go to **Live Collab → Multiplayer**, click **Share &lt;folder&gt;**. You become the room's PM. A join code such as `K7QM-3XPA` is copied for you. One code per teammate, valid for 72 hours.
+   - *Teammate (a coder):* **Live Collab → Multiplayer → Join a workspace**. Enter the code and your name. Everyone who joins with a code is a coder. Files sync to `~/live-collab/<workspace>` and the Bob kit is installed.
+4. **Open in IBM Bob.** Click **Open in IBM Bob**, click **Trust** in Bob IDE, and switch the mode to **Live Collab PM Lead** (owner) or **Live Collab Coder** (teammates). The next section walks through every click.
 
 Starter prompts for both roles are in [`radar/bob-kit/prompts/`](radar/bob-kit/prompts/). The full walkthrough in Bahasa Indonesia, with a check after every step, is in [`deploy.md`](deploy.md) §5.1.
 
@@ -237,8 +237,8 @@ After you share or join (Quick start step 3), this is what a working session loo
 
    | Your role | Pick this mode | What it can do |
    |---|---|---|
-   | Coder | **Live Collab Coder** | Edit only the files of its own task. Other people's files are blocked. |
-   | PM | **Live Collab PM Lead** | Read code, plan tasks, review, and settle file conflicts. It does not edit code. |
+   | PM (the owner who shared the folder) | **Live Collab PM Lead** | Read code, plan tasks, review, and settle file conflicts. It does not edit code. |
+   | Coder (everyone who joined with a code) | **Live Collab Coder** | Edit only the files of its own task. Other people's files are blocked. |
 
 3. Start a **new task** in the Bob panel. The first line of Bob's context is a `[Radar]` brief: who holds which file and the latest decisions.
 4. The first `radar` tool call asks for permission once. Click **Approve**.
