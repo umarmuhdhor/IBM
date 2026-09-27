@@ -10,6 +10,7 @@ export const EVENT_TYPES = [
   'member.offline',
   'member.reconnected',
   'member.stale',
+  'member.removed',
   'file.changed',
   'file.deleted',
   'file.rejected',
@@ -93,6 +94,8 @@ function sentence(ev: RadarEvent, names: FeedNames): string | null {
       return `${who(ev.payload.memberId)} goes offline`;
     case 'member.reconnected':
       return `${who(ev.payload.memberId)} is back online`;
+    case 'member.removed':
+      return `${who(ev.payload.memberId)} was removed from the team`;
     case 'member.stale':
       return `${who(ev.payload.memberId)}'s computer stopped responding`;
     case 'file.changed':

@@ -129,6 +129,10 @@ function applyDomain(s: RadarState, ev: RadarEvent): RadarState {
       return patchMember(s, ev.payload.memberId, { online: true, stale: false });
     case 'member.offline':
       return patchMember(s, ev.payload.memberId, { online: false });
+    case 'member.removed': {
+      const members = Object.fromEntries(Object.entries(s.members).filter(([id]) => id !== ev.payload.memberId));
+      return { ...s, members };
+    }
     case 'member.stale':
       return patchMember(s, ev.payload.memberId, { stale: true });
 
@@ -316,9 +320,10 @@ function requestIdOf(payload: unknown): string | null {
   return typeof id === 'string' ? id : null;
 }
 
-function appendFeed(s: RadarState, ev: RadarEvent): RadarState {
+/** `named` supplies member names; a removed member's name comes from the state before the event. */
+function appendFeed(s: RadarState, ev: RadarEvent, named: RadarState = s): RadarState {
   const names: Record<string, string> = {};
-  for (const m of Object.values(s.members)) names[m.id] = m.name;
+  for (const m of Object.values(named.members)) names[m.id] = m.name;
   const text = feedText(ev, names);
   if (text === null) return s;
   const item: FeedItem = { id: ev.id, ts: ev.ts, type: ev.type, actor: ev.actor, text };
@@ -333,7 +338,7 @@ export function applyEvent(state: RadarState, ev: RadarEvent): RadarState {
   if (state.cursor > 0 && ev.id <= state.cursor) return state;
   const known = parseRadarEvent(ev);
   if (known === null) return typeof ev.id === 'number' ? { ...state, cursor: Math.max(state.cursor, ev.id) } : state;
-  const next = appendFeed(applyDomain(state, known), known);
+  const next = appendFeed(applyDomain(state, known), known, known.type === 'member.removed' ? state : undefined);
   return { ...next, cursor: Math.max(next.cursor, known.id) };
 }
 

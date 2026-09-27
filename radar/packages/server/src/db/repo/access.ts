@@ -12,6 +12,11 @@ export function revokeTokens(db: Db, memberId: string | null, now: number): void
   else db.run("UPDATE token SET revoked_at = ? WHERE kind = 'member' AND member_id = ? AND revoked_at IS NULL", now, memberId);
 }
 
+/** The member a token was issued to, live or revoked (null for mc and unknown tokens). */
+export function tokenMember(db: Db, hash: string): string | null {
+  return db.one<{ member_id: string | null }>('SELECT member_id FROM token WHERE hash = ?', hash)?.member_id ?? null;
+}
+
 /** Whether a token that gives no principal was revoked (a newer sign-in) or never existed here (D-alief-15). */
 export function tokenIsRevoked(db: Db, hash: string): boolean {
   return db.one<{ n: number }>('SELECT COUNT(*) AS n FROM token WHERE hash = ? AND revoked_at IS NOT NULL', hash)!.n > 0;
@@ -20,7 +25,7 @@ export function tokenIsRevoked(db: Db, hash: string): boolean {
 /** Looks a token up by its sha256 hex (primary key). Revoked tokens and deleted members give null. */
 export function principalByHash(db: Db, hash: string): Principal | null {
   const row = db.one<{ kind: string; member_id: string | null; role: Role | null }>(
-    'SELECT t.kind, t.member_id, m.role FROM token t LEFT JOIN member m ON m.id = t.member_id WHERE t.hash = ? AND t.revoked_at IS NULL',
+    'SELECT t.kind, t.member_id, m.role FROM token t LEFT JOIN member m ON m.id = t.member_id AND m.removed_at IS NULL WHERE t.hash = ? AND t.revoked_at IS NULL',
     hash,
   );
   if (!row) return null;
