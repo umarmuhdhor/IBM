@@ -1,6 +1,8 @@
 import type { RadarState, TaskView } from '@radar/ui'
+import { AskBobReviewCard } from './AskBobReviewCard'
 import { CoderTaskCard } from './CoderTaskCard'
 import { PlanApprovalCard } from './PlanApprovalCard'
+import { getRadarViewModel } from './radar-view-model'
 import { StepProgressBar, stepProgress, TaskStatusLabel } from './TaskStatusLabel'
 
 type Props = {
@@ -62,6 +64,8 @@ export function TaskBoardView({ state, role, seatId }: Props) {
   const showMine = role === 'coder' || (role === 'mc' && seatId !== null && state.members[seatId]?.role === 'coder')
   const showTeam = role === 'pm' || role === 'mc'
   const coders = Object.values(state.members).filter((member) => member.role === 'coder')
+  const awaitingReview = showTeam ? getRadarViewModel(state).awaitingReview : []
+  const reviewNote = decides ? null : pm ? `Waiting for ${pm.name} (PM) to review.` : 'The owner reviews in Mission Control.'
 
   return (
     <div className="mx-auto max-w-3xl space-y-8 p-4">
@@ -73,6 +77,18 @@ export function TaskBoardView({ state, role, seatId }: Props) {
           />
           {plans.map((proposal) => (
             <PlanApprovalCard key={proposal.id} proposal={proposal} state={state} readOnlyNote={readOnlyNote} />
+          ))}
+        </section>
+      )}
+
+      {awaitingReview.length > 0 && (
+        <section aria-label="Ready for review" className="space-y-3">
+          <SectionHeading
+            title={`Ready for review · ${awaitingReview.length}`}
+            hint={decides ? 'Your Bob (PM Lead) reviews the diff and proposes a verdict. You approve it in Mission Control.' : undefined}
+          />
+          {awaitingReview.map((task) => (
+            <AskBobReviewCard key={task.id} task={task} state={state} readOnlyNote={reviewNote} />
           ))}
         </section>
       )}

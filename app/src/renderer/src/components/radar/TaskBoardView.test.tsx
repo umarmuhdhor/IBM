@@ -203,3 +203,21 @@ describe('TaskBoardView — plans and starting work (fase 15c)', () => {
     await waitFor(() => expect(decide).toHaveBeenCalledWith('P-1', true, ''))
   })
 })
+
+describe('TaskBoardView — submitted tasks waiting for a review', () => {
+  const submitted = { ...state, tasks: { ...state.tasks, 'T-1': { ...TASK_A, status: 'review' as const } } } satisfies RadarState
+
+  it('the PM asks their Bob to review a submitted task', async () => {
+    render(<TaskBoardView state={submitted} role="pm" seatId={null} />)
+    const ready = screen.getByRole('region', { name: 'Ready for review' })
+    expect(ready.textContent).toContain('Budi submitted 1 file')
+    fireEvent.click(screen.getByRole('button', { name: 'Review in Bob (T-1)' }))
+    await waitFor(() => expect(openInBob).toHaveBeenCalled())
+    expect(copyText).toHaveBeenCalledWith(expect.stringContaining('propose_review'))
+  })
+
+  it('a coder does not see it', () => {
+    render(<TaskBoardView state={submitted} role="coder" seatId="B" />)
+    expect(screen.queryByRole('region', { name: 'Ready for review' })).toBeNull()
+  })
+})

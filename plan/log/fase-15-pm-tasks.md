@@ -234,3 +234,36 @@ Verdict: **Approve**.
 - Ditulis Claude Code (kuota Bob habis). Verifikasi: app vitest radar 190 (baru: share tanpa role → `pm`; owner-PM
   approve dari Mission Control), `pnpm run typecheck` 0 error, oxlint bersih.
 - Tidak diverifikasi ter-render: form Join baru (perubahan kecil: toggle dihapus, satu kalimat ditambah).
+
+## Lanjutan · PM tahu kapan meminta review ke Bob (fase 15e)
+
+- Pemicu: T-1 dan T-2 berstatus Review ("waiting PM"), tetapi Needs you · 0 dan PM tidak bisa approve. Penyebab: kartu
+  approve baru muncul setelah Bob PM Lead mengirim `propose_review`; app tidak memberi tahu langkah itu.
+- Perubahan app (opsi A, dipilih Umar): task Review tanpa review dari Bob dihitung di Needs you dan tampil sebagai kartu
+  **Review in Bob** (menyalin prompt `get_task_diff` → `propose_review`, lalu membuka IBM Bob IDE) di Mission Control
+  dan bagian baru "Ready for review" di tab Tasks. Begitu Bob mengusulkan review, kartu diganti ReviewCard
+  (Approve / Send back). Alur tetap lewat Bob; tidak ada approve langsung tanpa review Bob.
+- Ditulis Claude Code. Verifikasi: app vitest radar 195 (baru 5), typecheck 0 error, oxlint bersih, gerbang
+  `check:code-quality:changed` lulus.
+
+### Gerbang UI `better-interface` (fase 15e)
+
+Scope: kartu `AskBobReviewCard` di Mission Control → Needs you dan Tasks → Ready for review; app dev lewat CDP
+(port 9387), 1440 px, tema terang (tema aktif pengguna).
+
+| Domain | Bukti | Hasil |
+|---|---|---|
+| Accessibility | tombol punya nama unik "Review in Bob (T-1)" (sr-only), `role="alert"`/`status` | 1 MEDIUM (diperbaiki) |
+| Layout | kartu di atas Team progress; di Mission Control di bawah judul Needs you | Clear |
+| Writing | kalimat kartu cocok di dua tab | 1 HIGH (diperbaiki) |
+| Typography | `[overflow-wrap:anywhere]` pada judul | Clear |
+| Colors | aksen `--lc-needs-you` sama dengan kartu rencana; error merah + cara lanjut | Clear |
+| UI | shadcn `Button`, tanpa animasi | Clear |
+
+| Severity | Domain | Location | Before | After | Why |
+|---|---|---|---|---|---|
+| HIGH | Writing | `AskBobReviewCard.tsx` teks kartu | "then you approve it here" juga tampil di tab Tasks, padahal approve di Mission Control | "then you approve its verdict." | Menyesatkan di tab Tasks — **diperbaiki** |
+| MEDIUM | Accessibility | `AskBobReviewCard.tsx` tombol | dua tombol bernama sama "Review in Bob" | "Review in Bob (T-1)" lewat teks sr-only | Daftar tombol screen reader tanpa konteks — **diperbaiki** |
+
+Screenshot: `ui-15/pm-review-in-bob-mc-1440.png`, `pm-review-in-bob-tasks-1440.png`. Tidak diverifikasi: 320 px,
+tema gelap, screen reader nyata. Verdict: **Approve**.

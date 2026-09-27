@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { RadarState } from '@radar/ui'
 import { MissionControlView } from './MissionControlView'
@@ -58,5 +58,44 @@ describe('MissionControlView', () => {
     const repo = screen.getByRole('region', { name: 'Shared repo' })
     expect(repo.textContent).toContain('Andi · held')
     expect(repo.textContent).toContain('Budi queued #1')
+  })
+
+  describe('a submitted task with no review yet', () => {
+    const member = { role: 'coder' as const, color: null, online: true, stale: false, activeTaskId: null, blocked: false, writingUntil: 0 }
+    const task = { description: '', queuedFiles: [], adhoc: false, parentTaskId: null, editCount: 1, commitSha: null, summary: null, steps: [], status: 'review' as const }
+    const submitted = {
+      ...state,
+      proposals: {},
+      members: { M: { ...member, id: 'M', name: 'mel' } },
+      tasks: { 'T-1': { ...task, id: 'T-1', title: 'Bill logic', ownerId: 'M', files: ['calc.js'] } }
+    } satisfies RadarState
+
+    it('counts as needing the PM and asks their Bob to review it', async () => {
+      const copyText = vi.fn().mockResolvedValue(undefined)
+      const openInBob = vi.fn().mockResolvedValue(null)
+      Object.defineProperty(window, 'api', { configurable: true, value: { radar: { copyText, openInBob } } })
+      render(<MissionControlView state={submitted} canDecide now={0} />)
+      expect(screen.getByText('Needs you · 1')).toBeTruthy()
+      fireEvent.click(screen.getByRole('button', { name: /^Review in Bob/ }))
+      await waitFor(() => expect(openInBob).toHaveBeenCalled())
+      expect(copyText.mock.calls[0]?.[0]).toMatch(/^Review task T-1 with radar get_task_diff.*propose_review\.$/)
+      expect(copyText.mock.calls[0]?.[0].length).toBeLessThanOrEqual(200)
+      expect(screen.getByRole('status').textContent).toContain('PM Lead mode')
+    })
+
+    it('is read-only for a viewer who cannot decide', () => {
+      render(<MissionControlView state={submitted} canDecide={false} now={0} readOnlyNote="Waiting for umar (PM)." />)
+      expect(screen.queryByRole('button', { name: /^Review in Bob/ })).toBeNull()
+      expect(screen.getByText('Waiting for umar (PM).')).toBeTruthy()
+    })
+
+    it('gives way to the review card once Bob proposes one', () => {
+      render(<MissionControlView canDecide now={0} state={{
+        ...submitted,
+        proposals: { p3: { id: 'P-3', kind: 'review', status: 'menunggu', payload: {}, reason: 'Looks right', refId: 'T-1', createdAt: 1, decidedBy: null, note: null } }
+      }} />)
+      expect(screen.queryByRole('button', { name: /^Review in Bob/ })).toBeNull()
+      expect(screen.getByText('Needs you · 1')).toBeTruthy()
+    })
   })
 })
