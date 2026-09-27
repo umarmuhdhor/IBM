@@ -97,9 +97,9 @@ The [replay](https://ibm-bob-live-collab.pages.dev/demo/) plays back a recorded 
 </table>
 
 <p align="center">
-<img src=".github/readme/app-pm-tasks.png" width="820" alt="Desktop app, Tasks tab: the PM sees each coder's task, its files, and step progress (Budi 2/5, Dewi 0/5)" />
+<img src=".github/readme/app-overview.png" width="820" alt="Desktop app, Overview tab: nothing needs a decision, progress 1 of 2 tasks done (Aarief T-2 in progress, mel T-1 done), 3 files held by Aarief, and recent room activity" />
 <br />
-<sub>The desktop app (an Orca fork). The PM sees every coder's task, its files and step progress, updated live.</sub>
+<sub>The desktop app (an Orca fork). Overview shows what needs you, each coder's task progress, which files are held, and recent activity, updated live.</sub>
 </p>
 
 ## Built on IBM Bob primitives
