@@ -151,7 +151,7 @@ describe('Team seats (D-alief-20)', () => {
     useRadarStore.setState({ state, connected: false, connectionFailure: 'removed' })
     render(<Harness initial="team" />)
     expect(
-      screen.getByText('The owner removed you from this workspace. Join with a new code in Multiplayer.')
+      screen.getByText('The owner removed you from this workspace. Join with a new code in Room.')
     ).toBeTruthy()
     useRadarStore.setState({ connectionFailure: null })
   })
@@ -170,12 +170,12 @@ describe('Live Collab connection labels', () => {
     expect(screen.getByLabelText('Live Collab status').textContent).toContain('offline')
     expect(screen.queryByText('1 online')).toBeNull()
     expect(screen.queryByRole('button', { name: "Watch Budi's Bob" })).toBeNull()
-    expect(screen.getByRole('button', { name: 'Open Multiplayer' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Open Room' })).toBeTruthy()
   })
 })
 
-describe('Multiplayer and Settings tabs', () => {
-  it('Multiplayer is its own tab with its own title, next to Settings', () => {
+describe('Room tab', () => {
+  it('holds sharing, joining and the folded connection details', () => {
     vi.stubGlobal('api', {
       radar: {
         getSyncStatus: vi.fn(async () => ({
@@ -192,13 +192,29 @@ describe('Multiplayer and Settings tabs', () => {
         getSharePrompts: vi.fn(async () => false)
       }
     })
-    render(<Harness initial="multiplayer" />)
-    expect(screen.getByRole('heading', { level: 2 }).textContent).toBe('Multiplayer')
+    const { unmount } = render(<Harness initial="multiplayer" />)
+    expect(screen.getByRole('heading', { level: 2 }).textContent).toBe('Room')
     expect(screen.getByRole('form', { name: 'Join with a code' })).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: 'Settings' }))
-    expect(screen.getByRole('heading', { level: 2 }).textContent).toBe('Settings')
-    expect(screen.queryByRole('form', { name: 'Join with a code' })).toBeNull()
+    expect(screen.getByText('Connection details').closest('details')?.open).toBe(false)
+    expect(screen.queryByRole('button', { name: 'Settings' })).toBeNull()
+    unmount()
+    // A link to the connection settings opens Room with the details unfolded.
+    render(<Harness initial="settings" />)
+    expect(screen.getByRole('button', { name: 'Room' }).getAttribute('aria-current')).toBe('page')
+    expect(screen.getByText('Connection details').closest('details')?.open).toBe(true)
     vi.unstubAllGlobals()
+  })
+})
+
+describe('Overview tab', () => {
+  it('is the first tab and shows what needs a decision, progress, files and activity', () => {
+    render(<Harness initial="mission" />)
+    const bar = screen.getAllByRole('button').filter((b) => ['Overview', 'My tasks', 'Team', 'Room'].includes(b.textContent ?? ''))
+    expect(bar.map((b) => b.textContent)).toEqual(['Overview', 'My tasks', 'Team', 'Room'])
+    expect(screen.getByRole('region', { name: 'Needs you' })).toBeTruthy()
+    expect(screen.getByRole('region', { name: 'Progress' })).toBeTruthy()
+    expect(screen.getByRole('region', { name: 'Files' })).toBeTruthy()
+    expect(screen.getByRole('region', { name: 'Recent activity' })).toBeTruthy()
   })
 })
 

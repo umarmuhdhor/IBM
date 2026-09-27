@@ -267,3 +267,41 @@ Scope: kartu `AskBobReviewCard` di Mission Control → Needs you dan Tasks → R
 
 Screenshot: `ui-15/pm-review-in-bob-mc-1440.png`, `pm-review-in-bob-tasks-1440.png`. Tidak diverifikasi: 320 px,
 tema gelap, screen reader nyata. Verdict: **Approve**.
+
+## Lanjutan · Tata letak app lebih jelas (fase 15f)
+
+- Pemicu: fitur berjalan, tetapi tampilan membingungkan. Info yang sama muncul di beberapa tab (task di Tasks, Mission
+  Control, Team; daftar file di Mission Control dan Files & locks; undangan di Multiplayer dan Team), nama tab abstrak,
+  papan 4 kolom yang kebanyakan kosong, feed mentah panjang, Settings penuh isian teknis.
+- Umar memilih "rapikan jadi 4 tab". Tab sekarang: **Overview · Tasks · Team · Room**.
+  - **Overview** (menggantikan Mission Control dan Files & locks; tab pertama): Needs you lebar penuh di atas (untuk yang
+    tidak memutuskan: "Waiting for a decision"), lalu Progress (satu baris per task: orang, task, langkah, status; yang
+    perlu perhatian di atas), lalu Files in use (+ "Show all N files") dan Recent activity (8 + "Show more").
+    Panel Notifications dihapus karena mengulang feed.
+  - **Room** (Multiplayer + Settings): bagikan/gabung, undang teman, dan "Connection details" terlipat. Tautan lama ke
+    Settings membuka Room dengan detail terbuka.
+  - **Team**: tanpa kartu undangan ganda.
+- Ditulis Claude Code. Verifikasi: app vitest radar 196, typecheck 0 error, oxlint bersih.
+
+### Gerbang UI `better-interface` (fase 15f)
+
+Scope: Overview, Room, Team, Tasks; app dev lewat CDP (port 9387), 1440 px, tema terang (tema aktif pengguna).
+
+| Domain | Bukti | Hasil |
+|---|---|---|
+| Accessibility | region berlabel (Needs you, Progress, Files, Recent activity), `aria-current` pada tab, `<details>/<summary>` asli untuk detail koneksi | Clear |
+| Layout | satu tempat per informasi; urutan keputusan → progres → file/aktivitas; Room dan Tasks lebar maks 3xl, Overview 5xl | 1 MEDIUM (diperbaiki) |
+| Writing | nama tab konkret; teks "in Mission Control" di Tasks diganti "in Overview" | Clear |
+| Typography | `tabular-nums` untuk langkah, `[overflow-wrap:anywhere]` pada judul task | Clear |
+| Colors | status = titik + kata; warna anggota hanya penanda tambahan di samping nama | Clear |
+| UI | shadcn `Button`, tanpa animasi baru | Clear |
+
+| Severity | Domain | Location | Before | After | Why |
+|---|---|---|---|---|---|
+| MEDIUM | Layout | `RadarPanel.tsx` Room | kartu melebar selebar layar | `mx-auto max-w-3xl` seperti Tasks | Baris teks terlalu panjang untuk dibaca — **diperbaiki** |
+| MEDIUM | Writing | `MissionControlView.tsx` Needs you | catatan read-only tampil dua kali (judul + kartu) | kartu: "Waiting for the PM’s Bob to review it." | Pengulangan — **diperbaiki** |
+
+Di luar lane (dicatat, tidak diubah): pesan sync `radar/packages/sync/src/notify.ts:19` menampilkan "(no copy)" saat
+tidak ada salinan (lane Alief).
+Screenshot: `ui-15/layout-overview-1440.png`, `layout-room-1440.png`. Tidak diverifikasi: 900/320 px, tema gelap,
+screen reader nyata. Verdict: **Approve**.

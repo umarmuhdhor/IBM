@@ -17,7 +17,7 @@ describe('MissionControlView', () => {
   it('keeps coder decisions read-only', () => {
     render(<MissionControlView state={state} canDecide={false} now={0} />)
     expect(screen.queryByRole('button', { name: 'Approve' })).toBeNull()
-    expect(screen.getByText('Only Mission Control can decide.')).toBeTruthy()
+    expect(screen.getByText('Only the PM or the owner can decide.')).toBeTruthy()
   })
 
   it('waits for a server decision event after the PM approves', () => {
@@ -46,7 +46,7 @@ describe('MissionControlView', () => {
     expect(screen.queryByText(/\+0 −0/)).toBeNull()
   })
 
-  it('lists claimed files with holder and queue under Shared repo', () => {
+  it('lists files in use with holder and queue', () => {
     const member = { role: 'coder' as const, color: null, online: true, stale: false, activeTaskId: null, blocked: false, writingUntil: 0 }
     const task = { description: '', queuedFiles: [], adhoc: false, parentTaskId: null, editCount: 0, commitSha: null, summary: null, steps: [], status: 'dikerjakan' as const }
     render(<MissionControlView now={0} canDecide={false} state={{
@@ -55,7 +55,7 @@ describe('MissionControlView', () => {
       tasks: { 'T-1': { ...task, id: 'T-1', title: 'Kupon', ownerId: 'A', files: [] }, 'T-2': { ...task, id: 'T-2', title: 'Dark mode', ownerId: 'B', files: [] } },
       locks: { 'src/checkout.ts': { path: 'src/checkout.ts', taskId: 'T-1', memberId: 'A', state: 'dipegang', queue: ['T-2'] } }
     }} />)
-    const repo = screen.getByRole('region', { name: 'Shared repo' })
+    const repo = screen.getByRole('region', { name: 'Files' })
     expect(repo.textContent).toContain('Andi · held')
     expect(repo.textContent).toContain('Budi queued #1')
   })
@@ -87,6 +87,7 @@ describe('MissionControlView', () => {
       render(<MissionControlView state={submitted} canDecide={false} now={0} readOnlyNote="Waiting for umar (PM)." />)
       expect(screen.queryByRole('button', { name: /^Review in Bob/ })).toBeNull()
       expect(screen.getByText('Waiting for umar (PM).')).toBeTruthy()
+      expect(screen.getByText('Waiting for the PM’s Bob to review it.')).toBeTruthy()
     })
 
     it('gives way to the review card once Bob proposes one', () => {

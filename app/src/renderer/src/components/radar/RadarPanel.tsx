@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button'
 import { useRadarStore } from '@/store/radar-store'
 import { MissionControlView } from './MissionControlView'
 import { TeamPanel } from './TeamPanel'
-import { FilesLocksView } from './FilesLocksView'
 import { InviteCodesCard } from './InviteCodesCard'
 import { JoinWithCodeCard } from './JoinWithCodeCard'
 import { RadarSettingsPane } from './RadarSettingsPane'
@@ -16,7 +15,7 @@ import { WatchBobView } from './WatchBobView'
 import { TaskBoardView } from './TaskBoardView'
 import type { RadarPanelTab } from './radar-panel-tab'
 
-const TABS: RadarPanelTab[] = ['multiplayer', 'tasks', 'mission', 'team', 'files', 'settings']
+const TABS: RadarPanelTab[] = ['mission', 'tasks', 'team', 'multiplayer']
 
 type Props = {
   tab: RadarPanelTab
@@ -37,12 +36,11 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
     : null
   const tasksLabel = connection?.role === 'coder' ? 'My tasks' : 'Tasks'
   const LABEL: Record<RadarPanelTab, string> = {
-    mission: 'Mission Control',
+    mission: 'Overview',
     team: 'Team',
-    files: 'Files & locks',
-    multiplayer: 'Multiplayer',
+    multiplayer: 'Room',
     tasks: tasksLabel,
-    settings: 'Settings',
+    settings: 'Room',
     watch: 'Watch Bob'
   }
   const [watchedMemberId, setWatchedMemberId] = useState<string | null>(null)
@@ -66,6 +64,7 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
   // Why: codes made for a folder this app no longer shares are dead; a new share starts an empty list.
   const inviteKey = `${connection?.workspace ?? ''}/${sharedCode?.code ?? ''}`
   const tabs: RadarPanelTab[] = watchedMemberId ? [...TABS, 'watch'] : TABS
+  const barTab: RadarPanelTab = tab === 'settings' ? 'multiplayer' : tab
 
   const watch = (memberId: string) => {
     setWatchedMemberId(memberId)
@@ -98,10 +97,10 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
             key={item}
             type="button"
             onClick={() => onTabChange(item)}
-            aria-current={tab === item ? 'page' : undefined}
+            aria-current={barTab === item ? 'page' : undefined}
             className={cn(
               'rounded-md px-2 py-1 text-xs',
-              tab === item
+              barTab === item
                 ? 'bg-secondary text-foreground'
                 : 'text-muted-foreground hover:bg-secondary'
             )}
@@ -111,9 +110,9 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
         ))}
       </div>
       <div className="scrollbar-sleek min-h-0 flex-1 overflow-y-auto">
-        {tab === 'multiplayer' ? (
+        {tab === 'multiplayer' || tab === 'settings' ? (
           // Why: fixed slots keep ShareFolderCard mounted (and its message) when sharing turns this app into Mission Control.
-          <div className="space-y-3 p-4">
+          <div className="mx-auto max-w-3xl space-y-3 p-4">
             {/* Teammates see it too: once the owner stops sharing, anyone can share the next folder. */}
             <ShareFolderCard
               connection={connection}
@@ -128,20 +127,29 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
             {connection?.role === 'mc' && <InviteCodesCard key={inviteKey} />}
             {connectionFailure === 'access-rejected' && (
               <Button variant="link" size="xs" onClick={() => onTabChange('settings')}>
-                The server rejected this app’s token. Check it in Settings
+                The server rejected this app’s token. Check it under Connection details
               </Button>
             )}
-          </div>
-        ) : tab === 'settings' ? (
-          <div className="px-4 pt-3">
-            {/* Why: teammates join with code + name + role in Multiplayer; server, workspace and tokens are for the owner. */}
-            <RadarSettingsPane
-              connection={connection}
-              connected={connected}
-              connectionFailure={connectionFailure}
-              workspacePath={workspacePath}
-              onConnectionChange={onConnectionChange}
-            />
+            {/* Why: teammates join with code + name + role above; server, workspace and tokens are for the owner. */}
+            <details
+              key={tab}
+              open={tab === 'settings'}
+              className="rounded-lg border border-border bg-card"
+            >
+              <summary className="cursor-pointer px-4 py-3 text-sm font-medium">
+                Connection details
+                <span className="ml-2 text-xs font-normal text-muted-foreground">server, workspace, access token, privacy</span>
+              </summary>
+              <div className="border-t border-border px-1 pb-2">
+                <RadarSettingsPane
+                  connection={connection}
+                  connected={connected}
+                  connectionFailure={connectionFailure}
+                  workspacePath={workspacePath}
+                  onConnectionChange={onConnectionChange}
+                />
+              </div>
+            </details>
           </div>
         ) : !connection ? (
           <div className="m-4 space-y-3">
@@ -151,14 +159,14 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
               sharedCode={sharedCode}
               onConnectionChange={onConnectionChange}
               onShared={(code) => {
-                // Why: this view unmounts once connected; Multiplayer shows the copied code again.
+                // Why: this view unmounts once connected; Room shows the copied code again.
                 setSharedCode(code)
                 onTabChange('multiplayer')
               }}
             />
             <JoinWithCodeCard connection={connection} onConnectionChange={onConnectionChange} />
             <Button variant="link" size="xs" onClick={() => onTabChange('settings')}>
-              Workspace owner? Connect Mission Control in settings
+              Workspace owner? Open connection details
             </Button>
           </div>
         ) : !connected || !state ? (
@@ -167,11 +175,11 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
               {connected
                 ? 'Waiting for workspace state from the server.'
                 : connectionFailure === 'workspace-closed'
-                  ? 'The owner stopped sharing this workspace. Join with a new code in Multiplayer.'
+                  ? 'The owner stopped sharing this workspace. Join with a new code in Room.'
                   : connectionFailure === 'signed-out'
                     ? 'You signed in on another device, so this app was signed out.'
                     : connectionFailure === 'removed'
-                      ? 'The owner removed you from this workspace. Join with a new code in Multiplayer.'
+                      ? 'The owner removed you from this workspace. Join with a new code in Room.'
                       : 'Connection lost. The app keeps trying to reconnect.'}
             </p>
             <button
@@ -179,22 +187,13 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
               onClick={() => onTabChange('multiplayer')}
               className="mt-3 rounded-md border border-border px-3 py-1.5 text-xs"
             >
-              Open Multiplayer
+              Open Room
             </button>
           </div>
         ) : tab === 'tasks' ? (
           <TaskBoardView state={state} role={connection?.role ?? null} seatId={seatId} />
-        ) : tab === 'mission' ? (
-          <MissionControlView state={state} canDecide={canDecide} readOnlyNote={decideNote} now={now} />
         ) : tab === 'team' ? (
-          <>
-            {connection?.role === 'mc' && (
-              <div className="p-4 pb-0">
-                <InviteCodesCard key={inviteKey} />
-              </div>
-            )}
-            <TeamPanel state={state} now={now} onWatch={watch} onOpenTasks={() => onTabChange('tasks')} canRemove={connection?.role === 'mc'} />
-          </>
+          <TeamPanel state={state} now={now} onWatch={watch} onOpenTasks={() => onTabChange('tasks')} canRemove={connection?.role === 'mc'} />
         ) : tab === 'watch' ? (
           watchedMemberId ? (
             <WatchBobView state={state} memberId={watchedMemberId} onStopWatching={stopWatching} />
@@ -211,7 +210,7 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
             </div>
           )
         ) : (
-          <FilesLocksView state={state} now={now} />
+          <MissionControlView state={state} canDecide={canDecide} readOnlyNote={decideNote} now={now} onOpenTasks={() => onTabChange('tasks')} />
         )}
       </div>
     </div>

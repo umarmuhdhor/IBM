@@ -138,7 +138,7 @@ it('shows the shared folder with its code, and asks before replacing the workspa
   expect(screen.getByRole('button', { name: 'Replace with other' })).toBeTruthy()
   expect(shareFolder).not.toHaveBeenCalled()
   fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
-  expect(screen.getByRole('region', { name: 'Multiplayer' })).toBeTruthy()
+  expect(screen.getByRole('region', { name: 'Share a folder' })).toBeTruthy()
 })
 
 it('stops sharing only after the owner confirms, then disconnects', async () => {
