@@ -6,11 +6,11 @@ import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { Command, Option } from 'commander';
 import pc from 'picocolors';
-import { decodeInvite, HealthRes, InviteInvalidError, MEMBER_COLORS, TasksRes } from '@radar/common';
+import { decodeInvite, HealthRes, InviteInvalidError, MEMBER_COLORS, TasksRes, type LockHolder } from '@radar/common';
 import { ConfigInvalidError, ConfigMissingError, loadLocalConfig, type LocalConfig } from '@radar/common/node';
 import { SyncAgent, SYNC_CLIENT_VERSION, type StopKind } from './agent.js';
 import { findKitDir, installKit, type KitRole } from './kit.js';
-import { terminalNotifier } from './notify.js';
+import { formatRejection, terminalNotifier, type RejectReason } from './notify.js';
 import type { SyncMode } from './watcher.js';
 
 export interface JoinFiles {
@@ -94,6 +94,10 @@ interface RunFlags {
 export function wireJsonStatus(agent: Pick<EventEmitter, 'on'>, out: (line: string) => void): void {
   agent.on('status', (s: object) => out(JSON.stringify({ type: 'status', ts: Date.now(), ...s })));
   agent.on('conflict', (c: { path: string; sidecar: string }) => out(JSON.stringify({ type: 'conflict', ts: Date.now(), path: c.path, sidecar: c.sidecar })));
+  // The app shows why a change was not sent (PM read-only, file held by a task, too large, binary).
+  agent.on('rejected', (r: { path: string; reason: RejectReason; holder?: LockHolder | null; sidecar: string | null }) =>
+    out(JSON.stringify({ type: 'rejected', ts: Date.now(), path: r.path, reason: r.reason, sidecar: r.sidecar, message: formatRejection({ ...r, holder: r.holder ?? null }) })),
+  );
   agent.on('stopped', (message: string, reason: StopKind) => out(JSON.stringify({ type: 'stopped', ts: Date.now(), reason, message })));
 }
 

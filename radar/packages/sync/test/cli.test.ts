@@ -160,10 +160,12 @@ describe('--json-status lines', () => {
     wireJsonStatus(agent, (l) => lines.push(l));
     agent.emit('status', { connected: true, files: 2 });
     agent.emit('conflict', { path: 'notes/a.md', sidecar: 'notes/a.md.radar-conflict' });
+    agent.emit('rejected', { path: 'notes.md', reason: 'pm_readonly', holder: null, sidecar: 'notes.md.radar-rejected' });
     agent.emit('stopped', 'The owner stopped sharing this workspace.', 'workspace-closed');
     expect(lines.map((l) => JSON.parse(l))).toEqual([
       expect.objectContaining({ type: 'status', connected: true, files: 2 }),
       expect.objectContaining({ type: 'conflict', path: 'notes/a.md', sidecar: 'notes/a.md.radar-conflict' }),
+      expect.objectContaining({ type: 'rejected', path: 'notes.md', reason: 'pm_readonly', message: expect.stringContaining('A PM does not write files') }),
       expect.objectContaining({ type: 'stopped', reason: 'workspace-closed', message: 'The owner stopped sharing this workspace.' }),
     ]);
   });
