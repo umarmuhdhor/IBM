@@ -115,7 +115,7 @@ export function applyUpdate(
       ts: deps.now,
       actor: member.memberId,
       type: 'file.rejected',
-      payload: { path, by: member.memberId, reason: d.reason, holderMemberId: d.holder?.memberId ?? null, holderTaskId: d.holder?.taskId ?? null },
+      payload: { path, by: member.memberId, reason: d.reason, holderMemberId: d.holder?.memberId ?? null, holderTaskId: d.holder?.taskId ?? null, ...(d.holder?.range ? { holderRange: d.holder.range } : {}) },
     });
     return reject(path, d.reason, serverCopy(f), d.holder);
   };
@@ -202,7 +202,7 @@ export function applyDelete(
       ts: deps.now,
       actor: member.memberId,
       type: 'file.rejected',
-      payload: { path, by: member.memberId, reason: decision.reason, holderMemberId: decision.holder?.memberId ?? null, holderTaskId: decision.holder?.taskId ?? null },
+      payload: { path, by: member.memberId, reason: decision.reason, holderMemberId: decision.holder?.memberId ?? null, holderTaskId: decision.holder?.taskId ?? null, ...(decision.holder?.range ? { holderRange: decision.holder.range } : {}) },
     });
     return { ok: false, path, reason: decision.reason, holder: decision.holder, server: serverCopy(f) };
   }
