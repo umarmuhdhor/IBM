@@ -61,6 +61,25 @@ describe('rejoining keeps the seat (bug 5)', () => {
   });
 });
 
+describe('rejoining without a token reuses the offline seat (bug reconnect)', () => {
+  it("'Dewi' joins as pm; a new open code redeemed by 'dewi' (no token) gets the same seat id, the team still has one member named Dewi, and the role is taken from the new join", async () => {
+    const { stub } = freshWorkspace();
+    const open = await openWorkspace(stub);
+    const dewi = await join(stub, open.code, 'Dewi', 'pm');
+    expect(dewi.member).toBe('B');
+
+    const again = await join(stub, await newCode(stub, open.mcToken), 'dewi', 'coder');
+    expect(again.member).toBe('B');
+    expect(again.role).toBe('coder');
+    const team = await members(stub, open.mcToken);
+    expect(team.filter((m) => m.name.toLowerCase() === 'dewi')).toHaveLength(1);
+    expect(team).toEqual([
+      { id: 'A', name: 'Alief', role: 'coder' },
+      { id: 'B', name: 'dewi', role: 'coder' },
+    ]);
+  });
+});
+
 describe('the owner removes a seat (bug 5)', () => {
   it('removes the member: gone from the team, token and socket end with "member removed", used code refused', async () => {
     const { stub } = freshWorkspace();

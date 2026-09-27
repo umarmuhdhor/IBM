@@ -89,3 +89,11 @@ export function activePm(db: Db, exceptId?: string): MemberRow | null {
   }
   return db.one<MemberRow>("SELECT * FROM member WHERE role = 'pm' AND removed_at IS NULL");
 }
+
+/** An offline active seat (removed_at IS NULL, online = 0) whose name matches case-insensitively; lowest id first. */
+export function offlineMemberNamed(db: Db, name: string): MemberRow | null {
+  return db.one<MemberRow>(
+    "SELECT * FROM member WHERE removed_at IS NULL AND online = 0 AND TRIM(LOWER(name)) = TRIM(LOWER(?)) ORDER BY id LIMIT 1",
+    name,
+  );
+}
