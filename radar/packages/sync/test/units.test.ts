@@ -145,6 +145,15 @@ describe('sidecar', () => {
 });
 
 describe('notify messages', () => {
+  it('a file that never syncs says it stays on this Mac and what to do (fase 12k UI gate)', () => {
+    const base = { holder: null, sidecar: null } as const;
+    expect(formatRejection({ ...base, path: 'logo.png', reason: 'binary' })).toBe(
+      '✖ logo.png is a binary file and does not sync. Only text files sync; it stays on this Mac.',
+    );
+    expect(formatRejection({ ...base, path: 'dump.sql', reason: 'too_large' })).toBe(
+      '✖ dump.sql is larger than 1 MB and does not sync. It stays on this Mac; make it smaller to sync it.',
+    );
+  });
   const holder = { memberId: 'A', memberName: 'Alice', taskId: 'T-1', taskTitle: 'Kupon', state: 'dipegang' as const };
   it('names the holder for held_by_other', () => {
     expect(formatRejection({ path: 'src/checkout/checkout.ts', reason: 'held_by_other', holder, sidecar: 'src/checkout/checkout.ts.radar-rejected' })).toBe(

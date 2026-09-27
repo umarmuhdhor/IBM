@@ -20,9 +20,9 @@ export function formatRejection(r: { path: string; reason: RejectReason; holder:
     case 'conflict':
       return `✖ Your copy was behind, so the server version is used. Your copy: ${saved ?? '(no copy)'}`;
     case 'too_large':
-      return `✖ ${r.path} is larger than 1 MB and does not sync.`;
+      return `✖ ${r.path} is larger than 1 MB and does not sync. It stays on this Mac; make it smaller to sync it.`;
     case 'binary':
-      return `✖ ${r.path} is a binary file and does not sync.`;
+      return `✖ ${r.path} is a binary file and does not sync. Only text files sync; it stays on this Mac.`;
     case 'held_by_other':
     case 'committing': {
       const held = r.holder?.range ? `${rangeText(r.holder.range)} ${r.holder.range.start === r.holder.range.end ? 'is' : 'are'} held by` : 'held by';
