@@ -2,6 +2,7 @@ import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync 
 import { homedir, tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { encodeInvite } from '@radar/common'
+import { ipcMain } from 'electron'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
@@ -374,5 +375,50 @@ describe('a share cut off mid-upload (fase 12k bug 9)', () => {
       owner: { role: 'pm' }
     })
     expect(JSON.parse(readFileSync(ownerFile(), 'utf8'))).toEqual({ workspace: 'my-app', folder: root })
+  })
+
+  it('a Share clicked while the start is still finishing the old share waits for it', async () => {
+    write('src/a.ts', 'export const a = 1\n')
+    mkdirSync(dirname(ownerFile()), { recursive: true })
+    writeFileSync(ownerFile(), JSON.stringify({ workspace: 'my-app', folder: root, pending: true, role: 'coder' }))
+    mocks.readRadarConnection.mockReturnValue(mcConnection)
+    const seen: string[] = []
+    let release = (): void => undefined
+    const held = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        const path = new URL(url).pathname
+        seen.push(path)
+        if (seen.length === 2) {
+          await held
+          seen.push('upload done')
+        }
+        return path === '/v1/workspace/open'
+          ? new Response(JSON.stringify(opened), { status: 201 })
+          : new Response(JSON.stringify({ inserted: 1, headCommit: null }), { status: 200 })
+      })
+    )
+    registerRadarOpenFolderIpc()
+    await vi.waitFor(() => expect(seen).toHaveLength(2))
+    const share: unknown = vi
+      .mocked(ipcMain.handle)
+      .mock.calls.find(([channel]) => channel === 'radar:share-folder')?.[1]
+    if (typeof share !== 'function') {
+      throw new Error('radar:share-folder is not registered')
+    }
+    const clicked = share({ sender: {} }, { folder: root, name: 'Alief', role: 'coder', server: SERVER })
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    release()
+    await clicked
+    expect(seen).toEqual([
+      '/v1/workspace/open',
+      '/v1/workspace/files',
+      'upload done',
+      '/v1/workspace/open',
+      '/v1/workspace/files'
+    ])
   })
 })

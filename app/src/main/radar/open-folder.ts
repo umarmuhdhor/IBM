@@ -270,6 +270,8 @@ async function chooseAndShare(
   return shareFolder(folder, field('name'), field('role'), field('server'))
 }
 
+let resuming: Promise<void> | null = null
+
 export function registerRadarOpenFolderIpc(): void {
   // The owner's folder keeps syncing after a restart while the app is still its Mission Control.
   void app.whenReady().then(() => {
@@ -277,11 +279,13 @@ export function registerRadarOpenFolderIpc(): void {
       const saved = readRadarConnection()
       const owned = readOwnerFolder()
       if (saved?.role === 'mc' && owned?.pending && owned.workspace === saved.workspace) {
-        void shareFolder(owned.folder, null, owned.role, null).catch((error: unknown) =>
-          console.warn(
-            '[radar] could not finish sharing the folder:',
-            error instanceof Error ? error.message : error
-          )
+        resuming = shareFolder(owned.folder, null, owned.role, null).then(
+          () => undefined,
+          (error: unknown) =>
+            console.warn(
+              '[radar] could not finish sharing the folder:',
+              error instanceof Error ? error.message : error
+            )
         )
       } else if (
         saved?.role === 'mc' &&
@@ -300,8 +304,13 @@ export function registerRadarOpenFolderIpc(): void {
       )
     }
   })
-  ipcMain.handle('radar:stop-sharing', () => stopSharing())
-  ipcMain.handle('radar:share-folder', (event, value: unknown) =>
-    chooseAndShare(BrowserWindow.fromWebContents(event.sender), value)
-  )
+  // Why: a Share or Stop clicked while the start is still finishing the old share would race it.
+  ipcMain.handle('radar:stop-sharing', async () => {
+    await resuming
+    return stopSharing()
+  })
+  ipcMain.handle('radar:share-folder', async (event, value: unknown) => {
+    await resuming
+    return chooseAndShare(BrowserWindow.fromWebContents(event.sender), value)
+  })
 }
