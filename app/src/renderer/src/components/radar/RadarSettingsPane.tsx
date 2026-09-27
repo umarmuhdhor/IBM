@@ -35,6 +35,9 @@ function connectionStatus(saved: boolean, connected: boolean, failure: RadarConn
   if (failure === 'signed-out') {
     return 'This seat signed in on another device, so this app was signed out.'
   }
+  if (failure === 'removed') {
+    return 'The owner removed you from this workspace. Join with a new code.'
+  }
   if (failure === 'connection-lost') {
     return 'Server connection lost. Check the URL and network; the app will retry.'
   }

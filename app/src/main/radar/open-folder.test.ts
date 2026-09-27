@@ -1,7 +1,8 @@
-import { chmodSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { homedir, tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { encodeInvite } from '@radar/common'
+import { ipcMain } from 'electron'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
@@ -44,8 +45,14 @@ vi.mock('./sync-agent', () => ({
   workspaceFolder: (workspace: string) => `/home/test/live-collab/${workspace}`
 }))
 
-const { batchFolderFiles, collectFolderFiles, shareFolder, stopSharing, workspaceNameFor } =
-  await import('./open-folder')
+const {
+  batchFolderFiles,
+  collectFolderFiles,
+  registerRadarOpenFolderIpc,
+  shareFolder,
+  stopSharing,
+  workspaceNameFor
+} = await import('./open-folder')
 
 const SERVER = 'https://collab.example.dev'
 const invite = encodeInvite({
@@ -320,5 +327,98 @@ describe('stopSharing (D-alief-12)', () => {
     respondInOrder([401, { error: { code: 'UNAUTHORIZED', message: 'Token revoked.' } }])
     await expect(stopSharing()).rejects.toThrow('Token revoked.')
     expect(mocks.disconnectRadar).not.toHaveBeenCalled()
+  })
+})
+
+describe('a share cut off mid-upload (fase 12k bug 9)', () => {
+  const mcConnection = {
+    server: `${SERVER}/`,
+    workspace: 'my-app',
+    member: 'mc',
+    role: 'mc',
+    token: 'rdr_test_mc_value'
+  }
+  const ownerFile = () => join(mocks.userData, 'radar', 'owner-folder.json')
+
+  it('keeps this Mac as owner once the server opened the workspace, so Share again replaces it', async () => {
+    write('src/a.ts', 'export const a = 1\n')
+    respondInOrder([201, opened], [503, { error: { code: 'UNAVAILABLE', message: 'try later' } }])
+    await expect(shareFolder(root, 'Alief', 'coder', SERVER)).rejects.toThrow()
+    expect(mocks.saveRadarConnection).toHaveBeenCalledWith(mcConnection)
+    expect(JSON.parse(readFileSync(ownerFile(), 'utf8'))).toEqual({
+      workspace: 'my-app',
+      folder: root,
+      pending: true,
+      role: 'coder'
+    })
+    expect(mocks.startSyncAgent).not.toHaveBeenCalled()
+
+    mocks.readRadarConnection.mockReturnValue(mcConnection)
+    respondInOrder([201, opened], [200, { inserted: 1, headCommit: null }])
+    await shareFolder(root, 'Alief', 'coder', SERVER)
+    expect(vi.mocked(fetch).mock.calls[0]?.[1]?.headers).toMatchObject({
+      Authorization: 'Bearer rdr_test_mc_value'
+    })
+    expect(JSON.parse(readFileSync(ownerFile(), 'utf8'))).toEqual({ workspace: 'my-app', folder: root })
+  })
+
+  it('the next start finishes the share by itself', async () => {
+    write('src/a.ts', 'export const a = 1\n')
+    mkdirSync(dirname(ownerFile()), { recursive: true })
+    writeFileSync(ownerFile(), JSON.stringify({ workspace: 'my-app', folder: root, pending: true, role: 'pm' }))
+    mocks.readRadarConnection.mockReturnValue(mcConnection)
+    respondInOrder([201, opened], [200, { inserted: 1, headCommit: null }])
+    registerRadarOpenFolderIpc()
+    await vi.waitFor(() => expect(mocks.startSyncAgent).toHaveBeenCalledWith('my-app', invite, root))
+    expect(vi.mocked(fetch).mock.calls[1]?.[0]).toBe(`${SERVER}/v1/workspace/files`)
+    expect(JSON.parse(String(vi.mocked(fetch).mock.calls[0]?.[1]?.body))).toMatchObject({
+      owner: { role: 'pm' }
+    })
+    expect(JSON.parse(readFileSync(ownerFile(), 'utf8'))).toEqual({ workspace: 'my-app', folder: root })
+  })
+
+  it('a Share clicked while the start is still finishing the old share waits for it', async () => {
+    write('src/a.ts', 'export const a = 1\n')
+    mkdirSync(dirname(ownerFile()), { recursive: true })
+    writeFileSync(ownerFile(), JSON.stringify({ workspace: 'my-app', folder: root, pending: true, role: 'coder' }))
+    mocks.readRadarConnection.mockReturnValue(mcConnection)
+    const seen: string[] = []
+    let release = (): void => undefined
+    const held = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        const path = new URL(url).pathname
+        seen.push(path)
+        if (seen.length === 2) {
+          await held
+          seen.push('upload done')
+        }
+        return path === '/v1/workspace/open'
+          ? new Response(JSON.stringify(opened), { status: 201 })
+          : new Response(JSON.stringify({ inserted: 1, headCommit: null }), { status: 200 })
+      })
+    )
+    registerRadarOpenFolderIpc()
+    await vi.waitFor(() => expect(seen).toHaveLength(2))
+    const share: unknown = vi
+      .mocked(ipcMain.handle)
+      .mock.calls.find(([channel]) => channel === 'radar:share-folder')?.[1]
+    if (typeof share !== 'function') {
+      throw new Error('radar:share-folder is not registered')
+    }
+    const clicked = share({ sender: {} }, { folder: root, name: 'Alief', role: 'coder', server: SERVER })
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    release()
+    await clicked
+    expect(seen).toEqual([
+      '/v1/workspace/open',
+      '/v1/workspace/files',
+      'upload done',
+      '/v1/workspace/open',
+      '/v1/workspace/files'
+    ])
   })
 })

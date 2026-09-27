@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import type { RadarState } from '@radar/ui'
 import type { RadarSyncStatus } from '../../../../shared/radar-join'
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 import { useRadarStore } from '@/store/radar-store'
 import { ShareFolderCard } from './ShareFolderCard'
 
@@ -180,6 +181,42 @@ it('tells the old owner that another device took over, and lets them start over 
   await waitFor(() => expect(onConnectionChange).toHaveBeenCalledWith(null))
 })
 
+it('lets the owner take back ownership on this Mac after another device took over (D-alief-21)', async () => {
+  useRadarStore.setState({ connectionFailure: 'signed-out' })
+  const summary = { ...owner }
+  const reclaimOwner = vi.fn(async () => summary)
+  Object.assign((globalThis as unknown as { api: { radar: Record<string, unknown> } }).api.radar, { reclaimOwner })
+  const onConnectionChange = vi.fn()
+  render(
+    <ShareFolderCard
+      connection={owner}
+      folder={null}
+      sharedCode={code}
+      onConnectionChange={onConnectionChange}
+      onShared={vi.fn()}
+    />
+  )
+  expect(await screen.findByText(/If it is closed now, take back ownership on this Mac/)).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'Take back ownership' }))
+  await waitFor(() => expect(onConnectionChange).toHaveBeenCalledWith(summary))
+  expect(reclaimOwner).toHaveBeenCalledTimes(1)
+})
+
+it('offers no take-back when the workspace was closed', async () => {
+  useRadarStore.setState({ connectionFailure: 'workspace-closed' })
+  render(
+    <ShareFolderCard
+      connection={owner}
+      folder={null}
+      sharedCode={code}
+      onConnectionChange={vi.fn()}
+      onShared={vi.fn()}
+    />
+  )
+  expect(await screen.findByText(/no longer shared from this Mac/)).toBeTruthy()
+  expect(screen.queryByRole('button', { name: 'Take back ownership' })).toBeNull()
+})
+
 it('drops the "Sharing stopped" note once this app joins another workspace', async () => {
   stopSharing.mockResolvedValue(undefined)
   const props = { folder: null, sharedCode: null, onConnectionChange: vi.fn(), onShared: vi.fn() }
@@ -222,6 +259,20 @@ it("a teammate sees who is sharing instead of a Share button that always fails",
   useRadarStore.setState({ state: null })
 })
 
+it('a joined teammate gets no extra "is sharing" card above their workspace card (fase 12k bug 8)', async () => {
+  status.folder = '/Users/me/live-collab/my-app'
+  const { container } = render(
+    <ShareFolderCard
+      connection={{ server: owner.server, workspace: 'my-app', member: 'B', role: 'coder' }}
+      folder="/Users/me/live-collab/my-app"
+      sharedCode={null}
+      onConnectionChange={vi.fn()}
+      onShared={vi.fn()}
+    />
+  )
+  await waitFor(() => expect(container.textContent).toBe(''))
+})
+
 it('after a restart the owner is told where to make a new join code', async () => {
   status.folder = '/Users/me/my-app'
   render(
@@ -245,4 +296,70 @@ it('drops the "Copied" note when another device takes over as owner', async () =
   act(() => useRadarStore.setState({ connectionFailure: 'signed-out' }))
   expect(await screen.findByText(/Another device took over as owner/)).toBeTruthy()
   expect(screen.queryByText(/Copied K7QM-3XPA/)).toBeNull()
+})
+
+it.each([
+  ['Share a different folder…', 'Share a different folder?'],
+  ['Stop sharing…', 'Stop sharing my-app?']
+])(
+  'Escape in the %s confirmation closes only the confirmation (fase 12k bug 7)',
+  async (trigger, heading) => {
+    status.folder = '/Users/me/my-app'
+    const onOpenChange = vi.fn()
+    render(
+      <Sheet open onOpenChange={onOpenChange}>
+        <SheetContent>
+          <SheetTitle>Live Collab</SheetTitle>
+          <ShareFolderCard
+            connection={owner}
+            folder="/Users/me/my-app"
+            sharedCode={code}
+            onConnectionChange={vi.fn()}
+            onShared={vi.fn()}
+          />
+        </SheetContent>
+      </Sheet>
+    )
+    fireEvent.click(await screen.findByRole('button', { name: trigger }))
+    expect(screen.getByRole('heading', { name: heading })).toBeTruthy()
+    // Focus moves into the confirmation, so the keyboard stays inside it.
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Cancel' }))
+
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' })
+
+    expect(screen.queryByRole('heading', { name: heading })).toBeNull()
+    expect(onOpenChange).not.toHaveBeenCalled()
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: trigger }))
+
+    // The next Escape closes the panel as usual.
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' })
+    expect(onOpenChange).toHaveBeenCalledWith(false)
+  }
+)
+
+it.each([
+  ['Share a different folder…', 'Share a different folder?', /This replaces my-app/],
+  ['Stop sharing…', 'Stop sharing my-app?', /Everyone is disconnected/]
+])('the %s confirmation is an alert dialog, and Escape elsewhere leaves it open', async (trigger, heading, warning) => {
+  status.folder = '/Users/me/my-app'
+  render(
+    <>
+      <input aria-label="Elsewhere" />
+      <ShareFolderCard
+        connection={owner}
+        folder="/Users/me/my-app"
+        sharedCode={code}
+        onConnectionChange={vi.fn()}
+        onShared={vi.fn()}
+      />
+    </>
+  )
+  fireEvent.click(await screen.findByRole('button', { name: trigger }))
+  const dialog = screen.getByRole('alertdialog', { name: heading })
+  expect(dialog.getAttribute('aria-describedby')).toBe(screen.getByText(warning).id)
+
+  const elsewhere = screen.getByRole('textbox', { name: 'Elsewhere' })
+  elsewhere.focus()
+  fireEvent.keyDown(elsewhere, { key: 'Escape' })
+  expect(screen.getByRole('alertdialog', { name: heading })).toBeTruthy()
 })

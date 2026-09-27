@@ -151,7 +151,9 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
                   ? 'The owner stopped sharing this workspace. Join with a new code in Multiplayer.'
                   : connectionFailure === 'signed-out'
                     ? 'You signed in on another device, so this app was signed out.'
-                    : 'Connection lost. The app keeps trying to reconnect.'}
+                    : connectionFailure === 'removed'
+                      ? 'The owner removed you from this workspace. Join with a new code in Multiplayer.'
+                      : 'Connection lost. The app keeps trying to reconnect.'}
             </p>
             <button
               type="button"
@@ -170,7 +172,7 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
                 <InviteCodesCard key={inviteKey} />
               </div>
             )}
-            <TeamPanel state={state} now={now} onWatch={watch} />
+            <TeamPanel state={state} now={now} onWatch={watch} canRemove={connection?.role === 'mc'} />
           </>
         ) : tab === 'watch' ? (
           watchedMemberId ? (

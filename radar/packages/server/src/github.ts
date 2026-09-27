@@ -24,7 +24,7 @@ export async function verifyHeadCommit(c: GithubRefCheck): Promise<void> {
   } catch (err) {
     throw new RadarError(422, 'VALIDATION', `Cannot reach GitHub to check headCommit (${err instanceof Error ? err.message : 'network error'}).`);
   }
-  if (!res.ok) throw new RadarError(422, 'VALIDATION', `GitHub menolak pemeriksaan headCommit (HTTP ${res.status}).`);
+  if (!res.ok) throw new RadarError(422, 'VALIDATION', `GitHub refused the headCommit check (HTTP ${res.status}).`);
   const body = (await res.json()) as { object?: { sha?: unknown } };
   const sha = typeof body.object?.sha === 'string' ? body.object.sha : '';
   if (c.headCommit.length < 7 || !sha.startsWith(c.headCommit)) {

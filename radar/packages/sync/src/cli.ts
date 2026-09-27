@@ -9,7 +9,7 @@ import pc from 'picocolors';
 import { decodeInvite, HealthRes, InviteInvalidError, MEMBER_COLORS, TasksRes, type LockHolder } from '@radar/common';
 import { ConfigInvalidError, ConfigMissingError, loadLocalConfig, type LocalConfig } from '@radar/common/node';
 import { SyncAgent, SYNC_CLIENT_VERSION, type StopKind } from './agent.js';
-import { findKitDir, installKit, type KitRole } from './kit.js';
+import { findKitDir, installKit, type KitResult, type KitRole } from './kit.js';
 import { formatRejection, terminalNotifier, type RejectReason } from './notify.js';
 import type { SyncMode } from './watcher.js';
 
@@ -94,10 +94,16 @@ interface RunFlags {
 export function wireJsonStatus(agent: Pick<EventEmitter, 'on'>, out: (line: string) => void): void {
   agent.on('status', (s: object) => out(JSON.stringify({ type: 'status', ts: Date.now(), ...s })));
   agent.on('conflict', (c: { path: string; sidecar: string }) => out(JSON.stringify({ type: 'conflict', ts: Date.now(), path: c.path, sidecar: c.sidecar })));
-  // The app shows why a change was not sent (PM read-only, file held by a task, too large, binary).
-  agent.on('rejected', (r: { path: string; reason: RejectReason; holder?: LockHolder | null; sidecar: string | null }) =>
-    out(JSON.stringify({ type: 'rejected', ts: Date.now(), path: r.path, reason: r.reason, sidecar: r.sidecar, message: formatRejection({ ...r, holder: r.holder ?? null }) })),
-  );
+  // The app shows why a change was not sent (PM read-only, file held by a task, too large, binary), and drops the
+  // notice with `accepted` once the server takes that path after all.
+  const refused = new Set<string>();
+  agent.on('rejected', (r: { path: string; reason: RejectReason; holder?: LockHolder | null; sidecar: string | null }) => {
+    refused.add(r.path);
+    out(JSON.stringify({ type: 'rejected', ts: Date.now(), path: r.path, reason: r.reason, sidecar: r.sidecar, message: formatRejection({ ...r, holder: r.holder ?? null }) }));
+  });
+  agent.on('ack', (a: { path: string }) => {
+    if (refused.delete(a.path)) out(JSON.stringify({ type: 'accepted', ts: Date.now(), path: a.path }));
+  });
   agent.on('stopped', (message: string, reason: StopKind) => out(JSON.stringify({ type: 'stopped', ts: Date.now(), reason, message })));
 }
 
@@ -177,6 +183,26 @@ export async function printStatus(cfg: LocalConfig, out: (s: string) => void): P
     out(`task     ${pc.yellow(`failed: ${(err as Error).message}`)}`);
   }
   return 0;
+}
+
+/** `kit install` exit code: the app's install button trusts it, so a missing kit is a failure too (fase 12k). */
+export function kitInstallExitCode(r: Pick<KitResult, 'status'>): number {
+  return r.status === 'installed' ? 0 : 1;
+}
+
+/** `--json-status` line for the app after the join installs the Bob kit (fase 12k bug 4). */
+export function kitStatusLine(r: KitResult, role: KitRole): string {
+  const base = { type: 'kit', ts: Date.now(), status: r.status, role };
+  if (r.status === 'installed') return JSON.stringify({ ...base, message: `Bob ${role} kit installed in .bob/.` });
+  if (r.status === 'refused') {
+    const shown = r.foreign.slice(0, 3).join(', ') + (r.foreign.length > 3 ? ` and ${r.foreign.length - 3} more` : '');
+    return JSON.stringify({
+      ...base,
+      foreign: r.foreign,
+      message: `Bob kit not installed: this folder's .bob/ already has other files (${shown}). Installing it moves your current .bob/ to a backup folder .bob.bak-<time> first, so nothing is lost.`,
+    });
+  }
+  return JSON.stringify({ ...base, message: 'Bob kit not found in the app, so Bob IDE hooks and radar-mcp are not set up in this folder.' });
 }
 
 function reportKit(r: ReturnType<typeof installKit>, role: KitRole, out: (s: string) => void): void {
@@ -274,7 +300,8 @@ export function buildProgram(): Command {
           if (role !== cfg.role) writeJoinFiles({ root, server, workspace, member, token, role });
           if (o.kit === false) return;
           const r = installKit({ root, role: kitRole ?? role, kitDir: findKitDir(o.kitDir), force: o.forceKit ?? false });
-          if (!o.jsonStatus) reportKit(r, kitRole ?? role, out);
+          if (o.jsonStatus) out(kitStatusLine(r, kitRole ?? role));
+          else reportKit(r, kitRole ?? role, out);
         },
       });
       process.exit(code);
@@ -317,7 +344,7 @@ export function buildProgram(): Command {
       if (!role) role = existsSync(join(root, '.radar', 'local.json')) ? loadConfigOrExit(root).role : 'coder';
       const r = installKit({ root, role, kitDir: findKitDir(o.kitDir), force: o.force ?? false });
       reportKit(r, role, out);
-      process.exit(r.status === 'refused' ? 1 : 0);
+      process.exit(kitInstallExitCode(r));
     });
 
   program

@@ -1,15 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { useRadarStore } from '@/store/radar-store'
 import type { RadarConnectionSummary } from '../../../../shared/radar-connection'
 import { DEFAULT_RADAR_SERVER, type RadarJoinCode } from '../../../../shared/radar-join'
+import { ReclaimOwnerButton } from './ReclaimOwnerButton'
 import { SyncConflictsNote } from './SyncConflictsNote'
-import {
-  endedNotice,
-  ipcErrorText,
-  syncLine,
-  useRadarSyncStatus
-} from './use-radar-sync-status'
+import { confirmDialogProps, useEscapeToCancel } from './use-escape-to-cancel'
+import { endedNotice, ipcErrorText, syncLine, useRadarSyncStatus } from './use-radar-sync-status'
 
 type Props = {
   connection: RadarConnectionSummary | null
@@ -47,6 +44,12 @@ export function ShareFolderCard({
   const [busy, setBusy] = useState(false)
   const [replacing, setReplacing] = useState(false)
   const [stopping, setStopping] = useState(false)
+  const cancelButton = useRef<HTMLButtonElement>(null)
+  const confirmSection = useRef<HTMLElement>(null)
+  const confirmId = useId()
+  const replaceButton = useRef<HTMLButtonElement>(null)
+  const stopButton = useRef<HTMLButtonElement>(null)
+  const [refocus, setRefocus] = useState<'replace' | 'stop' | null>(null)
   const owner = connection?.role === 'mc'
   // D-alief-15: the Mission Control token stopped working, so Stop sharing and codes would only fail.
   const ownerEnded =
@@ -60,6 +63,29 @@ export function ShareFolderCard({
     setNote(text === null ? null : { text, key, error })
   // Only offer the open folder when it is not the one already shared.
   const openFolder = folder && folder !== sync.folder ? folder : null
+
+  const cancelConfirm = () => {
+    if (busy) {
+      return
+    }
+    setRefocus(replacing ? 'replace' : 'stop')
+    setReplacing(false)
+    setStopping(false)
+  }
+  useEscapeToCancel(confirmSection, owner && (replacing || stopping), cancelConfirm)
+  // Keyboard focus follows the confirmation in and back out to the button that opened it.
+  useEffect(() => {
+    if (replacing || stopping) {
+      cancelButton.current?.focus()
+    }
+  }, [replacing, stopping])
+  useEffect(() => {
+    if (refocus) {
+      const opener = refocus === 'replace' ? replaceButton : stopButton
+      opener.current?.focus()
+      setRefocus(null)
+    }
+  }, [refocus])
 
   const copy = async (code: string, key = currentKey) => {
     try {
@@ -140,10 +166,11 @@ export function ShareFolderCard({
           <h3 className="text-sm font-semibold">{connection.workspace}</h3>
           <p className="text-xs text-foreground">
             {connectionFailure === 'signed-out'
-              ? 'Another device took over as owner. This Mac no longer runs Mission Control.'
+              ? 'Another device took over as owner. If it is closed now, take back ownership on this Mac.'
               : 'This workspace is no longer shared from this Mac.'}
           </p>
         </div>
+        {connectionFailure === 'signed-out' && <ReclaimOwnerButton onReclaimed={onConnectionChange} />}
         <Button
           size="sm"
           variant="outline"
@@ -166,12 +193,13 @@ export function ShareFolderCard({
   if (owner && stopping) {
     return (
       <section
-        aria-label="Stop sharing"
+        ref={confirmSection}
+        {...confirmDialogProps(confirmId)}
         className="space-y-3 rounded-lg border border-border bg-card p-4"
       >
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold">Stop sharing {connection.workspace}?</h3>
-          <p className="text-xs text-destructive">
+          <h3 id={`${confirmId}-title`} className="text-sm font-semibold">Stop sharing {connection.workspace}?</h3>
+          <p id={`${confirmId}-warning`} className="text-xs text-destructive">
             Everyone is disconnected, and tasks, locks and teammates on the server are removed.
             Files on every Mac stay. Afterwards anyone on the team can share their own folder.
           </p>
@@ -185,7 +213,13 @@ export function ShareFolderCard({
           >
             {busy ? 'Stopping…' : 'Stop sharing'}
           </Button>
-          <Button size="sm" variant="outline" disabled={busy} onClick={() => setStopping(false)}>
+          <Button
+            ref={cancelButton}
+            size="sm"
+            variant="outline"
+            disabled={busy}
+            onClick={cancelConfirm}
+          >
             Cancel
           </Button>
         </div>
@@ -197,12 +231,13 @@ export function ShareFolderCard({
   if (owner && replacing) {
     return (
       <section
-        aria-label="Share a different folder"
+        ref={confirmSection}
+        {...confirmDialogProps(confirmId)}
         className="space-y-3 rounded-lg border border-border bg-card p-4"
       >
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold">Share a different folder?</h3>
-          <p className="text-xs text-destructive">
+          <h3 id={`${confirmId}-title`} className="text-sm font-semibold">Share a different folder?</h3>
+          <p id={`${confirmId}-warning`} className="text-xs text-destructive">
             This replaces {connection.workspace} for everyone. Tasks, locks, files and teammates on
             the server are removed, and teammates need a new code. Files on your Mac stay.
           </p>
@@ -230,7 +265,13 @@ export function ShareFolderCard({
                 ? 'Sharing…'
                 : 'Replace and choose folder…'}
           </Button>
-          <Button size="sm" variant="outline" disabled={busy} onClick={() => setReplacing(false)}>
+          <Button
+            ref={cancelButton}
+            size="sm"
+            variant="outline"
+            disabled={busy}
+            onClick={cancelConfirm}
+          >
             Cancel
           </Button>
         </div>
@@ -303,6 +344,7 @@ export function ShareFolderCard({
             </>
           )}
           <Button
+            ref={replaceButton}
             size="sm"
             variant="ghost"
             onClick={() => {
@@ -313,6 +355,7 @@ export function ShareFolderCard({
             Share a different folder…
           </Button>
           <Button
+            ref={stopButton}
             size="sm"
             variant="ghost"
             onClick={() => {
@@ -330,6 +373,10 @@ export function ShareFolderCard({
 
   // Why: the server has one workspace; a teammate can share only after the owner stops.
   if (connection && connection.role !== 'mc' && !endedNotice(sync, connectionFailure)) {
+    // The teammate's workspace card below already names the workspace; a second card only repeats it.
+    if (sync.folder) {
+      return null
+    }
     return (
       <section
         aria-label="Multiplayer"

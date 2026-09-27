@@ -117,3 +117,19 @@ export function basename(p: string): string {
   const i = posix.lastIndexOf('/');
   return i === -1 ? posix : posix.slice(i + 1);
 }
+
+/**
+ * An empty folder travels as the file path `<folder>/.radar-dir` with empty content (fase 12k bug 1,
+ * D-alief-19). The sync agent never writes this file to disk: it creates or removes the folder instead.
+ */
+export const DIR_MARKER = '.radar-dir';
+
+/** True for `<folder>/.radar-dir`; a marker at the workspace root would be the root itself, so it is not one. */
+export function isDirMarker(p: string): boolean {
+  return p.endsWith(`/${DIR_MARKER}`);
+}
+
+/** The folder of a marker path: `src/empty/.radar-dir` is `src/empty`. */
+export function dirMarkerFolder(p: string): string {
+  return p.slice(0, -(DIR_MARKER.length + 1));
+}

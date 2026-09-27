@@ -59,4 +59,38 @@ describe('TeamPanel', () => {
     expect(within(card('Andi')).queryByText('writing ✎')).toBeNull()
     expect(within(card('Andi')).getByLabelText('Agent Andi · Bob coder, member A').getAttribute('data-status')).toBe('idle')
   })
+
+  it('lets Mission Control remove a seat after a confirmation, never the owner seat A (D-alief-20)', async () => {
+    const removeMember = vi.fn(async () => undefined)
+    vi.stubGlobal('window', Object.assign(window, { api: { radar: { removeMember } } }))
+    render(<TeamPanel state={state} now={3_000} onWatch={vi.fn()} canRemove />)
+
+    expect(within(card('Andi')).queryByRole('button', { name: /Remove/ })).toBeNull()
+    fireEvent.click(within(card('Budi')).getByRole('button', { name: 'Remove Budi' }))
+    expect(within(card('Budi')).getByRole('alertdialog', { name: 'Remove Budi?', description: 'Their open tasks are cancelled, and they need a new code to join again.' })).toBeTruthy()
+    fireEvent.keyDown(within(card('Budi')).getByRole('alertdialog', { name: 'Remove Budi?' }), { key: 'Escape' })
+    expect(within(card('Budi')).queryByRole('alertdialog', { name: 'Remove Budi?' })).toBeNull()
+    expect(removeMember).not.toHaveBeenCalled()
+
+    fireEvent.click(within(card('Budi')).getByRole('button', { name: 'Remove Budi' }))
+    fireEvent.click(within(card('Budi')).getByRole('button', { name: 'Remove' }))
+    expect(removeMember).toHaveBeenCalledWith('B')
+    await vi.waitFor(() => expect(within(card('Budi')).queryByRole('alertdialog', { name: 'Remove Budi?' })).toBeNull())
+  })
+
+  it("shows the server's reason when a removal fails", async () => {
+    const removeMember = vi.fn(async () => {
+      throw new Error("Error invoking remote method 'radar:remove-member': Error: There is no member B.")
+    })
+    vi.stubGlobal('window', Object.assign(window, { api: { radar: { removeMember } } }))
+    render(<TeamPanel state={state} now={3_000} onWatch={vi.fn()} canRemove />)
+    fireEvent.click(within(card('Budi')).getByRole('button', { name: 'Remove Budi' }))
+    fireEvent.click(within(card('Budi')).getByRole('button', { name: 'Remove' }))
+    expect(await within(card('Budi')).findByRole('alert')).toHaveProperty('textContent', 'There is no member B.')
+  })
+
+  it('offers no Remove to teammates', () => {
+    render(<TeamPanel state={state} now={3_000} onWatch={vi.fn()} />)
+    expect(screen.queryByRole('button', { name: /^Remove/ })).toBeNull()
+  })
 })

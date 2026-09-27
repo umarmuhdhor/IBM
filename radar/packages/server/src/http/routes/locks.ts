@@ -14,7 +14,7 @@ const RTT_MAX_MS = 60_000;
 
 export function pathOr422(raw: string): string {
   const path = cleanPath(raw);
-  if (path === null) throw new RadarError(422, 'VALIDATION', `Path ${raw} di luar workspace.`);
+  if (path === null) throw new RadarError(422, 'VALIDATION', `Path ${raw} is outside the workspace.`);
   return path;
 }
 
@@ -24,7 +24,7 @@ export function registerLockRoutes(app: Hono, deps: WorkspaceDeps): void {
     const req = parseWith(LockCheckReq, await readJson(c.req.raw));
     const paths = [...new Set(req.paths.map(pathOr422))];
     if (paths.length > LOCK_CHECK_MAX_PATHS) {
-      throw new RadarError(422, 'VALIDATION', `Maksimal ${LOCK_CHECK_MAX_PATHS} path per panggilan.`);
+      throw new RadarError(422, 'VALIDATION', `At most ${LOCK_CHECK_MAX_PATHS} paths per call.`);
     }
     // D-alief-17: lines per path, keyed by the same clean path as `paths`. Unknown keys are ignored.
     const lines: Record<string, LineRange[]> = {};

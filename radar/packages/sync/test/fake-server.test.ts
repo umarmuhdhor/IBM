@@ -201,3 +201,29 @@ describe('merged ack (D-alief-17)', () => {
     expect(existsSync(join(root, 'a.ts.radar-conflict'))).toBe(false);
   });
 });
+
+describe('local files that never sync (fase 12k bug 2)', () => {
+  it('a binary or too-large file is reported once as rejected instead of only in sync.log', async () => {
+    const srv = await fakeServer();
+    const rejected: { path: string; reason: string; sidecar: string | null }[] = [];
+    const notices: string[] = [];
+    const root = tempDir();
+    const a = new SyncAgent({ root, server: srv.url, token: 'rdr_test', member: 'A', debounceMs: 20, log: () => {}, notify: (n) => notices.push(n.text), ...FAST });
+    agents.push(a);
+    a.on('rejected', (r: { path: string; reason: string; sidecar: string | null }) => rejected.push({ path: r.path, reason: r.reason, sidecar: r.sidecar }));
+    await a.start();
+    writeFileSync(join(root, 'logo.png'), Buffer.from([0x89, 0x50, 0x4e, 0x47, 0, 0, 0, 0]));
+    writeFileSync(join(root, 'big.txt'), 'x'.repeat(1_048_577));
+    await waitFor(() => rejected.length === 2, 3000, 'two rejections');
+    expect(rejected).toEqual(expect.arrayContaining([
+      { path: 'logo.png', reason: 'binary', sidecar: null },
+      { path: 'big.txt', reason: 'too_large', sidecar: null },
+    ]));
+    expect(notices.join('\n')).toMatch(/logo\.png is a binary file/);
+    expect(srv.updates).toEqual([]);
+    // Saving the same file again does not repeat the notice.
+    writeFileSync(join(root, 'logo.png'), Buffer.from([0x89, 0x50, 0x4e, 0x47, 1, 0, 0, 0]));
+    await sleep(200);
+    expect(rejected).toHaveLength(2);
+  });
+});

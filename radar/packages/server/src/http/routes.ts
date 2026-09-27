@@ -8,6 +8,7 @@ import {
   JoinReq,
   normalizeJoinCode,
   OpenWorkspaceReq,
+  OWNER_RECLAIM_TTL_MS,
   WS_HELLO_TIMEOUT_MS,
   type JoinRes,
   type OpenWorkspaceRes,
@@ -17,17 +18,18 @@ import { createJoinCode, importFiles, initWorkspace, registerAdminRoutes } from 
 import { sha256Hex } from '../crypto';
 import type { WorkspaceDeps } from '../deps';
 import { findJoinCode } from '../db/repo/join-code';
-import { getMeta } from '../db/repo/meta';
+import { getMeta, setMeta } from '../db/repo/meta';
 import { getMember } from '../db/repo/member';
 import { insertMetric } from '../db/repo/metric';
 import { appendEvent } from '../services/events';
 import { exportEvents } from '../services/export';
 import { truncateActivityText } from '../services/activity';
-import { addMemberForCode, rotateToken } from '../services/join';
+import { addMemberForCode, reuseSeatForCode, rotateToken } from '../services/join';
 import { buildState } from '../services/state';
 import { principalFromHeader, requireMember, requireRole } from './auth';
 import { errorJson, parseWith, RadarError, readJson, toErrorResponse } from './errors';
 import { ExportQuery } from './query';
+import { RateLimiter } from '../services/rate-limit';
 import { registerFileRoutes } from './routes/files';
 import { registerLockRoutes } from './routes/locks';
 import { registerProposalRoutes } from './routes/proposals';
@@ -35,11 +37,15 @@ import { registerRequestRoutes } from './routes/requests';
 import { registerTaskRoutes } from './routes/tasks';
 import { registerTeamRoutes } from './routes/team';
 
+/** D-alief-21: a few owner codes per seat per minute is plenty for a person, and too few to matter to a script. */
+const RECLAIM_PER_MINUTE = 5;
+
 const sameName = (a: string | undefined, b: string) =>
   a !== undefined && a.trim().toLowerCase() === b.trim().toLowerCase();
 
 export function createApp(deps: WorkspaceDeps): Hono {
   const app = new Hono();
+  const reclaimLimiter = new RateLimiter(RECLAIM_PER_MINUTE);
   app.onError((err) => toErrorResponse(err));
   app.notFound(() => errorJson(404, 'NOT_FOUND', 'This endpoint does not exist.'));
 
@@ -107,7 +113,13 @@ export function createApp(deps: WorkspaceDeps): Hono {
     if (memberId === null) {
       if (!req.name || !req.role)
         throw new RadarError(422, 'VALIDATION', 'Enter your name and pick a role to join.');
-      memberId = addMemberForCode(deps, hash, req.name, req.role);
+      const seat = principalFromHeader(deps.db, c.req.header('authorization'));
+      if (seat?.kind === 'member') {
+        reuseSeatForCode(deps, hash, seat.memberId, req.name, req.role);
+        memberId = seat.memberId;
+      } else {
+        memberId = addMemberForCode(deps, hash, req.name, req.role);
+      }
     }
     const member = getMember(deps.db, memberId);
     if (!member) throw notFound;
@@ -145,6 +157,31 @@ export function createApp(deps: WorkspaceDeps): Hono {
     return c.json(createJoinCode(deps, req), 201);
   });
 
+  // D-alief-21: the member who shared the folder takes back Mission Control when the device that took over as owner is
+  // gone. Only that seat's token may ask, only while no Mission Control app is connected, and the owner code lives
+  // OWNER_RECLAIM_TTL_MS; the app redeems it at once and never shows it.
+  app.post('/v1/owner/reclaim', (c) => {
+    const p = requireRole(deps.db, c.req.header('authorization'), ['coder', 'pm', 'mc']);
+    const ownerId = getMeta(deps.db, 'owner_member');
+    if (p.kind !== 'member' || ownerId === null || p.memberId !== ownerId) {
+      const name = ownerId === null ? null : getMember(deps.db, ownerId)?.name;
+      throw new RadarError(
+        403,
+        'FORBIDDEN',
+        name ? `Only ${name}, who shared this workspace, can take back ownership.` : 'Only the member who shared this workspace can take back ownership.',
+      );
+    }
+    const retry = reclaimLimiter.hit(`reclaim:${p.memberId}`, deps.now());
+    if (retry > 0) {
+      const res = errorJson(429, 'RATE_LIMITED', `Too many attempts. Try again in ${retry} seconds.`);
+      res.headers.set('retry-after', String(retry));
+      return res;
+    }
+    if (deps.hub.ready().some(({ att }) => att.principal.kind === 'mc'))
+      throw new RadarError(409, 'CONFLICT', 'Mission Control is open on another device. Take back ownership there, or close it first.');
+    return c.json(createJoinCode(deps, { owner: true }, OWNER_RECLAIM_TTL_MS), 201);
+  });
+
   // D-alief-12: the owner's app opens a folder as the workspace, like Share in Google Docs. One workspace per server:
   // an empty server lets anyone start it (limited per IP); after that only the current Mission Control token can
   // replace it, which deletes everything. The owner becomes member A and gets a first open code to share.
@@ -179,6 +216,8 @@ export function createApp(deps: WorkspaceDeps): Hono {
       branch: 'main',
       members: [{ id: 'A', name: req.owner.name, role: req.owner.role }],
     });
+    // D-alief-20: the member who shared the folder; their seat cannot be removed and may take back ownership.
+    deps.transact(() => setMeta(deps.db, 'owner_member', 'A'));
     const code = createJoinCode(deps, {});
     const server = new URL(c.req.url).origin;
     const res: OpenWorkspaceRes = {

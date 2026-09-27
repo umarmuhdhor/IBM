@@ -2,6 +2,7 @@ import type { RadarConnection } from '../../shared/radar-connection'
 import type { RadarConnectionFailure, RadarWsUpdate } from '../../shared/radar-update'
 import {
   WS_CLOSE_REASON_CLOSED,
+  WS_CLOSE_REASON_REMOVED,
   WS_CLOSE_REASON_ROTATED,
   WS_CLOSE_UNAUTHORIZED,
   WS_PING_FRAME,
@@ -33,6 +34,9 @@ function closeFailure(event: CloseEvent): RadarConnectionFailure {
   // D-alief-15: the server names why a token stopped working.
   if (event.reason === WS_CLOSE_REASON_CLOSED) {
     return 'workspace-closed'
+  }
+  if (event.reason === WS_CLOSE_REASON_REMOVED) {
+    return 'removed'
   }
   return event.reason === WS_CLOSE_REASON_ROTATED ? 'signed-out' : 'access-rejected'
 }

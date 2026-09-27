@@ -1,8 +1,8 @@
 // Local file IO for the sync agent: atomic writes (tmp file + rename), classified reads, hashing.
 import { createHash, randomBytes } from 'node:crypto';
-import { chmodSync, mkdirSync, readdirSync, readFileSync, realpathSync, renameSync, rmdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdirSync, readdirSync, readFileSync, realpathSync, renameSync, rmdirSync, rmSync, statSync, writeFileSync, type Dirent } from 'node:fs';
 import { basename, dirname, join, sep } from 'node:path';
-import { isProbablyBinary, MAX_FILE_BYTES, normalizeRelative, PathOutsideWorkspaceError } from '@radar/common';
+import { DIR_MARKER, dirMarkerFolder, isDirMarker, isProbablyBinary, MAX_FILE_BYTES, normalizeRelative, PathOutsideWorkspaceError } from '@radar/common';
 
 export class UnsafePathError extends Error {
   override readonly name = 'UnsafePathError';
@@ -13,6 +13,24 @@ export class UnsafePathError extends Error {
 
 /** Temp names of atomicWrite: `.<name>.radar-tmp-<hex>` (also in DEFAULT_IGNORE_PATTERNS). */
 export const isTmpName = (name: string): boolean => name.startsWith('.') && name.includes('.radar-tmp-');
+
+/** A path the agent never syncs. An empty-folder marker (`<folder>/.radar-dir`) follows its folder's rule. */
+export function isIgnored(ignores: (rel: string) => boolean, rel: string, isDir: boolean | undefined): boolean {
+  if (rel === '') return false;
+  if (isDirMarker(rel)) return isIgnored(ignores, dirMarkerFolder(rel), true);
+  if (isTmpName(basename(rel))) return true;
+  if (ignores(rel)) return true;
+  // `ignore` only matches 'dist/' style rules against a path ending in '/'.
+  return isDir !== false && ignores(`${rel}/`);
+}
+
+/** True when a folder entry is something the agent syncs: a non-ignored file or folder. A real file named
+ * like the marker never syncs, so it cannot fake a folder. */
+export function isSyncedEntry(ignores: (rel: string) => boolean, rel: string, e: Dirent): boolean {
+  return (e.isFile() || e.isDirectory()) && e.name !== DIR_MARKER && !isIgnored(ignores, rel, e.isDirectory());
+}
+
+const EMPTY_TEXT_HASH = createHash('sha256').update('').digest('hex');
 
 /**
  * Validates a workspace-relative path from the server or the watcher. Throws UnsafePathError for
@@ -74,8 +92,24 @@ function resolveInside(root: string, rel: string, followLast: boolean): string {
   return real;
 }
 
-/** Reads `<root>/<rel>`. A directory or a file that vanished counts as missing. */
-export function readLocal(root: string, rel: string): LocalFile {
+/**
+ * Reads `<root>/<rel>`. A directory or a file that vanished counts as missing. An empty-folder marker reads
+ * as an empty text file while its folder exists and holds nothing that syncs (fase 12k bug 1), else missing.
+ */
+export function readLocal(root: string, rel: string, ignores: (rel: string) => boolean = () => false): LocalFile {
+  if (isDirMarker(rel)) {
+    const folder = dirMarkerFolder(rel);
+    let entries: Dirent[];
+    try {
+      entries = readdirSync(resolveInside(root, folder, true), { withFileTypes: true });
+    } catch (err) {
+      const code = (err as NodeJS.ErrnoException).code;
+      if (code === 'ENOENT' || code === 'ENOTDIR') return { kind: 'missing' };
+      throw err;
+    }
+    if (entries.some((e) => isSyncedEntry(ignores, `${folder}/${e.name}`, e))) return { kind: 'missing' };
+    return { kind: 'text', content: '', hash: EMPTY_TEXT_HASH, bytes: Buffer.alloc(0) };
+  }
   let bytes: Buffer;
   try {
     bytes = readFileSync(resolveInside(root, rel, true));
@@ -119,6 +153,10 @@ function renameWithRetry(from: string, to: string): void {
  * inside the workspace is written through (its target is replaced, not the link).
  */
 export function atomicWrite(root: string, rel: string, content: string | Buffer): void {
+  if (isDirMarker(rel)) {
+    mkdirSync(resolveInside(root, dirMarkerFolder(rel), true), { recursive: true });
+    return;
+  }
   const target = resolveInside(root, rel, true);
   const dir = dirname(target);
   mkdirSync(dir, { recursive: true });
@@ -141,13 +179,44 @@ export function atomicWrite(root: string, rel: string, content: string | Buffer)
 
 /** Deletes `<root>/<rel>` (a symlink itself, not its target); a missing file is fine. */
 export function removeLocal(root: string, rel: string): void {
+  if (isDirMarker(rel)) {
+    removeEmptyFolder(resolveInside(root, dirMarkerFolder(rel), true));
+    return;
+  }
   rmSync(resolveInside(root, rel, false), { force: true });
 }
 
-/** After a remote delete: removes the folders it left empty, up to (not including) the root. */
-export function pruneEmptyParents(root: string, rel: string): void {
+/** Files the OS drops into folders on its own; they do not keep a removed folder alive. */
+const OS_JUNK = new Set(['.DS_Store', 'Thumbs.db', 'desktop.ini']);
+
+/** Removes a folder that holds nothing, or only OS junk files. Anything else keeps the folder. */
+function removeEmptyFolder(abs: string): void {
+  let entries: Dirent[];
+  try {
+    entries = readdirSync(abs, { withFileTypes: true });
+  } catch {
+    return;
+  }
+  if (!entries.every((e) => e.isFile() && OS_JUNK.has(e.name))) return;
+  for (const e of entries) rmSync(join(abs, e.name), { force: true });
+  try {
+    rmdirSync(abs);
+  } catch {
+    // Something appeared meanwhile: keep the folder.
+  }
+}
+
+/**
+ * After a remote delete: removes the folders it left empty, up to (not including) the root. `keep` names
+ * folders (workspace-relative) that must stay, such as an empty folder a teammate shares on purpose.
+ */
+export function pruneEmptyParents(root: string, rel: string, keep: (folder: string) => boolean = () => false): void {
   const realRoot = realpathSync(root);
-  for (let dir = dirname(resolveInside(root, rel, false)); dir.startsWith(realRoot + sep); dir = dirname(dir)) {
+  const start = isDirMarker(rel) ? dirMarkerFolder(rel) : rel;
+  let folder = dirname(start) === '.' ? '' : dirname(start);
+  for (let dir = dirname(resolveInside(root, start, false)); dir.startsWith(realRoot + sep); dir = dirname(dir)) {
+    if (keep(folder)) return;
+    folder = dirname(folder) === '.' ? '' : dirname(folder);
     try {
       if (readdirSync(dir).length > 0) return;
       rmdirSync(dir);

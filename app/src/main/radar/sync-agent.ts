@@ -23,7 +23,8 @@ const STOP_REASONS: readonly RadarSyncStopReason[] = [
   'workspace-closed',
   'signed-out',
   'replaced',
-  'rejected'
+  'rejected',
+  'removed'
 ]
 
 function isStopReason(value: unknown): value is RadarSyncStopReason {
@@ -81,10 +82,29 @@ export function applySyncLine(current: RadarSyncStatus, line: string): RadarSync
       ? { ...current, conflicts: [...current.conflicts, path] }
       : null
   }
+  const linePath = 'path' in parsed && typeof parsed.path === 'string' ? parsed.path : null
   if (parsed.type === 'rejected') {
     const text =
       'message' in parsed && typeof parsed.message === 'string' ? cliErrorText(parsed.message) : ''
-    return text ? { ...current, rejected: text } : null
+    return text ? { ...current, rejected: text, rejectedPath: linePath } : null
+  }
+  if (parsed.type === 'accepted') {
+    // The server took the refused file after all (lock released, file fixed): the notice is stale.
+    return current.rejected && linePath === current.rejectedPath
+      ? { ...current, rejected: null, rejectedPath: null }
+      : null
+  }
+  if (parsed.type === 'kit') {
+    // Fase 12k: the join could not put the Bob kit in .bob/; say why instead of leaving Bob IDE half set up.
+    const kitStatus = 'status' in parsed ? parsed.status : null
+    if (kitStatus === 'installed') {
+      return { ...current, kit: null }
+    }
+    const message =
+      'message' in parsed && typeof parsed.message === 'string' ? parsed.message : null
+    return (kitStatus === 'refused' || kitStatus === 'missing-kit') && message
+      ? { ...current, kit: { status: kitStatus, message } }
+      : null
   }
   if (parsed.type === 'stopped') {
     // D-alief-15: the CLI says why it ended for good; the exit that follows keeps this state.
@@ -162,7 +182,9 @@ export function startSyncAgent(
     message: null,
     conflicts: [],
     stopReason: null,
-    rejected: null
+    rejected: null,
+    rejectedPath: null,
+    kit: null
   })
   const proc = spawnProcess({ program: process.execPath, args, env, timeoutMs: null })
   child = proc
@@ -194,6 +216,39 @@ export function startSyncAgent(
     publish({
       state: code === 0 ? 'stopped' : 'error',
       message: code === 0 ? null : cliErrorText(lastError) || `Sync stopped (exit ${code})`
+    })
+  })
+}
+
+/**
+ * Fase 12k: installs the Bob kit into the synced folder after the user agreed to replace `.bob/`.
+ * The CLI moves the current `.bob/` to `.bob.bak-<time>` first (`kit install --force`), so nothing is lost.
+ */
+export function installBobKit(): Promise<void> {
+  const folder = status.folder
+  const cli = join(radarCliDir(), 'dist', 'radar.mjs')
+  if (!folder || !existsSync(cli)) {
+    return Promise.reject(new Error('Join a workspace first.'))
+  }
+  const env: NodeJS.ProcessEnv = { ...process.env, ELECTRON_RUN_AS_NODE: '1' }
+  delete env.RADAR_INVITE
+  const kitDir = join(radarCliDir(), 'bob-kit')
+  const args = [cli, 'kit', 'install', '--dir', folder, '--kit-dir', kitDir, '--force']
+  const proc = spawnProcess({ program: process.execPath, args, env, timeoutMs: 30_000 })
+  let lastError = ''
+  proc.stderr.setEncoding('utf8')
+  proc.stderr.on('data', (chunk: string) => {
+    lastError = chunk.trim().split('\n').pop()?.slice(0, 300) ?? lastError
+  })
+  return new Promise((resolve, reject) => {
+    proc.on('error', (error) => reject(error))
+    proc.on('exit', (code) => {
+      if (code === 0) {
+        publish({ kit: null })
+        resolve()
+      } else {
+        reject(new Error(cliErrorText(lastError) || `The kit install stopped (exit ${code}).`))
+      }
     })
   })
 }

@@ -3,7 +3,7 @@ import { chmodSync, existsSync, lstatSync, mkdirSync, readdirSync, statSync, sym
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { sha256Hex } from '@radar/common';
-import { KnownStore } from '../src/known.js';
+import { DELETED_HASH, KnownStore } from '../src/known.js';
 import { atomicWrite, hashText, pruneEmptyParents, readLocal, removeLocal, UnsafePathError } from '../src/writer.js';
 import { writeSidecar } from '../src/sidecar.js';
 import { formatRejection, terminalNotifier } from '../src/notify.js';
@@ -33,6 +33,16 @@ describe('KnownStore', () => {
     expect(k.get('a.ts')).toBeUndefined();
     k.clear();
     expect(k.size).toBe(0);
+  });
+});
+
+describe('KnownStore file count (fase 12k)', () => {
+  it('counts files on the server, not deleted files or empty-folder markers', () => {
+    const k = new KnownStore();
+    k.set('a.ts', { version: 2, hash: 'x' });
+    k.set('gone.ts', { version: 3, hash: DELETED_HASH });
+    k.set('assets/.radar-dir', { version: 1, hash: 'e' });
+    expect(k.fileCount()).toBe(1);
   });
 });
 
@@ -135,6 +145,15 @@ describe('sidecar', () => {
 });
 
 describe('notify messages', () => {
+  it('a file that never syncs says it stays on this Mac and what to do (fase 12k UI gate)', () => {
+    const base = { holder: null, sidecar: null } as const;
+    expect(formatRejection({ ...base, path: 'logo.png', reason: 'binary' })).toBe(
+      '✖ logo.png is a binary file and does not sync. Only text files sync; it stays on this Mac.',
+    );
+    expect(formatRejection({ ...base, path: 'dump.sql', reason: 'too_large' })).toBe(
+      '✖ dump.sql is larger than 1 MB and does not sync. It stays on this Mac; make it smaller to sync it.',
+    );
+  });
   const holder = { memberId: 'A', memberName: 'Alice', taskId: 'T-1', taskTitle: 'Kupon', state: 'dipegang' as const };
   it('names the holder for held_by_other', () => {
     expect(formatRejection({ path: 'src/checkout/checkout.ts', reason: 'held_by_other', holder, sidecar: 'src/checkout/checkout.ts.radar-rejected' })).toBe(
@@ -164,6 +183,7 @@ describe('stop reasons (D-alief-15)', () => {
   it('maps fatal closes to a kind and keeps reconnecting otherwise', () => {
     expect(fatalClose(4401, 'workspace closed')?.kind).toBe('workspace-closed');
     expect(fatalClose(4401, 'token rotated')?.kind).toBe('signed-out');
+    expect(fatalClose(4401, 'member removed')).toEqual({ kind: 'removed', message: 'The workspace owner removed you, so sync stopped.' });
     expect(fatalClose(4401, 'unauthorized')?.kind).toBe('rejected');
     expect(fatalClose(4000, '')?.kind).toBe('replaced');
     expect(fatalClose(1006, '')).toBeNull();

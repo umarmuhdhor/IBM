@@ -1,13 +1,5 @@
 import { app, BrowserWindow, dialog, ipcMain } from 'electron'
-import {
-  existsSync,
-  readdirSync,
-  readFileSync,
-  rmSync,
-  statSync,
-  writeFileSync,
-  mkdirSync
-} from 'node:fs'
+import { existsSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs'
 import { userInfo } from 'node:os'
 import { basename, join } from 'node:path'
 import {
@@ -35,6 +27,7 @@ import { startSyncAgent } from './sync-agent'
 import { readableOrThrow, refuseBroadFolder } from './share-folder-guard'
 import { serverFetch } from './server-fetch'
 import { readProfileName, saveProfileName } from './profile-name'
+import { ownerFolderPath, readOwnerFolder, saveOwnerFolder } from './owner-folder'
 
 // D-alief-12: the owner opens a folder on their own Mac, and that folder becomes the workspace.
 // The app uploads it with the Mission Control token, then syncs the same folder as member A.
@@ -132,36 +125,6 @@ export function workspaceNameFor(folder: string): string {
   return slug || 'workspace'
 }
 
-type OwnerFolder = { workspace: string; folder: string }
-
-function ownerFolderPath(): string {
-  return join(app.getPath('userData'), 'radar', 'owner-folder.json')
-}
-
-function readOwnerFolder(): OwnerFolder | null {
-  try {
-    const value: unknown = JSON.parse(readFileSync(ownerFolderPath(), 'utf8'))
-    if (
-      typeof value === 'object' &&
-      value !== null &&
-      'workspace' in value &&
-      typeof value.workspace === 'string' &&
-      'folder' in value &&
-      typeof value.folder === 'string'
-    ) {
-      return { workspace: value.workspace, folder: value.folder }
-    }
-  } catch {
-    // Missing or unreadable: nothing to resume.
-  }
-  return null
-}
-
-function saveOwnerFolder(value: OwnerFolder): void {
-  mkdirSync(join(app.getPath('userData'), 'radar'), { recursive: true })
-  writeFileSync(ownerFolderPath(), JSON.stringify(value))
-}
-
 /** First share without a saved name: git's user.name, else the macOS account name. */
 export async function ownerName(folder: string): Promise<string> {
   const git = await runProcess({
@@ -219,6 +182,16 @@ export async function shareFolder(
     throw new Error(await errorMessage(opened))
   }
   const res = OpenWorkspaceRes.parse(await opened.json())
+  const connection: RadarConnection = {
+    server: `${server}/`,
+    workspace: res.workspace,
+    member: 'mc',
+    role: 'mc',
+    token: res.mcToken
+  }
+  // Why: from here the server's workspace is ours; without the token a cut-off upload could never be replaced.
+  saveRadarConnection(connection)
+  saveOwnerFolder({ workspace: res.workspace, folder, pending: true, role })
   for (const batch of batchFolderFiles(files)) {
     const uploaded = await serverFetch(`${server}/v1/workspace/files`, {
       method: 'POST',
@@ -232,14 +205,6 @@ export async function shareFolder(
     AdminFilesRes.parse(await uploaded.json())
   }
 
-  const connection: RadarConnection = {
-    server: `${server}/`,
-    workspace: res.workspace,
-    member: 'mc',
-    role: 'mc',
-    token: res.mcToken
-  }
-  saveRadarConnection(connection)
   startClient(connection)
   saveOwnerFolder({ workspace: res.workspace, folder })
   // Why: the server already holds these files, so the first snapshot rewrites nothing in the folder.
@@ -305,13 +270,24 @@ async function chooseAndShare(
   return shareFolder(folder, field('name'), field('role'), field('server'))
 }
 
+let resuming: Promise<void> | null = null
+
 export function registerRadarOpenFolderIpc(): void {
   // The owner's folder keeps syncing after a restart while the app is still its Mission Control.
   void app.whenReady().then(() => {
     try {
       const saved = readRadarConnection()
       const owned = readOwnerFolder()
-      if (
+      if (saved?.role === 'mc' && owned?.pending && owned.workspace === saved.workspace) {
+        resuming = shareFolder(owned.folder, null, owned.role, null).then(
+          () => undefined,
+          (error: unknown) =>
+            console.warn(
+              '[radar] could not finish sharing the folder:',
+              error instanceof Error ? error.message : error
+            )
+        )
+      } else if (
         saved?.role === 'mc' &&
         owned?.workspace === saved.workspace &&
         existsSync(join(owned.folder, '.radar', 'local.json'))
@@ -328,8 +304,13 @@ export function registerRadarOpenFolderIpc(): void {
       )
     }
   })
-  ipcMain.handle('radar:stop-sharing', () => stopSharing())
-  ipcMain.handle('radar:share-folder', (event, value: unknown) =>
-    chooseAndShare(BrowserWindow.fromWebContents(event.sender), value)
-  )
+  // Why: a Share or Stop clicked while the start is still finishing the old share would race it.
+  ipcMain.handle('radar:stop-sharing', async () => {
+    await resuming
+    return stopSharing()
+  })
+  ipcMain.handle('radar:share-folder', async (event, value: unknown) => {
+    await resuming
+    return chooseAndShare(BrowserWindow.fromWebContents(event.sender), value)
+  })
 }

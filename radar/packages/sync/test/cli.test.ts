@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { loadLocalConfig } from '@radar/common/node';
 import { encodeInvite } from '@radar/common';
 import { EventEmitter } from 'node:events';
-import { resolveJoin, wireJsonStatus, writeJoinFiles } from '../src/cli.js';
+import { kitInstallExitCode, kitStatusLine, resolveJoin, wireJsonStatus, writeJoinFiles } from '../src/cli.js';
 import { findKitDir, installKit } from '../src/kit.js';
 import { cleanupDirs, read, tempDir } from './helpers.js';
 
@@ -118,6 +118,12 @@ describe('kit install', () => {
     expect(readdirSync(root)).toEqual([]);
   });
 
+  it('kit install fails unless the kit really was installed (fase 12k code review)', () => {
+    expect(kitInstallExitCode({ status: 'installed' })).toBe(0);
+    expect(kitInstallExitCode({ status: 'refused' })).toBe(1);
+    expect(kitInstallExitCode({ status: 'missing-kit' })).toBe(1);
+  });
+
   it('finds the kit from the flag, then RADAR_KIT_DIR, then the repo bob-kit', () => {
     const kitDir = fakeKit();
     expect(findKitDir(kitDir, {})).toBe(kitDir);
@@ -168,5 +174,36 @@ describe('--json-status lines', () => {
       expect.objectContaining({ type: 'rejected', path: 'notes.md', reason: 'pm_readonly', message: expect.stringContaining('A PM does not write files') }),
       expect.objectContaining({ type: 'stopped', reason: 'workspace-closed', message: 'The owner stopped sharing this workspace.' }),
     ]);
+  });
+});
+
+describe('rejected notice clears (fase 12k)', () => {
+  it('says once when a refused path is accepted later, and says nothing for other saves', () => {
+    const agent = new EventEmitter();
+    const lines: string[] = [];
+    wireJsonStatus(agent, (l) => lines.push(l));
+    agent.emit('ack', { path: 'other.ts', version: 2 });
+    agent.emit('rejected', { path: 'app.ts', reason: 'locked', holder: null, sidecar: 'app.ts.radar-rejected' });
+    agent.emit('ack', { path: 'app.ts', version: 3 });
+    agent.emit('ack', { path: 'app.ts', version: 4 });
+    expect(lines.map((l) => JSON.parse(l))).toEqual([
+      expect.objectContaining({ type: 'rejected', path: 'app.ts' }),
+      expect.objectContaining({ type: 'accepted', path: 'app.ts' }),
+    ]);
+  });
+});
+
+describe('kit status line (fase 12k bug 4)', () => {
+  it('tells the app the kit was refused, which files are in the way, and what --force does', () => {
+    const line = JSON.parse(kitStatusLine({ status: 'refused', foreign: ['.bob/custom_modes.yaml', '.bob/notes.md'] }, 'coder'));
+    expect(line).toMatchObject({ type: 'kit', status: 'refused', role: 'coder', foreign: ['.bob/custom_modes.yaml', '.bob/notes.md'] });
+    expect(line.message).toContain('.bob/custom_modes.yaml');
+    expect(line.message).toMatch(/backup/i);
+    expect(line.message).toContain('.bob.bak-');
+  });
+
+  it('reports an installed kit and a missing kit', () => {
+    expect(JSON.parse(kitStatusLine({ status: 'installed', files: 7 }, 'pm'))).toMatchObject({ type: 'kit', status: 'installed', role: 'pm' });
+    expect(JSON.parse(kitStatusLine({ status: 'missing-kit', kitDir: null }, 'coder'))).toMatchObject({ type: 'kit', status: 'missing-kit', message: expect.stringContaining('Bob kit') });
   });
 });

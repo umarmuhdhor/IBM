@@ -15,7 +15,7 @@ export function registerTaskRoutes(app: Hono, deps: WorkspaceDeps): void {
     // A coder lists only their own tasks; the team view is GET /v1/team (pm, mc).
     // R3 §7 my_tasks calls with ?owner=me, which means the caller (D-umar-04).
     const owner = q.owner === 'me' ? member.memberId : q.owner;
-    if (owner !== undefined && owner !== member.memberId) throw new RadarError(403, 'FORBIDDEN', 'Hanya task milikmu sendiri.');
+    if (owner !== undefined && owner !== member.memberId) throw new RadarError(403, 'FORBIDDEN', 'Only your own tasks.');
     const res: TasksRes = {
       tasks: listTaskItems(deps.db, member.memberId, q.status ?? 'open'),
       activeTaskId: getMember(deps.db, member.memberId)?.active_task_id ?? null,

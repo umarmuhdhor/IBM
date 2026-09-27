@@ -540,3 +540,52 @@ Format:
 - Batasan yang dicatat: rentang tidak bergeser saat ada sisipan di atasnya; commit task mengambil isi file penuh, jadi baris rekan yang digabung ikut ter-commit oleh task pemegang (sama dengan catatan `transferNow`); member yang mengedit di luar rentang tidak mendapat kunci sendiri.
 - Alternatif yang ditolak: tabel `lock_range` terpisah dengan banyak pemegang per file (I1, antrean, dan sekitar 10 pemanggil `getLock` harus diubah, terlalu besar sebelum deadline); kunci rentang dari sync tanpa hook (edit manual di luar Bob tetap mengunci seluruh file, perilaku lama); menolak semua update basi (dua orang di satu file tidak bisa bekerja bersamaan).
 - Dampak: Umar (`lock_guard` mengirim `lines`), Aarief (label kunci di app), Imelda (teks landing dan `/demo` sekarang benar; usulan penyesuaian kalau ada beda dicatat di log fase 12j).
+
+## D-alief-18 · 27 Sep 2026 · fase 12k · Teks untuk user dalam bahasa Inggris (amandemen R5 §1)
+
+- Konteks: app, landing, dan demo berbahasa Inggris, tetapi server masih mengirim pesan error, notifikasi, brief Bob, dan laporan sesi dalam bahasa Indonesia ("Task T-2 tidak ada.", "Giliranmu: …"). Juri dan user melihat dua bahasa bercampur.
+- Keputusan:
+  1. Semua teks server yang dibaca user atau Bob (pesan `RadarError`, notifikasi, `suggestion`, brief `start`/`prompt`, laporan sesi Markdown, pesan blokir) memakai bahasa Inggris. Feed `common/src/events.ts` sudah berbahasa Inggris.
+  2. Nilai wire dan enum tidak berubah (`bebas`, `dipegang`, `dipesan`, `review`, `terbuka`, `dikerjakan`, `selesai`, `antre`, `pindahkan`, `pecah`, `ditolak`, …). Ini kontrak R2/R3, bukan teks tampilan.
+  3. Mock server (`radar/scripts/mock`) mengikuti teks yang sama supaya lane lain melihat hal yang sama.
+  4. Tes `server/test/language.test.ts` menolak literal string di `server/src` dan `common/src/events.ts` yang berbunyi seperti kalimat bahasa Indonesia (dua kata Indonesia umum atau lebih).
+- Dampak: R5 §1 baris "Bahasa teks" diubah. Klien tidak mem-parse teks ini, jadi tidak ada perubahan kontrak. Output tool radar-mcp (`mcp/src`, lane Umar) masih berbahasa Indonesia; usulan terjemahan dicatat di log fase 12k.
+
+## D-alief-19 · 27 Sep 2026 · fase 12k · Folder kosong ikut tersinkron (penanda `.radar-dir`)
+
+- Konteks: protokol sync hanya mengenal file. Folder kosong yang dibuat satu orang (misalnya `assets/icons/`) tidak pernah muncul di laptop teman, dan folder kosong yang dihapus juga tidak ikut terhapus.
+- Keputusan:
+  1. Folder kosong dikirim sebagai path file `<folder>/.radar-dir` dengan isi kosong (`file.update` biasa). Hapus folder = `file.delete` untuk path itu. Tidak ada tipe pesan atau field baru; server tidak berubah.
+  2. `@radar/common` menambah `DIR_MARKER`, `isDirMarker()`, `dirMarkerFolder()` (aditif). Feed menulis "Andi adds the empty folder icons/" dan "Andi removes the empty folder icons/", bukan nama penanda.
+  3. Agent sync tidak pernah menulis file `.radar-dir` ke disk: penanda "ada" selama folder ada dan tidak berisi apa pun yang tersinkron (file yang di-ignore seperti `.DS_Store` tidak dihitung). Terima penanda = `mkdir`; terima hapus = hapus folder kalau kosong (atau hanya berisi `.DS_Store`/`Thumbs.db`/`desktop.ini`). Folder yang diisi file membuat penanda terhapus otomatis.
+  4. Setelah hapus dari server, folder induk yang jadi kosong tidak dihapus kalau server masih punya penandanya (teman sengaja membagikan folder kosong itu).
+  5. File asli bernama `.radar-dir` di folder user tidak pernah disinkron.
+- Dampak: penanda ikut ke commit GitHub per task sebagai file kosong (seperti `.gitkeep`). App, hooks, dan radar-mcp tidak berubah; daftar file di UI bisa menampilkan `<folder>/.radar-dir` sebagai baris file.
+- Catatan 27 Sep (ditemukan di prod saat uji bug 4): backup kit `.bob.bak-<waktu>/` yang dibuat tombol "Back up .bob and install the Bob kit" ikut tersinkron ke server dan teman. Pola `.bob.bak-*/` sekarang masuk daftar ignore default dan daftar selalu-ignore di `@radar/common` (sama seperti `.bob/`), jadi `!` di `.radarignore` pun tidak bisa membukanya.
+
+## D-alief-20 · 27 Sep 2026 · fase 12k · Kursi member dipakai ulang, owner bisa mengeluarkan member
+
+- Konteks: e2e dua app 27 Sep: setiap kali teman bergabung lagi dengan kode open baru, server membuat kursi baru (B, C, D, …) untuk orang yang sama. Kartu Team penuh kursi mati, dan owner tidak punya cara membersihkannya.
+- Keputusan:
+  1. **Gabung ulang:** `POST /v1/join` dengan kode open yang belum dipakai menerima `Authorization: Bearer <token member>` opsional. Kalau token itu milik kursi member yang masih aktif, kode itu dipakai untuk kursi yang sama: nama dan peran diganti, token diputar, dan event `member.created` dikirim lagi. Tanpa header, atau dengan token Mission Control atau token yang tidak dikenal, perilaku lama berlaku (kursi baru). Pencocokan nama tidak dipakai, jadi orang lain tidak bisa mengambil kursi hanya dengan memakai nama yang sama. App hanya mengirim token member yang tersimpan, tidak pernah token Mission Control, dan hanya ke server yang sama (origin).
+  2. **Keluarkan member:** `DELETE /v1/members/:id`, hanya Mission Control. Server membatalkan task member yang masih `terbuka`/`draf`/`dikerjakan` (kuncinya pindah ke antrean berikutnya), mencabut token, menghapus kode join milik member itu, menandai `member.removed_at`, mengirim event baru `member.removed {memberId}`, dan menutup socket member dengan 4401 `member removed`. Kursi owner (`meta.owner_member`, diisi `A` oleh `/v1/workspace/open`) ditolak 409.
+  3. **Skema v6:** kolom `member.removed_at` (boleh NULL). Baris member tidak dihapus supaya riwayat event, task, dan commit tetap punya nama. Semua pencarian member dan token melewati baris yang sudah dikeluarkan. Id kursi yang dikeluarkan hanya dipakai lagi untuk pendatang baru kalau id A–H yang masih bebas sudah habis.
+  4. **Kontrak (milik Core, aditif):** `ErrorReason` bertambah `removed` (401: "The workspace owner removed you. Ask them for a new code to join again."), `WS_CLOSE_REASON_REMOVED = 'member removed'`, event `member.removed` di `EVENT_TYPES` dan `schemas.ts`, feed "Budi was removed from the team", reducer membuang member itu dari state. Sync agent berhenti dengan jenis `removed`.
+  5. **App:** kartu Team punya tombol Remove untuk Mission Control (bukan untuk A) dengan konfirmasi di tempat. Member yang dikeluarkan melihat "The owner removed you from this workspace. Ask the owner for a new code to join again." di kartu Multiplayer dan pengaturan Live Collab.
+- Batasan: workspace yang dibuka sebelum skema v6 tidak punya `owner_member`. Di sana server tidak melindungi kursi A (app tetap menyembunyikan tombol Remove untuk A) dan klaim ulang owner (D-alief-21) ditolak. Share ulang setelah deploy mengisi `owner_member`.
+- Temuan security review (MEDIUM, diterima): member aktif yang memegang kode open milik orang lain bisa memakainya untuk kursinya sendiri (ganti nama atau peran coder/pm), dan undangan itu jadi terpakai. Risiko ini sama dengan sebelumnya: siapa pun yang memegang kode open bisa memakainya lebih dulu dan memilih peran sendiri saat pertama bergabung. Peran `mc` tidak bisa didapat lewat jalur ini. Kalau perlu nanti: kode open yang ditandai "hanya member baru" dan event `member.renamed` terpisah.
+- Alternatif yang ditolak: mencocokkan nama saat gabung ulang (siapa pun bisa mengambil kursi orang lain dengan nama yang sama); menghapus baris member (foreign key task, event, dan commit rusak); kursi kedaluwarsa otomatis (teman yang sedang offline sebentar kehilangan kursinya).
+- Dampak: Aarief (tombol Remove dan teks baru di app), Umar (hook dan radar-mcp menerima 401 `removed` seperti token dicabut; tidak ada perubahan wajib), Imelda (replay menampilkan baris feed baru).
+
+## D-alief-21 · 27 Sep 2026 · fase 12k · Owner mengambil kembali Mission Control tanpa CLI
+
+- Konteks: kalau owner membuka Mission Control di perangkat lain dengan kode owner, token Mission Control di Mac asal diputar. Setelah perangkat lain itu ditutup, owner di Mac asal tidak punya jalan kembali selain CLI admin.
+- Keputusan:
+  1. `POST /v1/owner/reclaim` hanya menerima token member kursi `meta.owner_member`, yaitu kursi yang membagikan folder. Member lain mendapat 403 "Only <nama>, who shared this workspace, can take back ownership.".
+  2. Ditolak 409 selama ada socket Mission Control yang tersambung: "Mission Control is open on another device. Take back ownership there, or close it first." Jadi reclaim tidak bisa merebut Mission Control yang sedang dipakai.
+  3. Dibatasi 5 permintaan per menit per kursi (429 dengan `retry-after`). Server mengembalikan kode owner biasa dengan umur 10 menit (`OWNER_RECLAIM_TTL_MS`).
+  4. App (main process) membaca token kursi owner dari `<folder>/.radar/local.json` (file 0600 yang ditulis sync agent), hanya kalau server dan workspace sama dengan koneksi Mission Control yang tersimpan. App meminta kode, langsung menukarnya lewat `/v1/join`, lalu menyimpan token Mission Control yang baru. Kode tidak pernah sampai ke renderer atau layar, dan sync folder tidak dihentikan.
+  5. Tombol "Take back ownership" (`ReclaimOwnerButton`) muncul di kartu owner yang berakhir karena `signed-out` dan menampilkan alasan dari server kalau ditolak.
+- Alasan: token kursi owner hanya ada di folder yang dibagikan di Mac pemilik, jadi itu bukti kepemilikan yang sudah ada tanpa rahasia baru. Menukar kode di main process menjaga kode owner tetap di luar UI.
+- Alternatif yang ditolak: reclaim dengan token Mission Control lama (token itu sudah dicabut, dan menerima token yang dicabut membuka celah); menampilkan kode owner baru di layar (bisa terlihat di rekaman demo atau tangkapan layar); reclaim yang memutus Mission Control yang sedang aktif (dua perangkat bisa saling merebut terus).
+- Dampak: Aarief (tombol baru di kartu Share), Umar dan Imelda tidak terpengaruh.

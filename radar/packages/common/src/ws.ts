@@ -119,3 +119,5 @@ export const WS_CLOSE_UNAUTHORIZED = 4401;
  */
 export const WS_CLOSE_REASON_ROTATED = 'token rotated';
 export const WS_CLOSE_REASON_CLOSED = 'workspace closed';
+/** D-alief-20: the owner removed this seat; the member needs a new code to join again. */
+export const WS_CLOSE_REASON_REMOVED = 'member removed';

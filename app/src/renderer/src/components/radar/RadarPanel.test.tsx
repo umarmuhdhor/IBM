@@ -59,12 +59,20 @@ const connection = {
   role: 'coder'
 } as const
 
-function Harness({ initial, joined = true }: { initial: RadarPanelTab; joined?: boolean }) {
+function Harness({
+  initial,
+  joined = true,
+  role = 'coder'
+}: {
+  initial: RadarPanelTab
+  joined?: boolean
+  role?: 'coder' | 'mc'
+}) {
   const [tab, setTab] = useState<RadarPanelTab>(initial)
   return (
     <RadarPanel
       tab={tab}
-      connection={joined ? connection : null}
+      connection={joined ? { ...connection, role, member: role === 'mc' ? 'mc' : 'B' } : null}
       onConnectionChange={vi.fn()}
       onTabChange={setTab}
     />
@@ -125,6 +133,25 @@ describe('RadarPanel without a connection', () => {
     expect(screen.getByRole('form', { name: 'Join with a code' })).toBeTruthy()
     expect(screen.queryByRole('region', { name: 'Team' })).toBeNull()
     vi.unstubAllGlobals()
+  })
+})
+
+describe('Team seats (D-alief-20)', () => {
+  it('only Mission Control sees Remove on a teammate card', () => {
+    const { unmount } = render(<Harness initial="team" />)
+    expect(screen.queryByRole('button', { name: 'Remove Budi' })).toBeNull()
+    unmount()
+    render(<Harness initial="team" role="mc" />)
+    expect(screen.getByRole('button', { name: 'Remove Budi' })).toBeTruthy()
+  })
+
+  it('tells a removed member why the team views are gone', () => {
+    useRadarStore.setState({ state, connected: false, connectionFailure: 'removed' })
+    render(<Harness initial="team" />)
+    expect(
+      screen.getByText('The owner removed you from this workspace. Join with a new code in Multiplayer.')
+    ).toBeTruthy()
+    useRadarStore.setState({ connectionFailure: null })
   })
 })
 

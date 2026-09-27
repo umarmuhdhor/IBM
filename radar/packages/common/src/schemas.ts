@@ -73,8 +73,11 @@ export const ERROR_CODES = [
 export const ErrorCodeSchema = z.enum(ERROR_CODES);
 export type ErrorCode = z.infer<typeof ErrorCodeSchema>;
 
-/** 401 errors say why the token failed (D-alief-15): `signed-out` = replaced by a newer sign-in, `workspace-closed` = unknown token. */
-export const ErrorReasonSchema = z.enum(['signed-out', 'workspace-closed']);
+/**
+ * 401 errors say why the token failed (D-alief-15): `signed-out` = replaced by a newer sign-in, `workspace-closed` =
+ * unknown token, `removed` = the owner removed this seat (D-alief-20).
+ */
+export const ErrorReasonSchema = z.enum(['signed-out', 'workspace-closed', 'removed']);
 export type ErrorReason = z.infer<typeof ErrorReasonSchema>;
 
 export const ErrorRes = z.object({
@@ -653,6 +656,7 @@ export const RadarEventSchema = z.discriminatedUnion('type', [
   event('member.online', memberOnly),
   event('member.offline', memberOnly),
   event('member.reconnected', memberOnly),
+  event('member.removed', memberOnly),
   event('member.stale', memberOnly.extend({ lastHeartbeat: EpochMsSchema.nullable() })),
   event(
     'file.changed',

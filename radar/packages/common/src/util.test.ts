@@ -79,6 +79,15 @@ describe('ignore rules (R5 §6)', () => {
     expect(open.ignores('.radar/')).toBe(true);
   });
 
+  it('never syncs the .bob backup the kit install makes (fase 12k, found on prod)', () => {
+    const open = createIgnoreMatcherFromText('!.bob.bak-1790488580299/\n');
+    for (const matcher of [m, open]) {
+      expect(matcher.ignores('.bob.bak-1790488580299/notes.md')).toBe(true);
+      expect(matcher.ignores('.bob.bak-1790488580299/')).toBe(true);
+    }
+    expect(m.ignores('docs/bob.bak.md')).toBe(false);
+  });
+
   it('applies .gitignore files in subfolders to their own folder only (D-alief-16)', () => {
     const n = createIgnoreMatcherFromText('*.log\n', { pkg: 'local.txt\n/build-out/\n!keep.log\n', 'pkg/deep': '*.tmp\n' });
     expect(n.ignores('pkg/local.txt')).toBe(true);

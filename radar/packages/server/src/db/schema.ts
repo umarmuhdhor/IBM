@@ -1,6 +1,6 @@
 // R2 §2, copied verbatim. Kept as a TS string (not schema.sql) because workerd and the vitest pool cannot
 // import a .sql file the same way (D-alief-03). Runs on every DO start; every statement is IF NOT EXISTS.
-export const SCHEMA_VERSION = '5';
+export const SCHEMA_VERSION = '6';
 
 export const SCHEMA_SQL = `
 -- Tanpa PRAGMA journal/transaksi: Durable Object mengatur sendiri. FK sudah ON secara default (§1).
@@ -25,7 +25,8 @@ CREATE TABLE IF NOT EXISTS member (
   git_email      TEXT NOT NULL,
   active_task_id TEXT,                                   -- FK lunak ke task.id
   last_heartbeat INTEGER,
-  online         INTEGER NOT NULL DEFAULT 0
+  online         INTEGER NOT NULL DEFAULT 0,
+  removed_at     INTEGER                                 -- D-alief-20: the owner removed this seat; NULL = active
 );
 
 CREATE TABLE IF NOT EXISTS token (

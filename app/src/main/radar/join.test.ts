@@ -12,12 +12,15 @@ const mocks = vi.hoisted(() => ({
   stopSyncAgent: vi.fn(),
   ensureNodeForBob: vi.fn(async () => undefined),
   moveAsideOldFolder: vi.fn((_folder: string): string | null => null),
-  existsSync: vi.fn((_path: string) => false)
+  existsSync: vi.fn((_path: string) => false),
+  readFileSync: vi.fn((_path: string, _enc: string): string => ''),
+  getSyncStatus: vi.fn((): { folder: string | null } => ({ folder: null }))
 }))
 
 vi.mock('node:fs', async (importOriginal) => ({
   ...(await importOriginal<typeof fs>()),
-  existsSync: mocks.existsSync
+  existsSync: mocks.existsSync,
+  readFileSync: mocks.readFileSync
 }))
 
 vi.mock('electron', () => ({
@@ -39,13 +42,14 @@ vi.mock('./connection-ipc', () => ({ startClient: mocks.startClient }))
 vi.mock('./node-shim', () => ({ ensureNodeForBob: mocks.ensureNodeForBob }))
 vi.mock('./join-folder', () => ({ moveAsideOldFolder: mocks.moveAsideOldFolder }))
 vi.mock('./sync-agent', () => ({
-  getSyncStatus: vi.fn(),
+  getSyncStatus: mocks.getSyncStatus,
   startSyncAgent: mocks.startSyncAgent,
   stopSyncAgent: mocks.stopSyncAgent,
   workspaceFolder: (workspace: string) => `/home/test/live-collab/${workspace}`
 }))
 
-const { createJoinCode, joinWithCode, resumeMemberSync, serverOrigin } = await import('./join')
+const { createJoinCode, joinWithCode, reclaimOwner, removeMember, resumeMemberSync, serverOrigin } =
+  await import('./join')
 
 const SERVER = 'https://collab.example.dev'
 const invite = encodeInvite({
@@ -269,5 +273,156 @@ describe('resumeMemberSync', () => {
     mocks.existsSync.mockReturnValue(false)
     resumeMemberSync()
     expect(mocks.startSyncAgent).not.toHaveBeenCalled()
+  })
+})
+
+describe('rejoining keeps the seat (D-alief-20)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.getRadarConnectionSummary.mockReturnValue({
+      server: `${SERVER}/`,
+      workspace: 'toko-demo',
+      member: 'D',
+      role: 'coder'
+    })
+  })
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('sends the current seat token with the code, so the server reuses the seat', async () => {
+    respond(200, { workspace: 'toko-demo', member: 'D', role: 'pm', invite })
+    mocks.readRadarConnection.mockReturnValue({
+      server: `${SERVER}/`,
+      workspace: 'toko-demo',
+      member: 'D',
+      role: 'coder',
+      token: 'rdr_old_seat_value'
+    })
+    await joinWithCode('K7QM-3XPA', SERVER, 'Dewi', 'pm')
+    expect(fetch).toHaveBeenCalledWith(
+      `${SERVER}/v1/join`,
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: 'Bearer rdr_old_seat_value' })
+      })
+    )
+  })
+
+  it('never sends a Mission Control token or a token for another server', async () => {
+    for (const saved of [
+      { server: `${SERVER}/`, workspace: 'toko-demo', member: 'mc', role: 'mc', token: 'rdr_mc' },
+      { server: 'https://other.example.dev/', workspace: 'x', member: 'B', role: 'coder', token: 'rdr_b' }
+    ]) {
+      respond(200, { workspace: 'toko-demo', member: 'D', role: 'coder', invite })
+      mocks.readRadarConnection.mockReturnValue(saved)
+      await joinWithCode('K7QM-3XPA', SERVER, 'Dewi', 'coder')
+      const init = vi.mocked(fetch).mock.calls[0]![1] as RequestInit
+      expect(init.headers).not.toHaveProperty('Authorization')
+      vi.unstubAllGlobals()
+    }
+  })
+})
+
+describe('removeMember (D-alief-20)', () => {
+  beforeEach(() => vi.clearAllMocks())
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('needs a Mission Control connection', async () => {
+    respond(200, { ok: true })
+    mocks.readRadarConnection.mockReturnValue({
+      server: `${SERVER}/`,
+      workspace: 'toko-demo',
+      member: 'D',
+      role: 'coder',
+      token: 'rdr_test_member_value'
+    })
+    await expect(removeMember('B')).rejects.toThrow(/Mission Control/)
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it('deletes the seat with the Mission Control token and shows the server message on failure', async () => {
+    mocks.readRadarConnection.mockReturnValue({
+      server: `${SERVER}/`,
+      workspace: 'toko-demo',
+      member: 'mc',
+      role: 'mc',
+      token: 'rdr_test_mc_value'
+    })
+    respond(200, { ok: true })
+    await removeMember('B')
+    expect(fetch).toHaveBeenCalledWith(
+      `${SERVER}/v1/members/B`,
+      expect.objectContaining({
+        method: 'DELETE',
+        headers: expect.objectContaining({ Authorization: 'Bearer rdr_test_mc_value' })
+      })
+    )
+    respond(409, { error: { code: 'CONFLICT', message: 'Alief shares this workspace, so their seat cannot be removed.' } })
+    await expect(removeMember('A')).rejects.toThrow('Alief shares this workspace')
+    await expect(removeMember('../x')).rejects.toThrow(/member/)
+  })
+})
+
+describe('reclaimOwner (D-alief-21)', () => {
+  const mcSaved = {
+    server: `${SERVER}/`,
+    workspace: 'toko-demo',
+    member: 'mc',
+    role: 'mc',
+    token: 'rdr_revoked_mc'
+  }
+  const local = JSON.stringify({ server: SERVER, workspace: 'toko-demo', member: 'A', token: 'rdr_owner_seat', role: 'coder' })
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.getRadarConnectionSummary.mockReturnValue({
+      server: `${SERVER}/`,
+      workspace: 'toko-demo',
+      member: 'mc',
+      role: 'mc'
+    })
+  })
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('asks for an owner code with the shared folder seat token, redeems it and keeps the folder syncing', async () => {
+    mocks.readRadarConnection.mockReturnValue(mcSaved)
+    mocks.getSyncStatus.mockReturnValue({ folder: '/home/test/projects/toko-demo' })
+    mocks.readFileSync.mockReturnValue(local)
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ member: null, owner: true, code: 'K7QM-3XPA', expiresAt: 1 }), { status: 201 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ workspace: 'toko-demo', member: null, role: 'mc', token: 'rdr_new_mc' }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(reclaimOwner()).resolves.toMatchObject({ workspace: 'toko-demo', role: 'mc' })
+    expect(mocks.readFileSync).toHaveBeenCalledWith('/home/test/projects/toko-demo/.radar/local.json', 'utf8')
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      `${SERVER}/v1/owner/reclaim`,
+      expect.objectContaining({ method: 'POST', headers: expect.objectContaining({ Authorization: 'Bearer rdr_owner_seat' }) })
+    )
+    expect(fetchMock).toHaveBeenNthCalledWith(2, `${SERVER}/v1/join`, expect.objectContaining({ body: JSON.stringify({ code: 'K7QM-3XPA' }) }))
+    const saved = { ...mcSaved, token: 'rdr_new_mc' }
+    expect(mocks.saveRadarConnection).toHaveBeenCalledWith(saved)
+    expect(mocks.startClient).toHaveBeenCalledWith(saved)
+    expect(mocks.stopSyncAgent).not.toHaveBeenCalled()
+  })
+
+  it('refuses without a shared folder of the same workspace and server', async () => {
+    mocks.readRadarConnection.mockReturnValue(mcSaved)
+    respond(201, {})
+    mocks.getSyncStatus.mockReturnValue({ folder: null })
+    await expect(reclaimOwner()).rejects.toThrow('Open the shared folder on this Mac to take back ownership.')
+    mocks.getSyncStatus.mockReturnValue({ folder: '/home/test/projects/other' })
+    mocks.readFileSync.mockReturnValue(JSON.stringify({ server: SERVER, workspace: 'other', member: 'A', token: 't', role: 'coder' }))
+    await expect(reclaimOwner()).rejects.toThrow('Open the shared folder on this Mac to take back ownership.')
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it("shows the server's message when it refuses", async () => {
+    mocks.readRadarConnection.mockReturnValue(mcSaved)
+    mocks.getSyncStatus.mockReturnValue({ folder: '/home/test/projects/toko-demo' })
+    mocks.readFileSync.mockReturnValue(local)
+    respond(409, { error: { code: 'CONFLICT', message: 'Mission Control is open on another device. Take back ownership there, or close it first.' } })
+    await expect(reclaimOwner()).rejects.toThrow('Mission Control is open on another device')
+    expect(mocks.saveRadarConnection).not.toHaveBeenCalled()
   })
 })
