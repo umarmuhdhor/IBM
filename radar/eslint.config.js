@@ -16,6 +16,8 @@ export default tseslint.config(
       'examples/**',
       'spike/**',
       'bob-kit/**',
+      // Remotion project with its own package.json and ESLint config.
+      'docs/video/**',
     ],
   },
   js.configs.recommended,
