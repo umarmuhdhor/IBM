@@ -21,6 +21,8 @@ export type RadarJoinApi = {
   stopSharing: () => Promise<void>
   getSyncStatus: () => Promise<RadarSyncStatus>
   openInBob: () => Promise<string | null>
+  /** Replaces the folder's `.bob/` with the Bob kit; the old one is kept as `.bob.bak-<time>`. */
+  installBobKit: () => Promise<void>
   showFolder: () => Promise<string>
   onSyncStatus: (callback: (status: RadarSyncStatus) => void) => () => void
   /** The name this person chose once; used for every share and join so teammates see one name. */
@@ -37,6 +39,7 @@ export const radarJoinApi: RadarJoinApi = {
   stopSharing: () => ipcRenderer.invoke('radar:stop-sharing'),
   getSyncStatus: () => ipcRenderer.invoke('radar:sync-status'),
   openInBob: () => ipcRenderer.invoke('radar:open-in-bob'),
+  installBobKit: () => ipcRenderer.invoke('radar:install-kit'),
   showFolder: () => ipcRenderer.invoke('radar:show-folder'),
   copyText: (text) => ipcRenderer.invoke('radar:copy-text', text),
   getProfileName: () => ipcRenderer.invoke('radar:profile-name'),

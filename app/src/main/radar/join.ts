@@ -17,7 +17,13 @@ import {
   requireOsEncryption,
   saveRadarConnection
 } from './secure-store'
-import { getSyncStatus, startSyncAgent, stopSyncAgent, workspaceFolder } from './sync-agent'
+import {
+  getSyncStatus,
+  installBobKit,
+  startSyncAgent,
+  stopSyncAgent,
+  workspaceFolder
+} from './sync-agent'
 import { serverFetch } from './server-fetch'
 import { readProfileName, saveProfileName } from './profile-name'
 
@@ -196,6 +202,7 @@ export function registerRadarJoinIpc(): void {
   ipcMain.handle('radar:profile-name', () => readProfileName())
   ipcMain.handle('radar:sync-status', () => getSyncStatus())
   ipcMain.handle('radar:open-in-bob', () => openInBob())
+  ipcMain.handle('radar:install-kit', () => installBobKit())
   // Why: navigator.clipboard rejects while the window is unfocused, e.g. right after the folder picker.
   ipcMain.handle('radar:copy-text', (_event, text: unknown) => {
     if (typeof text !== 'string' || text.length === 0 || text.length > 200) {

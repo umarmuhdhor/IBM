@@ -46,6 +46,22 @@ describe('applySyncLine', () => {
     )
   })
 
+  it('keeps a refused or missing Bob kit and clears it once installed (fase 12k bug 4)', () => {
+    const refused = applySyncLine(
+      BASE,
+      JSON.stringify({
+        type: 'kit',
+        status: 'refused',
+        role: 'coder',
+        foreign: ['.bob/x'],
+        message: 'Bob kit not installed.'
+      })
+    )
+    expect(refused?.kit).toEqual({ status: 'refused', message: 'Bob kit not installed.' })
+    expect(applySyncLine(refused!, '{"type":"kit","status":"installed","message":"ok"}')?.kit).toBeNull()
+    expect(applySyncLine(BASE, '{"type":"kit","status":"other"}')).toBeNull()
+  })
+
   it('lists each file kept as .radar-conflict once (D-alief-14)', () => {
     const line = '{"type":"conflict","path":"notes/a.md","sidecar":"notes/a.md.radar-conflict"}'
     const once = applySyncLine(BASE, line)
