@@ -16,7 +16,11 @@ export type RadarSyncStatus = {
   stopReason: RadarSyncStopReason | null
   /** Why the last local change was not sent (PM read-only, file held by a task, too large); kept as `.radar-rejected`. */
   rejected?: string | null
+  /** The Bob kit was not installed in the folder (`.bob/` holds other files, or the kit is missing); null once it is. */
+  kit?: RadarKitNotice | null
 }
+
+export type RadarKitNotice = { status: 'refused' | 'missing-kit'; message: string }
 
 export type RadarSyncStopReason = 'workspace-closed' | 'signed-out' | 'replaced' | 'rejected'
 
