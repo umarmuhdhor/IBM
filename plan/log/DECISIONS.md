@@ -497,12 +497,13 @@ Format:
 - Alternatif yang ditolak: app mencocokkan teks pesan (rapuh, dan teks berganti bahasa); kode close baru selain 4401 (klien lama akan terus mencoba menyambung ulang).
 - Dampak: Aarief (keadaan baru di kartu Join), Umar (hook/radar-mcp tidak berubah, hanya teks error).
 
-## D-alief-16 · 27 Sep 2026 · pasca fase 12 · File `.env` tidak pernah disinkron, `.gitignore` tidak bisa membuka `.radar/`
+## D-alief-16 · 27 Sep 2026 · pasca fase 12 · File `.env` tidak pernah disinkron, `.gitignore` tidak bisa membuka `.radar/`, `.gitignore` subfolder dipakai
 
 - Keputusan:
   1. **Kontrak (milik Core):** `@radar/common` menambah `ALWAYS_IGNORED_PATTERNS`: `.git/`, `.radar/`, `.bob/`, `*.radar-rejected`, `*.radar-conflict`, file temp sync, `.env` dan `.env.*`. Pengecualian: `.env.example`, `.env.sample`, `.env.template` tetap disinkron.
   2. `createIgnoreMatcherFromText` memeriksa daftar ini terpisah dari `.gitignore` workspace, jadi aturan `!` di `.gitignore` tidak bisa membuat token member (`.radar/local.json`), kit Bob, atau `.env` ikut tersinkron. `DEFAULT_IGNORE_PATTERNS` tidak berubah.
   3. Path yang berakhir `/` dianggap folder, sehingga aturan seperti `node_modules/` langsung melewati seluruh folder saat app memindai folder yang dibagikan.
-- Alasan: e2e 27 Sep: owner membagikan folder berisi `.env`, dan `.env` itu muncul di Mac teman. Aturan `!.radar/` di `.gitignore` juga bisa mengirim token member ke server.
+  4. `.gitignore` di subfolder ikut dipakai, seperti di git: `createIgnoreMatcherFromText(rootText, nested)` menerima `{ folder: isi .gitignore }`; aturan yang lebih dalam menang. `createIgnoreMatcher(root)` (`@radar/common/node`) membaca semua `.gitignore` di folder yang tidak diabaikan, dan sync agent membangun ulang aturannya saat `.gitignore` mana pun berubah. Server tetap hanya membaca `.gitignore` root (untuk lock), jadi penyaringan ada di klien.
+- Alasan: e2e 27 Sep: owner membagikan folder berisi `.env`, dan `.env` itu muncul di Mac teman. Aturan `!.radar/` di `.gitignore` juga bisa mengirim token member ke server. `pkg/.gitignore` diabaikan sehingga `pkg/local.txt` ikut tersinkron.
 - Alternatif yang ditolak: hanya menambah `.env` ke `DEFAULT_IGNORE_PATTERNS` (masih bisa dibatalkan dengan `!.env` di `.gitignore`); membuang semua `.env.*` termasuk contoh (template yang aman berguna untuk tim).
 - Dampak: server menolak lock/tulis `.env` dari klien lama; admin import juga melewatinya. Umar dan Aarief tidak perlu mengubah apa pun.

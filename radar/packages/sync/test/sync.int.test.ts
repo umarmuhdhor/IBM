@@ -207,6 +207,18 @@ describe('sync agent against the real server', () => {
     expect(A.a.stats.updatesSent).toBe(2);
   }, 10_000);
 
+  it('a .gitignore in a subfolder is honoured too (D-alief-16)', async () => {
+    const t = await seedTestWorkspace(server.url, SEED);
+    const [A, B] = await Promise.all([agent(t.A!, 'A'), agent(t.B!, 'B')]);
+    writeFileSync(join(A.root, 'src/.gitignore'), 'local.txt\n');
+    await waitFor(() => read(B.root, 'src/.gitignore') === 'local.txt\n', 3000, 'src/.gitignore reaches B');
+    writeFileSync(join(A.root, 'src/local.txt'), 'private\n');
+    writeFileSync(join(A.root, 'src/utils.ts'), '// after nested gitignore\n');
+    await waitFor(() => read(B.root, 'src/utils.ts') === '// after nested gitignore\n', 3000, 'normal file still syncs');
+    await sleep(300);
+    expect(read(B.root, 'src/local.txt')).toBeNull();
+  }, 10_000);
+
   it('a second agent for the same member replaces the first, which stops for good', async () => {
     const t = await seedTestWorkspace(server.url, SEED);
     const first = await agent(t.A!, 'A');

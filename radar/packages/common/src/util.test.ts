@@ -79,6 +79,21 @@ describe('ignore rules (R5 §6)', () => {
     expect(open.ignores('.radar/')).toBe(true);
   });
 
+  it('applies .gitignore files in subfolders to their own folder only (D-alief-16)', () => {
+    const n = createIgnoreMatcherFromText('*.log\n', { pkg: 'local.txt\n/build-out/\n!keep.log\n', 'pkg/deep': '*.tmp\n' });
+    expect(n.ignores('pkg/local.txt')).toBe(true);
+    expect(n.ignores('pkg/sub/local.txt')).toBe(true);
+    expect(n.ignores('local.txt')).toBe(false);
+    expect(n.ignores('pkg/build-out/a.js')).toBe(true);
+    expect(n.ignores('pkg/sub/build-out/a.js')).toBe(false);
+    expect(n.ignores('pkg/keep.log')).toBe(false);
+    expect(n.ignores('pkg/other.log')).toBe(true);
+    expect(n.ignores('pkg/deep/x.tmp')).toBe(true);
+    expect(n.ignores('pkg/x.tmp')).toBe(false);
+    const open = createIgnoreMatcherFromText('', { pkg: '!.env\n' });
+    expect(open.ignores('pkg/.env')).toBe(true);
+  });
+
   it('treats paths outside the workspace as ignored and the root as not ignored', () => {
     expect(m.ignores('../x.ts')).toBe(true);
     expect(m.ignores('/etc/hosts')).toBe(true);

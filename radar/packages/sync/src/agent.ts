@@ -26,6 +26,9 @@ import { writeSidecar } from './sidecar.js';
 import { createWatcher, isIgnored, listFiles, type SyncMode, type Watcher } from './watcher.js';
 import { atomicWrite, pruneEmptyParents, readLocal, removeLocal, safeRelative, UnsafePathError, type LocalFile } from './writer.js';
 
+/** Any .gitignore, root or nested, changes which paths sync (D-alief-16). */
+const isGitignore = (path: string): boolean => path === '.gitignore' || path.endsWith('/.gitignore');
+
 /** Close code for a sync socket replaced by a newer one of the same member (R3 §3). */
 export const WS_CLOSE_REPLACED = 4000;
 /** Close code when the workspace is reset on the server. */
@@ -455,7 +458,7 @@ export class SyncAgent extends EventEmitter {
       this.known.set(path, { version: f.version, hash: f.hash });
       atomicWrite(this.root, path, f.content);
       written++;
-      if (path === '.gitignore') this.rebuildMatcher();
+      if (isGitignore(path)) this.rebuildMatcher();
     }
     this.locks.clear();
     for (const l of msg.d.locks) this.locks.set(l.path, { path: l.path, state: l.state, taskId: l.taskId, memberId: l.memberId });
@@ -518,7 +521,7 @@ export class SyncAgent extends EventEmitter {
     removeLocal(this.root, path);
     // A folder renamed on another Mac arrives as deletes plus adds; do not leave the old folder behind empty.
     pruneEmptyParents(this.root, path);
-    if (path === '.gitignore') this.rebuildMatcher();
+    if (isGitignore(path)) this.rebuildMatcher();
     return true;
   }
 
@@ -543,7 +546,7 @@ export class SyncAgent extends EventEmitter {
     this.saveConflict(path, prev?.hash, d.hash);
     this.known.set(path, { version: d.version, hash: d.hash });
     atomicWrite(this.root, path, d.content);
-    if (path === '.gitignore') this.rebuildMatcher();
+    if (isGitignore(path)) this.rebuildMatcher();
     const appliedTs = Date.now();
     this.sendMsg({ t: 'file.applied', d: { path, version: d.version, serverTs: d.serverTs, appliedTs } });
     this.stats.applied++;
@@ -645,7 +648,7 @@ export class SyncAgent extends EventEmitter {
       return;
     }
     this.skipped.delete(path);
-    if (path === '.gitignore') this.rebuildMatcher();
+    if (isGitignore(path)) this.rebuildMatcher();
     const known = this.known.get(path);
     if (known?.hash === local.hash) return;
     const p = this.pending.get(path);
