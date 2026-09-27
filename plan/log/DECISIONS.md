@@ -612,3 +612,16 @@ Format:
   centang).
 - Dampak: Alief (review kontrak + deploy server v7), Aarief (tab baru di app), Imelda (replay bisa menampilkan
   event `task.step`; kalimat feed belum ada, event diabaikan feed).
+
+## D-umar-07 · 27 Sep 2026 · fase 15 · PM boleh menambah dokumen (.md, .txt)
+
+- Konteks: PM perlu menaruh file brief di folder proyek agar Bob PM Lead bisa membacanya lewat `@brief.md`;
+  lampiran chat Bob hanya menerima gambar. Sebelumnya semua tulisan PM ditolak (`pm_readonly`).
+- Keputusan: `checkWrite` baris 2 mengizinkan PM menulis file dengan ekstensi `PM_DOC_EXTENSIONS` (`.md`, `.txt`,
+  tidak peka huruf besar) tanpa kunci dan tanpa task, dengan alasan baru `pm_doc` di `CHECK_REASONS` (kontrak
+  aditif). Dokumen yang sedang dipegang coder atau di bawah klaim commit tetap ditolak. File lain tetap
+  `pm_readonly`. Sync agent tidak melewatkan dokumen baru PM saat scan awal.
+- Alternatif yang ditolak (dipilih Umar dari tiga opsi): hanya folder `briefs/` (lebih ketat tapi memaksa lokasi);
+  semua file seperti coder (PM jadi ikut coding, bertentangan dengan peran PM).
+- Dampak: Alief (kontrak `pm_doc` + deploy server), Aarief (tidak ada perubahan wajib; pesan penolakan baru tampil
+  apa adanya), Imelda (tidak terpengaruh).

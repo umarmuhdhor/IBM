@@ -166,8 +166,8 @@ describe('notify messages', () => {
     );
   });
   it('explains pm_readonly and conflict', () => {
-    expect(formatRejection({ path: 'README.md', reason: 'pm_readonly', holder: null, sidecar: 'README.md.radar-rejected' })).toBe(
-      '✖ A PM does not write files. Your change is kept in README.md.radar-rejected.',
+    expect(formatRejection({ path: 'src/app.ts', reason: 'pm_readonly', holder: null, sidecar: 'src/app.ts.radar-rejected' })).toBe(
+      '✖ A PM can only add documents (.md, .txt), not code. Your change is kept in app.ts.radar-rejected.',
     );
     expect(formatRejection({ path: 'src/a.ts', reason: 'conflict', holder: null, sidecar: 'src/a.ts.radar-conflict' })).toBe(
       '✖ Your copy was behind, so the server version is used. Your copy: a.ts.radar-conflict',

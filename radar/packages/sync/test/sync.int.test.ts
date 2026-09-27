@@ -73,23 +73,35 @@ describe('sync agent against the real server', () => {
     expect(A.a.known.get('src/utils.ts')).toEqual(B.a.known.get('src/utils.ts'));
   }, 10_000);
 
-  it('SY-04: a PM write is rejected, restored, and saved to .radar-rejected; coders are untouched', async () => {
+  it('SY-04: a PM code write is rejected, restored, and saved to .radar-rejected; coders are untouched', async () => {
     const t = await seedTestWorkspace(server.url, SEED);
     const notices: string[] = [];
     const [A, B] = await Promise.all([agent(t.A!, 'A'), agent(t.B!, 'B')]);
     const C = await agent(t.C!, 'C', { notify: (n) => notices.push(n.text) });
-    writeFileSync(join(C.root, 'README.md'), '# PM edit\n');
-    await waitFor(() => read(C.root, 'README.md.radar-rejected') === '# PM edit\n', 3000, 'sidecar');
-    await waitFor(() => read(C.root, 'README.md') === '# toko-demo\n', 3000, 'restore');
+    const original = 'export const checkout = () => 0;\n';
+    writeFileSync(join(C.root, 'src/checkout/checkout.ts'), '// PM edit\n');
+    await waitFor(() => read(C.root, 'src/checkout/checkout.ts.radar-rejected') === '// PM edit\n', 3000, 'sidecar');
+    await waitFor(() => read(C.root, 'src/checkout/checkout.ts') === original, 3000, 'restore');
     expect(C.a.stats.rejected).toBe(1);
-    expect(notices.join('\n')).toMatch(/A PM does not write files/);
+    expect(notices.join('\n')).toMatch(/A PM can only add documents/);
     await sleep(300);
-    expect(read(A.root, 'README.md')).toBe('# toko-demo\n');
-    expect(read(B.root, 'README.md')).toBe('# toko-demo\n');
+    expect(read(A.root, 'src/checkout/checkout.ts')).toBe(original);
+    expect(read(B.root, 'src/checkout/checkout.ts')).toBe(original);
     // the restore itself is not echoed back to the server
     expect(C.a.stats.updatesSent).toBe(1);
     // the sidecar is never synced
-    expect(read(A.root, 'README.md.radar-rejected')).toBeNull();
+    expect(read(A.root, 'src/checkout/checkout.ts.radar-rejected')).toBeNull();
+  }, 10_000);
+
+  it('fase 15: a PM adds a brief (.md) and every coder receives it', async () => {
+    const t = await seedTestWorkspace(server.url, SEED);
+    const [A, B] = await Promise.all([agent(t.A!, 'A'), agent(t.B!, 'B')]);
+    const C = await agent(t.C!, 'C');
+    mkdirSync(join(C.root, 'docs'), { recursive: true });
+    writeFileSync(join(C.root, 'docs/brief.md'), '# Coupon brief\n');
+    await waitFor(() => read(A.root, 'docs/brief.md') === '# Coupon brief\n', 3000, 'brief in A');
+    await waitFor(() => read(B.root, 'docs/brief.md') === '# Coupon brief\n', 3000, 'brief in B');
+    expect(C.a.stats.rejected).toBe(0);
   }, 10_000);
 
   it('a folder with different content at join keeps it as .radar-conflict; server wins; local-only files are sent', async () => {

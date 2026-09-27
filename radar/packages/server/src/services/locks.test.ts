@@ -65,6 +65,38 @@ describe('row 2 — PM is read-only', () => {
       expect(f.events()).toEqual([]);
     });
   });
+
+  it('allows PM C to write a free .md file (pm_doc) — no lock row, no events', async () => {
+    await withLocks((f) => {
+      const r = check(f, 'C', 'docs/brief.md');
+      expect(r).toMatchObject({ decision: 'allow', reason: 'pm_doc', taskId: null });
+      expect(getLock(f.db, 'docs/brief.md')).toBeNull();
+      expect(f.count("SELECT count(*) AS n FROM request WHERE requester_member = 'C'")).toBe(0);
+      expect(f.events()).toEqual([]);
+    });
+  });
+
+  it('allows PM C to write a free .TXT file (case-insensitive — pm_doc)', async () => {
+    await withLocks((f) => {
+      const r = check(f, 'C', 'NOTES.TXT');
+      expect(r).toMatchObject({ decision: 'allow', reason: 'pm_doc', taskId: null });
+      expect(getLock(f.db, 'NOTES.TXT')).toBeNull();
+      expect(f.events()).toEqual([]);
+    });
+  });
+
+  it('blocks PM C on a .md file that coder A already holds (held_by_other)', async () => {
+    await withLocks((f) => {
+      const t = f.task('A');
+      f.lock('docs/spec.md', t, 'dipegang');
+      const r = check(f, 'C', 'docs/spec.md');
+      expect(r).toMatchObject({ decision: 'block', reason: 'held_by_other' });
+      expect(r.holder).toMatchObject({ memberId: 'A', taskId: t.id });
+      // No new request or events should be created for a PM doc block.
+      expect(f.count("SELECT count(*) AS n FROM request WHERE requester_member = 'C'")).toBe(0);
+      expect(f.events()).toEqual([]);
+    });
+  });
 });
 
 // ---------------------------------------------------------------------------

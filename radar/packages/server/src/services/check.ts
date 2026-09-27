@@ -30,7 +30,7 @@ export function blockMessage(blocked: readonly LockCheckResult[], activeTaskId: 
   const first = blocked[0];
   if (!first) return '';
   if (first.reason === 'pm_readonly') {
-    return 'RADAR: a PM only reads and may not change files. Edit cancelled. Propose the change to Mission Control with radar propose_*.';
+    return 'RADAR: a PM can only add documents (.md, .txt) and may not change code. Edit cancelled. Propose the change to Mission Control with radar propose_*.';
   }
   const more = blocked.length > 1 ? ` (and ${blocked.length - 1} more ${blocked.length === 2 ? 'file' : 'files'})` : '';
   const next = activeTaskId ? `then work on another part of task ${activeTaskId}.` : "then wait for the PM's decision.";

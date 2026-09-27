@@ -1,5 +1,6 @@
 // Workspace path helpers. String-only (no node:path) because the Worker imports @radar/common too.
 // Workspace-relative paths are POSIX, without a leading './', and never contain '..'.
+import { PM_DOC_EXTENSIONS } from './constants.js';
 
 export class PathOutsideWorkspaceError extends Error {
   override readonly name = 'PathOutsideWorkspaceError';
@@ -132,4 +133,10 @@ export function isDirMarker(p: string): boolean {
 /** The folder of a marker path: `src/empty/.radar-dir` is `src/empty`. */
 export function dirMarkerFolder(p: string): string {
   return p.slice(0, -(DIR_MARKER.length + 1));
+}
+
+/** True when `path` ends with one of PM_DOC_EXTENSIONS (case-insensitive). */
+export function isPmDocPath(path: string): boolean {
+  const lower = path.toLowerCase();
+  return PM_DOC_EXTENSIONS.some((ext) => lower.endsWith(ext));
 }
