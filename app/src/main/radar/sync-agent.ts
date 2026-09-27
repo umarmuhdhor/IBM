@@ -23,7 +23,8 @@ const STOP_REASONS: readonly RadarSyncStopReason[] = [
   'workspace-closed',
   'signed-out',
   'replaced',
-  'rejected'
+  'rejected',
+  'removed'
 ]
 
 function isStopReason(value: unknown): value is RadarSyncStopReason {

@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { useEscapeToCancel } from './use-escape-to-cancel'
+import { confirmDialogProps, useEscapeToCancel } from './use-escape-to-cancel'
 import { ipcErrorText } from './use-radar-sync-status'
 
 type Props = { memberId: string; name: string }
@@ -15,6 +15,8 @@ export function RemoveSeatControl({ memberId, name }: Props) {
   const [error, setError] = useState<string | null>(null)
   const trigger = useRef<HTMLButtonElement>(null)
   const cancelButton = useRef<HTMLButtonElement>(null)
+  const dialog = useRef<HTMLDivElement>(null)
+  const dialogId = useId()
   const [refocus, setRefocus] = useState(false)
 
   useEffect(() => {
@@ -32,7 +34,7 @@ export function RemoveSeatControl({ memberId, name }: Props) {
       setRefocus(true)
     }
   }
-  useEscapeToCancel(confirming, cancel)
+  useEscapeToCancel(dialog, confirming, cancel)
 
   const remove = async () => {
     setBusy(true)
@@ -66,14 +68,18 @@ export function RemoveSeatControl({ memberId, name }: Props) {
 
   return (
     <div
-      role="group"
-      aria-label={`Remove ${name}?`}
+      ref={dialog}
+      {...confirmDialogProps(dialogId)}
       className="basis-full space-y-2 rounded-md border border-border bg-secondary/60 p-2.5 text-xs"
     >
-      <p>
-        Remove {name} from this workspace? Their open tasks are cancelled, and they need a new code
-        to join again.
-      </p>
+      <div className="space-y-0.5">
+        <h4 id={`${dialogId}-title`} className="font-medium">
+          Remove {name}?
+        </h4>
+        <p id={`${dialogId}-warning`} className="text-muted-foreground">
+          Their open tasks are cancelled, and they need a new code to join again.
+        </p>
+      </div>
       <div className="flex justify-end gap-2">
         <Button ref={cancelButton} size="xs" variant="outline" disabled={busy} onClick={cancel}>
           Cancel

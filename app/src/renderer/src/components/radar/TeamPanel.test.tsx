@@ -67,15 +67,15 @@ describe('TeamPanel', () => {
 
     expect(within(card('Andi')).queryByRole('button', { name: /Remove/ })).toBeNull()
     fireEvent.click(within(card('Budi')).getByRole('button', { name: 'Remove Budi' }))
-    expect(within(card('Budi')).getByText('Remove Budi from this workspace? Their open tasks are cancelled, and they need a new code to join again.')).toBeTruthy()
-    fireEvent.keyDown(within(card('Budi')).getByRole('group', { name: 'Remove Budi?' }), { key: 'Escape' })
-    expect(within(card('Budi')).queryByRole('group', { name: 'Remove Budi?' })).toBeNull()
+    expect(within(card('Budi')).getByRole('alertdialog', { name: 'Remove Budi?', description: 'Their open tasks are cancelled, and they need a new code to join again.' })).toBeTruthy()
+    fireEvent.keyDown(within(card('Budi')).getByRole('alertdialog', { name: 'Remove Budi?' }), { key: 'Escape' })
+    expect(within(card('Budi')).queryByRole('alertdialog', { name: 'Remove Budi?' })).toBeNull()
     expect(removeMember).not.toHaveBeenCalled()
 
     fireEvent.click(within(card('Budi')).getByRole('button', { name: 'Remove Budi' }))
     fireEvent.click(within(card('Budi')).getByRole('button', { name: 'Remove' }))
     expect(removeMember).toHaveBeenCalledWith('B')
-    await vi.waitFor(() => expect(within(card('Budi')).queryByRole('group', { name: 'Remove Budi?' })).toBeNull())
+    await vi.waitFor(() => expect(within(card('Budi')).queryByRole('alertdialog', { name: 'Remove Budi?' })).toBeNull())
   })
 
   it("shows the server's reason when a removal fails", async () => {

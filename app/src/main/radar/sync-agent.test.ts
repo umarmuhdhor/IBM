@@ -89,6 +89,9 @@ describe('applySyncLine', () => {
       stopReason: 'workspace-closed',
       message: 'The owner stopped sharing this workspace.'
     })
+    expect(
+      applySyncLine(BASE, '{"type":"stopped","reason":"removed","message":"The workspace owner removed you, so sync stopped."}')
+    ).toMatchObject({ state: 'stopped', stopReason: 'removed' })
     expect(applySyncLine(BASE, '{"type":"stopped","reason":"other"}')).toMatchObject({
       state: 'error',
       stopReason: null

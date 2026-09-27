@@ -3,14 +3,10 @@ import { Button } from '@/components/ui/button'
 import { useRadarStore } from '@/store/radar-store'
 import type { RadarConnectionSummary } from '../../../../shared/radar-connection'
 import { DEFAULT_RADAR_SERVER, type RadarJoinCode } from '../../../../shared/radar-join'
+import { ReclaimOwnerButton } from './ReclaimOwnerButton'
 import { SyncConflictsNote } from './SyncConflictsNote'
 import { confirmDialogProps, useEscapeToCancel } from './use-escape-to-cancel'
-import {
-  endedNotice,
-  ipcErrorText,
-  syncLine,
-  useRadarSyncStatus
-} from './use-radar-sync-status'
+import { endedNotice, ipcErrorText, syncLine, useRadarSyncStatus } from './use-radar-sync-status'
 
 type Props = {
   connection: RadarConnectionSummary | null
@@ -170,10 +166,11 @@ export function ShareFolderCard({
           <h3 className="text-sm font-semibold">{connection.workspace}</h3>
           <p className="text-xs text-foreground">
             {connectionFailure === 'signed-out'
-              ? 'Another device took over as owner. This Mac no longer runs Mission Control.'
+              ? 'Another device took over as owner. If it is closed now, take back ownership on this Mac.'
               : 'This workspace is no longer shared from this Mac.'}
           </p>
         </div>
+        {connectionFailure === 'signed-out' && <ReclaimOwnerButton onReclaimed={onConnectionChange} />}
         <Button
           size="sm"
           variant="outline"

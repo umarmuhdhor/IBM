@@ -181,6 +181,42 @@ it('tells the old owner that another device took over, and lets them start over 
   await waitFor(() => expect(onConnectionChange).toHaveBeenCalledWith(null))
 })
 
+it('lets the owner take back ownership on this Mac after another device took over (D-alief-21)', async () => {
+  useRadarStore.setState({ connectionFailure: 'signed-out' })
+  const summary = { ...owner }
+  const reclaimOwner = vi.fn(async () => summary)
+  Object.assign((globalThis as unknown as { api: { radar: Record<string, unknown> } }).api.radar, { reclaimOwner })
+  const onConnectionChange = vi.fn()
+  render(
+    <ShareFolderCard
+      connection={owner}
+      folder={null}
+      sharedCode={code}
+      onConnectionChange={onConnectionChange}
+      onShared={vi.fn()}
+    />
+  )
+  expect(await screen.findByText(/If it is closed now, take back ownership on this Mac/)).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'Take back ownership' }))
+  await waitFor(() => expect(onConnectionChange).toHaveBeenCalledWith(summary))
+  expect(reclaimOwner).toHaveBeenCalledTimes(1)
+})
+
+it('offers no take-back when the workspace was closed', async () => {
+  useRadarStore.setState({ connectionFailure: 'workspace-closed' })
+  render(
+    <ShareFolderCard
+      connection={owner}
+      folder={null}
+      sharedCode={code}
+      onConnectionChange={vi.fn()}
+      onShared={vi.fn()}
+    />
+  )
+  expect(await screen.findByText(/no longer shared from this Mac/)).toBeTruthy()
+  expect(screen.queryByRole('button', { name: 'Take back ownership' })).toBeNull()
+})
+
 it('drops the "Sharing stopped" note once this app joins another workspace', async () => {
   stopSharing.mockResolvedValue(undefined)
   const props = { folder: null, sharedCode: null, onConnectionChange: vi.fn(), onShared: vi.fn() }
