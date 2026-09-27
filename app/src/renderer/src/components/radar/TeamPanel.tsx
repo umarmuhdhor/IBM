@@ -57,7 +57,7 @@ export function TeamPanel({ state, now, onWatch }: Props) {
               {spots.map((spot) => (
                 <p key={spot.path} className="rounded-md border border-border bg-secondary/60 px-2.5 py-1.5 text-xs">
                   <span className="font-medium">#{spot.pos} in the queue for <span className="font-mono">{baseName(spot.path)}</span>.</span>{' '}
-                  <span className="text-muted-foreground">{spot.holderName} holds it. Working on other files meanwhile.</span>
+                  <span className="text-muted-foreground">{spot.holderName} holds {spot.holds}. Working on other files meanwhile.</span>
                 </p>
               ))}
               {own.length > 0 && (

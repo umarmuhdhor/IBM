@@ -33,7 +33,7 @@ export function SharedRepoList({ rows, emptyText }: Props) {
                     style={{ borderColor: memberColorVar(row.holderId), background: row.lock === 'reserved' ? 'transparent' : memberColorVar(row.holderId) }}
                   />
                   <span className={cn(row.lock === 'review' && 'text-[var(--lc-warn)]')}>
-                    {row.holderName} · {row.lock}
+                    {row.holderLabel} · {row.lock}
                   </span>
                 </span>
               ) : (

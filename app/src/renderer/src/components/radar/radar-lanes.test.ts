@@ -35,16 +35,25 @@ const state = {
 describe('radar lanes', () => {
   it('lists every file with holder, lock word, writing badge and queue', () => {
     expect(repoRows(state, 3_000)).toEqual([
-      { path: 'README.md', holderId: null, holderName: null, lock: null, writing: false, queue: [] },
-      { path: 'src/checkout/checkout.ts', holderId: 'A', holderName: 'Andi', lock: 'held', writing: false, queue: [{ memberId: 'B', name: 'Budi', pos: 1 }] },
-      { path: 'src/ui/theme.css', holderId: 'B', holderName: 'Budi', lock: 'reserved', writing: true, queue: [] }
+      { path: 'README.md', holderId: null, holderName: null, holderLabel: null, lock: null, writing: false, queue: [] },
+      { path: 'src/checkout/checkout.ts', holderId: 'A', holderName: 'Andi', holderLabel: 'Andi', lock: 'held', writing: false, queue: [{ memberId: 'B', name: 'Budi', pos: 1 }] },
+      { path: 'src/ui/theme.css', holderId: 'B', holderName: 'Budi', holderLabel: 'Budi', lock: 'reserved', writing: true, queue: [] }
     ])
     expect(repoRows(state, 9_000)[2]?.writing).toBe(false)
   })
 
   it('tells a queued member where they stand', () => {
-    expect(queueSpots(state, 'B')).toEqual([{ path: 'src/checkout/checkout.ts', pos: 1, holderName: 'Andi' }])
+    expect(queueSpots(state, 'B')).toEqual([{ path: 'src/checkout/checkout.ts', pos: 1, holderName: 'Andi', holds: 'it' }])
     expect(queueSpots(state, 'A')).toEqual([])
+  })
+
+  it('names the locked lines of a line-range lock (D-alief-17)', () => {
+    const ranged = {
+      ...state,
+      locks: { ...state.locks, 'src/checkout/checkout.ts': { ...state.locks['src/checkout/checkout.ts'], range: { start: 3, end: 5 } } }
+    } satisfies RadarState
+    expect(repoRows(ranged, 3_000)[1]).toMatchObject({ holderName: 'Andi', holderLabel: 'lines 3–5 · Andi', lock: 'held' })
+    expect(queueSpots(ranged, 'B')).toEqual([{ path: 'src/checkout/checkout.ts', pos: 1, holderName: 'Andi', holds: 'lines 3–5' }])
   })
 
   it('quotes the last shared prompt and turns Bob activity into hook and mode rows', () => {
