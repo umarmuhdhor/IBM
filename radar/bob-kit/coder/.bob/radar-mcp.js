@@ -29385,6 +29385,7 @@ var import_ignore = __toESM(require_ignore(), 1);
 // ../common/src/constants.ts
 var TERM_FRAME_MAX_BYTES = 32768;
 var PLAN_MAX_TASKS = 8;
+var PLAN_MAX_STEPS_PER_TASK = 12;
 var PLAN_MAX_FILES_PER_TASK = 20;
 var NOTIFY_MAX_CHARS = 200;
 var ACTIVITY_TEXT_MAX_CHARS = 200;
@@ -29418,6 +29419,7 @@ var CHECK_REASONS = [
 ];
 
 // ../common/src/schemas.ts
+var TaskStepSchema = external_exports.object({ text: external_exports.string(), done: external_exports.boolean() });
 var PathSchema = external_exports.string().min(1).max(1024);
 var LineRangeSchema = external_exports.object({ start: external_exports.number().int().positive(), end: external_exports.number().int().positive() }).refine((r) => r.end >= r.start, { message: "end must be >= start" });
 var MemberIdSchema = external_exports.string().min(1).max(64);
@@ -29457,7 +29459,7 @@ var ERROR_CODES = [
   "TERM_FRAME_TOO_LARGE"
 ];
 var ErrorCodeSchema = external_exports.enum(ERROR_CODES);
-var ErrorReasonSchema = external_exports.enum(["signed-out", "workspace-closed"]);
+var ErrorReasonSchema = external_exports.enum(["signed-out", "workspace-closed", "removed"]);
 var ErrorRes = external_exports.object({
   error: external_exports.object({ code: ErrorCodeSchema, message: external_exports.string(), reason: ErrorReasonSchema.optional() })
 });
@@ -29520,7 +29522,8 @@ var TaskItem = external_exports.object({
   adhoc: external_exports.boolean(),
   baseCommit: external_exports.string().nullable(),
   editCount: external_exports.number().int().nonnegative(),
-  files: external_exports.array(TaskFileEntry)
+  files: external_exports.array(TaskFileEntry),
+  steps: external_exports.array(TaskStepSchema).default([])
 });
 var TasksQuery = external_exports.object({
   owner: external_exports.string().optional(),
@@ -29560,6 +29563,8 @@ var ActivityRes = external_exports.object({
     })
   )
 });
+var StepReq = external_exports.object({ index: external_exports.number().int().nonnegative(), done: external_exports.boolean() });
+var StepRes = external_exports.object({ taskId: TaskIdSchema, steps: external_exports.array(TaskStepSchema) });
 var SubmitReq = external_exports.object({ summary: external_exports.string().min(1).max(SUBMIT_SUMMARY_MAX_CHARS) });
 var SubmitRes = external_exports.object({ taskId: TaskIdSchema, status: external_exports.literal("review"), files: external_exports.array(PathSchema) });
 var TeamRes = external_exports.object({
@@ -29580,7 +29585,8 @@ var TeamRes = external_exports.object({
       ownerId: MemberIdSchema,
       status: TaskStatusSchema2,
       files: external_exports.array(PathSchema),
-      editCount: external_exports.number().int().nonnegative()
+      editCount: external_exports.number().int().nonnegative(),
+      steps: external_exports.array(TaskStepSchema).default([])
     })
   ),
   locks: external_exports.array(
@@ -29628,7 +29634,8 @@ var PlanTask = external_exports.object({
   description: external_exports.string().max(2e3).default(""),
   ownerId: MemberIdSchema,
   files: external_exports.array(PathSchema).max(PLAN_MAX_FILES_PER_TASK),
-  queuedFiles: external_exports.array(PathSchema).max(PLAN_MAX_FILES_PER_TASK).default([])
+  queuedFiles: external_exports.array(PathSchema).max(PLAN_MAX_FILES_PER_TASK).default([]),
+  steps: external_exports.array(external_exports.string().trim().min(1).max(200)).max(PLAN_MAX_STEPS_PER_TASK).default([])
 });
 var PlanPayload = external_exports.object({
   goal: external_exports.string().min(1).max(500),
@@ -29805,7 +29812,8 @@ var TaskViewSchema = external_exports.object({
   parentTaskId: TaskIdSchema.nullable().default(null),
   editCount: external_exports.number().int().nonnegative(),
   commitSha: external_exports.string().nullable().default(null),
-  summary: external_exports.string().nullable().default(null)
+  summary: external_exports.string().nullable().default(null),
+  steps: external_exports.array(TaskStepSchema).default([])
 });
 var LockViewSchema = external_exports.object({
   path: PathSchema,
@@ -29877,6 +29885,7 @@ var RadarEventSchema = external_exports.discriminatedUnion("type", [
   event("member.online", memberOnly),
   event("member.offline", memberOnly),
   event("member.reconnected", memberOnly),
+  event("member.removed", memberOnly),
   event("member.stale", memberOnly.extend({ lastHeartbeat: EpochMsSchema.nullable() })),
   event(
     "file.changed",
@@ -29944,11 +29953,13 @@ var RadarEventSchema = external_exports.discriminatedUnion("type", [
       files: external_exports.array(PathSchema),
       queuedFiles: external_exports.array(PathSchema).default([]),
       adhoc: external_exports.boolean(),
-      parentTaskId: TaskIdSchema.nullable().optional()
+      parentTaskId: TaskIdSchema.nullable().optional(),
+      steps: external_exports.array(external_exports.string()).optional()
     })
   ),
   event("task.status", external_exports.object({ taskId: TaskIdSchema, from: TaskStatusSchema2, to: TaskStatusSchema2, by: external_exports.string() })),
   event("task.submitted", external_exports.object({ taskId: TaskIdSchema, summary: external_exports.string(), files: external_exports.array(PathSchema) })),
+  event("task.step", external_exports.object({ taskId: TaskIdSchema, index: external_exports.number().int().nonnegative(), done: external_exports.boolean(), by: MemberIdSchema })),
   event(
     "request.created",
     external_exports.object({
@@ -38143,8 +38154,15 @@ var my_tasks_default = defineTool({
           lines.push(`  ${f.path} \u2014 bebas`);
         }
       }
+      if (task.steps && task.steps.length > 0) {
+        const checked = task.steps.filter((s) => s.done).length;
+        lines.push(`  Langkah (${checked}/${task.steps.length}):`);
+        task.steps.forEach((s, i) => {
+          lines.push(`  [${s.done ? "x" : " "}] ${i + 1}. ${s.text}`);
+        });
+      }
     }
-    return lines.slice(0, 12).join("\n");
+    return lines.slice(0, 30).join("\n");
   }
 });
 
@@ -38293,6 +38311,7 @@ var AdminJoinCodeReq = external_exports.object({
   owner: external_exports.boolean().optional(),
   ttlHours: external_exports.number().int().min(1).max(JOIN_CODE_TTL_HOURS_MAX).optional()
 }).refine((r) => !(r.owner && r.member), { message: "An owner code cannot belong to a member." });
+var OWNER_RECLAIM_TTL_MS = 10 * 6e4;
 var AdminJoinCodeRes = external_exports.object({
   /** null for an open code and for an owner code. */
   member: external_exports.string().nullable(),
@@ -38418,8 +38437,30 @@ var submit_task_default = defineTool({
   }
 });
 
+// src/tools/coder/complete_step.ts
+var complete_step_default = defineTool({
+  name: "complete_step",
+  title: "Centang langkah task",
+  description: "Panggil setiap kali satu langkah dari checklist PM selesai. Progres langsung terlihat di halaman PM.",
+  inputSchema: {
+    task_id: external_exports.string().describe("ID task yang langkahnya dicentang"),
+    step: external_exports.number().int().min(1).describe("Nomor langkah (1-based, sesuai urutan di my_tasks)"),
+    done: external_exports.boolean().default(true).describe("true untuk mencentang, false untuk membatalkan centang")
+  },
+  async run(args, client) {
+    const data = await client.post(`/v1/tasks/${encodeURIComponent(args.task_id)}/steps`, {
+      index: args.step - 1,
+      done: args.done
+    });
+    const total = data.steps.length;
+    const checked = data.steps.filter((s) => s.done).length;
+    const action = args.done ? "selesai" : "dibatalkan";
+    return `${data.taskId}: langkah ${args.step}/${total} ${action} (${checked} dari ${total} tercentang).`;
+  }
+});
+
 // src/tools/coder/index.ts
-var CODER_TOOLS = [my_tasks_default, why_blocked_default, request_file_default, team_activity_default, submit_task_default];
+var CODER_TOOLS = [my_tasks_default, why_blocked_default, request_file_default, team_activity_default, submit_task_default, complete_step_default];
 
 // src/tools/pm/team_status.ts
 var team_status_default = defineTool({
@@ -38448,7 +38489,11 @@ var team_status_default = defineTool({
       (tasksByStatus[t.status] ??= []).push(t);
     }
     for (const [status, tasks] of Object.entries(tasksByStatus)) {
-      lines.push(`Task ${status}: ${tasks.map((t) => `${t.id} ${t.title}`).join(", ")}`);
+      lines.push(`Task ${status}: ${tasks.map((t) => {
+        if (t.steps.length === 0) return `${t.id} ${t.title}`;
+        const checked = t.steps.filter((s) => s.done).length;
+        return `${t.id} ${t.title} (${checked}/${t.steps.length} langkah)`;
+      }).join(", ")}`);
     }
     return lines.slice(0, 25).join("\n");
   }
@@ -38468,7 +38513,8 @@ var propose_plan_default = defineTool({
         description: external_exports.string().min(1),
         owner: external_exports.string().min(1).describe("ID anggota seperti A atau B (bukan nama)"),
         files: external_exports.array(external_exports.string().min(1)).max(20),
-        queued_files: external_exports.array(external_exports.string().min(1)).max(20).optional()
+        queued_files: external_exports.array(external_exports.string().min(1)).max(20).optional(),
+        steps: external_exports.array(external_exports.string().min(1).max(200)).max(12).optional().describe("Checklist langkah kecil yang bisa dicentang coder (3\u20136 langkah)")
       })
     ).min(1).max(8)
   },
@@ -38481,7 +38527,8 @@ var propose_plan_default = defineTool({
         description: t.description,
         ownerId: t.owner,
         files: t.files,
-        queuedFiles: t.queued_files ?? []
+        queuedFiles: t.queued_files ?? [],
+        steps: t.steps ?? []
       }))
     };
     let data;
