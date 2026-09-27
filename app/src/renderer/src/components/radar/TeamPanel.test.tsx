@@ -48,7 +48,9 @@ describe('TeamPanel', () => {
     render(<TeamPanel state={state} now={3_000} onWatch={vi.fn()} />)
 
     expect(within(card('Andi')).getByText('writing ✎')).toBeTruthy()
-    expect(within(card('Budi')).getByText('blocked')).toBeTruthy()
+    // Once in the status line, once as the blocked hook row under Bob activity.
+    expect(within(card('Budi')).getAllByText('blocked')).toHaveLength(2)
+    expect(within(card('Budi')).getByRole('list', { name: "Budi's Bob activity" }).textContent).toContain('apply_diff a.ts')
     expect(within(card('Andi')).getByLabelText('Agent Andi · Bob coder, member A').getAttribute('data-status')).toBe('writing')
   })
 
