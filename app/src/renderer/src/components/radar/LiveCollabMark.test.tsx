@@ -5,9 +5,14 @@ import { LiveCollabMark } from './LiveCollabMark'
 
 afterEach(cleanup)
 
-it('shows three collaborating Bob agents', () => {
-  render(<LiveCollabMark />)
-  const mark = screen.getByRole('img', { name: 'Three Bob agents working together' })
-  expect(mark.tagName).toBe('IMG')
-  expect(mark.getAttribute('src')).toContain('bob-live-collab.png')
+it('draws the hub mark with five bars and one live dot', () => {
+  render(<LiveCollabMark title="Live Collab" />)
+  const mark = screen.getByRole('img', { name: 'Live Collab' })
+  expect(mark.querySelectorAll('rect')).toHaveLength(5)
+  expect(mark.querySelectorAll('circle')).toHaveLength(1)
+})
+
+it('is hidden from assistive tech when decorative', () => {
+  const { container } = render(<LiveCollabMark />)
+  expect(container.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true')
 })

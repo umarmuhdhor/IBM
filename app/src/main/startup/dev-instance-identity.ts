@@ -3,7 +3,9 @@ import path from 'node:path'
 import type { AppIdentity } from '../../shared/app-identity'
 
 // Live Collab fork: own name/id so settings, Keychain item and worktrees never collide with stock Orca.
-const BASE_APP_NAME = 'IBM Bob Live Collab'
+const BASE_APP_NAME = 'Live Collab'
+// Why: dev Keychain item and dev bundle keep the pre-rename name so existing dev secrets stay readable.
+const DEV_KEYCHAIN_APP_NAME = 'IBM Bob Live Collab Dev'
 const BASE_APP_USER_MODEL_ID = 'dev.livecollab.app'
 const MAX_LABEL_LENGTH = 80
 
@@ -94,7 +96,7 @@ export function getDevInstanceIdentity(
     // Why: one stable Keychain key ('Orca Dev Safe Storage') for all dev
     // branches; the per-branch identity still shows via `name` (window title,
     // app menu, renderer label).
-    appName: `${BASE_APP_NAME} Dev`,
+    appName: DEV_KEYCHAIN_APP_NAME,
     isDev: true,
     devLabel,
     devBranch: branch,

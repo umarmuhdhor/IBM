@@ -58,13 +58,15 @@ describe('GPU acceleration About panel', () => {
     })
   })
 
-  it('credits Orca in the IBM Bob Live Collab About panel', () => {
-    expect(createGpuAccelerationAboutPanelOptions({
-      appName: 'IBM Bob Live Collab',
-      appVersion: '1.0.0',
-      platform: 'darwin',
-      gpuFallbackActive: false,
-      gpuFeatureStatus: { gpu_compositing: 'enabled' }
-    }).credits).toContain('Built on Orca by Stably AI (MIT)')
+  it('credits Orca in the Live Collab About panel', () => {
+    expect(
+      createGpuAccelerationAboutPanelOptions({
+        appName: 'Live Collab',
+        appVersion: '1.0.0',
+        platform: 'darwin',
+        gpuFallbackActive: false,
+        gpuFeatureStatus: { gpu_compositing: 'enabled' }
+      }).credits
+    ).toContain('Built on Orca by Stably AI (MIT)')
   })
 })
