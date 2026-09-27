@@ -27,6 +27,11 @@ export function insertMember(db: Db, m: { id: string; name: string; role: Role; 
   );
 }
 
+/** A seat taken again from the same app (D-alief-20): the teammate may pick a new name or role. */
+export function renameMember(db: Db, id: string, name: string, role: Role): void {
+  db.run('UPDATE member SET name = ?, role = ?, git_name = ? WHERE id = ?', name, role, name, id);
+}
+
 export function listMembers(db: Db): MemberRow[] {
   return db.all<MemberRow>('SELECT * FROM member ORDER BY id');
 }

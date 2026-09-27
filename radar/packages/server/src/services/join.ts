@@ -5,7 +5,7 @@ import { newToken, sha256Hex } from '../crypto';
 import type { WorkspaceDeps } from '../deps';
 import { insertToken, revokeTokens } from '../db/repo/access';
 import { claimJoinCode } from '../db/repo/join-code';
-import { insertMember, listMembers } from '../db/repo/member';
+import { insertMember, listMembers, renameMember } from '../db/repo/member';
 import { RadarError } from '../http/errors';
 import { appendEvent } from './events';
 
@@ -43,5 +43,17 @@ export function addMemberForCode(deps: WorkspaceDeps, codeHash: string, name: st
     claimJoinCode(deps.db, codeHash, id);
     appendEvent(deps.db, uow, { ts: deps.now(), actor: 'server', type: 'member.created', payload: { memberId: id, name, role } });
     return id;
+  });
+}
+
+/**
+ * D-alief-20: a new open code redeemed with the app's current seat token keeps that seat instead of adding one, so
+ * rejoining (e.g. as PM after coder) does not leave an old seat behind. Only the holder of the live token can do this.
+ */
+export function reuseSeatForCode(deps: WorkspaceDeps, codeHash: string, memberId: string, name: string, role: Role): void {
+  deps.transact((uow) => {
+    renameMember(deps.db, memberId, name, role);
+    claimJoinCode(deps.db, codeHash, memberId);
+    appendEvent(deps.db, uow, { ts: deps.now(), actor: 'server', type: 'member.created', payload: { memberId, name, role } });
   });
 }
