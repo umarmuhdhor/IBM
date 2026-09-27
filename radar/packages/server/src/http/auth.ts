@@ -3,7 +3,8 @@
 import type { Principal } from '@radar/common';
 import { safeEqual, sha256Hex } from '../crypto';
 import type { Db } from '../db/sql';
-import { principalByHash, tokenIsRevoked } from '../db/repo/access';
+import { principalByHash, tokenIsRevoked, tokenMember } from '../db/repo/access';
+import { isRemovedMember } from '../db/repo/member';
 import { RadarError } from './errors';
 
 export type RoleKey = 'coder' | 'pm' | 'mc';
@@ -29,6 +30,9 @@ export function principalFromHeader(db: Db, header: string | null | undefined): 
  * token belongs to a workspace that was stopped or replaced, since tokens are random (D-alief-15).
  */
 export function unauthorized(db: Db, token: string | null): RadarError {
+  const member = token && token.length <= 256 ? tokenMember(db, sha256Hex(token)) : null;
+  if (member !== null && isRemovedMember(db, member))
+    return new RadarError(401, 'UNAUTHORIZED', 'The workspace owner removed you. Ask them for a new code to join again.', 'removed');
   if (token && token.length <= 256 && tokenIsRevoked(db, sha256Hex(token)))
     return new RadarError(401, 'UNAUTHORIZED', 'You signed in on another device, so this one was signed out.', 'signed-out');
   return new RadarError(401, 'UNAUTHORIZED', 'This workspace is no longer shared. Join with a new code.', 'workspace-closed');

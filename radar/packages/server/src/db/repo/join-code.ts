@@ -40,6 +40,11 @@ export function claimJoinCode(db: Db, hash: string, memberId: string): void {
   db.run('UPDATE join_code SET member_id = ? WHERE hash = ? AND member_id IS NULL AND owner = 0', memberId, hash);
 }
 
+/** D-alief-20: a removed seat's codes stop working, so the same code cannot sign them back in. */
+export function deleteMemberJoinCodes(db: Db, memberId: string): void {
+  db.run('DELETE FROM join_code WHERE member_id = ?', memberId);
+}
+
 export function deleteExpiredJoinCodes(db: Db, now: number): void {
   db.run('DELETE FROM join_code WHERE expires_at <= ?', now);
 }

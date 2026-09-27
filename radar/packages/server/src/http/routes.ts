@@ -17,7 +17,7 @@ import { createJoinCode, importFiles, initWorkspace, registerAdminRoutes } from 
 import { sha256Hex } from '../crypto';
 import type { WorkspaceDeps } from '../deps';
 import { findJoinCode } from '../db/repo/join-code';
-import { getMeta } from '../db/repo/meta';
+import { getMeta, setMeta } from '../db/repo/meta';
 import { getMember } from '../db/repo/member';
 import { insertMetric } from '../db/repo/metric';
 import { appendEvent } from '../services/events';
@@ -185,6 +185,8 @@ export function createApp(deps: WorkspaceDeps): Hono {
       branch: 'main',
       members: [{ id: 'A', name: req.owner.name, role: req.owner.role }],
     });
+    // D-alief-20: the member who shared the folder; their seat cannot be removed and may take back ownership.
+    deps.transact(() => setMeta(deps.db, 'owner_member', 'A'));
     const code = createJoinCode(deps, {});
     const server = new URL(c.req.url).origin;
     const res: OpenWorkspaceRes = {

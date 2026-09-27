@@ -1,7 +1,7 @@
 // `meta` key/value rows (R2 §2): schema_version, workspace_id, workspace_name, repo_url, head_commit, created_at.
 import type { Db } from '../sql';
 
-export type MetaKey = 'schema_version' | 'workspace_id' | 'workspace_name' | 'repo_url' | 'head_commit' | 'created_at' | 'branch';
+export type MetaKey = 'schema_version' | 'workspace_id' | 'workspace_name' | 'repo_url' | 'head_commit' | 'created_at' | 'branch' | 'owner_member';
 
 export function getMeta(db: Db, key: MetaKey): string | null {
   return db.one<{ value: string }>('SELECT value FROM meta WHERE key = ?', key)?.value ?? null;

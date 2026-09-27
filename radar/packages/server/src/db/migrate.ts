@@ -23,6 +23,9 @@ export function migrate(db: Db): void {
     const lockCols = db.all<{ name: string }>('PRAGMA table_info(lock)').map((c) => c.name);
     if (!lockCols.includes('start_line')) db.script('ALTER TABLE lock ADD COLUMN start_line INTEGER;');
     if (!lockCols.includes('end_line')) db.script('ALTER TABLE lock ADD COLUMN end_line INTEGER;');
+    // v6 (D-alief-20): the owner can remove a seat. Existing members stay active.
+    const memberCols = db.all<{ name: string }>('PRAGMA table_info(member)').map((c) => c.name);
+    if (!memberCols.includes('removed_at')) db.script('ALTER TABLE member ADD COLUMN removed_at INTEGER;');
     if (row?.value !== SCHEMA_VERSION) {
       db.run("INSERT INTO meta (key, value) VALUES ('schema_version', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value", SCHEMA_VERSION);
     }

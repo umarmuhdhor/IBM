@@ -264,3 +264,13 @@ describe('feedText', () => {
     );
   });
 });
+
+describe('member.removed (D-alief-20)', () => {
+  it('drops the seat from the team and says so in the feed', () => {
+    const joined = applyEvent(initialState(), { id: 1, ts: T0, actor: 'server', type: 'member.created', payload: { memberId: 'B', name: 'Budi', role: 'coder' } });
+    expect(joined.members.B?.name).toBe('Budi');
+    const removed = applyEvent(joined, { id: 2, ts: T0 + 1000, actor: 'mc', type: 'member.removed', payload: { memberId: 'B' } });
+    expect(removed.members.B).toBeUndefined();
+    expect(removed.feed[0]?.text).toContain('Budi was removed from the team');
+  });
+});

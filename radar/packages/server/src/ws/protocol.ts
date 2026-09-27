@@ -2,6 +2,7 @@
 // fully applied before the DO takes the next.
 import {
   WS_CLOSE_REASON_CLOSED,
+  WS_CLOSE_REASON_REMOVED,
   WS_CLOSE_REASON_ROTATED,
   WS_CLOSE_UNAUTHORIZED,
   WsMessageSchema,
@@ -107,7 +108,13 @@ function handleHello(deps: WorkspaceDeps, ws: WebSocket, msg: WsMessageOf<'hello
     hub.close(
       ws,
       WS_CLOSE_UNAUTHORIZED,
-      why?.reason === 'signed-out' ? WS_CLOSE_REASON_ROTATED : why?.reason === 'workspace-closed' ? WS_CLOSE_REASON_CLOSED : 'unauthorized',
+      why?.reason === 'signed-out'
+        ? WS_CLOSE_REASON_ROTATED
+        : why?.reason === 'workspace-closed'
+          ? WS_CLOSE_REASON_CLOSED
+          : why?.reason === 'removed'
+            ? WS_CLOSE_REASON_REMOVED
+            : 'unauthorized',
     );
     return;
   }
