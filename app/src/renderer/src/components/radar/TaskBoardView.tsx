@@ -55,10 +55,11 @@ export function TaskBoardView({ state, role, seatId }: Props) {
   const tasks = Object.values(state.tasks).filter((task) => task.status !== 'batal')
   const pm = Object.values(state.members).find((member) => member.role === 'pm')
   const plans = Object.values(state.proposals).filter((p) => p.kind === 'plan' && p.status === 'menunggu')
-  const decides = role === 'pm' || (role === 'mc' && !pm)
+  // D-umar-10: the owner is normally the PM, so Mission Control decides when its own seat is the PM.
+  const decides = role === 'pm' || (role === 'mc' && (!pm || pm.id === seatId))
   const readOnlyNote = decides ? null : pm ? `Waiting for ${pm.name} (PM) to approve.` : 'The owner approves plans in Mission Control.'
   const mine = seatId ? tasks.filter((task) => task.ownerId === seatId) : []
-  const showMine = role === 'coder' || (role === 'mc' && seatId !== null)
+  const showMine = role === 'coder' || (role === 'mc' && seatId !== null && state.members[seatId]?.role === 'coder')
   const showTeam = role === 'pm' || role === 'mc'
   const coders = Object.values(state.members).filter((member) => member.role === 'coder')
 
