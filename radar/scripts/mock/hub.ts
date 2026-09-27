@@ -197,7 +197,7 @@ export class MockHub {
 
   private task(id: string): TaskView {
     const t = this.state.tasks[id];
-    if (!t) throw new HttpError(404, 'NOT_FOUND', `task ${id} tidak ada`);
+    if (!t) throw new HttpError(404, 'NOT_FOUND', `there is no task ${id}`);
     return t;
   }
 
@@ -389,8 +389,8 @@ export class MockHub {
       return !l || (l.memberId === memberId && l.taskId === taskId);
     });
     return writable.length > 0
-      ? `Lanjutkan file lain di task ${taskId}: ${writable.slice(0, 3).join(', ')}.`
-      : `Tunggu keputusan PM untuk task ${taskId}.`;
+      ? `Continue with other files of ${taskId}: ${writable.slice(0, 3).join(', ')}.`
+      : `Wait for the PM's decision on ${taskId}.`;
   }
 
   // ---- REST handlers (R3 §2) -----------------------------------------------------------------------------------
@@ -410,9 +410,9 @@ export class MockHub {
     } else if (blocked?.holder) {
       const h = blocked.holder;
       message =
-        `RADAR: ${blocked.path} sedang dipegang Bob milik ${h.memberName} (${h.taskId} ${h.taskTitle}). ` +
-        `Edit dibatalkan. Jangan coba ulang dan jangan ubah lewat shell. Panggil radar why_blocked, beri tahu user, ` +
-        `lalu kerjakan bagian lain dari task ${activeTaskId ?? 'kamu'}.`;
+        `RADAR: ${blocked.path} is held by ${h.memberName}'s Bob (${h.taskId} ${h.taskTitle}). Edit cancelled. ` +
+        `Do not retry and do not change it through the shell. Call radar why_blocked, tell the user, ` +
+        (activeTaskId ? `then work on another part of task ${activeTaskId}.` : "then wait for the PM's decision.");
     }
     return { decision: blocked ? 'block' : 'allow', results, activeTaskId, message, serverMs: this.now() - started };
   }
@@ -424,7 +424,7 @@ export class MockHub {
 
   private taskLine(taskId: string | null): string | null {
     const t = taskId ? this.state.tasks[taskId] : undefined;
-    return t ? `Task aktif: ${t.id} ${t.title} (${t.status}).` : null;
+    return t ? `Active task: ${t.id} ${t.title} (${t.status}).` : null;
   }
 
   private briefStart(p: MemberPrincipal): string[] {
@@ -432,32 +432,32 @@ export class MockHub {
     const taskId = this.resolveActiveTask(me, false);
     const lines: string[] = [];
     const taskLine = this.taskLine(taskId);
-    lines.push(`Kamu ${me} (${p.role}). ${taskLine ?? 'Belum ada task. Tunggu rencana PM atau panggil radar my_tasks.'}`);
+    lines.push(`You are ${me} (${p.role}). ${taskLine ?? "No task yet. Wait for the PM's plan or call radar my_tasks."}`);
 
     const myTasks = new Set(Object.values(this.state.tasks).filter((t) => t.ownerId === me).map((t) => t.id));
     const locks = Object.values(this.state.locks);
     const mine = locks.filter((l) => l.memberId === me).map((l) => l.path);
     const queued = locks.flatMap((l) => {
       const i = l.queue.findIndex((t) => myTasks.has(t));
-      return i >= 0 ? [`${l.path} (antre #${i + 1})`] : [];
+      return i >= 0 ? [`${l.path} (queued #${i + 1})`] : [];
     });
-    if (mine.length + queued.length > 0) lines.push(`File kamu: ${[...mine, ...queued].join(', ')}`);
+    if (mine.length + queued.length > 0) lines.push(`Your files: ${[...mine, ...queued].join(', ')}`);
 
     const others = locks
       .filter((l) => l.memberId !== me)
       .sort((a, b) => Number(b.queue.some((t) => myTasks.has(t))) - Number(a.queue.some((t) => myTasks.has(t))))
       .slice(0, 4)
       .map((l) => `${l.path}→${l.memberId}(${l.taskId})`);
-    if (others.length > 0) lines.push(`Dipegang orang lain: ${others.join(', ')}`);
+    if (others.length > 0) lines.push(`Held by others: ${others.join(', ')}`);
 
     const waiting = Object.values(this.state.requests)
       .filter((r) => r.requesterMemberId === me && (r.status === 'terbuka' || r.status === 'diusulkan'))
       .map((r) => `${r.path} (${r.id})`);
-    if (waiting.length > 0) lines.push(`Menunggu PM: ${waiting.join(', ')}.`);
+    if (waiting.length > 0) lines.push(`Waiting for the PM: ${waiting.join(', ')}.`);
 
     const note = this.notifications.filter((n) => n.memberId === me).at(-1);
-    if (note) lines.push(`Catatan PM: ${note.message}`);
-    lines.push('Jangan edit file milik orang lain. Kalau ditolak: radar why_blocked.');
+    if (note) lines.push(`PM note: ${note.message}`);
+    lines.push('Do not edit files others hold. If an edit is refused: radar why_blocked.');
     return lines;
   }
 
@@ -471,7 +471,7 @@ export class MockHub {
     if (lastBlock) {
       const b = lastBlock.payload;
       lines.push(
-        `Edit ${b.path} DITOLAK: dipegang ${b.holderMemberId} (${b.holderTaskId}). Jangan coba ulang, jangan lewat shell. ${this.suggestion(me, b.taskId)}`,
+        `Edit to ${b.path} REFUSED: held by ${b.holderMemberId} (${b.holderTaskId}). Do not retry, do not go through the shell. ${this.suggestion(me, b.taskId)}`,
       );
     }
     for (const e of fresh) {
@@ -480,24 +480,24 @@ export class MockHub {
         const outcome = e.payload.outcome;
         lines.push(
           outcome === 'antre'
-            ? `Keputusan PM: kamu antre ${r?.path} setelah ${r?.holderTaskId ?? 'pemegang'}.`
+            ? `PM decision: you are queued for ${r?.path} after ${r?.holderTaskId ?? 'the holder'}.`
             : outcome === 'ditolak'
-              ? `Keputusan PM: permintaan ${r?.path} ditolak.`
-              : `Keputusan PM (${outcome}): ${r?.path} (${e.payload.requestId}).`,
+              ? `PM decision: your request for ${r?.path} was declined.`
+              : `PM decision (${outcome}): ${r?.path} (${e.payload.requestId}).`,
         );
       } else if (e.type === 'notify.sent' && e.payload.memberId === me) {
-        lines.push(`Catatan PM: ${e.payload.message}`);
+        lines.push(`PM note: ${e.payload.message}`);
       } else if (e.type === 'lock.transferred' && e.payload.toMemberId === me) {
-        lines.push(`Giliranmu: ${e.payload.path} kini dipesan untuk ${e.payload.toTaskId}.`);
+        lines.push(`Your turn: ${e.payload.path} is now reserved for ${e.payload.toTaskId}.`);
       } else if (e.type === 'lock.reserved' && e.payload.memberId === me && e.payload.source !== 'plan') {
-        lines.push(`Giliranmu: ${e.payload.path} kini dipesan untuk ${e.payload.taskId}.`);
+        lines.push(`Your turn: ${e.payload.path} is now reserved for ${e.payload.taskId}.`);
       }
     }
     const changed = new Map<string, string>();
     for (const e of fresh) {
       if (e.type === 'file.changed' && e.payload.by !== me) changed.set(e.payload.path, `${e.payload.path} (${e.payload.by},v${e.payload.version})`);
     }
-    if (changed.size > 0) lines.push(`Berubah: ${[...changed.values()].slice(-5).join(', ')}`);
+    if (changed.size > 0) lines.push(`Changed: ${[...changed.values()].slice(-5).join(', ')}`);
     if (lines.length === 0) return [];
     const taskLine = this.taskLine(this.resolveActiveTask(me, false));
     return taskLine ? [...lines, taskLine] : lines;
@@ -536,7 +536,7 @@ export class MockHub {
 
   activate(p: MemberPrincipal, taskId: string) {
     const t = this.task(taskId);
-    if (t.ownerId !== p.memberId) throw new HttpError(403, 'FORBIDDEN', `${taskId} bukan task kamu`);
+    if (t.ownerId !== p.memberId) throw new HttpError(403, 'FORBIDDEN', `${taskId} is not your task`);
     if (t.status !== 'terbuka' && t.status !== 'dikerjakan') throw new HttpError(409, 'CONFLICT', `${taskId} berstatus ${t.status}`);
     this.setActive(p.memberId, taskId);
     return { activeTaskId: taskId };
@@ -593,7 +593,7 @@ export class MockHub {
 
   submit(p: MemberPrincipal, taskId: string, summary: string) {
     const t = this.task(taskId);
-    if (t.ownerId !== p.memberId) throw new HttpError(403, 'FORBIDDEN', `${taskId} bukan task kamu`);
+    if (t.ownerId !== p.memberId) throw new HttpError(403, 'FORBIDDEN', `${taskId} is not your task`);
     const touched = [...(this.touches.get(taskId)?.keys() ?? [])];
     if (t.status !== 'dikerjakan' && !(t.status === 'terbuka' && touched.length > 0)) {
       throw new HttpError(409, 'CONFLICT', `${taskId} berstatus ${t.status}`);
@@ -691,7 +691,7 @@ export class MockHub {
       }
     } else if (req.kind === 'decision') {
       const r = this.state.requests[req.payload.requestId];
-      if (!r) throw new HttpError(404, 'NOT_FOUND', `request ${req.payload.requestId} tidak ada`);
+      if (!r) throw new HttpError(404, 'NOT_FOUND', `there is no request ${req.payload.requestId}`);
       if (r.status !== 'terbuka' && r.status !== 'diusulkan') throw new HttpError(409, 'CONFLICT', `${r.id} berstatus ${r.status}`);
       refId = r.id;
     } else {
@@ -711,7 +711,7 @@ export class MockHub {
 
   decide(proposalId: string, approve: boolean, note: string | undefined) {
     const prop = this.state.proposals[proposalId];
-    if (!prop) throw new HttpError(404, 'NOT_FOUND', `proposal ${proposalId} tidak ada`);
+    if (!prop) throw new HttpError(404, 'NOT_FOUND', `there is no proposal ${proposalId}`);
     if (prop.status !== 'menunggu') throw new HttpError(409, 'CONFLICT', `${proposalId} berstatus ${prop.status}`);
     let applied: Record<string, unknown> = {};
     if (!approve) {
@@ -766,7 +766,7 @@ export class MockHub {
 
   private applyDecision(proposalId: string, d: DecisionPayload, auto: boolean): Record<string, unknown> {
     const r = this.state.requests[d.requestId];
-    if (!r) throw new HttpError(404, 'NOT_FOUND', `request ${d.requestId} tidak ada`);
+    if (!r) throw new HttpError(404, 'NOT_FOUND', `there is no request ${d.requestId}`);
     const reqTask = r.requesterTaskId ?? this.resolveActiveTask(r.requesterMemberId)!;
     let applied: Record<string, unknown>;
     if (d.option === 'antre') {
@@ -873,7 +873,7 @@ export class MockHub {
   }
 
   notify(actor: string, memberId: string, message: string) {
-    if (!this.state.members[memberId]) throw new HttpError(404, 'NOT_FOUND', `member ${memberId} tidak ada`);
+    if (!this.state.members[memberId]) throw new HttpError(404, 'NOT_FOUND', `there is no member ${memberId}`);
     const id = this.notifications.length + 1;
     this.notifications.push({ id, memberId, message, ts: this.now() });
     this.emit(actor, 'notify.sent', { notificationId: id, memberId, message, by: actor });
@@ -892,12 +892,12 @@ export class MockHub {
       lockCheckP95Ms: null,
     };
     const markdown = [
-      '## Laporan sesi (mock)',
+      '## Session report (mock)',
       '',
       `- Task: ${stats.tasks}`,
       `- Commit: ${stats.commits}`,
-      `- Blokir: ${stats.blocks}`,
-      `- Keputusan: ${stats.decisions}`,
+      `- Blocks: ${stats.blocks}`,
+      `- PM decisions: ${stats.decisions}`,
     ].join('\n');
     return { markdown, stats };
   }
@@ -951,7 +951,7 @@ export class MockHub {
 
   fileHistory(path: string, limit = 5) {
     const versions = this.history.get(path);
-    if (!versions) throw new HttpError(404, 'NOT_FOUND', `${path} tidak ada riwayat`);
+    if (!versions) throw new HttpError(404, 'NOT_FOUND', `${path} has no history`);
     return { path, versions: [...versions].reverse().slice(0, limit) };
   }
 
