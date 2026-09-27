@@ -515,7 +515,7 @@ export class MockHub {
       adhoc: t.adhoc,
       baseCommit: this.baseCommit.get(t.id) ?? null,
       editCount: t.editCount,
-      steps: [],
+      steps: t.steps ?? [],
       files: [...paths].map((path) => {
         const l = this.state.locks[path];
         if (l?.taskId === t.id) return { path, lock: l.state, queuePos: 0 };

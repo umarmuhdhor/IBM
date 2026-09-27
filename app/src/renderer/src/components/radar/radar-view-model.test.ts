@@ -9,7 +9,7 @@ const state = {
     B: { id: 'B', name: 'Budi', role: 'coder', color: null, online: false, stale: false, activeTaskId: null, blocked: true, writingUntil: 0 }
   },
   tasks: {
-    'T-1': { id: 'T-1', title: 'Checkout', description: '', ownerId: 'A', status: 'dikerjakan', files: [], queuedFiles: [], adhoc: false, parentTaskId: null, editCount: 3, commitSha: null, summary: null }
+    'T-1': { id: 'T-1', title: 'Checkout', description: '', ownerId: 'A', status: 'dikerjakan', files: [], queuedFiles: [], adhoc: false, parentTaskId: null, editCount: 3, commitSha: null, summary: null, steps: [] }
   },
   locks: {}, files: {}, requests: {},
   proposals: { p1: { id: 'p1', kind: 'decision', status: 'menunggu', payload: { title: 'Budi needs checkout.ts' }, reason: 'Shared file', refId: null, createdAt: 1, decidedBy: null, note: null } },

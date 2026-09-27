@@ -48,7 +48,7 @@ describe('MissionControlView', () => {
 
   it('lists claimed files with holder and queue under Shared repo', () => {
     const member = { role: 'coder' as const, color: null, online: true, stale: false, activeTaskId: null, blocked: false, writingUntil: 0 }
-    const task = { description: '', queuedFiles: [], adhoc: false, parentTaskId: null, editCount: 0, commitSha: null, summary: null, status: 'dikerjakan' as const }
+    const task = { description: '', queuedFiles: [], adhoc: false, parentTaskId: null, editCount: 0, commitSha: null, summary: null, steps: [], status: 'dikerjakan' as const }
     render(<MissionControlView now={0} canDecide={false} state={{
       ...state,
       members: { A: { ...member, id: 'A', name: 'Andi' }, B: { ...member, id: 'B', name: 'Budi' } },

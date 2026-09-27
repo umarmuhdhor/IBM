@@ -251,8 +251,6 @@ export type StepReq = z.infer<typeof StepReq>;
 export const StepRes = z.object({ taskId: TaskIdSchema, steps: z.array(TaskStepSchema) });
 export type StepRes = z.infer<typeof StepRes>;
 
-// ---- 2.9 submit ----------------------------------------------------------------------------------------------
-
 export const SubmitReq = z.object({ summary: z.string().min(1).max(SUBMIT_SUMMARY_MAX_CHARS) });
 export type SubmitReq = z.infer<typeof SubmitReq>;
 

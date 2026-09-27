@@ -17,7 +17,9 @@ function taskProgress(task: TaskView): { checked: number; total: number } {
 }
 
 function ProgressBar({ checked, total }: { checked: number; total: number }) {
-  if (total === 0) return null
+  if (total === 0) {
+    return null
+  }
   const pct = Math.round((checked / total) * 100)
   return (
     <div
@@ -32,7 +34,7 @@ function ProgressBar({ checked, total }: { checked: number; total: number }) {
   )
 }
 
-function CoderTaskCard({ task, memberId }: { task: TaskView; memberId: string | null }) {
+function CoderTaskCard({ task }: { task: TaskView }) {
   const [pending, setPending] = useState<Set<number>>(new Set())
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -162,7 +164,7 @@ export function TaskBoardView({ state, role, memberId }: Props) {
         ) : (
           <div className="space-y-3">
             {myTasks.map((task) => (
-              <CoderTaskCard key={task.id} task={task} memberId={memberId} />
+              <CoderTaskCard key={task.id} task={task} />
             ))}
           </div>
         )}
@@ -182,7 +184,9 @@ export function TaskBoardView({ state, role, memberId }: Props) {
       ) : (
         coders.map((coder) => {
           const coderTasks = allTasks.filter((t) => t.ownerId === coder.id)
-          if (coderTasks.length === 0) return null
+          if (coderTasks.length === 0) {
+            return null
+          }
           const totalSteps = coderTasks.reduce((acc, t) => acc + t.steps.length, 0)
           const doneSteps = coderTasks.reduce((acc, t) => acc + t.steps.filter((s) => s.done).length, 0)
           return (
