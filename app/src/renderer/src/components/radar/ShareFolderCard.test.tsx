@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import type { RadarState } from '@radar/ui'
 import type { RadarSyncStatus } from '../../../../shared/radar-join'
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 import { useRadarStore } from '@/store/radar-store'
 import { ShareFolderCard } from './ShareFolderCard'
 
@@ -246,3 +247,42 @@ it('drops the "Copied" note when another device takes over as owner', async () =
   expect(await screen.findByText(/Another device took over as owner/)).toBeTruthy()
   expect(screen.queryByText(/Copied K7QM-3XPA/)).toBeNull()
 })
+
+it.each([
+  ['Share a different folder…', 'Share a different folder?'],
+  ['Stop sharing…', 'Stop sharing my-app?']
+])(
+  'Escape in the %s confirmation closes only the confirmation (fase 12k bug 7)',
+  async (trigger, heading) => {
+    status.folder = '/Users/me/my-app'
+    const onOpenChange = vi.fn()
+    render(
+      <Sheet open onOpenChange={onOpenChange}>
+        <SheetContent>
+          <SheetTitle>Live Collab</SheetTitle>
+          <ShareFolderCard
+            connection={owner}
+            folder="/Users/me/my-app"
+            sharedCode={code}
+            onConnectionChange={vi.fn()}
+            onShared={vi.fn()}
+          />
+        </SheetContent>
+      </Sheet>
+    )
+    fireEvent.click(await screen.findByRole('button', { name: trigger }))
+    expect(screen.getByRole('heading', { name: heading })).toBeTruthy()
+    // Focus moves into the confirmation, so the keyboard stays inside it.
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Cancel' }))
+
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' })
+
+    expect(screen.queryByRole('heading', { name: heading })).toBeNull()
+    expect(onOpenChange).not.toHaveBeenCalled()
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: trigger }))
+
+    // The next Escape closes the panel as usual.
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' })
+    expect(onOpenChange).toHaveBeenCalledWith(false)
+  }
+)

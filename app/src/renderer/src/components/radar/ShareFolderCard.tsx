@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { useRadarStore } from '@/store/radar-store'
 import type { RadarConnectionSummary } from '../../../../shared/radar-connection'
 import { DEFAULT_RADAR_SERVER, type RadarJoinCode } from '../../../../shared/radar-join'
 import { SyncConflictsNote } from './SyncConflictsNote'
+import { useEscapeToCancel } from './use-escape-to-cancel'
 import {
   endedNotice,
   ipcErrorText,
@@ -47,6 +48,10 @@ export function ShareFolderCard({
   const [busy, setBusy] = useState(false)
   const [replacing, setReplacing] = useState(false)
   const [stopping, setStopping] = useState(false)
+  const cancelButton = useRef<HTMLButtonElement>(null)
+  const replaceButton = useRef<HTMLButtonElement>(null)
+  const stopButton = useRef<HTMLButtonElement>(null)
+  const [refocus, setRefocus] = useState<'replace' | 'stop' | null>(null)
   const owner = connection?.role === 'mc'
   // D-alief-15: the Mission Control token stopped working, so Stop sharing and codes would only fail.
   const ownerEnded =
@@ -60,6 +65,29 @@ export function ShareFolderCard({
     setNote(text === null ? null : { text, key, error })
   // Only offer the open folder when it is not the one already shared.
   const openFolder = folder && folder !== sync.folder ? folder : null
+
+  const cancelConfirm = () => {
+    if (busy) {
+      return
+    }
+    setRefocus(replacing ? 'replace' : 'stop')
+    setReplacing(false)
+    setStopping(false)
+  }
+  useEscapeToCancel(owner && (replacing || stopping), cancelConfirm)
+  // Keyboard focus follows the confirmation in and back out to the button that opened it.
+  useEffect(() => {
+    if (replacing || stopping) {
+      cancelButton.current?.focus()
+    }
+  }, [replacing, stopping])
+  useEffect(() => {
+    if (refocus) {
+      const opener = refocus === 'replace' ? replaceButton : stopButton
+      opener.current?.focus()
+      setRefocus(null)
+    }
+  }, [refocus])
 
   const copy = async (code: string, key = currentKey) => {
     try {
@@ -185,7 +213,13 @@ export function ShareFolderCard({
           >
             {busy ? 'Stopping…' : 'Stop sharing'}
           </Button>
-          <Button size="sm" variant="outline" disabled={busy} onClick={() => setStopping(false)}>
+          <Button
+            ref={cancelButton}
+            size="sm"
+            variant="outline"
+            disabled={busy}
+            onClick={cancelConfirm}
+          >
             Cancel
           </Button>
         </div>
@@ -230,7 +264,13 @@ export function ShareFolderCard({
                 ? 'Sharing…'
                 : 'Replace and choose folder…'}
           </Button>
-          <Button size="sm" variant="outline" disabled={busy} onClick={() => setReplacing(false)}>
+          <Button
+            ref={cancelButton}
+            size="sm"
+            variant="outline"
+            disabled={busy}
+            onClick={cancelConfirm}
+          >
             Cancel
           </Button>
         </div>
@@ -303,6 +343,7 @@ export function ShareFolderCard({
             </>
           )}
           <Button
+            ref={replaceButton}
             size="sm"
             variant="ghost"
             onClick={() => {
@@ -313,6 +354,7 @@ export function ShareFolderCard({
             Share a different folder…
           </Button>
           <Button
+            ref={stopButton}
             size="sm"
             variant="ghost"
             onClick={() => {
