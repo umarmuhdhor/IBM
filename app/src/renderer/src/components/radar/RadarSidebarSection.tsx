@@ -15,6 +15,19 @@ const ITEMS = [
   { tab: 'settings', label: 'Settings', icon: Settings2 }
 ] as const
 
+/**
+ * The Live Collab sheet is non-modal, so a click in the sidebar counts as outside and closes it.
+ * Clicks on these items switch the tab instead.
+ */
+export function keepPanelOpenForLiveCollabNav(event: {
+  target: EventTarget | null
+  preventDefault: () => void
+}): void {
+  if (event.target instanceof Element && event.target.closest('nav[aria-label="Live Collab"]')) {
+    event.preventDefault()
+  }
+}
+
 export function RadarSidebarSection({ needsYou, onOpen }: Props) {
   return (
     <nav aria-label="Live Collab" className="border-b border-worktree-sidebar-border px-2 py-2">

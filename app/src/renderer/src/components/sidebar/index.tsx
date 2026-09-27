@@ -19,7 +19,10 @@ import { resolveLeftSidebarStyleVariables } from '@/lib/left-sidebar-appearance'
 import { useSystemPrefersDark } from '@/components/terminal-pane/use-system-prefers-dark'
 import { lazyWithRetry } from '@/lib/lazy-with-retry'
 import { LocalGitToolchainScanBanner } from './LocalGitToolchainScanBanner'
-import { RadarSidebarSection } from '@/components/radar/RadarSidebarSection'
+import {
+  keepPanelOpenForLiveCollabNav,
+  RadarSidebarSection
+} from '@/components/radar/RadarSidebarSection'
 import { RadarPanel } from '@/components/radar/RadarPanel'
 import { useRadarSession } from '@/components/radar/use-radar-session'
 import { getRadarViewModel } from '@/components/radar/radar-view-model'
@@ -300,6 +303,7 @@ function Sidebar({
           side="left"
           showCloseButton
           aria-describedby={undefined}
+          onInteractOutside={keepPanelOpenForLiveCollabNav}
           className="sm:max-w-none"
           overlayStyle={{ top: WORKSPACE_TOP_CHROME_HEIGHT, left: sidebarWidth, bottom: statusBarVisible ? STATUS_BAR_RESERVE_HEIGHT : 0, pointerEvents: 'none' }}
           style={{ ...leftSidebarStyle, left: `var(--workspace-sidebar-live-width, ${sidebarWidth}px)`, top: WORKSPACE_TOP_CHROME_HEIGHT, bottom: statusBarVisible ? STATUS_BAR_RESERVE_HEIGHT : 0, height: 'auto', width: `min(calc(100vw - ${sidebarWidth}px), 1100px)` }}
