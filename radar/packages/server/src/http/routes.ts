@@ -23,7 +23,7 @@ import { insertMetric } from '../db/repo/metric';
 import { appendEvent } from '../services/events';
 import { exportEvents } from '../services/export';
 import { truncateActivityText } from '../services/activity';
-import { addMemberForCode, rotateToken } from '../services/join';
+import { addMemberForCode, reuseSeatForCode, rotateToken } from '../services/join';
 import { buildState } from '../services/state';
 import { principalFromHeader, requireMember, requireRole } from './auth';
 import { errorJson, parseWith, RadarError, readJson, toErrorResponse } from './errors';
@@ -107,7 +107,13 @@ export function createApp(deps: WorkspaceDeps): Hono {
     if (memberId === null) {
       if (!req.name || !req.role)
         throw new RadarError(422, 'VALIDATION', 'Enter your name and pick a role to join.');
-      memberId = addMemberForCode(deps, hash, req.name, req.role);
+      const seat = principalFromHeader(deps.db, c.req.header('authorization'));
+      if (seat?.kind === 'member') {
+        reuseSeatForCode(deps, hash, seat.memberId, req.name, req.role);
+        memberId = seat.memberId;
+      } else {
+        memberId = addMemberForCode(deps, hash, req.name, req.role);
+      }
     }
     const member = getMember(deps.db, memberId);
     if (!member) throw notFound;
