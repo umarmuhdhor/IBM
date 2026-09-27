@@ -120,6 +120,31 @@ describe('reducer edge cases', () => {
     expect(s.locks['b.ts']).toBeUndefined();
   });
 
+  it('lock.acquired carries the line range; a later acquired without range keeps it (D-alief-17)', () => {
+    const s = applyEvents(initialState(), [
+      ev(1, 'lock.acquired', { path: 'c.ts', taskId: 'T-1', memberId: 'A', auto: true, range: { start: 3, end: 5 } }),
+    ]);
+    expect(s.locks['c.ts']?.range).toEqual({ start: 3, end: 5 });
+    const wider = applyEvent(s, ev(2, 'lock.acquired', { path: 'c.ts', taskId: 'T-1', memberId: 'A', auto: false, range: { start: 3, end: 9 } }));
+    expect(wider.locks['c.ts']?.range).toEqual({ start: 3, end: 9 });
+    const back = applyEvent(wider, ev(3, 'lock.acquired', { path: 'c.ts', taskId: 'T-1', memberId: 'A', auto: false }));
+    expect(back.locks['c.ts']?.range).toEqual({ start: 3, end: 9 });
+    const moved = applyEvent(back, ev(4, 'lock.transferred', { path: 'c.ts', toTaskId: 'T-2', toMemberId: 'B', cause: 'decision' }));
+    expect(moved.locks['c.ts']?.range).toBeUndefined();
+  });
+
+  it('feed names the locked lines (D-alief-17)', () => {
+    const s = applyEvents(initialState(), [
+      ev(1, 'member.created', { memberId: 'A', name: 'Alice' }),
+      ev(2, 'member.created', { memberId: 'B', name: 'Budi' }),
+      ev(3, 'lock.acquired', { path: 'src/c.ts', taskId: 'T-1', memberId: 'A', auto: true, range: { start: 3, end: 5 } }),
+      ev(4, 'lock.blocked', { path: 'src/c.ts', memberId: 'B', taskId: 'T-2', holderMemberId: 'A', holderTaskId: 'T-1', via: 'hook', requestId: null, holderRange: { start: 3, end: 5 } }),
+    ]);
+    const texts = s.feed.map((f) => f.text.replace(/^\S+ /, ''));
+    expect(texts).toContain('Alice now holds lines 3–5 of c.ts (T-1)');
+    expect(texts).toContain("Budi's Bob is blocked on c.ts, lines 3–5 are locked by Alice");
+  });
+
   it('a finished task leaves every queue', () => {
     const s = applyEvents(held, [
       ev(4, 'task.created', { taskId: 'T-2', title: 't', ownerId: 'B', status: 'dikerjakan', files: [], adhoc: false }),
