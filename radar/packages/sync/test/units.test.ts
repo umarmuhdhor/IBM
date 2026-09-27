@@ -183,6 +183,7 @@ describe('stop reasons (D-alief-15)', () => {
   it('maps fatal closes to a kind and keeps reconnecting otherwise', () => {
     expect(fatalClose(4401, 'workspace closed')?.kind).toBe('workspace-closed');
     expect(fatalClose(4401, 'token rotated')?.kind).toBe('signed-out');
+    expect(fatalClose(4401, 'member removed')).toEqual({ kind: 'removed', message: 'The workspace owner removed you, so sync stopped.' });
     expect(fatalClose(4401, 'unauthorized')?.kind).toBe('rejected');
     expect(fatalClose(4000, '')?.kind).toBe('replaced');
     expect(fatalClose(1006, '')).toBeNull();

@@ -111,6 +111,14 @@ describe('Radar WebSocket client', () => {
     expect(updates).toHaveBeenCalledWith({ kind: 'status', connected: false, failure: 'access-rejected' })
   })
 
+  it('says when the owner removed this seat (D-alief-20)', () => {
+    const updates = vi.fn()
+    const client = new RadarWsClient(connection, updates, (url) => new FakeSocket(url))
+    client.connect()
+    FakeSocket.instances[0]!.onclose?.({ code: 4401, reason: 'member removed' })
+    expect(updates).toHaveBeenLastCalledWith({ kind: 'status', connected: false, failure: 'removed' })
+  })
+
   it('says why the server closed the workspace or signed this device out (D-alief-15)', () => {
     const updates = vi.fn()
     const client = new RadarWsClient(connection, updates, (url) => new FakeSocket(url))

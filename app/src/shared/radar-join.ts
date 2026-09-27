@@ -24,7 +24,7 @@ export type RadarSyncStatus = {
 
 export type RadarKitNotice = { status: 'refused' | 'missing-kit'; message: string }
 
-export type RadarSyncStopReason = 'workspace-closed' | 'signed-out' | 'replaced' | 'rejected'
+export type RadarSyncStopReason = 'workspace-closed' | 'signed-out' | 'removed' | 'replaced' | 'rejected'
 
 export type RadarJoinResult = {
   connection: RadarConnectionSummary

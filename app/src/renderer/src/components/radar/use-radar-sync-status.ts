@@ -51,6 +51,9 @@ export function endedNotice(
   if (reason === 'signed-out') {
     return `You joined from another device, so this Mac stopped syncing.${files} Join with a new code to use this Mac again.`
   }
+  if (reason === 'removed') {
+    return `The owner removed you from this workspace.${files} Ask the owner for a new code to join again.`
+  }
   if (reason === 'replaced') {
     return 'Another Live Collab app on this Mac took over this folder.'
   }
