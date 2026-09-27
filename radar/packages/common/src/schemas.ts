@@ -5,6 +5,7 @@ import {
   ACTIVITY_TEXT_MAX_CHARS,
   NOTIFY_MAX_CHARS,
   PLAN_MAX_FILES_PER_TASK,
+  PLAN_MAX_STEPS_PER_TASK,
   PLAN_MAX_TASKS,
   SUBMIT_SUMMARY_MAX_CHARS,
 } from './constants.js';
@@ -21,6 +22,11 @@ import {
   REVIEW_VERDICTS,
   TASK_STATUSES,
 } from './types.js';
+
+// ---- Step (PM checklist item) --------------------------------------------------------------------------------
+
+export const TaskStepSchema = z.object({ text: z.string(), done: z.boolean() });
+export type TaskStepSchema = z.infer<typeof TaskStepSchema>;
 
 // ---- Primitives ----------------------------------------------------------------------------------------------
 
@@ -169,6 +175,7 @@ export const TaskItem = z.object({
   baseCommit: z.string().nullable(),
   editCount: z.number().int().nonnegative(),
   files: z.array(TaskFileEntry),
+  steps: z.array(TaskStepSchema).default([]),
 });
 export type TaskItem = z.infer<typeof TaskItem>;
 
@@ -236,6 +243,16 @@ export type ActivityRes = z.infer<typeof ActivityRes>;
 
 // ---- 2.9 submit ----------------------------------------------------------------------------------------------
 
+// ---- 2.9.1 step ----------------------------------------------------------------------------------------------
+
+export const StepReq = z.object({ index: z.number().int().nonnegative(), done: z.boolean() });
+export type StepReq = z.infer<typeof StepReq>;
+
+export const StepRes = z.object({ taskId: TaskIdSchema, steps: z.array(TaskStepSchema) });
+export type StepRes = z.infer<typeof StepRes>;
+
+// ---- 2.9 submit ----------------------------------------------------------------------------------------------
+
 export const SubmitReq = z.object({ summary: z.string().min(1).max(SUBMIT_SUMMARY_MAX_CHARS) });
 export type SubmitReq = z.infer<typeof SubmitReq>;
 
@@ -263,6 +280,7 @@ export const TeamRes = z.object({
       status: TaskStatusSchema,
       files: z.array(PathSchema),
       editCount: z.number().int().nonnegative(),
+      steps: z.array(TaskStepSchema).default([]),
     }),
   ),
   locks: z.array(
@@ -325,6 +343,7 @@ export const PlanTask = z.object({
   ownerId: MemberIdSchema,
   files: z.array(PathSchema).max(PLAN_MAX_FILES_PER_TASK),
   queuedFiles: z.array(PathSchema).max(PLAN_MAX_FILES_PER_TASK).default([]),
+  steps: z.array(z.string().trim().min(1).max(200)).max(PLAN_MAX_STEPS_PER_TASK).default([]),
 });
 export type PlanTask = z.infer<typeof PlanTask>;
 
@@ -572,6 +591,7 @@ export const TaskViewSchema = z.object({
   editCount: z.number().int().nonnegative(),
   commitSha: z.string().nullable().default(null),
   summary: z.string().nullable().default(null),
+  steps: z.array(TaskStepSchema).default([]),
 });
 
 export const LockViewSchema = z.object({
@@ -725,10 +745,12 @@ export const RadarEventSchema = z.discriminatedUnion('type', [
       queuedFiles: z.array(PathSchema).default([]),
       adhoc: z.boolean(),
       parentTaskId: TaskIdSchema.nullable().optional(),
+      steps: z.array(z.string()).optional(),
     }),
   ),
   event('task.status', z.object({ taskId: TaskIdSchema, from: TaskStatusSchema, to: TaskStatusSchema, by: z.string() })),
   event('task.submitted', z.object({ taskId: TaskIdSchema, summary: z.string(), files: z.array(PathSchema) })),
+  event('task.step', z.object({ taskId: TaskIdSchema, index: z.number().int().nonnegative(), done: z.boolean(), by: MemberIdSchema })),
   event(
     'request.created',
     z.object({

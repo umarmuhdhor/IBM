@@ -212,6 +212,7 @@ function applyDomain(s: RadarState, ev: RadarEvent): RadarState {
         editCount: 0,
         commitSha: null,
         summary: null,
+        steps: (p.steps ?? []).map((text) => ({ text, done: false })),
       };
       return { ...s, tasks: { ...s.tasks, [p.taskId]: task } };
     }
@@ -229,6 +230,14 @@ function applyDomain(s: RadarState, ev: RadarEvent): RadarState {
     }
     case 'task.submitted':
       return patchTask(s, ev.payload.taskId, () => ({ summary: ev.payload.summary }));
+    case 'task.step': {
+      const p = ev.payload;
+      return patchTask(s, p.taskId, (t) => {
+        if (p.index < 0 || p.index >= t.steps.length) return {};
+        const steps = t.steps.map((step, i) => (i === p.index ? { ...step, done: p.done } : step));
+        return { steps };
+      });
+    }
 
     case 'request.created': {
       const p = ev.payload;
