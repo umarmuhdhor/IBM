@@ -111,16 +111,41 @@ function blockFor(member, path, via):
 | 11 | #9 diulang 5× | hook | block | `held_by_other` | tetap 1 request aktif, 5 baris block |
 | 12 | file milik task yang sedang di-commit (klaim aktif: `commit_started_at` terisi dan umurnya < `COMMIT_CLAIM_TTL_MS`) | hook/sync | block | `committing` | tanpa request, berlaku juga untuk pemilik |
 
+### Kunci per rentang baris (D-alief-17, skema v5)
+
+`checkWrite(member, path, via, lines | null)`. `lines` datang dari `LockCheckReq.lines[path]` (hook `lock_guard`, dihitung dengan `touchedLines` di `@radar/common`) atau dari diff baris di lapis `file.update`. `null` = baris tidak diketahui = seluruh file. Kunci tetap satu baris per path; kolom `start_line`/`end_line` NULL = seluruh file. Baris tabel di atas tetap berlaku; tabel ini menggantikan baris 3, 5, dan 9 saat kunci atau edit punya rentang.
+
+| # | Kunci di path | Baris edit | Hasil | reason | Efek |
+|---|---|---|---|---|---|
+| R1 | tidak ada | diketahui | allow | `grabbed` | kunci rentang = span baris edit; `lock.acquired.range` |
+| R2 | tidak ada | tidak diketahui | allow | `grabbed` | kunci seluruh file (baris 3) |
+| R3 | rentang milik saya | diketahui | allow | `own` | rentang melebar ke span gabungan; `lock.acquired.range` dikirim ulang |
+| R4 | rentang milik saya | tidak diketahui | allow | `own` | rentang tetap |
+| R5 | rentang orang lain | tidak beririsan (termasuk `[]`) | allow | `outside_range` | tanpa kunci, request, atau block; `taskId` null |
+| R6 | rentang orang lain | beririsan | block | `held_by_other` | request (dedup) + block; `holder.range`, `lock.blocked.holderRange` |
+| R7 | rentang orang lain | tidak diketahui | block | `held_by_other` | sama dengan R6 |
+| R8 | seluruh file orang lain | apa pun | block | seperti baris 8–10 | – |
+
+Beririsan = `a.start <= b.end && b.start <= a.end`; sisipan sebelum baris n menyentuh baris n. Klaim commit (baris 12) memblokir semua baris. Pesan hook: "RADAR: src/app.ts lines 3–5 are locked by Alice (T-1 Kupon). …".
+
 ### Penerimaan `file.update` (lapis kedua, SY-04 / §6 "Dua lapis penegakan")
 
 ```text
 on file.update {path, baseVersion, content, hash} from member:
   if size(content) > 1 MB → reject 'too_large';  if binary → reject 'binary'
   if sha256(content) != hash → reject 'conflict' (klien mengirim ulang)
-  r = checkWrite(member, path, 'sync')
+  f = fileRepo.get(path); lock = lockRepo.get(path); ranged = lock punya rentang and f tidak dihapus
+  if ranged and f and baseVersion < f.version and f.updated_by != member.id:      # D-alief-17
+      m = merge3(base = isi versi baseVersion, ours = f.content, theirs = content)
+      if not m.ok:
+          if lock bukan milik member and checkWrite(member, path, 'sync', changedLines(base, content)).block
+              → send file.rejected {reason:'held_by_other', holder}; return
+          → send file.rejected {reason:'conflict', server:f}; return      # tidak pernah timpa diam-diam
+      content = m.merged; merged = true
+  lines = ranged ? changedLines(f.content, content) : null
+  r = checkWrite(member, path, 'sync', lines)
   if r.block → send file.rejected {reason, holder, server: current file}; emit file.rejected; return
-  f = fileRepo.get(path)
-  if f and baseVersion < f.version and f.updated_by != member.id:
+  if not ranged and f and baseVersion < f.version and f.updated_by != member.id:
       # PC tertinggal (SY-07): isi server menang
       send file.rejected {reason:'conflict', server:f}; return
   if f and f.hash == hash → send file.ack (no-op, versi tetap); return
@@ -130,7 +155,7 @@ on file.update {path, baseVersion, content, hash} from member:
   taskTouchRepo.upsert(task, path, first_version = f?.version ?? 0, last_version = newVersion)
   task.edit_count += 1
   emit file.changed {…, patch}   → broadcast file.changed ke semua sync KECUALI pengirim; event ke mc
-  send file.ack
+  send file.ack {…, merged?: true, content?: m.merged}   # pengirim menulis isi gabungan ke disk
 ```
 
 ## 4. `resolveActiveTask(member)`
