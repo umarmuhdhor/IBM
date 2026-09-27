@@ -561,3 +561,4 @@ Format:
   4. Setelah hapus dari server, folder induk yang jadi kosong tidak dihapus kalau server masih punya penandanya (teman sengaja membagikan folder kosong itu).
   5. File asli bernama `.radar-dir` di folder user tidak pernah disinkron.
 - Dampak: penanda ikut ke commit GitHub per task sebagai file kosong (seperti `.gitkeep`). App, hooks, dan radar-mcp tidak berubah; daftar file di UI bisa menampilkan `<folder>/.radar-dir` sebagai baris file.
+- Catatan 27 Sep (ditemukan di prod saat uji bug 4): backup kit `.bob.bak-<waktu>/` yang dibuat tombol "Back up .bob and install the Bob kit" ikut tersinkron ke server dan teman. Pola `.bob.bak-*/` sekarang masuk daftar ignore default dan daftar selalu-ignore di `@radar/common` (sama seperti `.bob/`), jadi `!` di `.radarignore` pun tidak bisa membukanya.

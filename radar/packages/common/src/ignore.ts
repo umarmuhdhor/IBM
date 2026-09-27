@@ -10,6 +10,8 @@ export const DEFAULT_IGNORE_PATTERNS: readonly string[] = [
   'node_modules/',
   '.radar/',
   '.bob/',
+  // The kit install moves an existing .bob/ aside as .bob.bak-<time>/ (fase 12k).
+  '.bob.bak-*/',
   'bob_sessions/',
   '.next/',
   'dist/',
@@ -33,6 +35,8 @@ export const ALWAYS_IGNORED_PATTERNS: readonly string[] = [
   '.git/',
   '.radar/',
   '.bob/',
+  // The kit install moves an existing .bob/ aside as .bob.bak-<time>/ (fase 12k).
+  '.bob.bak-*/',
   '*.radar-rejected',
   '*.radar-conflict',
   '.*.radar-tmp-*',
