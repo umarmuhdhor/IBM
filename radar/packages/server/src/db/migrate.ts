@@ -26,6 +26,7 @@ export function migrate(db: Db): void {
     // v6 (D-alief-20): the owner can remove a seat. Existing members stay active.
     const memberCols = db.all<{ name: string }>('PRAGMA table_info(member)').map((c) => c.name);
     if (!memberCols.includes('removed_at')) db.script('ALTER TABLE member ADD COLUMN removed_at INTEGER;');
+    // v7: task_step table added via IF NOT EXISTS in SCHEMA_SQL above; no column migrations needed.
     if (row?.value !== SCHEMA_VERSION) {
       db.run("INSERT INTO meta (key, value) VALUES ('schema_version', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value", SCHEMA_VERSION);
     }

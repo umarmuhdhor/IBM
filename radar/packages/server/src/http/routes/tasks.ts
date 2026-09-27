@@ -1,10 +1,10 @@
 // Task endpoints (R3 §2.4, §2.5, §2.9, §2.15, §2.19).
-import { SubmitReq, TaskDiffRes, TasksQuery, type ActivateRes, type CancelRes, type SubmitRes, type TasksRes } from '@radar/common';
+import { StepReq, SubmitReq, TaskDiffRes, TasksQuery, type ActivateRes, type CancelRes, type StepRes, type SubmitRes, type TasksRes } from '@radar/common';
 import type { Hono } from 'hono';
 import { ctxOf, type WorkspaceDeps } from '../../deps';
 import { getMember } from '../../db/repo/member';
 import { buildTaskDiff } from '../../services/diff';
-import { activateTask, cancelTask, listTaskItems, submitTask } from '../../services/tasks';
+import { activateTask, cancelTask, listTaskItems, setTaskStep, submitTask } from '../../services/tasks';
 import { requireMember, requireRole } from '../auth';
 import { parseWith, RadarError, readJson } from '../errors';
 
@@ -35,6 +35,15 @@ export function registerTaskRoutes(app: Hono, deps: WorkspaceDeps): void {
     const taskId = c.req.param('id');
     const { files } = deps.transact((uow) => submitTask(ctxOf(deps, uow), member.memberId, taskId, req.summary));
     const res: SubmitRes = { taskId, status: 'review', files };
+    return c.json(res);
+  });
+
+  app.post('/v1/tasks/:id/steps', async (c) => {
+    const member = requireMember(deps.db, c.req.header('authorization'), ['coder']);
+    const req = parseWith(StepReq, await readJson(c.req.raw));
+    const taskId = c.req.param('id');
+    const result = deps.transact((uow) => setTaskStep(ctxOf(deps, uow), member.memberId, taskId, req.index, req.done));
+    const res: StepRes = result;
     return c.json(res);
   });
 

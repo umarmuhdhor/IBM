@@ -15,6 +15,7 @@ import { listFileMeta, listFilesWithContent } from '../db/repo/file';
 import { rangeOf } from '../db/repo/lock';
 import { listMembers } from '../db/repo/member';
 import { getMeta } from '../db/repo/meta';
+import { listSteps } from '../db/repo/task-step';
 import type { Db } from '../db/sql';
 import { rowsToEvents } from './events';
 
@@ -88,6 +89,7 @@ export function buildState(db: Db, fallbackId: string): StateRes {
     editCount: t.edit_count,
     commitSha: t.commit_sha,
     summary: t.submit_summary,
+    steps: listSteps(db, t.id),
   }));
 
   const files = listFileMeta(db).map((f) => ({

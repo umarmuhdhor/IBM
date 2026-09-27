@@ -6,6 +6,7 @@ import { getLock, setTaskLocksState } from '../db/repo/lock';
 import { getMember, setActiveTask } from '../db/repo/member';
 import { openRequestsOfTask, setRequestStatus } from '../db/repo/request';
 import { getTask, listTasks, setSubmitSummary, type TaskRow } from '../db/repo/task';
+import { listSteps, setStepDone } from '../db/repo/task-step';
 import { touchesOf } from '../db/repo/touch';
 import type { Db } from '../db/sql';
 import { RadarError } from '../http/errors';
@@ -42,6 +43,7 @@ export function toTaskItem(db: Db, t: TaskRow): TaskItem {
     baseCommit: t.base_commit,
     editCount: t.edit_count,
     files: taskFiles(db, t.id),
+    steps: listSteps(db, t.id),
   };
 }
 
@@ -96,6 +98,22 @@ export function closeTask(ctx: LockCtx, task: TaskRow, to: 'selesai' | 'batal', 
     }
   }
   if (getMember(ctx.db, task.owner_id)?.active_task_id === task.id) setActiveTask(ctx.db, task.owner_id, null);
+}
+
+/**
+ * `POST /v1/tasks/:id/steps` (coder only, task owner, task must be terbuka/dikerjakan).
+ * Marks a step done or undone and appends a `task.step` event.
+ */
+export function setTaskStep(ctx: LockCtx, memberId: string, taskId: string, index: number, done: boolean): { taskId: string; steps: TaskItem['steps'] } {
+  const task = taskOr404(ctx.db, taskId);
+  if (task.owner_id !== memberId) throw new RadarError(403, 'FORBIDDEN', `Task ${task.id} is not yours.`);
+  if (task.status !== 'terbuka' && task.status !== 'dikerjakan') {
+    throw new RadarError(409, 'CONFLICT', `Task ${task.id} is ${task.status}; steps can only be changed on an open or in-progress task.`);
+  }
+  const ok = setStepDone(ctx.db, taskId, index, done, ctx.now);
+  if (!ok) throw new RadarError(404, 'NOT_FOUND', `Task ${task.id} has no step at index ${index}.`);
+  appendEvent(ctx.db, ctx.uow, { ts: ctx.now, actor: memberId, type: 'task.step', payload: { taskId, index, done, by: memberId } });
+  return { taskId, steps: listSteps(ctx.db, taskId) };
 }
 
 /** `POST /v1/tasks/:id/cancel` (mc): `terbuka`/`draf`/`dikerjakan` → `batal`; 409 for `review`/`selesai`/`batal`. */

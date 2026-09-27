@@ -440,7 +440,7 @@ describe('tasks and requests edge cases (R3 §2.5, §2.7, §2.9)', () => {
     const { stub, t } = await setup([P], [Q], [P]);
     const team = (await call(stub, 'GET', '/v1/team', { token: t.mc })).json;
     expect(team.members.map((m: { id: string }) => m.id)).toEqual(['A', 'B', 'C']);
-    expect(team.tasks).toContainEqual({ id: 'T-1', title: 'Tugas A', ownerId: 'A', status: 'terbuka', files: [P], editCount: 0 });
+    expect(team.tasks).toContainEqual(expect.objectContaining({ id: 'T-1', title: 'Tugas A', ownerId: 'A', status: 'terbuka', files: [P], editCount: 0 }));
     expect(team.locks).toContainEqual({ path: P, taskId: 'T-1', memberId: 'A', state: 'dipesan', queue: ['T-2'] });
     expect(team).toMatchObject({ openRequests: 0, pendingProposals: 0, headCommit: 'abc1234' });
     const act = (await call(stub, 'GET', `/v1/activity?path=${encodeURIComponent(P)}&limit=5`, { token: t.A })).json;

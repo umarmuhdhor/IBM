@@ -81,3 +81,11 @@ export function setOffline(db: Db, id: string, lastHeartbeat: number): void {
 export function setActiveTask(db: Db, id: string, taskId: string | null): void {
   db.run('UPDATE member SET active_task_id = ? WHERE id = ? AND active_task_id IS NOT ?', taskId, id, taskId);
 }
+
+/** The active PM seat, excluding `exceptId` (pass the seat being reused so it doesn't block itself). */
+export function activePm(db: Db, exceptId?: string): MemberRow | null {
+  if (exceptId !== undefined) {
+    return db.one<MemberRow>("SELECT * FROM member WHERE role = 'pm' AND removed_at IS NULL AND id != ?", exceptId);
+  }
+  return db.one<MemberRow>("SELECT * FROM member WHERE role = 'pm' AND removed_at IS NULL");
+}

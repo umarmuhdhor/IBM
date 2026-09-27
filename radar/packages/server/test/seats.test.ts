@@ -55,7 +55,8 @@ describe('rejoining keeps the seat (bug 5)', () => {
     await join(stub, open.code, 'Budi', 'coder');
     const c = await join(stub, await newCode(stub, open.mcToken), 'Citra', 'pm', open.mcToken);
     expect(c.member).toBe('C');
-    const d = await join(stub, await newCode(stub, open.mcToken), 'Dewi', 'pm', 'rdr_not_a_real_token');
+    // Dewi joins as coder (Citra is already the PM).
+    const d = await join(stub, await newCode(stub, open.mcToken), 'Dewi', 'coder', 'rdr_not_a_real_token');
     expect(d.member).toBe('D');
   });
 });
@@ -115,12 +116,13 @@ describe('the owner removes a seat (bug 5)', () => {
     expect((await call(stub, 'DELETE', '/v1/members/B', { token: open.mcToken })).status).toBe(200);
     expect((await call(stub, 'DELETE', '/v1/members/B', { token: open.mcToken })).status).toBe(404);
 
-    // C..H fill the free ids; the next newcomer gets the removed B
-    for (const name of ['C', 'D', 'E', 'F', 'G', 'H']) await join(stub, await newCode(stub, open.mcToken), `n${name}`, 'pm');
-    const late = await join(stub, await newCode(stub, open.mcToken), 'Late', 'pm');
+    // C fills in as PM; D–H fill the rest as coders; the next newcomer gets the removed B
+    await join(stub, await newCode(stub, open.mcToken), 'nC', 'pm');
+    for (const name of ['D', 'E', 'F', 'G', 'H']) await join(stub, await newCode(stub, open.mcToken), `n${name}`, 'coder');
+    const late = await join(stub, await newCode(stub, open.mcToken), 'Late', 'coder');
     expect(late.member).toBe('B');
-    expect((await members(stub, open.mcToken)).find((m) => m.id === 'B')).toEqual({ id: 'B', name: 'Late', role: 'pm' });
-    const full = await call(stub, 'POST', '/v1/join', { body: { code: await newCode(stub, open.mcToken), name: 'Nine', role: 'pm' } });
+    expect((await members(stub, open.mcToken)).find((m) => m.id === 'B')).toEqual({ id: 'B', name: 'Late', role: 'coder' });
+    const full = await call(stub, 'POST', '/v1/join', { body: { code: await newCode(stub, open.mcToken), name: 'Nine', role: 'coder' } });
     expect(full.status).toBe(409);
   });
 });
