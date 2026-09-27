@@ -679,6 +679,10 @@ export class SyncAgent extends EventEmitter {
       if (!this.skipped.has(path)) {
         this.skipped.add(path);
         this.log('skip', `${path} ${local.kind}`);
+        // Tell the user once per file; otherwise it only shows up in sync.log and teammates never get it.
+        const r = { path, reason: local.kind, holder: null, sidecar: null } as const;
+        this.notify({ level: 'warn', text: formatRejection(r) });
+        this.emit('rejected', r);
       }
       return;
     }
