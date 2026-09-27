@@ -1,5 +1,6 @@
 // `known`: the last version + hash agreed with the server per path (from snapshot, ack or changed).
 // It drives anti-echo (SY-03): a watcher event whose hash equals `known` is our own write.
+import { isDirMarker } from '@radar/common';
 
 /** `hash` of a known entry whose file the server deleted (SY-06). */
 export const DELETED_HASH = '';
@@ -38,6 +39,13 @@ export class KnownStore {
 
   get size(): number {
     return this.map.size;
+  }
+
+  /** Files the server has, for the status line: tombstones and empty-folder markers are not files. */
+  fileCount(): number {
+    let n = 0;
+    for (const [path, e] of this.map) if (e.hash !== DELETED_HASH && !isDirMarker(path)) n++;
+    return n;
   }
 
   /** `hello.knownVersions`: agreed versions only (version 0 means "never agreed"). */

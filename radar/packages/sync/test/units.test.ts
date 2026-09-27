@@ -3,7 +3,7 @@ import { chmodSync, existsSync, lstatSync, mkdirSync, readdirSync, statSync, sym
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { sha256Hex } from '@radar/common';
-import { KnownStore } from '../src/known.js';
+import { DELETED_HASH, KnownStore } from '../src/known.js';
 import { atomicWrite, hashText, pruneEmptyParents, readLocal, removeLocal, UnsafePathError } from '../src/writer.js';
 import { writeSidecar } from '../src/sidecar.js';
 import { formatRejection, terminalNotifier } from '../src/notify.js';
@@ -33,6 +33,16 @@ describe('KnownStore', () => {
     expect(k.get('a.ts')).toBeUndefined();
     k.clear();
     expect(k.size).toBe(0);
+  });
+});
+
+describe('KnownStore file count (fase 12k)', () => {
+  it('counts files on the server, not deleted files or empty-folder markers', () => {
+    const k = new KnownStore();
+    k.set('a.ts', { version: 2, hash: 'x' });
+    k.set('gone.ts', { version: 3, hash: DELETED_HASH });
+    k.set('assets/.radar-dir', { version: 1, hash: 'e' });
+    expect(k.fileCount()).toBe(1);
   });
 });
 

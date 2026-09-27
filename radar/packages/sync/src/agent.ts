@@ -167,7 +167,7 @@ export class SyncAgent extends EventEmitter {
       stopped: this.isStopped,
       member: me?.memberId ?? null,
       role: me?.role ?? null,
-      files: this.known.size,
+      files: this.known.fileCount(),
       pending: this.pending.size,
       myLocks: me ? [...this.locks.values()].filter((l) => l.memberId === me.memberId).map((l) => l.path) : [],
     };
