@@ -164,27 +164,27 @@ describe('GET /v1/report/session (MA-06, R3 §2.17)', () => {
     const rep = SessionReportRes.parse(r.json);
     expect(rep.stats).toEqual({ tasks: 2, commits: 1, blocks: 1, decisions: 1, medianBlockToDecisionMs: 41_000, syncP95Ms: 300, lockCheckP95Ms: 3 });
     expect(rep.markdown).toMatchInlineSnapshot(`
-      "## Laporan sesi
+      "## Session report
 
       21:00–21:01 WITA · 1.5 min · 9 event (#1–#9)
 
-      | Ukuran | Nilai |
+      | Measure | Value |
       |---|---|
       | Task | 2 |
       | Commit | 1 |
-      | Blokir | 1 |
-      | Keputusan PM | 1 |
-      | Median blokir → keputusan | 41.0 s |
-      | Review (ditandai) | 1 (1) |
-      | p95 sinkron | 300 ms |
-      | p95 cek kunci (server) | 3 ms |
-      | p95 cek kunci (RTT hook) | 38 ms |
+      | Blocks | 1 |
+      | PM decisions | 1 |
+      | Median block → decision | 41.0 s |
+      | Reviews (flagged) | 1 (1) |
+      | p95 sync | 300 ms |
+      | p95 lock check (server) | 3 ms |
+      | p95 lock check (hook RTT) | 38 ms |
 
       ### Task
 
-      Per status: dikerjakan 1 · selesai 1
+      By status: dikerjakan 1 · selesai 1
 
-      | Task | Judul | Pemilik | Status |
+      | Task | Title | Owner | Status |
       |---|---|---|---|
       | T-1 | Header \\| nav | A | selesai |
       | T-2 | Checkout | B | dikerjakan |
@@ -195,7 +195,7 @@ describe('GET /v1/report/session (MA-06, R3 §2.17)', () => {
       |---|---|---|
       | T-1 | [c057649](https://github.com/demo/toko-demo/commit/c0576499abcdef) | 1 |
 
-      ### Temuan review
+      ### Review findings
 
       - T-1 · \`src/Header.tsx\`: import \\| lama
       "

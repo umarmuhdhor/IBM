@@ -53,13 +53,13 @@ export function isIgnoredPath(db: Db, path: string): boolean {
 
 export function requireMember(db: Db, id: string): MemberRow {
   const m = getMember(db, id);
-  if (!m) throw new RadarError(404, 'NOT_FOUND', `Member ${id} tidak ada.`);
+  if (!m) throw new RadarError(404, 'NOT_FOUND', `There is no member ${id}.`);
   return m;
 }
 
 export function requireTask(db: Db, id: string): TaskRow {
   const t = getTask(db, id);
-  if (!t) throw new RadarError(404, 'NOT_FOUND', `Task ${id} tidak ada.`);
+  if (!t) throw new RadarError(404, 'NOT_FOUND', `There is no task ${id}.`);
   return t;
 }
 
@@ -100,7 +100,7 @@ export function canTransition(from: TaskStatus, to: TaskStatus): boolean {
 export function setStatus(ctx: LockCtx, task: TaskRow, to: TaskStatus, by: string): void {
   if (task.status === to) return;
   if (!canTransition(task.status, to)) {
-    throw new RadarError(409, 'CONFLICT', `Task ${task.id} tidak bisa pindah dari ${task.status} ke ${to}.`);
+    throw new RadarError(409, 'CONFLICT', `Task ${task.id} cannot move from ${task.status} to ${to}.`);
   }
   setTaskStatus(ctx.db, task.id, to, ctx.now);
   appendEvent(ctx.db, ctx.uow, { ts: ctx.now, actor: by, type: 'task.status', payload: { taskId: task.id, from: task.status, to, by } });
@@ -418,7 +418,7 @@ export function advanceQueue(ctx: LockCtx, path: string, fromTaskId: string | nu
     payload: { path, fromTaskId, toTaskId: head.task_id, toMemberId: head.owner_id, cause: 'queue' },
   });
   lockChanged(ctx, path);
-  addNotification(ctx, { memberId: head.owner_id, kind: 'lock', message: `Giliranmu: ${path} kini dipesan untuk ${head.task_id}.`, ref: head.task_id });
+  addNotification(ctx, { memberId: head.owner_id, kind: 'lock', message: `Your turn: ${path} is now reserved for ${head.task_id}.`, ref: head.task_id });
   return head;
 }
 
@@ -452,7 +452,7 @@ export function transferNow(ctx: LockCtx, path: string, toTask: TaskRow): void {
   }
   if (lock.task_id === toTask.id) return;
   const fromTask = requireTask(ctx.db, lock.task_id);
-  if (commitClaimActive(fromTask, ctx.now)) throw new RadarError(409, 'CONFLICT', `${path} sedang di-commit (${fromTask.id}); coba lagi sebentar.`);
+  if (commitClaimActive(fromTask, ctx.now)) throw new RadarError(409, 'CONFLICT', `${path} is being committed (${fromTask.id}); try again in a moment.`);
   setFront(ctx.db, path, toTask.id, 'decision', ctx.now);
   updateLock(ctx.db, path, { taskId: toTask.id, memberId: toTask.owner_id, state: 'dipesan' }, ctx.now);
   moveTouch(ctx.db, fromTask.id, toTask.id, path);
@@ -467,7 +467,7 @@ export function transferNow(ctx: LockCtx, path: string, toTask: TaskRow): void {
   addNotification(ctx, {
     memberId: fromTask.owner_id,
     kind: 'lock',
-    message: `${path} dipindahkan ke ${toName} (${toTask.id}) oleh keputusan PM. Kamu antre berikutnya.`,
+    message: `${path} was moved to ${toName} (${toTask.id}) by a PM decision. You are next in the queue.`,
     ref: fromTask.id,
   });
 }
@@ -475,8 +475,8 @@ export function transferNow(ctx: LockCtx, path: string, toTask: TaskRow): void {
 /** R4 §5 revoke (SV-09): frees `path` from its holder, who loses the allocation, and advances the queue. */
 export function revoke(ctx: LockCtx, path: string, reason: string, by: string): QueueEntry | null {
   const lock = getLock(ctx.db, path);
-  if (!lock) throw new RadarError(404, 'NOT_FOUND', `${path} tidak sedang dikunci.`);
-  if (commitClaimActive(getTask(ctx.db, lock.task_id), ctx.now)) throw new RadarError(409, 'CONFLICT', `${path} sedang di-commit (${lock.task_id}); coba lagi sebentar.`);
+  if (!lock) throw new RadarError(404, 'NOT_FOUND', `${path} is not locked.`);
+  if (commitClaimActive(getTask(ctx.db, lock.task_id), ctx.now)) throw new RadarError(409, 'CONFLICT', `${path} is being committed (${lock.task_id}); try again in a moment.`);
   deleteLock(ctx.db, path);
   deleteAllocation(ctx.db, lock.task_id, path);
   renumberQueue(ctx.db, path);

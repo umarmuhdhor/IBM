@@ -282,10 +282,10 @@ describe('brief (R4 §8)', () => {
   it('start lists identity, own files with queue marks, other holders and the rules line', async () => {
     const { stub, t } = await setup([P, R], [Q], [P]);
     const b = (await call(stub, 'GET', '/v1/brief?kind=start', { token: t.B })).json;
-    expect(b.lines[0]).toBe('[Radar] Kamu B (coder). Task aktif: T-2 Tugas B (terbuka).');
-    expect(b.lines).toContain(`[Radar] File kamu: ${Q}, ${P} (antre #1)`);
-    expect(b.lines.find((l: string) => l.startsWith('[Radar] Dipegang orang lain:'))).toContain(`${P}→A(T-1)`);
-    expect(b.lines.at(-1)).toBe('[Radar] Jangan edit file milik orang lain. Kalau ditolak: radar why_blocked.');
+    expect(b.lines[0]).toBe('[Radar] You are B (coder). Active task: T-2 Tugas B (terbuka).');
+    expect(b.lines).toContain(`[Radar] Your files: ${Q}, ${P} (queued #1)`);
+    expect(b.lines.find((l: string) => l.startsWith('[Radar] Held by others:'))).toContain(`${P}→A(T-1)`);
+    expect(b.lines.at(-1)).toBe('[Radar] Do not edit files others hold. If an edit is refused: radar why_blocked.');
     expect(b.lines.length).toBeLessThanOrEqual(6);
     expect(b.cursor).toBeGreaterThan(0);
   });
@@ -297,8 +297,8 @@ describe('brief (R4 §8)', () => {
     await call(stub, 'POST', '/v1/locks/check', { token: t.A, body: { paths: [P], tool: 'write_file', clientTs: 0 } });
     await call(stub, 'POST', '/v1/locks/check', { token: t.B, body: { paths: [P], tool: 'write_file', clientTs: 0 } });
     const lines = (await call(stub, 'GET', `/v1/brief?kind=prompt&since=${cursor}`, { token: t.B })).json.lines as string[];
-    expect(lines[0]).toMatch(new RegExp(`^\\[Radar\\] Edit ${P} DITOLAK: dipegang Andi \\(T-1\\)\\. Jangan coba ulang`));
-    expect(lines.at(-1)).toBe('[Radar] Task aktif: T-2 Tugas B (terbuka).');
+    expect(lines[0]).toMatch(new RegExp(`^\\[Radar\\] Edit to ${P} REFUSED: held by Andi \\(T-1\\)\\. Do not retry`));
+    expect(lines.at(-1)).toBe('[Radar] Active task: T-2 Tugas B (terbuka).');
   });
 
   it('pm start counts open requests and pending proposals', async () => {
@@ -306,7 +306,7 @@ describe('brief (R4 §8)', () => {
     await call(stub, 'POST', '/v1/locks/check', { token: t.A, body: { paths: [P], tool: 'write_file', clientTs: 0 } });
     await call(stub, 'POST', '/v1/locks/check', { token: t.B, body: { paths: [P], tool: 'write_file', clientTs: 0 } });
     const lines = (await call(stub, 'GET', '/v1/brief?kind=start', { token: t.C })).json.lines as string[];
-    expect(lines[0]).toBe('[Radar] Kamu C (pm). Permintaan terbuka: 1. Usulan menunggu keputusan manusia: 0.');
+    expect(lines[0]).toBe('[Radar] You are C (pm). Open requests: 1. Proposals waiting for a human decision: 0.');
     expect(lines[1]).toContain(`R-1 ${P} (B→A)`);
   });
 });
@@ -324,10 +324,10 @@ describe('proposal validation and rejection (R3 §2.12–2.14, R4 §6)', () => {
     expect(dup.json.error.message).toContain(P);
     const pmOwner = await plan([{ ref: 'a', title: 'A', ownerId: 'C', files: [P] }]);
     expect(pmOwner.status).toBe(422);
-    expect(pmOwner.json.error.message).toContain('task a: C bukan coder');
+    expect(pmOwner.json.error.message).toContain('task a: C is not a coder');
     const outside = await plan([{ ref: 'a', title: 'A', ownerId: 'A', files: ['../x.ts'] }]);
     expect(outside.status).toBe(422);
-    expect(outside.json.error.message).toContain('task a files: path ../x.ts tidak valid');
+    expect(outside.json.error.message).toContain('task a files: path ../x.ts is not valid');
     // Normalising can create the overlap: ./src/shared.ts and src/shared.ts are the same file.
     const norm = await plan([
       { ref: 'a', title: 'A', ownerId: 'A', files: [`./${P}`] },
@@ -355,7 +355,7 @@ describe('proposal validation and rejection (R3 §2.12–2.14, R4 §6)', () => {
     expect((await call(stub, 'POST', `/v1/proposals/${p.json.proposalId}/decision`, { token: t.mc, body: { approve: false } })).json.status).toBe('ditolak');
     expect(await sql(stub, "SELECT status FROM request WHERE id = 'R-1'")).toEqual([{ status: 'ditolak' }]);
     expect(await sql(stub, 'SELECT task_id FROM lock WHERE path = ?', P)).toEqual([{ task_id: 'T-1' }]);
-    expect(await sql(stub, "SELECT message FROM notification WHERE member_id = 'B' AND kind = 'decision'")).toEqual([{ message: `Permintaan ${P} ditolak PM.` }]);
+    expect(await sql(stub, "SELECT message FROM notification WHERE member_id = 'B' AND kind = 'decision'")).toEqual([{ message: `The PM declined your request for ${P}.` }]);
     // A closed request cannot get another decision.
     const again = await call(stub, 'POST', '/v1/proposals', { token: t.C, body: { kind: 'decision', reason: 'x', payload: { requestId: 'R-1', option: 'antre' } } });
     expect(again.status).toBe(409);
