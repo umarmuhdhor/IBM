@@ -47,7 +47,7 @@ const MECHANISMS = [
   {
     tag: 'lock_guard',
     title: 'One file, one Bob',
-    body: 'A PreToolUse hook checks the shared lock table before any write. Andi holds checkout.ts, so no other Bob can overwrite it.',
+    body: 'A PreToolUse hook checks the shared lock table before any write. Arief holds checkout.ts, so no other Bob can overwrite it.',
   },
   {
     tag: 'radar.why_blocked',
@@ -80,12 +80,12 @@ const WORDS = [
 
 // Mirrors the near-miss in public/demo/events.json (ids 50–58).
 const NEAR_MISS_LOG = [
-  { who: 'budi · coder', what: 'apply_diff src/checkout/checkout.ts', tone: 'b' },
+  { who: 'umar · coder', what: 'apply_diff src/checkout/checkout.ts', tone: 'b' },
   { who: 'hook', what: 'PreToolUse · lock_guard → blocked', tone: 'danger' },
-  { who: 'held by', what: 'andi · T-1 coupon', tone: 'a' },
-  { who: 'mcp', what: 'radar.why_blocked → "held by Andi for T-1"', tone: 'muted' },
+  { who: 'held by', what: 'arief · T-1 coupon', tone: 'a' },
+  { who: 'mcp', what: 'radar.why_blocked → "held by Arief for T-1"', tone: 'muted' },
   { who: 'decision', what: 'queued · position 1', tone: 'muted' },
-  { who: 'budi · coder', what: 'continues src/ui/Header.tsx', tone: 'b' },
+  { who: 'umar · coder', what: 'continues src/ui/Header.tsx', tone: 'b' },
 ] as const;
 
 const PRIMITIVES = [
@@ -273,7 +273,7 @@ export default function HomePage() {
                 <div>
                   <p className="lp-nm-point-title">Blocked, then queued</p>
                   <p className="lp-nm-point-body">
-                    lock_guard stops the write before it lands. Budi&apos;s Bob waits at position 1
+                    lock_guard stops the write before it lands. Umar&apos;s Bob waits at position 1
                     and moves on to Header.tsx.
                   </p>
                 </div>

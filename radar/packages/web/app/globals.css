@@ -23,7 +23,7 @@ body {
 /* ── Landing page (app/page.tsx, DESIGN §5.11 · dark Carbon) ───────────────── */
 .lp {
   --lp-ease: cubic-bezier(0.23, 1, 0.32, 1);
-  /* One accent for the whole page: Carbon Blue 40. Lavender stays only as Budi's member colour. */
+  /* One accent for the whole page: Carbon Blue 40. Lavender stays only as Umar's member colour. */
   --lp-blue: #78a9ff;
   --lp-tint-line: rgba(120, 169, 255, 0.28);
   --lp-glow: radial-gradient(120% 70% at 80% 0%, rgba(120, 169, 255, 0.1), transparent 60%);
@@ -476,15 +476,15 @@ body {
   flex-direction: column;
   gap: 6px;
 }
-/* Budi pane: one 20/12/16 rhythm — who → which file → why (trace) → what now. */
-.lp-budi .lp-pane-head {
+/* Umar pane: one 20/12/16 rhythm — who → which file → why (trace) → what now. */
+.lp-umar .lp-pane-head {
   margin-bottom: 20px;
 }
-.lp-budi .lp-file {
+.lp-umar .lp-file {
   margin-bottom: 12px;
   color: var(--lc-text);
 }
-.lp-budi .lp-traces {
+.lp-umar .lp-traces {
   gap: 4px;
   padding-left: 12px;
   border-left: 1px solid var(--lc-border);
@@ -493,7 +493,7 @@ body {
   display: inline-block;
   width: 1.4em;
 }
-.lp-budi .lp-blocked-copy {
+.lp-umar .lp-blocked-copy {
   margin-top: 16px;
 }
 .lp-blocked-copy {
@@ -704,7 +704,7 @@ body {
   color: var(--lc-text-muted);
 }
 
-/* Near-miss: copy left, framed log right, lavender = Budi (member B). */
+/* Near-miss: copy left, framed log right, lavender = Umar (member B). */
 .lp-nm {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);

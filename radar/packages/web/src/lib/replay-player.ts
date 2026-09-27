@@ -43,11 +43,14 @@ export function stateAtOffset(events: readonly RadarEvent[], snapshots: readonly
     if (s.offsetMs <= offsetMs && s.offsetMs >= best.offsetMs) best = s;
   }
   let state = best.state;
+  // With an eventIndex every event from there on is unapplied, including ones at t0 (the offset-0
+  // snapshot holds none). A hand-built snapshot has no index, so fall back to skipping by time.
+  const indexed = best.eventIndex !== undefined;
   for (let i = best.eventIndex ?? 0; i < events.length; i++) {
     const ev = events[i] as RadarEvent;
     const offset = ev.ts - t0;
     if (offset > offsetMs) break;
-    if (offset > best.offsetMs) state = applyEvent(state, ev);
+    if (indexed || offset > best.offsetMs) state = applyEvent(state, ev);
   }
   return state;
 }

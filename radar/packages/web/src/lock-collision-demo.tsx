@@ -6,18 +6,18 @@ import { useEffect, useRef, useState } from 'react';
  * LockCollisionDemo — single-card, cursor-driven explainer for Bob's file-lock feature.
  *
  * One clock drives the whole story so cursors, carets and typed text never drift apart:
- *   1. Alice's cursor types lines 3–5. Bob locks that block to her.
- *   2. While she's on line 5, Budi's cursor lands on line 3 and tries to type. Bob rejects
- *      the keystrokes and puts Budi in the queue.
- *   3. Alice finishes the block and leaves. Only now does Bob ask the PM to hand the lock over.
- *   4. PM approves; the lock moves to Budi and his queued edit types in.
+ *   1. Arief's cursor types lines 3–5. Bob locks that block to Arief.
+ *   2. While Arief is on line 5, Umar's cursor lands on line 3 and tries to type. Bob rejects
+ *      the keystrokes and puts Umar in the queue.
+ *   3. Arief finishes the block and leaves. Only now does Bob ask the PM to hand the lock over.
+ *   4. PM approves; the lock moves to Umar and the queued edit types in.
  *
  * Each cursor flag is rendered inline with its caret, so it follows the text as it grows.
  * Before anyone types, their mouse pointer (same color as their caret) glides to the spot and
  * clicks it; the PM's pointer clicks Approve. Targets are measured from the DOM so they land exactly.
  *
  * Flags sit to the right of the caret, where no text has been typed yet, so they never cover code.
- * Alice types lines 3–5 while Budi waits on line 3, so the two flags never share a row.
+ * Arief types lines 3–5 while Umar waits on line 3, so the two flags never share a row.
  */
 
 const TYPED = [
@@ -25,49 +25,49 @@ const TYPED = [
   '  if (!slot) return { refusal: "lobby full" };',
   '  return reserveSlot(ctx, lobby, slot, ticket);',
 ];
-const LINE_CHAR_MS = [38, 38, 85]; // line 5 slows down so Budi's collision reads clearly
+const LINE_CHAR_MS = [38, 38, 85]; // line 5 slows down so Umar's collision reads clearly
 const LINE_GAP_MS = 250;
-const BUDI_ATTEMPT = ' //';
-const BUDI_TEXT = ' // race-safe';
-const BUDI_CHAR_MS = 110;
+const UMAR_ATTEMPT = ' //';
+const UMAR_TEXT = ' // race-safe';
+const UMAR_CHAR_MS = 110;
 
 // Mouse pointers glide to their target (PTR_TRAVEL), click (PTR_CLICK), then the caret takes over.
 const PTR_TRAVEL = 750;
 const PTR_CLICK = 260;
 
 // Absolute timeline (ms).
-const ALICE_PTR = 200;
-const ALICE_CLICK = ALICE_PTR + 100 + PTR_TRAVEL;
-const ALICE_IN = ALICE_CLICK + 120;
-const ALICE_START = ALICE_CLICK + 450;
+const ARIEF_PTR = 200;
+const ARIEF_CLICK = ARIEF_PTR + 100 + PTR_TRAVEL;
+const ARIEF_IN = ARIEF_CLICK + 120;
+const ARIEF_START = ARIEF_CLICK + 450;
 const LINE_START: number[] = [];
 {
-  let at = ALICE_START;
+  let at = ARIEF_START;
   TYPED.forEach((line, i) => {
     LINE_START.push(at);
     at += line.length * (LINE_CHAR_MS[i] ?? 40) + LINE_GAP_MS;
   });
 }
 const lastLine = TYPED.length - 1;
-const ALICE_END =
+const ARIEF_END =
   (LINE_START[lastLine] ?? 0) + (TYPED[lastLine] ?? '').length * (LINE_CHAR_MS[lastLine] ?? 40);
-const BUDI_PTR = (LINE_START[lastLine] ?? 0) + 150;
-const BUDI_CLICK = BUDI_PTR + 100 + PTR_TRAVEL;
-const BUDI_IN = BUDI_CLICK + 120;
-const BUDI_TRY = BUDI_IN + 450;
-const BUDI_BLOCK = BUDI_TRY + 900;
-const BUDI_QUEUE = BUDI_BLOCK + 1100;
-const ALICE_DONE = ALICE_END + 500;
-const PM_REQ = ALICE_DONE + 900;
+const UMAR_PTR = (LINE_START[lastLine] ?? 0) + 150;
+const UMAR_CLICK = UMAR_PTR + 100 + PTR_TRAVEL;
+const UMAR_IN = UMAR_CLICK + 120;
+const UMAR_TRY = UMAR_IN + 450;
+const UMAR_BLOCK = UMAR_TRY + 900;
+const UMAR_QUEUE = UMAR_BLOCK + 1100;
+const ARIEF_DONE = ARIEF_END + 500;
+const PM_REQ = ARIEF_DONE + 900;
 const PM_PTR = PM_REQ + 500;
 const PM_PRESS = PM_PTR + 100 + PTR_TRAVEL + 700; // hover a beat on Approve before clicking
 const PM_OK = PM_PRESS + 600;
 const HANDOFF = PM_OK + 1400;
-const BUDI_PTR2 = HANDOFF + 150;
-const BUDI_CLICK2 = BUDI_PTR2 + 100 + PTR_TRAVEL;
-const BUDI_TYPE = BUDI_CLICK2 + 450;
-const BUDI_END = BUDI_TYPE + BUDI_TEXT.length * BUDI_CHAR_MS;
-const RESOLVED = BUDI_END + 400;
+const UMAR_PTR2 = HANDOFF + 150;
+const UMAR_CLICK2 = UMAR_PTR2 + 100 + PTR_TRAVEL;
+const UMAR_TYPE = UMAR_CLICK2 + 450;
+const UMAR_END = UMAR_TYPE + UMAR_TEXT.length * UMAR_CHAR_MS;
+const RESOLVED = UMAR_END + 400;
 const TOTAL_MS = RESOLVED + 2600;
 const TICK_MS = 40;
 const BASE_W = 640; // card's design width; narrower containers scale it down
@@ -80,7 +80,7 @@ const CODE_SUFFIX = ['}'];
 const FIRST_LOCKED = CODE_PREFIX.length;
 
 type Pt = { x: number; y: number };
-type Geo = { alice: Pt; budi: Pt; approve: Pt };
+type Geo = { arief: Pt; umar: Pt; approve: Pt };
 type PtrSeg = { from: Pt; to: Pt; appear: number; click: number; leave: number };
 type PtrState = {
   pos: Pt;
@@ -112,16 +112,16 @@ function ptrAt(now: number, segs: PtrSeg[]): PtrState {
 const offset = (p: Pt, dx: number, dy: number): Pt => ({ x: p.x + dx, y: p.y + dy });
 
 function caption(t: number): { step: string; text: string } {
-  if (t < BUDI_IN)
-    return { step: '1', text: 'Alice’s Bob agent writes lines 3–5. Bob locks the block to her.' };
-  if (t < BUDI_BLOCK) return { step: '2', text: 'Budi’s agent tries to edit line 3…' };
-  if (t < BUDI_QUEUE)
+  if (t < UMAR_IN)
+    return { step: '1', text: 'Arief’s Bob agent writes lines 3–5. Bob locks the block to Arief.' };
+  if (t < UMAR_BLOCK) return { step: '2', text: 'Umar’s agent tries to edit line 3…' };
+  if (t < UMAR_QUEUE)
     return { step: '2', text: 'Blocked. Bob rejects the edit, no silent overwrite.' };
-  if (t < ALICE_DONE) return { step: '2', text: 'Budi waits in the queue while Alice finishes.' };
-  if (t < PM_REQ) return { step: '3', text: 'Alice is done. Budi is next in line.' };
-  if (t < PM_OK) return { step: '3', text: 'Bob asks the PM to hand the lock to Budi.' };
+  if (t < ARIEF_DONE) return { step: '2', text: 'Umar waits in the queue while Arief finishes.' };
+  if (t < PM_REQ) return { step: '3', text: 'Arief is done. Umar is next in line.' };
+  if (t < PM_OK) return { step: '3', text: 'Bob asks the PM to hand the lock to Umar.' };
   if (t < HANDOFF) return { step: '3', text: 'PM approves.' };
-  if (t < RESOLVED) return { step: '4', text: 'Lock moves to Budi. His queued edit lands.' };
+  if (t < RESOLVED) return { step: '4', text: 'Lock moves to Umar. The queued edit lands.' };
   return { step: '✓', text: 'Both edits kept. Zero merge conflicts.' };
 }
 
@@ -162,8 +162,8 @@ export function LockCollisionDemo() {
       const x0 = (a.left - c.left) / k;
       const y = (a.top - c.top + a.height / 2) / k;
       setGeo({
-        alice: { x: x0 + 2 * chW, y },
-        budi: { x: x0 + (TYPED[0] ?? '').length * chW + 2, y },
+        arief: { x: x0 + 2 * chW, y },
+        umar: { x: x0 + (TYPED[0] ?? '').length * chW + 2, y },
         // offsetLeft/Top ignore the card's slide-in transform, so this is its resting spot.
         approve: {
           x: approval.offsetLeft + approve.offsetLeft + approve.offsetWidth / 2,
@@ -193,84 +193,84 @@ export function LockCollisionDemo() {
     return () => window.clearInterval(id);
   }, [reducedMotion]);
 
-  // Reduced motion: freeze on the most informative frame (Alice done, Budi queued, PM asked).
+  // Reduced motion: freeze on the most informative frame (Arief done, Umar queued, PM asked).
   const now = reducedMotion ? PM_REQ + 500 : t;
 
-  // Alice: how many chars of each locked line are typed, and which line her caret is on.
+  // Arief: how many chars of each locked line are typed, and which line the caret is on.
   const typedChars = TYPED.map((line, i) => {
     const start = LINE_START[i] ?? 0;
     if (now < start) return 0;
     return Math.min(line.length, Math.floor((now - start) / (LINE_CHAR_MS[i] ?? 40)));
   });
-  let aliceLine = 0;
+  let ariefLine = 0;
   TYPED.forEach((_, i) => {
-    if (now >= (LINE_START[i] ?? 0)) aliceLine = i;
+    if (now >= (LINE_START[i] ?? 0)) ariefLine = i;
   });
-  const aliceVisible = now >= ALICE_IN && now < ALICE_DONE;
-  const aliceTyping = now >= ALICE_START && now < ALICE_END;
+  const ariefVisible = now >= ARIEF_IN && now < ARIEF_DONE;
+  const ariefTyping = now >= ARIEF_START && now < ARIEF_END;
 
-  // Budi: arrives on line 3, his keystrokes bounce, then he queues.
-  const budiVisible = now >= BUDI_IN && now < RESOLVED;
-  const budiGhost =
-    now >= BUDI_TRY && now < BUDI_BLOCK
-      ? BUDI_ATTEMPT.slice(0, Math.min(BUDI_ATTEMPT.length, Math.floor((now - BUDI_TRY) / 280) + 1))
+  // Umar: arrives on line 3, the keystrokes bounce, then Umar queues.
+  const umarVisible = now >= UMAR_IN && now < RESOLVED;
+  const umarGhost =
+    now >= UMAR_TRY && now < UMAR_BLOCK
+      ? UMAR_ATTEMPT.slice(0, Math.min(UMAR_ATTEMPT.length, Math.floor((now - UMAR_TRY) / 280) + 1))
       : '';
-  const budiBlocked = now >= BUDI_BLOCK && now < BUDI_QUEUE;
-  const budiQueued = now >= BUDI_QUEUE && now < HANDOFF;
-  const budiChars =
-    now < BUDI_TYPE ? 0 : Math.min(BUDI_TEXT.length, Math.floor((now - BUDI_TYPE) / BUDI_CHAR_MS));
-  const budiTyping = now >= BUDI_TYPE && now < BUDI_END;
-  const budiLabel = budiBlocked
-    ? '⛔ Budi · blocked'
-    : budiQueued
-      ? 'Budi · queued #1'
-      : 'Budi · agent';
+  const umarBlocked = now >= UMAR_BLOCK && now < UMAR_QUEUE;
+  const umarQueued = now >= UMAR_QUEUE && now < HANDOFF;
+  const umarChars =
+    now < UMAR_TYPE ? 0 : Math.min(UMAR_TEXT.length, Math.floor((now - UMAR_TYPE) / UMAR_CHAR_MS));
+  const umarTyping = now >= UMAR_TYPE && now < UMAR_END;
+  const umarLabel = umarBlocked
+    ? '⛔ Umar · blocked'
+    : umarQueued
+      ? 'Umar · queued #1'
+      : 'Umar · agent';
 
   const showApproval = now >= PM_REQ && now < HANDOFF;
   const pressing = now >= PM_PRESS && now < PM_OK;
   const approved = now >= PM_OK;
 
-  const lockOwner: 'alice' | 'budi' | null =
-    now < ALICE_START ? null : now >= HANDOFF ? 'budi' : 'alice';
+  const lockOwner: 'arief' | 'umar' | null =
+    now < ARIEF_START ? null : now >= HANDOFF ? 'umar' : 'arief';
   const released = now >= RESOLVED;
   const badge =
     lockOwner === null
       ? null
       : released
         ? 'unlocked'
-        : lockOwner === 'budi'
-          ? 'locked · Budi'
-          : now >= ALICE_DONE
-            ? 'Alice done'
-            : 'locked · Alice';
-  const shaking = now >= BUDI_BLOCK && now < BUDI_BLOCK + 450;
+        : lockOwner === 'umar'
+          ? 'locked · Umar'
+          : now >= ARIEF_DONE
+            ? 'Arief done'
+            : 'locked · Arief';
+  const shaking = now >= UMAR_BLOCK && now < UMAR_BLOCK + 450;
 
   const ptrs =
     geo && !reducedMotion
       ? {
           a: ptrAt(now, [
             {
-              from: offset(geo.alice, 170, 130),
-              to: geo.alice,
-              appear: ALICE_PTR,
-              click: ALICE_CLICK,
-              leave: ALICE_START + 200,
+              from: offset(geo.arief, 170, 130),
+              to: geo.arief,
+              appear: ARIEF_PTR,
+              click: ARIEF_CLICK,
+              leave: ARIEF_START + 200,
             },
           ]),
           b: ptrAt(now, [
             {
-              from: offset(geo.budi, 150, 150),
-              to: geo.budi,
-              appear: BUDI_PTR,
-              click: BUDI_CLICK,
-              leave: BUDI_BLOCK + 500,
+              from: offset(geo.umar, 150, 150),
+              to: geo.umar,
+              appear: UMAR_PTR,
+              click: UMAR_CLICK,
+              leave: UMAR_BLOCK + 500,
             },
             {
-              from: offset(geo.budi, 150, 150),
-              to: geo.budi,
-              appear: BUDI_PTR2,
-              click: BUDI_CLICK2,
-              leave: BUDI_TYPE + 200,
+              from: offset(geo.umar, 150, 150),
+              to: geo.umar,
+              appear: UMAR_PTR2,
+              click: UMAR_CLICK2,
+              leave: UMAR_TYPE + 200,
             },
           ]),
           pm: ptrAt(now, [
@@ -328,15 +328,15 @@ export function LockCollisionDemo() {
               <div
                 className={
                   'lcd-block' +
-                  (lockOwner === 'alice' ? ' lcd-block-alice' : '') +
-                  (lockOwner === 'budi' && !released ? ' lcd-block-budi' : '')
+                  (lockOwner === 'arief' ? ' lcd-block-arief' : '') +
+                  (lockOwner === 'umar' && !released ? ' lcd-block-umar' : '')
                 }
               >
                 {badge && (
                   <span
                     className={
                       'lcd-lock-badge' +
-                      (lockOwner === 'budi' ? ' lcd-lock-badge-b' : '') +
+                      (lockOwner === 'umar' ? ' lcd-lock-badge-b' : '') +
                       (released ? ' lcd-lock-badge-free' : '')
                     }
                   >
@@ -352,25 +352,25 @@ export function LockCollisionDemo() {
                     <span className="lcd-line-text">
                       {i === 0 && <span ref={anchorRef} className="lcd-anchor" />}
                       {line.slice(0, typedChars[i])}
-                      {i === aliceLine && (
+                      {i === ariefLine && (
                         <Caret
                           who="a"
-                          label="Alice · agent"
-                          blink={!aliceTyping}
-                          visible={aliceVisible}
+                          label="Arief · agent"
+                          blink={!ariefTyping}
+                          visible={ariefVisible}
                         />
                       )}
                       {i === 0 && (
                         <>
-                          {budiGhost && <span className="lcd-ghost">{budiGhost}</span>}
-                          <span className="lcd-text-b">{BUDI_TEXT.slice(0, budiChars)}</span>
+                          {umarGhost && <span className="lcd-ghost">{umarGhost}</span>}
+                          <span className="lcd-text-b">{UMAR_TEXT.slice(0, umarChars)}</span>
                           <Caret
                             who="b"
-                            label={budiLabel}
-                            blink={!budiTyping && !budiGhost}
-                            visible={budiVisible}
-                            blocked={budiBlocked}
-                            queued={budiQueued}
+                            label={umarLabel}
+                            blink={!umarTyping && !umarGhost}
+                            visible={umarVisible}
+                            blocked={umarBlocked}
+                            queued={umarQueued}
                           />
                         </>
                       )}
@@ -394,8 +394,8 @@ export function LockCollisionDemo() {
           >
             <div className="lcd-approval-head">Bob → PM · approval needed</div>
             <p className="lcd-approval-body">
-              <b className="lcd-name-a">Alice</b> finished lines 3–5.{' '}
-              <b className="lcd-name-b">Budi</b> is queued on the same block. Hand the lock to Budi?
+              <b className="lcd-name-a">Arief</b> finished lines 3–5.{' '}
+              <b className="lcd-name-b">Umar</b> is queued on the same block. Hand the lock to Umar?
             </p>
             <div className="lcd-approval-row">
               {approved ? (
@@ -545,8 +545,8 @@ const CSS = `
   border: 1px solid transparent;
   transition: border-color 400ms ease, background-color 400ms ease;
 }
-.lcd-block-alice { border-color: rgba(120, 169, 255, 0.7); background: rgba(120, 169, 255, 0.07); }
-.lcd-block-budi { border-color: rgba(190, 149, 255, 0.7); background: rgba(190, 149, 255, 0.07); }
+.lcd-block-arief { border-color: rgba(120, 169, 255, 0.7); background: rgba(120, 169, 255, 0.07); }
+.lcd-block-umar { border-color: rgba(190, 149, 255, 0.7); background: rgba(190, 149, 255, 0.07); }
 .lcd-shake { animation: lcd-shake 420ms cubic-bezier(0.36, 0.07, 0.19, 0.97); }
 @keyframes lcd-shake {
   20% { transform: translateX(-4px); }

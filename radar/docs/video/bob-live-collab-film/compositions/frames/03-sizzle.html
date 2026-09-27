@@ -10,9 +10,51 @@
 @font-face{font-family:"PlexMono";font-weight:500;src:url("assets/fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2")}
 #root{position:absolute;inset:0;overflow:hidden;color:#f4f4f4;font-family:"Plex",sans-serif}
 .it{font-family:"Plex",sans-serif;font-style:normal;font-weight:600;text-decoration:underline;text-decoration-color:#0f62fe;text-decoration-thickness:0.07em;text-underline-offset:0.14em;text-decoration-skip-ink:none}
-#s03-cam{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0}
+#s03-cam{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;text-rendering:geometricPrecision;-webkit-font-smoothing:antialiased}
 .plane{position:absolute;width:720px;height:405px;border:3px solid #393939;border-radius:12px;overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,0.65);background:#0e0e10}
-.plane img{display:block;width:100%;height:100%;object-fit:cover;object-position:top}
+.plane{background:#0b0b0c}
+.app{position:absolute;left:0;top:0;width:1280px;height:716px;transform:scale(0.5578);transform-origin:0 0;background:#0b0b0c;color:#f4f4f4;font-family:"Plex",sans-serif}
+.app .ah{height:70px;display:flex;align-items:center;gap:18px;padding:0 26px;border-bottom:1px solid #222}
+.app .ah b{font-size:26px;font-weight:600}
+.app .live{color:#42be65;font-size:19px}.app .live::before{content:"";display:inline-block;width:12px;height:12px;border-radius:50%;background:#42be65;margin-right:8px}
+.app .onl{color:#a8a8a8;font-size:19px}
+.app .tabs{height:66px;display:flex;align-items:center;gap:8px;padding:0 20px;border-bottom:1px solid #222;font-size:19px;color:#c6c6c6}
+.app .tabs span{padding:8px 14px;border-radius:10px}
+.app .tabs .cur{border:2px solid #e0e0e0;color:#fff;background:#1a1a1a}
+.app .bd{padding:22px 26px}
+.app .row{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.app .row h3{margin:0;font-size:22px;font-weight:600}
+.app .btn{border:1px solid #333;border-radius:8px;padding:8px 14px;font-size:17px;color:#c6c6c6}
+.app .btn.pri{background:#0f62fe;border-color:#0f62fe;color:#fff}
+.app .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.app .card{border:1px solid #2a2a2a;border-top:3px solid var(--c);border-radius:12px;background:#141414;padding:16px;height:470px;overflow:hidden}
+.app .who{display:flex;align-items:center;gap:12px}
+.app .av{width:30px;height:30px;border-radius:50%;border:2px solid var(--c);display:grid;place-items:center;font-size:14px;color:var(--c)}
+.app .who b{display:block;font-size:20px;font-weight:500}
+.app .who small{display:block;font-size:15px;color:#a8a8a8}
+.app .who .w{margin-left:auto;border:1px solid #333;border-radius:8px;padding:5px 11px;font-size:15px}
+.app .pill{margin:14px 0 12px;border:1.5px solid var(--c);border-radius:8px;padding:6px 10px;font-family:"PlexMono",monospace;font-size:16px;color:var(--c);background:color-mix(in srgb,var(--c) 12%,transparent)}
+.app .q{border:1px solid #2a2a2a;border-radius:8px;background:#1a1a1a;padding:10px;font-size:15px;line-height:1.45;color:#c6c6c6;margin-bottom:10px}
+.app .q b{color:#fff}
+.app .tk{display:flex;gap:10px;font-size:15px;color:#e0e0e0;padding:6px 4px 12px;align-items:baseline}
+.app .tk i{font-style:normal;color:#a8a8a8}
+.app .tk .st{margin-left:auto;white-space:nowrap;color:#c6c6c6}
+.app .tk .st::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--s,#f1c21b);margin-right:6px}
+.app h6{margin:6px 0 8px;font-size:14px;letter-spacing:0.06em;color:#a8a8a8;font-weight:500}
+.app .ac{display:flex;align-items:center;gap:10px;font-family:"PlexMono",monospace;font-size:15px;margin:5px 0;white-space:nowrap}
+.app .ac em{font-style:normal;background:#222;color:#a8a8a8;padding:1px 7px;border-radius:4px;font-size:13px}
+.app .ac .r{margin-left:auto;color:#42be65}.app .ac .r.no{color:#fa4d56}
+.app table{width:100%;border-collapse:collapse;font-size:18px}
+.app th{text-align:left;color:#a8a8a8;font-weight:500;font-size:15px;padding:10px 12px;border-bottom:1px solid #2a2a2a}
+.app td{padding:14px 12px;border-bottom:1px solid #1f1f1f}
+.app td.f{font-family:"PlexMono",monospace}
+.app .lk{display:inline-block;border:1.5px solid var(--c);color:var(--c);border-radius:14px;padding:2px 12px;font-size:15px}
+.app .mc{display:grid;grid-template-columns:1.1fr 1fr;gap:18px}
+.app .col{border:1px solid #2a2a2a;border-radius:12px;background:#141414;padding:16px}
+.app .need{border:1px solid #2a2a2a;border-left:4px solid #ff7eb6;border-radius:10px;background:#1a1a1a;padding:14px;font-size:17px;line-height:1.5}
+.app .need small{display:block;color:#ff7eb6;font-weight:600;font-size:13px;letter-spacing:0.06em;margin-bottom:4px}
+.app .need .bs{display:flex;gap:10px;margin-top:12px}
+.app .log{margin-top:14px;font-family:"PlexMono",monospace;font-size:15px;color:#a8a8a8;line-height:1.8}
 #s03-p1{left:226px;top:50px}
 #s03-p2{left:974px;top:50px}
 #s03-p3{left:226px;top:483px}
@@ -24,12 +66,12 @@
 </style>
 <div data-hf-id="hf-3azd" id="root" data-composition-id="s03" data-width="1920" data-height="1080">
   <div data-hf-id="hf-dex1" id="s03-cam">
-    <div data-hf-id="hf-khr4" class="plane" id="s03-p1"><img data-hf-id="hf-epqf" src="assets/img/scroll-000.png" alt=""></div>
-    <div data-hf-id="hf-vd8r" class="plane" id="s03-p2"><img data-hf-id="hf-m217" src="assets/img/scroll-035.png" alt=""></div>
-    <div data-hf-id="hf-rf4q" class="plane" id="s03-p3"><img data-hf-id="hf-0j5u" src="assets/img/scroll-070.png" alt=""></div>
-    <div data-hf-id="hf-8nf1" class="plane" id="s03-p4"><img data-hf-id="hf-0rmv" src="assets/img/scroll-088.png" alt=""></div>
+    <div data-hf-id="hf-khr4" class="plane" id="s03-p1"><div class="app" data-layout-allow-overlap><div class="ah"><b>My tasks</b><span class="live">Live Collab</span><span class="onl">3 online</span></div><div class="tabs"><span>Multiplayer</span><span class="cur">My tasks</span><span>Mission Control</span><span>Team</span><span>Files & locks</span><span>Settings</span></div><div class="bd"><div class="row"><h3>My tasks · Alief</h3><span class="btn">Open in Bob IDE</span></div><div class="col" style="margin-bottom:16px"><div class="tk" style="font-size:20px;--s:#f1c21b"><i>T-1</i><b>Promo codes at checkout</b><span class="st">in progress</span></div><div class="ac"><em>files</em>src/checkout.ts · src/promo.ts<span class="r">locked to you</span></div><div class="ac"><em>from</em>Aarief · approved plan</div></div><div class="col" style="opacity:0.6"><div class="tk" style="font-size:20px"><i>T-2</i><b>Cart total in header</b><span class="st">Umar</span></div><div class="ac"><em>files</em>src/Header.tsx · src/cartBadge.ts<span class="r" style="color:#08bdba">Umar</span></div></div></div></div></div>
+    <div data-hf-id="hf-vd8r" class="plane" id="s03-p2"><div class="app" data-layout-allow-overlap><div class="ah"><b>Team</b><span class="live">Live Collab</span><span class="onl">3 online</span></div><div class="tabs"><span>Multiplayer</span><span>My tasks</span><span>Mission Control</span><span class="cur">Team</span><span>Files & locks</span><span>Settings</span></div><div class="bd"><div class="row"><h3>Team</h3><span class="btn">Open in Bob IDE</span></div><div class="cards"><div class="card" style="--c:#be95ff"><div class="who"><span class="av">A</span><div><b>Aarief</b><small>pm-lead · IBM Bob IDE · online</small></div><span class="w">Watch</span></div><div class="pill">Aarief · Bob pm-lead</div><h6>BOB ACTIVITY</h6><div class="ac"><em>mcp</em>propose_plan<span class="r">approved</span></div><div class="ac"><em>hook</em>prompt from the human</div><div class="ac"><em>mode</em>session start · pm-lead</div></div><div class="card" style="--c:#78a9ff"><div class="who"><span class="av">A</span><div><b>Alief</b><small>coder · IBM Bob IDE · online</small></div><span class="w">Watch</span></div><div class="pill">Alief · Bob coder</div><div class="tk"><i>T-1</i>Promo codes · checkout.ts<span class="st">in progress</span></div><h6>BOB ACTIVITY</h6><div class="ac"><em>hook</em>write_file checkout.ts<span class="r">allowed</span></div><div class="ac"><em>hook</em>apply_diff promo.ts<span class="r">allowed</span></div><div class="ac"><em>mcp</em>my_tasks</div><div class="ac"><em>mode</em>session start · coder</div></div><div class="card" style="--c:#08bdba"><div class="who"><span class="av">U</span><div><b>Umar</b><small>coder · IBM Bob IDE · online</small></div><span class="w">Watch</span></div><div class="pill">Umar · Bob coder</div><div class="q"><b>#1 in the queue for checkout.ts.</b> Alief holds it. Working on Header.tsx meanwhile.</div><div class="tk"><i>T-2</i>Cart total · Header.tsx<span class="st">in progress</span></div><h6>BOB ACTIVITY</h6><div class="ac"><em>hook</em>apply_diff checkout.ts<span class="r no">blocked</span></div><div class="ac"><em>mcp</em>why_blocked</div><div class="ac"><em>mcp</em>request_file</div></div></div></div></div></div>
+    <div data-hf-id="hf-rf4q" class="plane" id="s03-p3"><div class="app" data-layout-allow-overlap><div class="ah"><b>Files &amp; locks</b><span class="live">Live Collab</span><span class="onl">3 online</span></div><div class="tabs"><span>Multiplayer</span><span>My tasks</span><span>Mission Control</span><span>Team</span><span class="cur">Files & locks</span><span>Settings</span></div><div class="bd"><div class="row"><h3>Files &amp; locks</h3><span class="btn">Open in Bob IDE</span></div><table><tr><th>File</th><th>Owner</th><th>Task</th><th>Queue</th></tr><tr><td class="f">src/checkout.ts</td><td><span class="lk" style="--c:#78a9ff">🔒 Alief</span></td><td>T-1 · editing</td><td><span class="lk" style="--c:#08bdba">#1 Umar</span></td></tr><tr><td class="f">src/promo.ts</td><td><span class="lk" style="--c:#78a9ff">🔒 Alief</span></td><td>T-1</td><td>—</td></tr><tr><td class="f">src/Header.tsx</td><td><span class="lk" style="--c:#08bdba">🔒 Umar</span></td><td>T-2 · editing</td><td>—</td></tr><tr><td class="f">src/cartBadge.ts</td><td><span class="lk" style="--c:#08bdba">🔒 Umar</span></td><td>T-2</td><td>—</td></tr></table></div></div></div>
+    <div data-hf-id="hf-8nf1" class="plane" id="s03-p4"><div class="app" data-layout-allow-overlap><div class="ah"><b>Mission Control</b><span class="live">Live Collab</span><span class="onl">3 online</span></div><div class="tabs"><span>Multiplayer</span><span>My tasks</span><span class="cur">Mission Control</span><span>Team</span><span>Files & locks</span><span>Settings</span></div><div class="bd"><div class="mc"><div class="col"><h6>TASKS</h6><div class="tk" style="font-size:18px"><i>T-1</i>Promo codes · Alief<span class="st">in progress</span></div><div class="tk" style="font-size:18px"><i>T-2</i>Cart total · Umar<span class="st">in progress</span></div><div class="log">✓ plan approved by Aarief<br>🔒 4 files, one owner each<br>✗ Umar's Bob · checkout.ts blocked</div></div><div class="col"><h6>NEEDS YOU</h6><div class="need"><small>NEEDS YOU</small>Umar's Bob requests <b>checkout.ts</b>, held by Alief for T-1.<div class="bs"><span class="btn pri">Queue after T-1</span><span class="btn">Deny</span></div></div></div></div></div></div></div>
   </div>
-  <div data-hf-id="hf-42wb" id="s03-words"><span data-hf-id="hf-rp93" id="s03-w1">Visible<span data-hf-id="hf-6jgg" class="dot">.</span></span><span data-hf-id="hf-2sji" id="s03-w2">Locked<span data-hf-id="hf-3zzs" class="dot">.</span></span><span data-hf-id="hf-0q84" id="s03-w3" class="it">Human-approved<span data-hf-id="hf-2t2p" class="dot">.</span></span></div>
+  <div data-hf-id="hf-42wb" id="s03-words" data-layout-allow-overlap><span data-hf-id="hf-rp93" id="s03-w1" data-layout-allow-overlap>Visible<span data-hf-id="hf-6jgg" class="dot">.</span></span><span data-hf-id="hf-2sji" id="s03-w2" data-layout-allow-overlap>Locked<span data-hf-id="hf-3zzs" class="dot">.</span></span><span data-hf-id="hf-0q84" id="s03-w3" data-layout-allow-overlap class="it">Human-approved<span data-hf-id="hf-2t2p" class="dot">.</span></span></div>
   <div data-hf-id="hf-c5qh" id="s03-black"></div>
 </div>
 <script>
@@ -37,11 +79,13 @@
   const tl = gsap.timeline({ paused: true });
   const P = ["#s03-p1", "#s03-p2", "#s03-p3", "#s03-p4"];
   const C = [[586, 252], [1334, 252], [586, 685], [1334, 685]];
-  const K = 1.22;
+  const K = 1.4;
   // Camera move that grows one screen in place and pulls it a little toward centre.
   const focus = (i, t) => {
     const [cx, cy] = C[i];
-    tl.to("#s03-cam", { x: cx + (960 - cx) * 0.3 - cx * K, y: cy + (470 - cy) * 0.3 - cy * K, scale: K, duration: 0.9, ease: "power3.inOut" }, t);
+    tl.set("#s03-cam", { willChange: "transform" }, t);
+    tl.to("#s03-cam", { x: cx + (960 - cx) * 0.4 - cx * K, y: cy + (470 - cy) * 0.4 - cy * K, scale: K, duration: 0.9, ease: "power3.inOut" }, t);
+    tl.set("#s03-cam", { willChange: "auto" }, t + 0.9);
     P.forEach((p, j) => tl.to(p, { opacity: j === i ? 1 : 0.32, filter: j === i ? "blur(0px)" : "blur(3px)", borderColor: j === i ? "#0f62fe" : "#393939", duration: 0.6, ease: "power2.out" }, t));
   };
   // The four screens share one frame; they rise in one by one, half a second apart.

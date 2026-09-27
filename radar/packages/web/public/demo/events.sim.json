@@ -19,7 +19,7 @@
       "type": "member.created",
       "payload": {
         "memberId": "A",
-        "name": "Andi",
+        "name": "Arief",
         "role": "coder"
       }
     },
@@ -30,7 +30,7 @@
       "type": "member.created",
       "payload": {
         "memberId": "B",
-        "name": "Budi",
+        "name": "Umar",
         "role": "coder"
       }
     },
@@ -41,7 +41,7 @@
       "type": "member.created",
       "payload": {
         "memberId": "C",
-        "name": "Citra",
+        "name": "Imelda",
         "role": "pm"
       }
     },

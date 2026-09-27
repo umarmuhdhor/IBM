@@ -9,7 +9,7 @@ language: en
 audience: IBM Bob hackathon judges (lablab) and developers who code with IBM Bob
 length: 170s
 angle: kinetic product intro, then a slow step-by-step Bob IDE demo
-voice: elevenlabs Alice (Xb7hH8MSUJpSbSDYk0k2) · eleven_v3
+voice: elevenlabs Matilda (XrExE9yKIg1WjnnlVkGX) · eleven_multilingual_v2 · clause-aligned to the cut
 ---
 
 ## Intent

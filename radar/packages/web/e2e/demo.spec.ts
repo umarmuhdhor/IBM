@@ -72,9 +72,9 @@ test.describe('/ and /gallery smoke', () => {
       'aria-selected',
       'true',
     );
-    await expect(page.getByText("Budi's Bob asks for checkout.ts")).toBeVisible();
-    await page.getByRole('tab', { name: 'Budi' }).click();
-    await expect(page.getByRole('tab', { name: 'Budi' })).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByText("Umar's Bob asks for checkout.ts")).toBeVisible();
+    await page.getByRole('tab', { name: 'Umar' }).click();
+    await expect(page.getByRole('tab', { name: 'Umar' })).toHaveAttribute('aria-selected', 'true');
     await expect(page.getByRole('tabpanel').getByText(/lock_guard/)).toBeVisible();
     await expect(page.getByRole('link', { name: /watch full replay/i })).toBeVisible();
   });
@@ -83,10 +83,10 @@ test.describe('/ and /gallery smoke', () => {
     await page.goto('/');
     await page.getByRole('tab', { name: 'Mission Control' }).focus();
     await page.keyboard.press('ArrowRight');
-    await expect(page.getByRole('tab', { name: 'Budi' })).toBeFocused();
-    await expect(page.getByRole('tab', { name: 'Budi' })).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('tab', { name: 'Umar' })).toBeFocused();
+    await expect(page.getByRole('tab', { name: 'Umar' })).toHaveAttribute('aria-selected', 'true');
     await page.keyboard.press('ArrowRight');
-    await expect(page.getByRole('tab', { name: 'Andi' })).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('tab', { name: 'Arief' })).toHaveAttribute('aria-selected', 'true');
   });
 
   test('landing numbers come from meta.json and page has no horizontal scroll', async ({ page }) => {

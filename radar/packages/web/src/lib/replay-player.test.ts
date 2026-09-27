@@ -9,7 +9,7 @@ function ev(id: number, ts: number, type: string, payload: unknown, actor = 'ser
 // 5 file.changed events, one every 4s over 20s, so 10s snapshots land mid-stream.
 const EVENTS: RadarEvent[] = [
   ev(1, 0, 'workspace.created', { workspaceId: 'toko-demo', headCommit: null, fileCount: 0 }),
-  ev(2, 0, 'member.created', { memberId: 'A', name: 'Andi', role: 'coder' }),
+  ev(2, 0, 'member.created', { memberId: 'A', name: 'Arief', role: 'coder' }),
   ev(3, 4_000, 'file.changed', { path: 'a.ts', version: 1, hash: 'h1', by: 'A', taskId: null, size: 10 }),
   ev(4, 8_000, 'file.changed', { path: 'b.ts', version: 1, hash: 'h2', by: 'A', taskId: null, size: 10 }),
   ev(5, 12_000, 'file.changed', { path: 'c.ts', version: 1, hash: 'h3', by: 'A', taskId: null, size: 10 }),
@@ -33,6 +33,12 @@ describe('buildSnapshots + stateAtOffset', () => {
     const fresh6s = stateAtOffset(EVENTS, [{ offsetMs: 0, state: initialState() }], 6_000);
     expect(backTo6s.files).toEqual(fresh6s.files);
     expect(Object.keys(backTo6s.files)).toEqual(['a.ts']);
+  });
+
+  it('applies the events at the very first timestamp, so members have names from offset 0', () => {
+    const snapshots = buildSnapshots(EVENTS, 10_000);
+    expect(stateAtOffset(EVENTS, snapshots, 0).members['A']?.name).toBe('Arief');
+    expect(stateAtOffset(EVENTS, snapshots, 6_000).members['A']?.name).toBe('Arief');
   });
 
   it('an offset before the first event applies no events', () => {

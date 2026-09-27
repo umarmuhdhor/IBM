@@ -232,7 +232,7 @@ export default function GalleryPage() {
               ts={1790397011750}
               actor="A"
               kind="edit"
-              text="Andi edited src/checkout/shipping.ts"
+              text="Arief edited src/checkout/shipping.ts"
             />
           </Swatch>
           <Swatch label="blocked kind with trace">
@@ -240,7 +240,7 @@ export default function GalleryPage() {
               ts={1790397030350}
               actor="B"
               kind="blocked"
-              text="Budi blocked on src/routes.ts"
+              text="Umar blocked on src/routes.ts"
               trace={{ primitive: 'hook', detail: 'PreToolUse · lock_guard', outcome: 'blocked', ms: 84 }}
             />
           </Swatch>
@@ -338,7 +338,7 @@ export default function GalleryPage() {
       <Section title="DecisionCard">
         <Swatch label="pending (read-only)">
           <DecisionCard
-            title="Budi needs src/routes.ts"
+            title="Umar needs src/routes.ts"
             reason="T-2 requires a small format change in the same file A holds."
             status="pending"
             readOnly

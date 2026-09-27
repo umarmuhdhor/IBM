@@ -1,22 +1,22 @@
 [
   {
     "id": "01-waiting",
-    "title": "Problem · waiting",
+    "title": "Problem \u00b7 waiting",
     "text": "Here is how a sprint really goes. Tasks get split by hand, and half the team sits waiting on someone else's code. Hours, gone."
   },
   {
     "id": "02-overwrite",
-    "title": "Problem · overwrite",
+    "title": "Problem \u00b7 overwrite",
     "text": "And with AI, it gets worse. Your Bob doesn't know what my Bob is doing. One edit, and someone's work is gone."
   },
   {
     "id": "02b-parallel",
-    "title": "Solution · parallel",
+    "title": "Solution \u00b7 parallel",
     "text": "IBM Bob Live Collab puts your team's Bobs to work together. A PM Lead mode in Bob splits the brief, our radar-mcp server gives every file one owner, and everyone builds in parallel."
   },
   {
     "id": "02c-lock",
-    "title": "Solution · lock",
+    "title": "Solution \u00b7 lock",
     "text": "And no one can overwrite someone else's work. Bob's PreToolUse hook blocks the edit before it lands, and Bob's rules make it ask, not force."
   },
   {
@@ -42,7 +42,7 @@
   {
     "id": "07-zoomout",
     "title": "Zoom out",
-    "text": "Now zoom out. Each task lands in that coder's own Bob IDE, with their own account and their own context."
+    "text": "Each task lands in that coder's own Bob IDE, with their own account and their own context."
   },
   {
     "id": "08-build",
