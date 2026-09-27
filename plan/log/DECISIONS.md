@@ -625,3 +625,26 @@ Format:
   semua file seperti coder (PM jadi ikut coding, bertentangan dengan peran PM).
 - Dampak: Alief (kontrak `pm_doc` + deploy server), Aarief (tidak ada perubahan wajib; pesan penolakan baru tampil
   apa adanya), Imelda (tidak terpengaruh).
+
+## D-umar-08 · 27 Sep 2026 · fase 15c · PM menyetujui rencana
+
+- Konteks: uji tim: owner (coder yang membuat room = Mission Control) yang harus menyetujui pembagian tugas,
+  padahal PM yang memimpin tim.
+- Keputusan: `POST /v1/proposals/:id/decision` menerima token PM selain Mission Control; coder tetap 403.
+  `proposal.decided.by` dan `decided_by` berisi id member PM atau `mc`. Di app, PM mendapat tombol Approve (tab
+  Tasks dan Mission Control); Mission Control hanya mendapat tombol bila room tidak punya PM, dan melihat
+  "Waiting for <PM> to approve" bila ada. Server tetap menerima keputusan Mission Control sebagai cadangan (PM
+  sedang tidak ada).
+- Risiko: agent Bob PM memegang token PM. Mode `pm-lead` hanya punya grup `read` dan `mcp`, dan radar-mcp tidak
+  punya tool approve, jadi agent tidak bisa menyetujui usulannya sendiri.
+- Alternatif ditolak: server menolak Mission Control bila ada PM (owner terkunci saat PM offline; memecah banyak
+  test lama).
+
+## D-umar-09 · 27 Sep 2026 · fase 15c · Gabung ulang memakai kursi offline dengan nama sama
+
+- Konteks: teman yang terputus dan gabung lagi dengan kode baru mendapat kursi kedua (nama dobel), karena app-nya
+  tidak lagi punya token kursi (D-alief-20 hanya memakai token).
+- Keputusan: tanpa token kursi, kode open yang ditukar dengan nama yang sama (tanpa beda huruf besar) dengan kursi
+  aktif yang sedang **offline** memakai kursi itu. Kursi owner (`meta.owner_member`) tidak pernah diambil lewat nama.
+- Risiko diterima: pemegang kode open dari owner bisa mengambil kursi teman yang offline dengan mengetik namanya.
+  Kode itu sendiri diberikan owner secara pribadi; kursi online tidak bisa diambil.

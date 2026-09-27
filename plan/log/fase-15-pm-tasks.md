@@ -181,3 +181,46 @@ Pelajaran: Task 17 mahal karena Bob menjalankan ulang suite server berkali-kali 
 - Verifikasi: common 148, sync 74, server 234, hooks 52, mcp 50; `pnpm -C radar typecheck` + `lint` bersih.
 - Catatan: dokumen PM tidak punya task, jadi tidak ikut commit GitHub per task; dokumen tetap tersimpan di server
   dan tersinkron ke semua anggota.
+
+## Lanjutan · Bug dari uji tim (fase 15c)
+
+Laporan Umar setelah uji dengan mel dan aliefauzan di server production:
+
+| # | Laporan | Penyebab | Perbaikan |
+|---|---|---|---|
+| 1 | PM hanya bisa menaruh file di `.bob`, tidak di root | Server production masih versi sebelum fase 15b (tidak ada `pm_doc`), jadi file di root ditolak. `.bob/` selalu di-ignore sync, sehingga file di sana hanya "berhasil" karena tidak pernah dikirim | Kode sudah benar di `main` (#43); perlu **deploy server** (lane Alief, butuh token Cloudflare) |
+| 2 | Coder pembuat room yang harus accept, seharusnya PM | `POST /v1/proposals/:id/decision` hanya untuk Mission Control; owner app = Mission Control | PM boleh memutuskan (D-umar-08); tercatat siapa yang memutuskan; app: tab Tasks punya "Plans to approve" untuk PM, owner melihat "Waiting for <PM> to approve" |
+| 3 | Tombol "open" di Team tidak bisa diklik | "open" adalah teks status, bukan tombol | Status jadi titik + kata ("to do"); seluruh baris task jadi tombol yang membuka Tasks (chevron) |
+| 4 | Coder tidak tahu cara membuka/mengerjakan task | Tidak ada jalan dari app ke Bob; owner (Mission Control) juga coder tapi tidak punya My tasks | Tombol **Start in Bob**: aktifkan task, salin prompt, buka IBM Bob IDE; petunjuk singkat; owner mendapat My tasks lewat kursi folder bersama |
+| 5 | Teman terputus lalu masuk lagi → akun dobel | App kehilangan token kursi, jadi kode baru membuat kursi baru; production juga belum punya aturan satu PM | Kursi offline dengan nama sama dipakai ulang (Bob Task 23), kursi owner dikecualikan (D-umar-09) |
+| 6 | Tampilan amburadul | — | Tab Tasks disusun ulang: Plans to approve → My tasks → Team progress; kartu dengan "Your files", "x of y steps done", aksi jelas |
+
+- Bob: Task 23 (bug 5, 0.613 Bobcoin, `uaai_umar_task23_rejoin_same_seat_summary.png`, commit `f90b77da`). Kuota
+  Bob tinggal ~2%, jadi bug 2, 3, 4, 6 dikerjakan Claude Code (commit `a6e90743`, `dc0c7d71`).
+- Uji lokal (`wrangler dev` + skenario): PM gabung ulang tanpa token → kursi C yang sama; PM kedua 409; PM
+  approve P-1 di app → T-1..T-3 terbagi; coder mel: Start in Bob → server `activeTaskId T-2`.
+- Verifikasi: common 148, server 237, sync 74, mcp 50, hooks 52, app 188; typecheck, lint, oxlint, gerbang
+  `check:code-quality:changed` lulus.
+
+### Gerbang UI `better-interface` (fase 15c)
+
+Scope: tab Tasks (PM, coder, owner), baris task di Team; app dev di background lewat CDP (`agent-browser`,
+`ORCA_BACKGROUND_LAUNCH=1`) sesuai `app/AGENTS.md`; lebar 1440 dan 900; tema gelap.
+
+| Domain | Bukti | Hasil |
+|---|---|---|
+| Accessibility | tombol baris task punya nama lengkap ("T-2 Page layout (index.html), to do. Open in Tasks"), `role="alert"`/`status`, progressbar berlabel, langkah read-only punya teks sr-only | Clear |
+| Layout | urutan Plans to approve → My tasks → Team progress, lebar maks 3xl, 900 px tanpa terpotong | Clear |
+| Writing | label aksi berbentuk kata kerja ("Approve and assign", "Send back", "Start in Bob"), empty state menunjuk langkah berikut | 1 HIGH (diperbaiki) |
+| Typography | `[overflow-wrap:anywhere]`, angka `tabular-nums` | Clear |
+| Colors | status tidak hanya warna (titik + kata), aksen needs-you pada kartu rencana | 1 HIGH (diperbaiki) |
+| UI | tombol shadcn `Button`, tanpa animasi baru | Clear |
+
+| Severity | Domain | Location | Before | After | Why |
+|---|---|---|---|---|---|
+| HIGH | Colors | `CoderTaskCard.tsx` startInBob | masalah dari `openInBob()` ("Join a workspace first.") tampil hijau sebagai `status` | tampil sebagai `alert` merah + "The prompt is copied: open the project folder in IBM Bob IDE…" | Warna sukses untuk kegagalan menyesatkan — **diperbaiki**, test baru |
+| HIGH | Writing | `TeamPanel.tsx` baris task | kata "open" di kanan tampak seperti tombol tapi tidak bisa diklik | seluruh baris tombol + chevron, status "● to do" | Kontrol yang terlihat tapi tidak berfungsi — **diperbaiki** |
+
+Screenshot: `ui-15/pm-plan-approval-1440.png`, `pm-after-approve-1440.png`, `coder-my-tasks-start-1440.png`,
+`coder-my-tasks-900.png`, `team-task-rows-1440.png`. Tidak diverifikasi: 320 px, tema terang, screen reader nyata.
+Verdict: **Approve**.
