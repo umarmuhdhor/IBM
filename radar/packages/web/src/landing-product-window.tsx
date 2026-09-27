@@ -4,15 +4,15 @@ import { useRef, useState, type KeyboardEvent } from 'react';
 import { AgentTag, BobTrace, DecisionCard, LockChip, MemberChip, WritingPulse } from '@radar/ui';
 
 // Landing product window (fase 11D1 step 18a). Every file, task and outcome shown here mirrors
-// the toko-demo replay fixture (public/demo/events.json): Budi's Bob hits checkout.ts while
-// Andi holds it for T-1, the hook blocks it, and the request is queued while Budi moves on.
+// the toko-demo replay fixture (public/demo/events.json): Umar's Bob hits checkout.ts while
+// Arief holds it for T-1, the hook blocks it, and the request is queued while Umar moves on.
 
-type Pane = 'andi' | 'mc' | 'budi';
+type Pane = 'arief' | 'mc' | 'umar';
 
 const TABS: { id: Pane; label: string }[] = [
-  { id: 'andi', label: 'Andi' },
+  { id: 'arief', label: 'Arief' },
   { id: 'mc', label: 'Mission Control' },
-  { id: 'budi', label: 'Budi' },
+  { id: 'umar', label: 'Umar' },
 ];
 
 export function LandingProductWindow({ demoPath }: { demoPath: string }) {
@@ -76,9 +76,9 @@ export function LandingProductWindow({ demoPath }: { demoPath: string }) {
         tabIndex={0}
         className="lp-window-body"
       >
-        {pane === 'andi' ? <AndiPane /> : null}
+        {pane === 'arief' ? <AriefPane /> : null}
         {pane === 'mc' ? <MissionPane /> : null}
-        {pane === 'budi' ? <BudiPane /> : null}
+        {pane === 'umar' ? <UmarPane /> : null}
       </div>
 
       <div className="lp-window-foot">
@@ -91,12 +91,12 @@ export function LandingProductWindow({ demoPath }: { demoPath: string }) {
   );
 }
 
-function AndiPane() {
+function AriefPane() {
   return (
     <div>
       <div className="lp-pane-head">
         <MemberChip member="A" initials="A" status="online" />
-        <AgentTag label="Andi · Bob coder" member="A" status="writing" />
+        <AgentTag label="Arief · Bob coder" member="A" status="writing" />
         <WritingPulse member="A" />
       </div>
       <p className="lp-file">
@@ -133,17 +133,17 @@ function MissionPane() {
         </ul>
         <p className="lp-pane-kicker lp-pane-kicker-gap">Team</p>
         <div className="lp-people">
-          <AgentTag label="Andi · coder" member="A" status="writing" />
-          <AgentTag label="Budi · coder" member="B" status="blocked" />
-          <AgentTag label="Citra · pm-lead" member="C" status="idle" />
+          <AgentTag label="Arief · coder" member="A" status="writing" />
+          <AgentTag label="Umar · coder" member="B" status="blocked" />
+          <AgentTag label="Imelda · pm-lead" member="C" status="idle" />
         </div>
       </div>
       <div className="lp-needs">
         <p className="lp-pane-kicker">Needs you</p>
         <div className="lp-needs-enter">
           <DecisionCard
-            title="Budi's Bob asks for checkout.ts"
-            reason="Held by Andi for T-1. Queue Budi and continue Header.tsx meanwhile."
+            title="Umar's Bob asks for checkout.ts"
+            reason="Held by Arief for T-1. Queue Umar and continue Header.tsx meanwhile."
             status="auto-applied"
             readOnly
             onApprove={() => undefined}
@@ -163,12 +163,12 @@ function MissionPane() {
   );
 }
 
-function BudiPane() {
+function UmarPane() {
   return (
-    <div className="lp-budi">
+    <div className="lp-umar">
       <div className="lp-pane-head">
         <MemberChip member="B" initials="B" status="online" />
-        <AgentTag label="Budi · Bob coder" member="B" status="blocked" />
+        <AgentTag label="Umar · Bob coder" member="B" status="blocked" />
       </div>
       <p className="lp-file">
         src/checkout/checkout.ts <LockChip state="dipegang" holder="A" />
@@ -178,7 +178,7 @@ function BudiPane() {
         <BobTrace primitive="mcp" detail="radar.why_blocked" />
       </div>
       <p className="lp-blocked-copy">
-        checkout.ts is held by Andi&apos;s Bob for T-1 (coupon). You are queued at position 1.
+        checkout.ts is held by Arief&apos;s Bob for T-1 (coupon). You are queued at position 1.
         Continue <code>Header.tsx</code> first.
       </p>
     </div>
