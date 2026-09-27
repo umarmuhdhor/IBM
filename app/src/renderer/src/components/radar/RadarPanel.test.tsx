@@ -172,3 +172,33 @@ describe('Multiplayer and Settings tabs', () => {
     vi.unstubAllGlobals()
   })
 })
+
+describe('Invite teammates after a folder switch', () => {
+  it('forgets codes made for the workspace this app no longer shares', async () => {
+    vi.stubGlobal('api', {
+      radar: {
+        getSyncStatus: vi.fn(async () => ({
+          state: 'stopped',
+          folder: null,
+          files: null,
+          message: null,
+          conflicts: [],
+          stopReason: null
+        })),
+        onSyncStatus: vi.fn(() => () => undefined),
+        getProfileName: vi.fn(async () => null),
+        createJoinCode: vi.fn(async () => ({ member: null, code: 'WMAW-K7TN', expiresAt: 1 })),
+        copyText: vi.fn(async () => undefined)
+      }
+    })
+    const owner = { ...connection, member: 'mc', role: 'mc' } as const
+    const props = { tab: 'multiplayer', onConnectionChange: vi.fn(), onTabChange: vi.fn() } as const
+    const { rerender } = render(<RadarPanel connection={owner} {...props} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Make code' }))
+    expect(await screen.findByText('WMAW-K7TN')).toBeTruthy()
+    rerender(<RadarPanel connection={{ ...owner, workspace: 'gamma' }} {...props} />)
+    expect(screen.queryByText('WMAW-K7TN')).toBeNull()
+    expect(screen.queryByText(/Copied WMAW-K7TN/)).toBeNull()
+    vi.unstubAllGlobals()
+  })
+})

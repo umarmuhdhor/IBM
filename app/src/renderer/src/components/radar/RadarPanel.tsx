@@ -44,6 +44,8 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
     : null
   const [watchedMemberId, setWatchedMemberId] = useState<string | null>(null)
   const [sharedCode, setSharedCode] = useState<RadarJoinCode | null>(null)
+  // Why: codes made for a folder this app no longer shares are dead; a new share starts an empty list.
+  const inviteKey = `${connection?.workspace ?? ''}/${sharedCode?.code ?? ''}`
   const tabs: RadarPanelTab[] = watchedMemberId ? [...TABS, 'watch'] : TABS
 
   const watch = (memberId: string) => {
@@ -104,7 +106,7 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
             {connection?.role !== 'mc' && (
               <JoinWithCodeCard connection={connection} onConnectionChange={onConnectionChange} />
             )}
-            {connection?.role === 'mc' && <InviteCodesCard />}
+            {connection?.role === 'mc' && <InviteCodesCard key={inviteKey} />}
             {connectionFailure === 'access-rejected' && (
               <Button variant="link" size="xs" onClick={() => onTabChange('settings')}>
                 The server rejected this app’s token. Check it in Settings
@@ -165,7 +167,7 @@ export function RadarPanel({ tab, connection, onConnectionChange, onTabChange }:
           <>
             {connection?.role === 'mc' && (
               <div className="p-4 pb-0">
-                <InviteCodesCard />
+                <InviteCodesCard key={inviteKey} />
               </div>
             )}
             <TeamPanel state={state} now={now} onWatch={watch} />
