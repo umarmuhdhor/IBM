@@ -188,8 +188,38 @@ Cara lain tanpa menghentikan sharing: owner sekarang bisa klik **Share a differe
 Aturan server:
 
 - Server kosong boleh diklaim oleh siapa pun yang pertama klik **Share**.
-- Selama ada workspace, hanya owner-nya yang bisa **Stop sharing** atau **Share a different folder…**. Orang lain yang klik Share akan melihat pesan "This server already has the workspace …".
+- Selama ada workspace, hanya owner-nya yang bisa **Stop sharing** atau **Share a different folder…**. Orang lain yang klik Share akan melihat pesan "<nama> is sharing <workspace>. Ask them to stop sharing first, or ask them for a join code."
 - Butuh dua project jalan bersamaan? Deploy server kedua (bagian 3.1) dengan nama Worker lain.
+
+#### 4.3.1 Force close: share lama tidak bisa dihentikan dari app
+
+Kadang server masih memegang share lama, tetapi tidak ada app yang bisa menekan **Stop sharing**. Contohnya: app owner sudah di-reset, koneksinya hilang, atau owner memakai Mac lain. Tombol **Choose folder and share…** lalu menampilkan pesan "<nama> is sharing <workspace>. Ask them to stop sharing first, …", walaupun owner-nya kamu sendiri.
+
+Server hanya bisa ditutup oleh token Mission Control owner atau oleh `ADMIN_SECRET`. Token di app terenkripsi dengan Keychain macOS (Electron `safeStorage`), jadi tidak bisa dibaca dari CLI. Karena itu force close memakai `ADMIN_SECRET`.
+
+> **Peringatan:** reset menghapus semua data workspace di server (task, kunci, event, anggota, kode gabung) dan tidak bisa dibatalkan. Semua anggota terputus. File di Mac semua orang tetap ada.
+
+1. Coba reset dengan secret yang tersimpan di `~/.live-collab-admin` (bagian 3.2):
+
+   ```bash
+   ADMIN_SECRET="$(tr -d '\n' < ~/.live-collab-admin)" pnpm -C radar admin reset --server https://live-collab.afindo-mi01.workers.dev --confirm
+   ```
+
+   Kalau berhasil, output-nya `workspace reset`. Lanjut ke langkah 4.
+
+2. Kalau muncul `401 UNAUTHORIZED — The admin secret is wrong or not configured.`, secret di Worker berbeda dengan isi file. Timpa secret Worker dengan isi file. Ini butuh `wrangler login` ke akun Cloudflare pemilik Worker `live-collab`:
+
+   ```bash
+   tr -d '\n' < ~/.live-collab-admin | pnpm -C radar/packages/server exec wrangler secret put ADMIN_SECRET
+   ```
+
+   Output yang benar: `✨ Success! Uploaded secret ADMIN_SECRET`. Secret lama tidak berlaku lagi. Beri tahu siapa pun yang masih memakainya.
+
+3. Tunggu kurang lebih 30 detik, lalu jalankan lagi perintah reset dari langkah 1. Secret baru butuh beberapa detik sampai aktif, jadi reset yang langsung dijalankan bisa masih mendapat `401`. Ulangi kalau masih `401`.
+
+4. Di app, klik **Choose folder and share…** lagi. Anggota lain perlu kode baru, lalu **Join with a different code**.
+
+Kalau `~/.live-collab-admin` belum ada, buat dulu (`openssl rand -hex 32 > ~/.live-collab-admin && chmod 600 ~/.live-collab-admin`), lalu mulai dari langkah 2.
 
 ### 4.4 Cara lain: workspace dari admin CLI (repo demo)
 
@@ -223,6 +253,118 @@ curl -fsSL https://live-collab.afindo-mi01.workers.dev/j/<KODE> | sh
 
 Perintah ini memasang Node dan CLI di `~/.radar`, menukar kode, menyinkronkan folder, lalu membuka IBM Bob IDE.
 
+### 5.1 Panduan lengkap: dari kode sampai Bob bekerja
+
+Contoh: Alief (owner, Coder) sudah klik **Share** (4.1). Sari (PM) dan Budi (Coder) bergabung. Setiap langkah punya bagian **Cek** supaya kamu tahu langkah itu berhasil sebelum lanjut.
+
+#### Langkah 1: masukkan kode dan connect
+
+1. Buka app → sidebar **LIVE COLLAB** → **Multiplayer**.
+2. Di kartu **Join a workspace**, isi:
+   - **Kode** dari owner, misalnya `K7QM-3XPA`. Satu kode untuk satu orang, berlaku 72 jam.
+   - **Nama**, misalnya `Budi`.
+   - **Peran**: **Coder** untuk yang menulis kode, **PM** untuk yang membagi task.
+3. Klik **Join**. Tunggu beberapa detik sampai file selesai tersinkron.
+
+**Cek:**
+
+- Kartu menampilkan nama workspace dan status tersambung, bukan pesan error.
+- Di app owner, namamu muncul di daftar **Joined** dan di tab **Team**.
+- Folder project ada di Mac-mu, lengkap dengan kit Bob:
+
+  ```bash
+  ls ~/live-collab/<workspace>/.bob
+  ```
+
+  Isinya antara lain `custom_modes.yaml`, `mcp.json`, `settings.json`, dan `hooks/`. Kalau `.bob` tidak ada, lihat baris "Kit Bob tidak terpasang" di bagian 6.
+
+#### Langkah 2: buka IBM Bob IDE
+
+1. Di app, klik **Open in IBM Bob**. IBM Bob IDE terbuka di folder `~/live-collab/<workspace>` (owner: folder yang dia share).
+2. Klik **Trust** saat Bob bertanya. Folder yang belum dipercaya membuka "Restricted Mode", dan panel Bob kosong.
+3. Pilih mode:
+   - Coder: **Live Collab Coder**.
+   - PM: **Live Collab PM Lead**.
+4. Buat task baru di panel Bob.
+
+**Cek:**
+
+- Baris pertama konteks Bob berisi brief `[Radar]`: siapa memegang file apa dan keputusan terbaru.
+- Panggilan tool `radar` pertama bisa meminta izin satu kali. Klik **Approve**. Setelah itu tidak ditanya lagi.
+- Kalau mode Live Collab tidak muncul, tutup Bob, lalu klik **Open in IBM Bob** lagi dari app.
+
+#### Langkah 3: prompt di IBM Bob
+
+Tempel prompt di bawah ini ke panel Bob. Ganti bagian `<…>`. Prompt yang sama ada di `radar/bob-kit/prompts/`.
+
+**PM (mode Live Collab PM Lead)**: bagi pekerjaan di awal sesi.
+
+```text
+Tujuan sesi: <tujuan>. Tim: A dan B (coder). Mulai dengan team_status, baca file yang relevan, lalu susun rencana dengan propose_plan. Tidak boleh ada file yang sama di dua task; file bersama masuk queued_files.
+```
+
+Ganti `A dan B` dengan ID member dari tab **Team**. Rencana ini baru berlaku setelah owner klik **Approve** di **Mission Control**.
+
+**Coder (mode Live Collab Coder)**: mulai kerja.
+
+```text
+Mulai kerja: panggil radar my_tasks, lalu kerjakan task aktifmu saja. Baca ulang file sebelum mengeditnya.
+```
+
+Coder tidak wajib menunggu rencana PM. Prompt biasa juga boleh, misalnya `Tambahkan validasi email di src/auth/signup.ts`. File yang belum dipegang orang lain otomatis jadi milikmu.
+
+**Coder**: lanjut, atau saat edit ditolak.
+
+```text
+Lanjutkan task aktifmu. Kalau ada edit yang ditolak Radar, panggil why_blocked dulu, lalu kerjakan file lain.
+```
+
+**Coder**: selesai, ajukan hasil.
+
+```text
+Cek hasil kerjamu (typecheck/test bila ada). Kalau sudah beres, panggil radar submit_task dengan ringkasan 1–3 kalimat.
+```
+
+**PM**: review task yang diajukan.
+
+```text
+Task <id> diajukan. Review dengan get_task_diff: cek ekspor yang berubah dan file pengimpornya milik task lain, lalu usulkan hasil review dengan propose_review.
+```
+
+**PM**: saat dua coder berebut file.
+
+```text
+Ada permintaan file baru. Baca list_requests, bandingkan kedua task dan file yang diperebutkan, lalu usulkan keputusan dengan propose_decision (alasan satu kalimat).
+```
+
+**PM**: laporan akhir sesi.
+
+```text
+Buat laporan sesi dengan session_report.
+```
+
+#### Langkah 4: cek semuanya jalan
+
+Owner mengecek dari app (sidebar **LIVE COLLAB**). Anggota lain juga bisa melihat tab yang sama, tetapi hanya owner yang bisa memutuskan.
+
+| Yang dicek | Di mana | Tanda berhasil |
+|---|---|---|
+| Semua anggota tersambung | tab **Team** | Setiap nama muncul dan statusnya aktif. |
+| Bob anggota sedang bekerja | tab **Team** → **Watch** pada satu anggota → **Watch Bob** | **Bob activity** dan **Live feed** bertambah saat Bob mengedit. Isi prompt hanya tampil kalau anggota itu menyalakan **Share my prompts** di **Settings**. Kalau tidak, tampil "Prompt text not shared". |
+| File tersinkron | Mac anggota lain | Edit yang disimpan Bob di satu Mac muncul di `~/live-collab/<workspace>` Mac lain dalam beberapa detik. |
+| Kunci file | tab **Files & locks** | File yang sedang diedit tampil terkunci atas nama pemegangnya. Jumlahnya ada di "`N` files · `M` locked". |
+| Rencana, review, dan rebutan file | tab **Mission Control** | Kartu proposal muncul. Owner klik **Approve** / **Deny**, atau **Approve & commit** / **Send back** untuk review. "No decisions pending." berarti tidak ada yang menunggu. |
+
+**Uji kunci (opsional, bagus untuk demo):**
+
+1. Coder A meminta Bob mengedit `src/x.ts`.
+2. Sebelum task A diajukan, Coder B meminta Bob mengedit bagian yang sama di `src/x.ts`.
+3. Hasil yang benar:
+   - Edit Bob B ditolak dengan pesan `RADAR` dan tidak menimpa pekerjaan A.
+   - Bob B memanggil `why_blocked`, lalu menjelaskan siapa pemegang file itu dan untuk task apa.
+   - Permintaan B masuk antrean dan muncul di **Mission Control**. PM bisa memakai prompt "rebutan" di atas.
+4. Satu Bob memegang satu blok baris, atau satu file kalau Bob menulis ulang seluruh file. Jadi B masih bisa mengedit bagian lain dari file yang sama.
+
 ## 6. Masalah umum
 
 | Gejala | Penyebab dan solusi |
@@ -232,8 +374,10 @@ Perintah ini memasang Node dan CLI di `~/.radar`, menukar kode, menyinkronkan fo
 | 409 "already has 8 members" | Workspace penuh (A–H). |
 | Token lama tidak berlaku | Kode dipakai lagi di perangkat lain. Perangkat terbaru yang menang. |
 | Mission Control terputus | Kode owner atau `admin token --member mc` dipakai lagi. Sambung ulang dengan kode owner. |
-| "This server already has the workspace …" saat Share | Server masih dipakai project lain. Minta owner-nya klik **Stop sharing** (4.3), atau minta kode gabung darinya. |
+| "<nama> is sharing <workspace>. Ask them to stop sharing first, …" saat Share | Server masih dipakai project lain. Minta owner-nya klik **Stop sharing** (4.3), atau minta kode gabung darinya. Kalau tidak ada app yang bisa Stop sharing (termasuk share lama milikmu sendiri), pakai force close (4.3.1). |
 | Sync berhenti, "Workspace reset" | Owner menghentikan sharing atau mengganti folder. Minta kode baru, lalu **Join with a different code**. |
+| Kit Bob tidak terpasang (`.bob` tidak ada, mode Live Collab tidak muncul di Bob) | Pasang ulang: `~/.radar/bin/radar kit install --dir ~/live-collab/<workspace>`. Perannya diambil dari koneksi, atau tulis `coder` / `pm` setelah `install`. Kalau `.bob` sudah berisi file lain, tambahkan `--force` (folder lama dicadangkan ke `.bob.bak-<ts>`). |
 | "more than 3000 files to share" | Tambahkan folder build atau data ke `.gitignore`, atau pilih folder yang lebih kecil. |
-| `ADMIN_SECRET is not set` | Set env di shell yang sama. Jangan kirim secret sebagai argumen. |
+| `ADMIN_SECRET is not set` | Set env di shell yang sama, misalnya `ADMIN_SECRET="$(tr -d '\n' < ~/.live-collab-admin)" pnpm -C radar admin …`. Jangan kirim secret sebagai argumen. |
+| `401 UNAUTHORIZED — The admin secret is wrong or not configured.` | Secret di Worker berbeda dengan secret lokal. Timpa dengan `wrangler secret put ADMIN_SECRET` (4.3.1 langkah 2). Tunggu kurang lebih 30 detik, lalu coba lagi. |
 | App tidak bisa menyimpan koneksi | Keychain macOS terkunci. Buka kunci, lalu coba lagi. |
