@@ -2,6 +2,8 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import type { RadarSyncStatus } from '../../../../shared/radar-join'
+import type { RadarState } from '@radar/ui'
+import { useRadarStore } from '@/store/radar-store'
 import { JoinWithCodeCard } from './JoinWithCodeCard'
 
 const status: RadarSyncStatus = {
@@ -56,6 +58,22 @@ it('lets a teammate join the next workspace after the owner stopped sharing (D-a
   )
   fireEvent.click(await screen.findByRole('button', { name: 'Join with a different code' }))
   expect(screen.getByRole('form', { name: 'Join with a code' })).toBeTruthy()
+})
+
+it('titles the joined workspace with your name and role, not the server member letter', async () => {
+  status.state = 'syncing'
+  status.message = null
+  const state = {
+    workspace: { id: 'w', name: 'old', headCommit: null, repoUrl: null },
+    members: {
+      B: { id: 'B', name: 'Budi', role: 'coder', color: null, online: true, stale: false, activeTaskId: null, blocked: false, writingUntil: 0 }
+    },
+    tasks: {}, locks: {}, files: {}, requests: {}, proposals: {}, feed: [], bobActivity: {}, cursor: 0
+  } satisfies RadarState
+  useRadarStore.setState({ state })
+  render(<JoinWithCodeCard connection={member} onConnectionChange={vi.fn()} />)
+  expect(await screen.findByRole('heading', { name: 'old · Budi (coder)' })).toBeTruthy()
+  useRadarStore.setState({ state: null })
 })
 
 it('names the files whose local copy was kept as .radar-conflict (D-alief-14)', async () => {
