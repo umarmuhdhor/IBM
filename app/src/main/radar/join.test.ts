@@ -12,12 +12,15 @@ const mocks = vi.hoisted(() => ({
   stopSyncAgent: vi.fn(),
   ensureNodeForBob: vi.fn(async () => undefined),
   moveAsideOldFolder: vi.fn((_folder: string): string | null => null),
-  existsSync: vi.fn((_path: string) => false)
+  existsSync: vi.fn((_path: string) => false),
+  readFileSync: vi.fn((_path: string, _enc: string): string => ''),
+  getSyncStatus: vi.fn((): { folder: string | null } => ({ folder: null }))
 }))
 
 vi.mock('node:fs', async (importOriginal) => ({
   ...(await importOriginal<typeof fs>()),
-  existsSync: mocks.existsSync
+  existsSync: mocks.existsSync,
+  readFileSync: mocks.readFileSync
 }))
 
 vi.mock('electron', () => ({
@@ -39,13 +42,14 @@ vi.mock('./connection-ipc', () => ({ startClient: mocks.startClient }))
 vi.mock('./node-shim', () => ({ ensureNodeForBob: mocks.ensureNodeForBob }))
 vi.mock('./join-folder', () => ({ moveAsideOldFolder: mocks.moveAsideOldFolder }))
 vi.mock('./sync-agent', () => ({
-  getSyncStatus: vi.fn(),
+  getSyncStatus: mocks.getSyncStatus,
   startSyncAgent: mocks.startSyncAgent,
   stopSyncAgent: mocks.stopSyncAgent,
   workspaceFolder: (workspace: string) => `/home/test/live-collab/${workspace}`
 }))
 
-const { createJoinCode, joinWithCode, resumeMemberSync, serverOrigin } = await import('./join')
+const { createJoinCode, joinWithCode, removeMember, resumeMemberSync, serverOrigin } =
+  await import('./join')
 
 const SERVER = 'https://collab.example.dev'
 const invite = encodeInvite({
@@ -271,3 +275,89 @@ describe('resumeMemberSync', () => {
     expect(mocks.startSyncAgent).not.toHaveBeenCalled()
   })
 })
+
+describe('rejoining keeps the seat (D-alief-20)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.getRadarConnectionSummary.mockReturnValue({
+      server: `${SERVER}/`,
+      workspace: 'toko-demo',
+      member: 'D',
+      role: 'coder'
+    })
+  })
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('sends the current seat token with the code, so the server reuses the seat', async () => {
+    respond(200, { workspace: 'toko-demo', member: 'D', role: 'pm', invite })
+    mocks.readRadarConnection.mockReturnValue({
+      server: `${SERVER}/`,
+      workspace: 'toko-demo',
+      member: 'D',
+      role: 'coder',
+      token: 'rdr_old_seat_value'
+    })
+    await joinWithCode('K7QM-3XPA', SERVER, 'Dewi', 'pm')
+    expect(fetch).toHaveBeenCalledWith(
+      `${SERVER}/v1/join`,
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: 'Bearer rdr_old_seat_value' })
+      })
+    )
+  })
+
+  it('never sends a Mission Control token or a token for another server', async () => {
+    for (const saved of [
+      { server: `${SERVER}/`, workspace: 'toko-demo', member: 'mc', role: 'mc', token: 'rdr_mc' },
+      { server: 'https://other.example.dev/', workspace: 'x', member: 'B', role: 'coder', token: 'rdr_b' }
+    ]) {
+      respond(200, { workspace: 'toko-demo', member: 'D', role: 'coder', invite })
+      mocks.readRadarConnection.mockReturnValue(saved)
+      await joinWithCode('K7QM-3XPA', SERVER, 'Dewi', 'coder')
+      const init = vi.mocked(fetch).mock.calls[0]![1] as RequestInit
+      expect(init.headers).not.toHaveProperty('Authorization')
+      vi.unstubAllGlobals()
+    }
+  })
+})
+
+describe('removeMember (D-alief-20)', () => {
+  beforeEach(() => vi.clearAllMocks())
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('needs a Mission Control connection', async () => {
+    respond(200, { ok: true })
+    mocks.readRadarConnection.mockReturnValue({
+      server: `${SERVER}/`,
+      workspace: 'toko-demo',
+      member: 'D',
+      role: 'coder',
+      token: 'rdr_test_member_value'
+    })
+    await expect(removeMember('B')).rejects.toThrow(/Mission Control/)
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it('deletes the seat with the Mission Control token and shows the server message on failure', async () => {
+    mocks.readRadarConnection.mockReturnValue({
+      server: `${SERVER}/`,
+      workspace: 'toko-demo',
+      member: 'mc',
+      role: 'mc',
+      token: 'rdr_test_mc_value'
+    })
+    respond(200, { ok: true })
+    await removeMember('B')
+    expect(fetch).toHaveBeenCalledWith(
+      `${SERVER}/v1/members/B`,
+      expect.objectContaining({
+        method: 'DELETE',
+        headers: expect.objectContaining({ Authorization: 'Bearer rdr_test_mc_value' })
+      })
+    )
+    respond(409, { error: { code: 'CONFLICT', message: 'Alief shares this workspace, so their seat cannot be removed.' } })
+    await expect(removeMember('A')).rejects.toThrow('Alief shares this workspace')
+    await expect(removeMember('../x')).rejects.toThrow(/member/)
+  })
+})
+

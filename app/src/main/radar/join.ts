@@ -1,6 +1,12 @@
 import { ipcMain, app, clipboard, shell } from 'electron'
 import { existsSync } from 'node:fs'
-import { AdminJoinCodeRes, decodeInvite, ErrorRes, JoinRes, normalizeJoinCode } from '@radar/common'
+import {
+  AdminJoinCodeRes,
+  decodeInvite,
+  ErrorRes,
+  JoinRes,
+  normalizeJoinCode
+} from '@radar/common'
 import { runProcess } from '../../shared/child-process/run-process'
 import type { RadarConnection } from '../../shared/radar-connection'
 import {
@@ -71,7 +77,7 @@ export async function joinWithCode(
   requireOsEncryption()
   const response = await serverFetch(`${server}/v1/join`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...seatHeader(server) },
     body: JSON.stringify(name ? { code, name, role } : { code }),
     signal: AbortSignal.timeout(15_000)
   })
@@ -108,6 +114,23 @@ export async function joinWithCode(
     folder: workspaceFolder(invite.workspace),
     previousFolder
   }
+}
+
+/**
+ * D-alief-20: this app's live member token for `server`, so a new open code reuses the seat instead of adding one.
+ * Never the Mission Control token, and never a token for another server.
+ */
+function seatHeader(server: string): { Authorization?: string } {
+  let saved: RadarConnection | null = null
+  try {
+    saved = readRadarConnection()
+  } catch {
+    return {}
+  }
+  if (!saved || saved.role === 'mc' || new URL(saved.server).origin !== server) {
+    return {}
+  }
+  return { Authorization: `Bearer ${saved.token}` }
 }
 
 /** D-alief-11: an owner code gives this app a Mission Control connection; Mission Control does not sync files. */
@@ -151,6 +174,26 @@ export async function createJoinCode(): Promise<RadarJoinCode> {
     throw new Error(await errorMessage(response))
   }
   return AdminJoinCodeRes.parse(await response.json())
+}
+
+/** D-alief-20: Mission Control removes a teammate's seat; their open tasks are cancelled on the server. */
+export async function removeMember(memberInput: unknown): Promise<void> {
+  const member = typeof memberInput === 'string' && /^[A-Z]$/.test(memberInput) ? memberInput : null
+  if (!member) {
+    throw new Error('Pick a member to remove.')
+  }
+  const connection = readRadarConnection()
+  if (!connection || connection.role !== 'mc') {
+    throw new Error('Connect as Mission Control to remove a member.')
+  }
+  const response = await serverFetch(new URL(`/v1/members/${member}`, connection.server).toString(), {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${connection.token}` },
+    signal: AbortSignal.timeout(10_000)
+  })
+  if (!response.ok) {
+    throw new Error(await errorMessage(response))
+  }
 }
 
 async function openInBob(): Promise<string | null> {
@@ -199,6 +242,7 @@ export function registerRadarJoinIpc(): void {
     return joinWithCode(field('code'), field('server'), field('name'), field('role'))
   })
   ipcMain.handle('radar:create-join-code', () => createJoinCode())
+  ipcMain.handle('radar:remove-member', (_event, member: unknown) => removeMember(member))
   ipcMain.handle('radar:profile-name', () => readProfileName())
   ipcMain.handle('radar:sync-status', () => getSyncStatus())
   ipcMain.handle('radar:open-in-bob', () => openInBob())
