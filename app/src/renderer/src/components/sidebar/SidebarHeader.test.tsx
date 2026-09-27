@@ -37,6 +37,12 @@ type MockState = {
 
 let mockState: MockState
 
+// Why: these tests cover upstream Orca controls that Live Collab hides (radar-product-trim).
+vi.mock(
+  '../../../../shared/radar-product-trim',
+  () => import('../../../../shared/radar-product-trim-off')
+)
+
 vi.mock('@/store', () => {
   const useAppStore = (selector: (state: MockState) => unknown) => selector(mockState)
   useAppStore.getState = () => mockState
