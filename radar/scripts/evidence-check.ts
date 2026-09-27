@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 // R7 §4 evidence checker (fase 14).
 //
-// pnpm -C radar evidence:check
+// pnpm -C radar evidence:check [--write-index]
 //
 // Exits nonzero when any R7 violation is found:
 //   - a member in plan/team.json has < 3 PNG …_summary.png files
@@ -10,7 +10,7 @@
 //   - bob_sessions/index/<nama>.md does not list every PNG owned by that member
 //   - a file under bob_sessions/ is git-ignored (would not be committed)
 import { execSync } from 'node:child_process';
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 // ── locate repo root ────────────────────────────────────────────────────────
@@ -117,6 +117,36 @@ const ignoredFiles = ignoredOut
   .filter(Boolean);
 for (const f of ignoredFiles) {
   fail(`bob_sessions file is git-ignored (would not be committed): ${f}`);
+}
+
+// ── 7. --write-index: combine the per-member tables into bob_sessions/INDEX.md (fase 14) ──
+if (process.argv.includes('--write-index')) {
+  const header = '| File | Member | Lane / phase | Date (WITA) | Summary | Files Bob helped with | Bobcoin |';
+  const rows: string[] = [];
+  for (const member of members) {
+    const indexFile = join(sessionsDir, 'index', `${member.id}.md`);
+    if (!existsSync(indexFile)) continue;
+    const memberRows = readFileSync(indexFile, 'utf8')
+      .split('\n')
+      .filter((l) => l.startsWith('| ['))
+      // index rows link ../<png>; INDEX.md sits next to the PNGs
+      .map((l) => l.replace(/\]\(\.\.\//g, ']('));
+    // task order inside each member (rows are appended in capture order)
+    memberRows.sort((x, y) => (/_task(\d{2})_/.exec(x)?.[1] ?? '').localeCompare(/_task(\d{2})_/.exec(y)?.[1] ?? ''));
+    rows.push(...memberRows);
+  }
+  const out = [
+    '# IBM Bob session evidence',
+    '',
+    "Each member's rows live in [`index/<name>.md`](index/), written by `radar/scripts/bob-evidence.sh`, so lane PRs never touch the same file. This table is generated from them: `pnpm -C radar evidence:check --write-index`.",
+    '',
+    header,
+    '|---|---|---|---|---|---|---|',
+    ...rows,
+    '',
+  ].join('\n');
+  writeFileSync(join(sessionsDir, 'INDEX.md'), out);
+  console.log(`evidence:check wrote bob_sessions/INDEX.md (${rows.length} rows)`);
 }
 
 // ── summary ────────────────────────────────────────────────────────────────
